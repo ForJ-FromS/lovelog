@@ -57,6 +57,7 @@ function hexFromHue(hh){
   return '#'+f(0)+f(8)+f(4);
 }
 const ytId=u=>{ const m=String(u||'').match(/(?:youtu\.be\/|v=|shorts\/|embed\/)([A-Za-z0-9_-]{11})/); return m?m[1]:null; };
+const ytList=u=>{ const m=String(u||'').match(/[?&]list=([A-Za-z0-9_-]+)/); return m?m[1]:null; };
 function dday(dstr){ const d=new Date(dstr+'T00:00:00'), n=new Date(); n.setHours(0,0,0,0);
   const f=Math.round((n-d)/86400000); return f>=0?'D+'+(f+1):'D'+f; }
 const today=()=>{ const d=new Date();
@@ -282,19 +283,30 @@ function renderSide(){
       box.appendChild(d); return;
     }
     if(w.t==='bgm'){
-      const vid=ytId(p.bgm?.url);
-      if(!vid){
-        if(st.mine){ d.innerHTML=`<p class="label">BGM</p><p style="font-size:11px;color:var(--muted)">✦ 꾸미기 → 위젯 → BGM ✎에 유튜브 링크를 넣으세요</p>`; box.appendChild(d); }
+      const vid=ytId(p.bgm?.url), list=ytList(p.bgm?.url);
+      if(!vid && !list){
+        if(st.mine){ d.innerHTML=`<p class="label">BGM</p><p style="font-size:11px;color:var(--muted)">✦ 꾸미기 → 위젯 → BGM ✎에 유튜브 영상/플레이리스트 링크를 넣으세요</p>`; box.appendChild(d); }
         return;
       }
-      d.innerHTML=`<p class="label">BGM</p>
-        <div class="bgm-play"><span class="ic">▶</span>
-        <span class="t">${esc(p.bgm.title||'배경음악')}</span></div><div class="bgm-fr"></div>`;
+      const cover = vid
+        ? `<img src="https://img.youtube.com/vi/${vid}/hqdefault.jpg" alt="">`
+        : `<span class="mus">♪</span>`;
+      d.innerHTML=`<p class="label">NOW PLAYING</p>
+        <div class="bgm-w">
+          <span class="bgm-cov">${cover}</span>
+          <span class="bgm-meta"><b>${esc(p.bgm.title|| (list?'플레이리스트':'배경음악'))}</b>
+            <span class="bgm-eq"><i></i><i></i><i></i><i></i><i></i></span></span>
+          <span class="bgm-btn2">▶</span>
+        </div><div class="bgm-fr"></div>`;
       box.appendChild(d);
-      let on=false; const btn=d.querySelector('.bgm-play'), fr=d.querySelector('.bgm-fr');
+      const src = list
+        ? `https://www.youtube.com/embed/videoseries?list=${list}&autoplay=1`
+        : `https://www.youtube.com/embed/${vid}?autoplay=1&loop=1&playlist=${vid}`;
+      let on=false; const btn=d.querySelector('.bgm-btn2'), fr=d.querySelector('.bgm-fr');
       btn.onclick=()=>{ on=!on;
-        fr.innerHTML=on?`<iframe style="width:100%;height:0;border:0" src="https://www.youtube.com/embed/${vid}?autoplay=1&loop=1&playlist=${vid}" allow="autoplay; encrypted-media"></iframe>`:'';
-        btn.querySelector('.ic').textContent=on?'■':'▶'; };
+        fr.innerHTML=on?`<iframe style="width:100%;height:0;border:0" src="${src}" allow="autoplay; encrypted-media"></iframe>`:'';
+        btn.textContent=on?'❚❚':'▶';
+        d.classList.toggle('playing',on); };
       return;
     }
     if(w.t==='latest'){
@@ -312,11 +324,9 @@ function renderSide(){
       return;
     }
     if(w.t==='profile'){
-      const shape=w.shape||'full';
-      d.className+=' w-profile'+(shape==='full'?' full':'');
-      d.innerHTML=(w.img?`<img class="s-${esc(shape)}" src="${w.img}" alt="" draggable="false">`:'')+
-        `<div class="tx">`+(w.text?`<p>${esc(w.text)}</p>`:'')+
-        `<p class="hd">@${esc(st.handle)}</p></div>`;
+      d.className+=' w-profile';
+      d.innerHTML=(w.img?`<img src="${w.img}" alt="" draggable="false">`:'')+
+        (w.text?`<p class="cap">${esc(w.text)}</p>`:'');
       box.appendChild(d); return;
     }
     if(w.t==='quote'){
@@ -500,14 +510,7 @@ function renderWidEdit(){
   let html=`<p class="p-h">${WNAME[w.t]} 편집</p>`;
   if(w.t==='profile') html+=`
     <div class="p-row"><label class="filelab">사진 <input type="file" id="we-img" accept="image/*"></label></div>
-    <div class="p-row"><select id="we-shape">
-      <option value="full">카드 꽉 채움 (기본)</option>
-      <option value="circle">원형</option>
-      <option value="rounded">둥근 사각</option>
-      <option value="square">사각</option>
-      <option value="frame">액자 (흰 테두리)</option>
-    </select></div>
-    <textarea id="we-text" placeholder="한 줄 소개 (선택)" style="min-height:70px">${w.text||''}</textarea>`;
+    <textarea id="we-text" placeholder="아래 캡션 (선택 — 비우면 사진만 꽉 차게)" style="min-height:60px">${w.text||''}</textarea>`;
   if(w.t==='quote') html+=`
     <textarea id="we-text" placeholder="걸어둘 문장" style="min-height:90px">${w.text||''}</textarea>`;
   if(w.t==='dday') html+=pdraft.ddays.map((d,i)=>`
@@ -536,8 +539,6 @@ function renderWidEdit(){
   $('#wid-edit').innerHTML=html;
   // 라이브 바인딩: 쓰는 즉시 draft에 반영
   const t=$('#we-text'); if(t) t.addEventListener('input',()=>{ w.text=t.value; });
-  const sh=$('#we-shape'); if(sh){ sh.value=w.shape||'full';
-    sh.addEventListener('change',()=>{ w.shape=sh.value; }); }
   const img=$('#we-img'); if(img) img.addEventListener('change',async e=>{
     const f=e.target.files[0]; if(!f) return; msg('사진 압축 중...');
     w.img=await compress(f,500,.8); msg('사진 반영됨 — [위젯 구성 저장]을 눌러주세요.');
