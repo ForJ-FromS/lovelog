@@ -93,29 +93,17 @@ async function enterPage(){
   $('#pg-hero').style.backgroundImage = p.heroImg?`url(${p.heroImg})`:'';
   const dd0=(p.ddays||[])[0];
   $('#pg-dday-main').innerHTML = dd0?`<p class="n">${esc(dday(dd0.date))}</p><p class="t">${esc(dd0.title)}</p>`:'';
-  // 사이드 디데이(2개째부터도 전부)
-  const side=$('#side-dday');
-  if(p.ddays&&p.ddays.length){ side.classList.remove('hidden');
-    $('#dd-list').innerHTML=p.ddays.map(d=>
-      `<div class="dd-item"><span class="t">${esc(d.title)}</span><span class="n">${esc(dday(d.date))}</span></div>`).join('');
-  } else side.classList.add('hidden');
-  // BGM
-  const bs=$('#side-bgm'), vid=ytId(p.bgm?.url);
-  if(vid){ bs.classList.remove('hidden');
-    $('#bgm-title').textContent=p.bgm.title||'배경음악';
-    let playing=false;
-    $('#bgm-btn').onclick=()=>{
-      playing=!playing;
-      $('#bgm-frame').innerHTML = playing
-        ? `<iframe src="https://www.youtube.com/embed/${vid}?autoplay=1&loop=1&playlist=${vid}" allow="autoplay; encrypted-media"></iframe>`:'';
-      $('#bgm-btn .ic').textContent = playing?'■':'▶';
-    };
-  } else bs.classList.add('hidden');
-  $('#btn-pen').classList.toggle('hidden',!st.mine);
-  $('#cat-add').classList.toggle('hidden',!st.mine);
+  // 레이아웃 · 테마
+  document.body.classList.toggle('light', !!p.light);
+  const headEl=document.querySelector('.head');
+  if(p.headMode==='side'){ headEl.classList.add('v'); $('#aside').prepend(headEl); }
+  else { headEl.classList.remove('v');
+    const cols=document.querySelector('.cols'); cols.parentNode.insertBefore(headEl, cols); }
+  $('#btn-write').classList.toggle('hidden',!st.mine);
+  $('#btn-deco').classList.toggle('hidden',!st.mine);
   show('view-page');
   await loadContent();
-  renderCats(); renderList(); renderGal();
+  renderSide(); renderList(); renderGal();
   // 딥링크 ?p=
   const pm=new URLSearchParams(location.search).get('p');
   if(pm) openPost(pm);
@@ -129,19 +117,103 @@ async function loadContent(){
   st.gallery=gs.docs.map(d=>({id:d.id,...d.data()}));
 }
 
-/* ---------- 렌더 ---------- */
+/* ---------- 사이드 위젯 렌더 ---------- */
 function cats(){ return st.page.cats||['archive','ooc']; }
-function renderCats(){
-  const cnt=c=>st.posts.filter(p=>p.cat===c).length;
-  $('#cats').innerHTML =
-    cats().map(c=>`<li><a data-c="${esc(c)}" class="${st.cat===c?'on':''}">
-      <span>${esc(c)}${st.mine?` <span class="x" data-x="${esc(c)}">✕</span>`:''}</span>
-      <span class="n">${cnt(c)}</span></a></li>`).join('')
-    +`<li><a data-c="recent" class="${st.cat==='recent'?'on':''}"><span>전체</span><span class="n">${st.posts.length}</span></a></li>`;
-  document.querySelectorAll('#cats a').forEach(a=>a.onclick=e=>{
-    if(e.target.dataset.x){ removeCat(e.target.dataset.x); return; }
-    st.cat=a.dataset.c; renderCats(); renderList(); backToList();
+function sideCfg(){
+  if(st.page.side && st.page.side.length) return st.page.side;
+  const s=[{t:'search'},{t:'category'}];
+  if(st.page.ddays&&st.page.ddays.length) s.push({t:'dday'});
+  if(ytId(st.page.bgm?.url)) s.push({t:'bgm'});
+  return s;
+}
+const WNAME={profile:'프로필',search:'검색',category:'카테고리',dday:'디데이',
+  bgm:'BGM',notice:'공지',quote:'인용구',links:'링크',banner:'배너칸'};
+function renderSide(){
+  const p=st.page, box=$('#aside');
+  // 세로 헤더 모드면 head를 유지한 채 위젯만 갱신
+  const headEl=box.querySelector('.head');
+  box.innerHTML=''; if(headEl) box.appendChild(headEl);
+  sideCfg().forEach(w=>{
+    const d=document.createElement('div'); d.className='side';
+    if(w.t==='search'){
+      d.innerHTML=`<p class="label">SEARCH</p>
+        <div class="s-search">⌕ <input id="q" placeholder="search"></div>`;
+      box.appendChild(d);
+      d.querySelector('#q').addEventListener('input',e=>{
+        st.q=e.target.value.trim().toLowerCase(); renderList(); });
+      return;
+    }
+    if(w.t==='category'){
+      const cnt=c=>st.posts.filter(x=>x.cat===c).length;
+      d.innerHTML=`<p class="label">CATEGORY</p><ul id="cats">`+
+        cats().map(c=>`<li><a data-c="${esc(c)}" class="${st.cat===c?'on':''}">
+          <span>${esc(c)}${st.mine?` <span class="x" data-x="${esc(c)}">✕</span>`:''}</span>
+          <span class="n">${cnt(c)}</span></a></li>`).join('')+
+        `<li><a data-c="recent" class="${st.cat==='recent'?'on':''}"><span>전체</span><span class="n">${st.posts.length}</span></a></li></ul>`+
+        (st.mine?'<p class="cat-add" id="cat-add">＋ 카테고리 추가</p>':'');
+      box.appendChild(d);
+      d.querySelectorAll('#cats a').forEach(el=>el.onclick=e=>{
+        if(e.target.dataset.x){ removeCat(e.target.dataset.x); return; }
+        st.cat=el.dataset.c; renderSide(); renderList(); backToList(); });
+      const ca=d.querySelector('#cat-add'); if(ca) ca.onclick=addCat;
+      return;
+    }
+    if(w.t==='dday'){
+      if(!(p.ddays&&p.ddays.length)) return;
+      d.innerHTML=`<p class="label">D-DAY</p>`+p.ddays.map(x=>
+        `<div class="dd-item"><span class="t">${esc(x.title)}</span><span class="n">${esc(dday(x.date))}</span></div>`).join('');
+      box.appendChild(d); return;
+    }
+    if(w.t==='bgm'){
+      const vid=ytId(p.bgm?.url); if(!vid) return;
+      d.innerHTML=`<p class="label">BGM</p>
+        <div class="bgm-play"><span class="ic">▶</span>
+        <span class="t">${esc(p.bgm.title||'배경음악')}</span></div><div class="bgm-fr"></div>`;
+      box.appendChild(d);
+      let on=false; const btn=d.querySelector('.bgm-play'), fr=d.querySelector('.bgm-fr');
+      btn.onclick=()=>{ on=!on;
+        fr.innerHTML=on?`<iframe style="width:100%;height:0;border:0" src="https://www.youtube.com/embed/${vid}?autoplay=1&loop=1&playlist=${vid}" allow="autoplay; encrypted-media"></iframe>`:'';
+        btn.querySelector('.ic').textContent=on?'■':'▶'; };
+      return;
+    }
+    if(w.t==='profile'){
+      d.className+=' w-profile';
+      d.innerHTML=`<p class="label">PROFILE</p>`+
+        (w.img?`<img src="${w.img}" alt="">`:'')+
+        (w.text?`<p>${esc(w.text)}</p>`:'');
+      box.appendChild(d); return;
+    }
+    if(w.t==='notice'){
+      d.className+=' w-notice';
+      d.innerHTML=`<p class="label">NOTICE</p><p>${esc(w.text||'')}</p>`;
+      box.appendChild(d); return;
+    }
+    if(w.t==='quote'){
+      d.className+=' w-quote';
+      d.innerHTML=`<span class="qm">❝</span><p>${esc(w.text||'')}</p>`;
+      box.appendChild(d); return;
+    }
+    if(w.t==='links'){
+      d.className+=' w-links';
+      d.innerHTML=`<p class="label">LINKS</p>`+(w.items||[]).map(l=>
+        `<a href="${esc(l.url)}" target="_blank" rel="noopener"><span>${esc(l.label)}</span><span>↗</span></a>`).join('');
+      box.appendChild(d); return;
+    }
+    if(w.t==='banner'){
+      d.className+=' w-banner';
+      d.innerHTML=`<p class="label">BANNER</p>`+(w.items||[]).map(b=>
+        `<a ${b.url?`href="${esc(b.url)}" target="_blank" rel="noopener"`:''}><img src="${b.img}" alt="" draggable="false"></a>`).join('');
+      box.appendChild(d); return;
+    }
   });
+}
+function renderCats(){ renderSide(); }
+async function addCat(){
+  const c=prompt('새 카테고리 이름'); if(!c) return;
+  const name=c.trim(); if(!name||cats().includes(name)) return;
+  const next=[...cats(),name];
+  await updateDoc(doc(db,'pages',st.handle),{cats:next});
+  st.page.cats=next; renderSide(); refreshWriteCats();
 }
 function renderList(){
   let items=st.posts;
@@ -217,8 +289,7 @@ $('#pv-del').onclick=async()=>{
   backToList(); renderCats(); renderList();
 };
 
-/* ---------- 검색 ---------- */
-$('#q').addEventListener('input',e=>{ st.q=e.target.value.trim().toLowerCase(); renderList(); });
+/* ---------- 검색: search 위젯 내부에서 바인딩 ---------- */
 $('#more-btn').onclick=()=>{ st.cat='recent'; st.q='__all__'; st.q=''; 
   $('#rows').innerHTML=''; const rest=st.posts.filter(p=>!p.pinned);
   $('#v-label').textContent='ALL';
@@ -231,13 +302,6 @@ $('#more-btn').onclick=()=>{ st.cat='recent'; st.q='__all__'; st.q='';
 };
 
 /* ---------- 카테고리 추가/삭제 ---------- */
-$('#cat-add').onclick=async()=>{
-  const c=prompt('새 카테고리 이름'); if(!c) return;
-  const name=c.trim(); if(!name||cats().includes(name)) return;
-  const next=[...cats(),name];
-  await updateDoc(doc(db,'pages',st.handle),{cats:next});
-  st.page.cats=next; renderCats(); refreshWriteCats();
-};
 async function removeCat(c){
   if(!confirm(`'${c}' 카테고리를 삭제할까요? (글은 남고 '전체'에서 보여요)`)) return;
   const next=cats().filter(x=>x!==c);
@@ -250,7 +314,96 @@ async function removeCat(c){
 function refreshWriteCats(){
   $('#w-cat').innerHTML=cats().map(c=>`<option>${esc(c)}</option>`).join('');
 }
-$('#btn-pen').onclick=()=>{ refreshWriteCats(); fillSettings(); $('#panel').classList.add('show'); };
+function openPanel(mode){
+  document.querySelectorAll('.tabs button').forEach(b=>{
+    const isWrite=['write','galup'].includes(b.dataset.tab);
+    b.style.display=(mode==='write'?isWrite:!isWrite)?'':'none';
+  });
+  const first = mode==='write'?'write':'wid';
+  document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===first));
+  document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('hidden',p.dataset.pane!==first));
+  $('#panel').classList.toggle('big', mode==='deco');
+  msg(''); $('#panel').classList.add('show');
+}
+$('#btn-write').onclick=()=>{ refreshWriteCats(); openPanel('write'); };
+$('#btn-deco').onclick=()=>{ fillSettings(); fillWidgets(); openPanel('deco'); };
+
+/* ---------- 위젯 편집 탭 ---------- */
+let draft=[]; let editIdx=-1;
+function fillWidgets(){ draft=JSON.parse(JSON.stringify(sideCfg())); editIdx=-1; renderWidList(); }
+function renderWidList(){
+  $('#wid-list').innerHTML = draft.map((w,i)=>`
+    <div class="wl">
+      <span class="nm">${WNAME[w.t]||w.t}${w.t==='links'?` (${(w.items||[]).length})`:''}${w.t==='banner'?` (${(w.items||[]).length})`:''}</span>
+      ${['profile','notice','quote','links','banner'].includes(w.t)?`<button data-e="${i}">✎</button>`:''}
+      <button data-u="${i}">↑</button><button data-d="${i}">↓</button><button data-x="${i}">✕</button>
+    </div>`).join('') || '<p class="pl-empty">위젯이 없어요 — 아래에서 추가하세요.</p>';
+  $('#wid-list').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+    const {e,u,d,x}=b.dataset;
+    if(e!==undefined){ editIdx=+e; renderWidEdit(); return; }
+    if(u!==undefined && +u>0){ const i=+u; [draft[i-1],draft[i]]=[draft[i],draft[i-1]]; }
+    if(d!==undefined && +d<draft.length-1){ const i=+d; [draft[i+1],draft[i]]=[draft[i],draft[i+1]]; }
+    if(x!==undefined){ draft.splice(+x,1); editIdx=-1; $('#wid-edit').innerHTML=''; }
+    renderWidList();
+  });
+}
+function renderWidEdit(){
+  const w=draft[editIdx]; if(!w){ $('#wid-edit').innerHTML=''; return; }
+  let html=`<p class="p-h">${WNAME[w.t]} 편집</p>`;
+  if(w.t==='profile') html+=`
+    <div class="p-row"><label class="filelab">사진 <input type="file" id="we-img" accept="image/*"></label></div>
+    <textarea id="we-text" placeholder="한 줄 소개 (선택)" style="min-height:70px">${w.text||''}</textarea>`;
+  if(w.t==='notice'||w.t==='quote') html+=`
+    <textarea id="we-text" placeholder="${w.t==='notice'?'공지 내용':'문장'}" style="min-height:90px">${w.text||''}</textarea>`;
+  if(w.t==='links') html+=(w.items||[]).map((l,i)=>`
+    <div class="p-row"><input data-ll="${i}" placeholder="이름" value="${l.label||''}">
+    <input data-lu="${i}" placeholder="https://..." value="${l.url||''}"></div>`).join('')+
+    `<button class="btn" id="we-add" style="font-size:12px">+ 링크 줄 추가</button>`;
+  if(w.t==='banner') html+=(w.items||[]).map((b,i)=>`
+    <div class="p-row"><span style="font-size:11px;color:var(--muted)">배너 ${i+1}</span>
+    <input data-bu="${i}" placeholder="눌렀을 때 이동할 주소 (선택)" value="${b.url||''}">
+    <button class="rmv" data-br="${i}">✕</button></div>`).join('')+
+    `<div class="p-row"><label class="filelab">배너 이미지 추가 <input type="file" id="we-bimg" accept="image/*"></label></div>`;
+  html+=`<button class="btn" id="we-ok" style="margin-top:8px;font-size:12px">이 위젯 반영</button>`;
+  $('#wid-edit').innerHTML=html;
+  const img=$('#we-img'); if(img) img.addEventListener('change',async e=>{
+    const f=e.target.files[0]; if(!f) return; msg('사진 압축 중...');
+    w.img=await compress(f,400,.8); msg('사진 준비 완료 — [이 위젯 반영]을 눌러주세요.');
+  });
+  const badd=$('#we-bimg'); if(badd) badd.addEventListener('change',async e=>{
+    const f=e.target.files[0]; if(!f) return; msg('배너 압축 중...');
+    w.items=w.items||[]; w.items.push({img:await compress(f,800,.8),url:''});
+    renderWidEdit(); msg('');
+  });
+  const ladd=$('#we-add'); if(ladd) ladd.onclick=()=>{ syncWid(w); w.items=w.items||[]; w.items.push({label:'',url:''}); renderWidEdit(); };
+  $('#wid-edit').querySelectorAll('[data-br]').forEach(b=>b.onclick=()=>{ w.items.splice(+b.dataset.br,1); renderWidEdit(); });
+  $('#we-ok').onclick=()=>{ syncWid(w); renderWidList(); msg('반영됨 — 아래 [위젯 구성 저장]까지 눌러야 저장돼요.'); };
+}
+function syncWid(w){
+  const t=$('#we-text'); if(t) w.text=t.value.trim();
+  $('#wid-edit').querySelectorAll('[data-ll]').forEach(i=>{ w.items[i.dataset.ll].label=i.value.trim(); });
+  $('#wid-edit').querySelectorAll('[data-lu]').forEach(i=>{ w.items[i.dataset.lu].url=i.value.trim(); });
+  $('#wid-edit').querySelectorAll('[data-bu]').forEach(i=>{ w.items[i.dataset.bu].url=i.value.trim(); });
+  if(w.t==='links') w.items=(w.items||[]).filter(l=>l.label||l.url);
+}
+$('#wid-add').onclick=()=>{
+  const t=$('#wid-type').value;
+  if(['search','category','dday','bgm','profile'].includes(t) && draft.some(w=>w.t===t)){
+    msg('이미 있는 위젯이에요.'); return; }
+  draft.push(t==='links'?{t,items:[]}:t==='banner'?{t,items:[]}:{t});
+  editIdx=draft.length-1; renderWidList();
+  if(['profile','notice','quote','links','banner'].includes(t)) renderWidEdit();
+};
+$('#wid-save').onclick=async()=>{
+  if(editIdx>=0 && draft[editIdx]) syncWid(draft[editIdx]);
+  msg('저장 중...');
+  try{
+    if(JSON.stringify(draft).length>500000){ msg('위젯 이미지 용량이 너무 커요.'); return; }
+    await updateDoc(doc(db,'pages',st.handle),{side:draft});
+    st.page.side=JSON.parse(JSON.stringify(draft));
+    renderSide(); msg('위젯 구성 저장 완료!');
+  }catch(e){ msg('오류: '+e.message); }
+};
 $('#p-close').onclick=()=>$('#panel').classList.remove('show');
 $('#panel').addEventListener('click',e=>{ if(e.target.id==='panel') $('#panel').classList.remove('show'); });
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
@@ -315,6 +468,8 @@ function fillSettings(){
   $('#s-name').value=p.name||''; $('#s-sub').value=p.sub||'';
   $('#s-bgm-url').value=p.bgm?.url||''; $('#s-bgm-title').value=p.bgm?.title||'';
   $('#s-gate').value=''; $('#s-hue').value=p.hue??'';
+  $('#s-headmode').value=p.headMode||'wide';
+  $('#s-light').checked=!!p.light;
   const dd=$('#s-ddays'); dd.innerHTML='';
   (p.ddays&&p.ddays.length?p.ddays:[]).forEach(d=>dd.appendChild(ddRow(d)));
   heroNew=null;
@@ -333,6 +488,8 @@ $('#s-go').onclick=async()=>{
       }).filter(x=>x.title&&x.date),
       bgm:{url:$('#s-bgm-url').value.trim(),title:$('#s-bgm-title').value.trim()},
       hue: parseInt($('#s-hue').value)||222,
+      headMode: $('#s-headmode').value,
+      light: $('#s-light').checked,
       updatedAt:serverTimestamp()
     };
     if(gateIn) data.gate=await sha256(gateIn);
