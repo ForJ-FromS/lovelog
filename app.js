@@ -43,6 +43,19 @@ function compress(file,maxW,q){ return new Promise((res,rej)=>{
     c.height=Math.round(img.height*sc);
     c.getContext('2d').drawImage(img,0,0,c.width,c.height);
     res(c.toDataURL('image/jpeg',q)); }; img.onerror=rej; img.src=URL.createObjectURL(file); });}
+function hueFromHex(hex){
+  const r=parseInt(hex.slice(1,3),16)/255,g=parseInt(hex.slice(3,5),16)/255,b=parseInt(hex.slice(5,7),16)/255;
+  const mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn;
+  if(!d) return 222;
+  let x; if(mx===r) x=((g-b)/d)%6; else if(mx===g) x=(b-r)/d+2; else x=(r-g)/d+4;
+  return Math.round((x*60+360)%360);
+}
+function hexFromHue(hh){
+  const s=.6,l=.62,aa=s*Math.min(l,1-l),
+  f=n=>{const k=(n+hh/30)%12;const c=l-aa*Math.max(-1,Math.min(k-3,9-k,1));
+    return Math.round(c*255).toString(16).padStart(2,'0')};
+  return '#'+f(0)+f(8)+f(4);
+}
 const ytId=u=>{ const m=String(u||'').match(/(?:youtu\.be\/|v=|shorts\/|embed\/)([A-Za-z0-9_-]{11})/); return m?m[1]:null; };
 function dday(dstr){ const d=new Date(dstr+'T00:00:00'), n=new Date(); n.setHours(0,0,0,0);
   const f=Math.round((n-d)/86400000); return f>=0?'D+'+(f+1):'D'+f; }
@@ -120,14 +133,14 @@ async function loadContent(){
 /* ---------- 사이드 위젯 렌더 ---------- */
 function cats(){ return st.page.cats||['archive','ooc']; }
 function sideCfg(){
-  if(st.page.side && st.page.side.length) return st.page.side;
+  if(st.page.side && st.page.side.length) return st.page.side.filter(w=>w.t!=='notice');
   const s=[{t:'search'},{t:'category'}];
   if(st.page.ddays&&st.page.ddays.length) s.push({t:'dday'});
   if(ytId(st.page.bgm?.url)) s.push({t:'bgm'});
   return s;
 }
 const WNAME={profile:'프로필',search:'검색',category:'카테고리',dday:'디데이',
-  bgm:'BGM',notice:'공지',quote:'인용구',links:'링크',banner:'배너칸'};
+  bgm:'BGM',quote:'인용구',links:'링크',banner:'배너칸'};
 function renderSide(){
   const p=st.page, box=$('#aside');
   // 세로 헤더 모드면 head를 유지한 채 위젯만 갱신
@@ -159,13 +172,20 @@ function renderSide(){
       return;
     }
     if(w.t==='dday'){
-      if(!(p.ddays&&p.ddays.length)) return;
+      if(!(p.ddays&&p.ddays.length)){
+        if(st.mine){ d.innerHTML=`<p class="label">D-DAY</p><p style="font-size:11px;color:var(--muted)">✦ 꾸미기 → 위젯 → 디데이 ✎에서 날짜를 추가하세요</p>`; box.appendChild(d); }
+        return;
+      }
       d.innerHTML=`<p class="label">D-DAY</p>`+p.ddays.map(x=>
         `<div class="dd-item"><span class="t">${esc(x.title)}</span><span class="n">${esc(dday(x.date))}</span></div>`).join('');
       box.appendChild(d); return;
     }
     if(w.t==='bgm'){
-      const vid=ytId(p.bgm?.url); if(!vid) return;
+      const vid=ytId(p.bgm?.url);
+      if(!vid){
+        if(st.mine){ d.innerHTML=`<p class="label">BGM</p><p style="font-size:11px;color:var(--muted)">✦ 꾸미기 → 위젯 → BGM ✎에 유튜브 링크를 넣으세요</p>`; box.appendChild(d); }
+        return;
+      }
       d.innerHTML=`<p class="label">BGM</p>
         <div class="bgm-play"><span class="ic">▶</span>
         <span class="t">${esc(p.bgm.title||'배경음악')}</span></div><div class="bgm-fr"></div>`;
@@ -181,11 +201,6 @@ function renderSide(){
       d.innerHTML=`<p class="label">PROFILE</p>`+
         (w.img?`<img class="s-${esc(w.shape||'circle')}" src="${w.img}" alt="">`:'')+
         (w.text?`<p>${esc(w.text)}</p>`:'');
-      box.appendChild(d); return;
-    }
-    if(w.t==='notice'){
-      d.className+=' w-notice';
-      d.innerHTML=`<p class="label">NOTICE</p><p>${esc(w.text||'')}</p>`;
       box.appendChild(d); return;
     }
     if(w.t==='quote'){
@@ -232,8 +247,9 @@ function renderList(){
   $('#rows').innerHTML = shown.length?shown.map(p=>`
     <li class="row" data-id="${p.id}">
       <span class="d">${esc((p.date||'').slice(5))}</span>
-      <span class="t">${esc(p.title)}</span>
-      <span class="k">${p.secret?'🔒':''}</span></li>`).join('')
+      <span class="t">${esc(p.title)} ${p.secret?'<span class="k">🔒</span>':''}</span>
+      <span class="c">${esc(p.cat)}</span>
+      <span class="k"></span></li>`).join('')
     :'<p class="pl-empty">아직 글이 없습니다.</p>';
   $('#more-btn').style.display=(st.cat==='recent'&&!st.q&&rest.length>7)?'':'none';
   document.querySelectorAll('[data-id]').forEach(el=>el.onclick=()=>openPost(el.dataset.id));
@@ -296,7 +312,9 @@ $('#more-btn').onclick=()=>{ st.cat='recent'; st.q='__all__'; st.q='';
   $('#rows').innerHTML=rest.map(p=>`
     <li class="row" data-id="${p.id}">
       <span class="d">${esc((p.date||'').slice(5))}</span>
-      <span class="t">${esc(p.title)}</span><span class="k">${p.secret?'🔒':''}</span></li>`).join('');
+      <span class="t">${esc(p.title)} ${p.secret?'<span class="k">🔒</span>':''}</span>
+      <span class="c">${esc(p.cat)}</span>
+      <span class="k"></span></li>`).join('');
   $('#more-btn').style.display='none';
   document.querySelectorAll('#rows [data-id]').forEach(el=>el.onclick=()=>openPost(el.dataset.id));
 };
@@ -329,13 +347,18 @@ $('#btn-write').onclick=()=>{ refreshWriteCats(); openPanel('write'); };
 $('#btn-deco').onclick=()=>{ fillSettings(); fillWidgets(); openPanel('deco'); };
 
 /* ---------- 위젯 편집 탭 ---------- */
-let draft=[]; let editIdx=-1;
-function fillWidgets(){ draft=JSON.parse(JSON.stringify(sideCfg())); editIdx=-1; renderWidList(); }
+let draft=[]; let editIdx=-1; let pdraft={ddays:[],bgm:{}};
+function fillWidgets(){
+  draft=JSON.parse(JSON.stringify(sideCfg())).filter(w=>w.t!=='notice');
+  pdraft={ ddays:JSON.parse(JSON.stringify(st.page.ddays||[])),
+           bgm:{url:st.page.bgm?.url||'', title:st.page.bgm?.title||''} };
+  editIdx=-1; renderWidList(); $('#wid-edit').innerHTML='';
+}
 function renderWidList(){
   $('#wid-list').innerHTML = draft.map((w,i)=>`
     <div class="wl">
       <span class="nm">${WNAME[w.t]||w.t}${w.t==='links'?` (${(w.items||[]).length})`:''}${w.t==='banner'?` (${(w.items||[]).length})`:''}</span>
-      ${['profile','notice','quote','links','banner'].includes(w.t)?`<button data-e="${i}">✎</button>`:''}
+      ${['profile','quote','links','banner','dday','bgm'].includes(w.t)?`<button data-e="${i}">✎</button>`:''}
       <button data-u="${i}">↑</button><button data-d="${i}">↓</button><button data-x="${i}">✕</button>
     </div>`).join('') || '<p class="pl-empty">위젯이 없어요 — 아래에서 추가하세요.</p>';
   $('#wid-list').querySelectorAll('button').forEach(b=>b.onclick=()=>{
@@ -360,8 +383,17 @@ function renderWidEdit(){
       <option value="tall">큰 카드형 (가로 꽉 채움)</option>
     </select></div>
     <textarea id="we-text" placeholder="한 줄 소개 (선택)" style="min-height:70px">${w.text||''}</textarea>`;
-  if(w.t==='notice'||w.t==='quote') html+=`
-    <textarea id="we-text" placeholder="${w.t==='notice'?'공지 내용':'문장'}" style="min-height:90px">${w.text||''}</textarea>`;
+  if(w.t==='quote') html+=`
+    <textarea id="we-text" placeholder="걸어둘 문장" style="min-height:90px">${w.text||''}</textarea>`;
+  if(w.t==='dday') html+=pdraft.ddays.map((d,i)=>`
+    <div class="p-row"><input data-dt="${i}" placeholder="제목" value="${esc(d.title)}">
+    <input type="date" data-dd="${i}" value="${esc(d.date)}" style="flex:.8">
+    <button class="rmv" data-dr="${i}">✕</button></div>`).join('')+
+    `<button class="btn" id="we-ddadd" style="font-size:12px">+ 디데이 추가</button>
+    <p class="note">첫 번째 디데이는 대문에도 표시돼요.</p>`;
+  if(w.t==='bgm') html+=`
+    <input id="we-burl" placeholder="유튜브 링크 https://youtu.be/..." value="${esc(pdraft.bgm.url)}">
+    <input id="we-btitle" placeholder="곡 제목 (선택)" value="${esc(pdraft.bgm.title)}">`;
   if(w.t==='links') html+=(w.items||[]).map((l,i)=>`
     <div class="p-row"><input data-ll="${i}" placeholder="이름" value="${l.label||''}">
     <input data-lu="${i}" placeholder="https://..." value="${l.url||''}"></div>`).join('')+
@@ -387,6 +419,12 @@ function renderWidEdit(){
     renderWidEdit(); renderWidList(); msg('배너 추가됨 — [위젯 구성 저장]을 눌러주세요.');
   });
   const ladd=$('#we-add'); if(ladd) ladd.onclick=()=>{ w.items=w.items||[]; w.items.push({label:'',url:''}); renderWidEdit(); };
+  const dadd=$('#we-ddadd'); if(dadd) dadd.onclick=()=>{ pdraft.ddays.push({title:'',date:''}); renderWidEdit(); };
+  $('#wid-edit').querySelectorAll('[data-dt]').forEach(i=>i.addEventListener('input',()=>{ pdraft.ddays[i.dataset.dt].title=i.value; }));
+  $('#wid-edit').querySelectorAll('[data-dd]').forEach(i=>i.addEventListener('change',()=>{ pdraft.ddays[i.dataset.dd].date=i.value; }));
+  $('#wid-edit').querySelectorAll('[data-dr]').forEach(b=>b.onclick=()=>{ pdraft.ddays.splice(+b.dataset.dr,1); renderWidEdit(); });
+  const bu=$('#we-burl'); if(bu) bu.addEventListener('input',()=>{ pdraft.bgm.url=bu.value.trim(); });
+  const bt=$('#we-btitle'); if(bt) bt.addEventListener('input',()=>{ pdraft.bgm.title=bt.value.trim(); });
   $('#wid-edit').querySelectorAll('[data-ll]').forEach(i=>i.addEventListener('input',()=>{ w.items[i.dataset.ll].label=i.value; }));
   $('#wid-edit').querySelectorAll('[data-lu]').forEach(i=>i.addEventListener('input',()=>{ w.items[i.dataset.lu].url=i.value.trim(); }));
   $('#wid-edit').querySelectorAll('[data-bu]').forEach(i=>i.addEventListener('input',()=>{ w.items[i.dataset.bu].url=i.value.trim(); }));
@@ -401,7 +439,7 @@ $('#wid-add').onclick=()=>{
     msg('이미 있는 위젯이에요.'); return; }
   draft.push(t==='links'?{t,items:[]}:t==='banner'?{t,items:[]}:{t});
   editIdx=draft.length-1; renderWidList();
-  if(['profile','notice','quote','links','banner'].includes(t)) renderWidEdit();
+  if(['profile','quote','links','banner','dday','bgm'].includes(t)) renderWidEdit();
 };
 $('#wid-save').onclick=async()=>{
   if(editIdx>=0 && draft[editIdx]) syncWid(draft[editIdx]);
@@ -410,8 +448,12 @@ $('#wid-save').onclick=async()=>{
     if(JSON.stringify(draft).length>700000){
       msg('위젯 이미지 용량이 너무 커요 — 배너/사진 수를 줄여주세요.');
       alert('이미지 용량이 커서 저장하지 못했어요. 배너나 사진 수를 줄여주세요.'); return; }
-    await updateDoc(doc(db,'pages',st.handle),{side:draft});
+    const dd=pdraft.ddays.filter(x=>x.title&&x.date);
+    await updateDoc(doc(db,'pages',st.handle),{side:draft, ddays:dd, bgm:pdraft.bgm});
     st.page.side=JSON.parse(JSON.stringify(draft));
+    st.page.ddays=dd; st.page.bgm={...pdraft.bgm};
+    const d0=dd[0];
+    $('#pg-dday-main').innerHTML = d0?`<p class="n">${esc(dday(d0.date))}</p><p class="t">${esc(d0.title)}</p>`:'';
     renderSide(); msg('위젯 구성 저장 완료!');
   }catch(e){ msg('오류: '+e.message); alert('저장 실패: '+e.message); }
 };
@@ -460,15 +502,6 @@ $('#g-go').onclick=async()=>{
   }catch(e){ msg('오류: '+e.message); }
 };
 
-function ddRow(d={title:'',date:''}){
-  const div=document.createElement('div'); div.className='p-row';
-  div.innerHTML=`<input placeholder="제목" value="${esc(d.title)}">
-    <input type="date" value="${esc(d.date)}" style="flex:.8">
-    <button class="rmv">✕</button>`;
-  div.querySelector('.rmv').onclick=()=>div.remove();
-  return div;
-}
-$('#s-dd-add').onclick=()=>$('#s-ddays').appendChild(ddRow());
 let heroNew=null;
 $('#s-hero').addEventListener('change',async e=>{
   const f=e.target.files[0]; if(!f) return;
@@ -477,12 +510,9 @@ $('#s-hero').addEventListener('change',async e=>{
 function fillSettings(){
   const p=st.page;
   $('#s-name').value=p.name||''; $('#s-sub').value=p.sub||'';
-  $('#s-bgm-url').value=p.bgm?.url||''; $('#s-bgm-title').value=p.bgm?.title||'';
-  $('#s-gate').value=''; $('#s-hue').value=p.hue??'';
+  $('#s-gate').value=''; $('#s-color').value=hexFromHue(p.hue??222);
   $('#s-headmode').value=p.headMode||'wide';
   $('#s-light').checked=!!p.light;
-  const dd=$('#s-ddays'); dd.innerHTML='';
-  (p.ddays&&p.ddays.length?p.ddays:[]).forEach(d=>dd.appendChild(ddRow(d)));
   heroNew=null;
 }
 $('#s-go').onclick=async()=>{
@@ -493,12 +523,7 @@ $('#s-go').onclick=async()=>{
       name:$('#s-name').value.trim()||st.handle,
       sub:$('#s-sub').value.trim(),
       heroImg: heroNew ?? st.page.heroImg ?? '',
-      ddays:[...document.querySelectorAll('#s-ddays .p-row')].map(r=>{
-        const [t,d]=r.querySelectorAll('input');
-        return {title:t.value.trim(),date:d.value};
-      }).filter(x=>x.title&&x.date),
-      bgm:{url:$('#s-bgm-url').value.trim(),title:$('#s-bgm-title').value.trim()},
-      hue: parseInt($('#s-hue').value)||222,
+      hue: hueFromHex($('#s-color').value),
       headMode: $('#s-headmode').value,
       light: $('#s-light').checked,
       updatedAt:serverTimestamp()

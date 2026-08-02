@@ -30,7 +30,7 @@
   input,textarea,select,button{font-family:inherit;font-size:14px}
   .mono{font-family:'IBM Plex Mono',monospace}
   .hidden{display:none!important}
-  .wrap{max-width:900px;margin:0 auto}
+  .wrap{max-width:1100px;margin:0 auto}
 
   /* ── 센터 뷰(로그인/가입/게이트) ── */
   .center{min-height:60vh;display:flex;flex-direction:column;
@@ -58,7 +58,7 @@
     background:var(--card);color:var(--body);font-size:16px;cursor:pointer}
   .fab:hover{color:var(--ink);border-color:var(--pri)}
   /* 꾸미기 모드: 넓은 창 + 위젯 목록/편집 2단 */
-  #panel.big .p-card{width:min(900px,100%)}
+  #panel.big .p-card{width:min(1040px,100%)}
   #panel.big .pane[data-pane="wid"]{display:grid;grid-template-columns:1fr 1.1fr;gap:0 24px}
   #panel.big .pane[data-pane="wid"] > .p-h{grid-column:1/3}
   #panel.big .pane[data-pane="wid"] > #wid-list{grid-column:1}
@@ -69,7 +69,7 @@
 
   /* ═══ 헤더(대문) — 레이아웃 차용, 장식은 중립 ═══ */
   .head{position:relative;border:1px solid var(--line);border-radius:16px;
-    overflow:hidden;min-height:190px;display:flex;align-items:flex-end;
+    overflow:hidden;min-height:252px;display:flex;align-items:flex-end;
     background:linear-gradient(170deg,var(--card),var(--card2))}
   .head::before,.head::after{content:'';position:absolute;z-index:3;
     width:16px;height:16px;border:1.5px solid hsl(var(--h) 40% 62% / .8)}
@@ -92,7 +92,7 @@
     letter-spacing:.2em;color:var(--muted)}
 
   /* ═══ 2단 ═══ */
-  .cols{display:grid;grid-template-columns:1fr 216px;gap:18px;margin-top:18px;align-items:start}
+  .cols{display:grid;grid-template-columns:1fr 252px;gap:20px;margin-top:18px;align-items:start}
   @media(max-width:720px){.cols{grid-template-columns:1fr}}
 
   .sec-head{display:flex;justify-content:space-between;align-items:baseline;
@@ -112,7 +112,7 @@
   .pin .meta{margin-top:8px;font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted)}
 
   #rows{list-style:none}
-  .row{display:grid;grid-template-columns:58px 1fr auto;gap:12px;align-items:center;
+  .row{display:grid;grid-template-columns:58px 1fr auto auto;gap:12px;align-items:center;
     padding:11px 8px;border-bottom:1px solid hsl(var(--h) 12% 15%);cursor:pointer;
     border-left:2px solid transparent;transition:border-color .15s,background .15s}
   .row:hover{border-left-color:var(--pri);background:hsl(var(--h) 20% 50% / .05)}
@@ -120,6 +120,8 @@
   .row .d{font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:var(--muted);
     border:1px solid var(--line);border-radius:5px;padding:2px 0;text-align:center;
     background:var(--card2)}
+  .row .c{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.12em;
+    color:var(--pri);border:1px solid var(--line);border-radius:4px;padding:1px 8px}
   .row .t{font-size:14px;color:var(--body)}
   .row .k{font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:var(--muted)}
   .more{display:block;text-align:center;margin-top:12px;cursor:pointer;
@@ -129,7 +131,9 @@
 
   /* ── 글 읽기 ── */
   #post-view article{border:1px solid var(--line);border-radius:12px;
-    background:var(--card);padding:clamp(22px,4vw,40px)}
+    background:var(--card);padding:clamp(22px,4vw,42px);position:relative;overflow:hidden}
+  #post-view article::before{content:'';position:absolute;left:0;top:0;right:0;height:3px;
+    background:linear-gradient(90deg,var(--pri),transparent 70%)}
   #pv-meta{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.15em;color:var(--muted)}
   #pv-title{margin-top:6px;font-size:20px;font-weight:600;color:var(--ink)}
   #pv-body{margin-top:18px;padding-top:18px;border-top:1px solid var(--line);
@@ -149,7 +153,9 @@
   /* ── 사이드 ── */
   aside{display:flex;flex-direction:column;gap:13px}
   .side{position:relative;border:1px solid var(--line);border-radius:12px;
-    background:var(--card);padding:15px 17px;overflow:hidden}
+    background:var(--card);padding:15px 17px;overflow:hidden;transition:border-color .2s}
+  .side:hover{border-color:hsl(var(--h) 30% 34%)}
+  body.light .side:hover{border-color:hsl(var(--h) 40% 70%)}
   .side::before{content:'';position:absolute;left:14px;top:0;width:30px;height:3px;
     border-radius:0 0 3px 3px;background:var(--pri);opacity:.85}
   .label{font-family:'IBM Plex Mono',monospace;font-size:8.5px;
@@ -205,7 +211,7 @@
     display:none;align-items:flex-start;justify-content:center;overflow:auto;padding:30px 14px}
   #panel.show{display:flex}
   .p-card{background:var(--card);border:1px solid var(--line);border-radius:16px;
-    width:min(620px,100%);padding:24px 22px;position:relative;margin-bottom:40px}
+    width:min(700px,100%);padding:26px 24px;position:relative;margin-bottom:40px}
   .p-x{position:absolute;top:14px;right:16px;border:none;background:none;
     color:var(--muted);cursor:pointer;font-size:14px}
   .p-x:hover{color:var(--ink)}
@@ -417,7 +423,6 @@
     <div class="p-row" style="margin-top:10px">
       <select id="wid-type">
         <option value="profile">프로필 사진 카드</option>
-        <option value="notice">공지 (자유 텍스트)</option>
         <option value="quote">인용구</option>
         <option value="links">링크 목록</option>
         <option value="banner">배너칸 (이미지)</option>
@@ -437,12 +442,6 @@
     <input id="s-name" placeholder="홈 이름">
     <input id="s-sub" placeholder="부제 (선택)">
     <div class="p-row"><label class="filelab">대문 이미지 <input type="file" id="s-hero" accept="image/*"></label></div>
-    <p class="p-h">디데이</p>
-    <div id="s-ddays"></div>
-    <button class="btn" id="s-dd-add" style="font-size:12px;padding:6px 12px">+ 디데이 추가</button>
-    <p class="p-h">BGM (유튜브 링크)</p>
-    <input id="s-bgm-url" placeholder="https://youtu.be/...">
-    <input id="s-bgm-title" placeholder="곡 제목 (선택)">
     <p class="p-h">대문 비밀번호</p>
     <input id="s-gate" type="password" placeholder="비우면 공개 홈 · 입력하면 비번 걸린 홈">
     <p class="note">가벼운 잠금이에요 — 진짜 비밀 내용은 글을 '비밀글'로 발행하세요(그건 암호화됩니다).</p>
@@ -454,7 +453,12 @@
       </select>
       <label class="chk"><input type="checkbox" id="s-light"> 밝은 테마</label>
     </div>
-    <input id="s-hue" type="number" min="0" max="360" placeholder="배경·테마 색 0~360 (예: 222 파랑 · 350 장미 · 150 초록)">
+    <div class="p-row" style="align-items:center">
+      <span style="font-size:12px;color:var(--body)">테마 색 — 찍으면 홈 전체가 이 색으로 물들어요</span>
+      <input type="color" id="s-color" value="#8091d0"
+        style="width:58px;height:36px;padding:2px;border:1px solid var(--line);
+        border-radius:8px;background:var(--card2);cursor:pointer">
+    </div>
     <button class="go" id="s-go" style="margin-top:6px">설정 저장</button>
   </div>
 
