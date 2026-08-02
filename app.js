@@ -184,11 +184,10 @@ function sideCfg(){
   let s;
   if(st.page.side && st.page.side.length) s=st.page.side.filter(w=>w.t!=='notice');
   else{
-    s=[{t:'search'},{t:'category'}];
+    s=[{t:'search'},{t:'category'},{t:'latest'}];
     if(st.page.ddays&&st.page.ddays.length) s.push({t:'dday'});
     if(ytId(st.page.bgm?.url)) s.push({t:'bgm'});
   }
-  if(!s.some(w=>w.t==='latest')) s=[...s,{t:'latest'}];
   return s.map(w=>({col:DEFCOL[w.t]||'r', ...w}));
 }
 const WNAME={latest:'최신글',profile:'프로필',search:'검색',category:'카테고리',
@@ -206,6 +205,7 @@ function renderCatbar(){
   bar.classList.remove('hidden');
   bar.innerHTML = `<a data-c="home" class="${st.cat==='home'?'on':''}">HOME</a>`+
     cats().map(c=>`<a data-c="${esc(c)}" class="${st.cat===c?'on':''}">${esc(c.toUpperCase())}</a>`).join('')+
+    `<a data-c="__gal" class="${st.cat==='__gal'?'on':''}">GALLERY</a>`+
     `<a data-c="recent" class="${st.cat==='recent'?'on':''}">ALL</a>`;
   bar.querySelectorAll('a').forEach(el=>el.onclick=()=>{
     el.dataset.c==='home' ? goHome() : goBoard(el.dataset.c);
@@ -303,6 +303,7 @@ function renderSide(){
         cats().map(c=>`<li><a data-c="${esc(c)}" class="${st.cat===c?'on':''}">
           <span>${esc(c)}${st.mine?` <span class="x" data-x="${esc(c)}">✕</span>`:''}</span>
           <span class="n">${cnt(c)}</span></a></li>`).join('')+
+        `<li><a data-c="__gal" class="${st.cat==='__gal'?'on':''}"><span>GALLERY</span><span class="n">${st.gallery.length}</span></a></li>`+
         `<li><a data-c="recent" class="${st.cat==='recent'?'on':''}"><span>전체</span><span class="n">${st.posts.length}</span></a></li></ul>`+
         (st.mine?'<p class="cat-add" id="cat-add">＋ 카테고리 추가</p>':'');
       box.appendChild(d);
@@ -398,10 +399,10 @@ async function addCat(){
   st.page.cats=next; renderSide(); refreshWriteCats();
 }
 function renderList(){
-  if(st.cat!=='recent' && st.cat!=='home' && isG(st.cat)){
-    $('#v-label').textContent=st.cat.toUpperCase();
+  if(st.cat==='__gal' || (st.cat!=='recent' && st.cat!=='home' && isG(st.cat))){
+    $('#v-label').textContent = st.cat==='__gal' ? 'GALLERY' : st.cat.toUpperCase();
     $('#pin-slot').innerHTML='';
-    const items=st.gallery.filter(g=>g.cat===st.cat);
+    const items = st.cat==='__gal' ? st.gallery : st.gallery.filter(g=>g.cat===st.cat);
     $('#rows').innerHTML = items.length
       ? `<div class="gal-grid">`+items.map(g=>
           `<a data-gg="${g.id}"><img src="${g.img}" alt="" draggable="false"></a>`).join('')+`</div>`
@@ -446,7 +447,7 @@ function renderGal(all){
     if(g){ $('#lb-img').src=g.img; $('#lb').classList.add('show'); }
   });
 }
-$('#gal-more').onclick=()=>renderGal(true);
+$('#gal-more').onclick=()=>goBoard('__gal');
 $('#lb').onclick=()=>$('#lb').classList.remove('show');
 document.addEventListener('contextmenu',e=>{
   if(e.target.closest&&(e.target.closest('#gal')||e.target.closest('#lb'))) e.preventDefault();
