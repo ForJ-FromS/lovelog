@@ -172,6 +172,10 @@
   aside{display:flex;flex-direction:column;gap:13px}
   .side{position:relative;border:1px solid var(--line);border-radius:12px;
     background:var(--card);padding:15px 17px;overflow:hidden;transition:border-color .2s}
+  .side[draggable="true"]{cursor:grab}
+  .side.dragging{opacity:.35}
+  .side.dropzone{border-color:var(--pri);box-shadow:0 0 0 1px var(--pri)}
+  aside.dropzone-end{outline:1.5px dashed var(--pri);outline-offset:6px;border-radius:14px}
   .side:hover{border-color:hsl(var(--h) 30% 34%)}
   body.light .side:hover{border-color:hsl(var(--h) 40% 70%)}
   .side::before{content:'';position:absolute;left:14px;top:0;width:30px;height:3px;

@@ -147,15 +147,67 @@ function sideCfg(){
 }
 const WNAME={profile:'프로필',search:'검색',category:'카테고리',dday:'디데이',
   bgm:'BGM',quote:'인용구',links:'링크',banner:'배너칸'};
+
+/* ── 위젯 드래그 앤 드롭 (주인장 전용) ── */
+function bindDrag(d){
+  if(!st.mine) return;
+  d.draggable=true;
+  d.addEventListener('dragstart',e=>{
+    e.dataTransfer.setData('text/plain', d.dataset.wi);
+    e.dataTransfer.effectAllowed='move';
+    setTimeout(()=>d.classList.add('dragging'),0);
+  });
+  d.addEventListener('dragend',()=>{
+    d.classList.remove('dragging');
+    document.querySelectorAll('.side.dropzone').forEach(x=>x.classList.remove('dropzone'));
+  });
+  d.addEventListener('dragover',e=>{ e.preventDefault(); d.classList.add('dropzone'); });
+  d.addEventListener('dragleave',()=>d.classList.remove('dropzone'));
+  d.addEventListener('drop',e=>{
+    e.preventDefault(); e.stopPropagation();
+    d.classList.remove('dropzone');
+    dropWidget(+e.dataTransfer.getData('text/plain'), +d.dataset.wi, d.parentElement.id);
+  });
+}
+['aside','aside-l'].forEach(id=>{
+  const c=document.getElementById(id); if(!c) return;
+  c.addEventListener('dragover',e=>{ e.preventDefault();
+    if(e.target===c) c.classList.add('dropzone-end'); });
+  c.addEventListener('dragleave',e=>{ if(e.target===c) c.classList.remove('dropzone-end'); });
+  c.addEventListener('drop',e=>{
+    c.classList.remove('dropzone-end');
+    if(e.target!==c) return;
+    e.preventDefault();
+    dropWidget(+e.dataTransfer.getData('text/plain'), -1, id);
+  });
+});
+async function dropWidget(from, to, contId){
+  if(isNaN(from)) return;
+  const arr=JSON.parse(JSON.stringify(sideCfg()));
+  if(from<0||from>=arr.length) return;
+  const [w]=arr.splice(from,1);
+  w.col = contId==='aside-l' ? 'l' : 'r';
+  if(to<0){ arr.push(w); }
+  else{
+    let ins=to; if(from<to) ins=to-1;
+    if(ins<0) ins=0; if(ins>arr.length) ins=arr.length;
+    arr.splice(ins,0,w);
+  }
+  st.page.side=arr;
+  renderSide();
+  try{ await updateDoc(doc(db,'pages',st.handle),{side:arr}); }
+  catch(e){ alert('순서 저장 실패: '+e.message); }
+}
 function renderSide(){
   const p=st.page, boxR=$('#aside'), boxL=$('#aside-l');
   const both = p.sidePos==='both';
   const headEl=document.querySelector('#aside .head, #aside-l .head');
   boxR.innerHTML=''; boxL.innerHTML='';
   if(headEl) (both?boxL:boxR).appendChild(headEl);
-  sideCfg().forEach(w=>{
+  sideCfg().forEach((w,wi)=>{
     const box = (both && w.col==='l') ? boxL : boxR;
     const d=document.createElement('div'); d.className='side';
+    d.dataset.wi=wi; bindDrag(d);
     if(w.t==='search'){
       d.innerHTML=`<p class="label">SEARCH</p>
         <div class="s-search">⌕ <input id="q" placeholder="search"></div>`;
