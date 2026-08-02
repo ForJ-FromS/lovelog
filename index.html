@@ -225,6 +225,13 @@
   #pv-body{margin-top:18px;padding-top:18px;border-top:1px solid var(--line);
     font-size:14px;line-height:2.05;color:var(--body)}
   #pv-body p{margin-bottom:1em}
+  #pv-body img{max-width:100%;border-radius:10px;margin:8px 0;display:block}
+  .gal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding-top:4px}
+  @media(max-width:640px){.gal-grid{grid-template-columns:repeat(2,1fr)}}
+  .gal-grid a{aspect-ratio:4/3;border-radius:9px;overflow:hidden;cursor:pointer;
+    border:1px solid var(--line);background:var(--card2);display:block}
+  .gal-grid img{width:100%;height:100%;object-fit:cover;display:block;
+    user-select:none;-webkit-user-drag:none;-webkit-touch-callout:none}
   .pv-actions{margin-top:24px;padding-top:14px;border-top:1px solid var(--line);
     display:flex;gap:8px}
   .pv-actions button{border:1px solid var(--line);background:none;color:var(--muted);
@@ -321,6 +328,9 @@
     display:none;align-items:center;justify-content:center;padding:26px}
   #lb.show{display:flex}
   #lb img{max-width:94vw;max-height:86vh;border-radius:10px}
+  #lb::after{content:'';position:absolute;inset:0}
+  #gal img,#lb img{user-select:none;-webkit-user-select:none;
+    -webkit-user-drag:none;-webkit-touch-callout:none}
 
   /* ── 관리 패널 ── */
   #panel{position:fixed;inset:0;background:rgba(5,6,9,.7);z-index:70;
@@ -570,6 +580,7 @@
     <button data-tab="write" class="on">새 글</button>
     <button data-tab="galup">갤러리</button>
     <button data-tab="wid">위젯 구성</button>
+    <button data-tab="cats">카테고리</button>
     <button data-tab="set">기본 정보</button>
     <button data-tab="theme">테마 · 레이아웃</button>
     <button data-tab="bg">배경</button>
@@ -578,18 +589,27 @@
   <div class="p-panes">
 
   <div class="pane" data-pane="write">
+    <p class="p-h" style="border:none;padding-top:0;margin-top:0">✎ 새 글 쓰기</p>
     <input id="w-title" placeholder="제목">
     <div class="p-row">
       <select id="w-cat"></select>
+      <button class="btn" id="w-catadd" title="새 카테고리 즉석 추가" style="font-size:12px">＋</button>
       <label class="chk"><input type="checkbox" id="w-secret"> 비밀글</label>
       <input id="w-pw" placeholder="비밀번호" style="display:none">
       <label class="chk"><input type="checkbox" id="w-pin"> 고정</label>
     </div>
     <textarea id="w-body" placeholder="본문"></textarea>
+    <div class="p-row">
+      <label class="filelab">🖼 본문에 이미지 넣기 <input type="file" id="w-img" accept="image/*"></label>
+      <span class="note" id="w-img-note">커서 위치에 [사진N] 표시가 들어가고, 발행하면 그 자리에 사진이 나와요.</span>
+    </div>
     <button class="go" id="w-go">발행</button>
   </div>
 
   <div class="pane hidden" data-pane="galup">
+    <p class="p-h" style="border:none;padding-top:0;margin-top:0">🖼 갤러리에 이미지 추가</p>
+    <p class="note" style="margin:-6px 0 10px">올라간 이미지는 방문자가 우클릭·드래그로 저장할 수 없어요.</p>
+    <div class="p-row"><select id="g-cat"></select></div>
     <input id="g-title" placeholder="이미지 제목 (선택)">
     <label class="filelab">이미지 선택 <input type="file" id="g-file" accept="image/*"></label>
     <button class="go" id="g-go" style="margin-top:10px">업로드</button>
@@ -614,6 +634,16 @@
     </div>
     <div id="wid-edit"></div>
     <button class="go" id="wid-save" style="margin-top:12px">위젯 구성 저장</button>
+  </div>
+
+  <div class="pane hidden" data-pane="cats">
+    <p class="p-h">카테고리 관리</p>
+    <div id="cat-mgr"></div>
+    <div class="p-row" style="margin-top:12px">
+      <input id="cat-new" placeholder="새 카테고리 이름">
+      <button class="btn" id="cat-add2" style="font-size:12px">＋ 추가</button>
+    </div>
+    <p class="note">이름을 고치고 [저장]을 누르면 그 카테고리에 있던 글들도 새 이름으로 함께 이사해요. ✕ 삭제해도 글은 사라지지 않고 '전체'에서 보여요.</p>
   </div>
 
   <div class="pane hidden" data-pane="set">
@@ -668,6 +698,13 @@
     <div class="p-row">
       <label class="chk"><input type="checkbox" id="s-light"> 밝은 테마</label>
       <label class="chk"><input type="checkbox" id="s-glass"> 카드 투명화 (배경이 비쳐 보임)</label>
+    </div>
+    <div class="p-row" style="align-items:center">
+      <span style="font-size:12px;color:var(--body)">타이틀(홈 이름) 글씨색</span>
+      <input type="color" id="s-title" value="#eeeeee"
+        style="width:58px;height:36px;padding:2px;border:1px solid var(--line);
+        border-radius:8px;background:var(--card2);cursor:pointer">
+      <button class="rmv" id="s-title-reset" style="font-size:11px">기본색으로</button>
     </div>
     <div class="p-row" style="align-items:center">
       <span style="font-size:12px;color:var(--body)">테마 색 — 찍으면 홈 전체가 이 색으로 물들어요</span>

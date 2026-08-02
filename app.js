@@ -84,6 +84,11 @@ function renderSeal(){
 /* ---------- 페이지 로드 ---------- */
 async function loadPage(handle){
   st.handle=handle;
+  // 첫 진입 시 주소를 깔끔 경로로 정리 (luvlog.me/?u=jeste → luvlog.me/jeste)
+  if(CLEAN){
+    const pm=new URLSearchParams(location.search).get('p');
+    history.replaceState(null,'', urlFor(handle, pm||undefined));
+  }
   const snap=await getDoc(doc(db,'pages',handle));
   if(!snap.exists()){ show('view-page');
     $('#pg-name').textContent='없는 페이지예요'; $('#pg-sub').textContent='@'+handle; return; }
@@ -121,6 +126,7 @@ async function enterPage(){
   document.documentElement.style.setProperty('--h', p.hue ?? 222);
   document.title=(p.name||h)+' — LOVELOG';
   $('#pg-name').textContent=p.name||h;
+  $('#pg-name').style.color = p.titleColor||'';
   $('#pg-sub').textContent=p.sub||'';
   $('#pg-over').textContent='@'+h.toUpperCase();
   const hs=heroList();
@@ -172,6 +178,8 @@ async function loadContent(){
 
 /* ---------- 사이드 위젯 렌더 ---------- */
 function cats(){ return st.page.cats||['archive','ooc']; }
+function gcats(){ return st.page.gcats||[]; }
+const isG=c=>gcats().includes(c);
 function sideCfg(){
   let s;
   if(st.page.side && st.page.side.length) s=st.page.side.filter(w=>w.t!=='notice');
@@ -289,7 +297,8 @@ function renderSide(){
     }
     if(w.t==='category'){
       if(catStyle()==='bar') return;   // 알약 바 모드에선 사이드 카테고리 숨김
-      const cnt=c=>st.posts.filter(x=>x.cat===c).length;
+      const cnt=c=> isG(c) ? st.gallery.filter(x=>x.cat===c).length
+                           : st.posts.filter(x=>x.cat===c).length;
       d.innerHTML=`<p class="label">CATEGORY</p><ul id="cats">`+
         cats().map(c=>`<li><a data-c="${esc(c)}" class="${st.cat===c?'on':''}">
           <span>${esc(c)}${st.mine?` <span class="x" data-x="${esc(c)}">✕</span>`:''}</span>
@@ -389,6 +398,21 @@ async function addCat(){
   st.page.cats=next; renderSide(); refreshWriteCats();
 }
 function renderList(){
+  if(st.cat!=='recent' && st.cat!=='home' && isG(st.cat)){
+    $('#v-label').textContent=st.cat.toUpperCase();
+    $('#pin-slot').innerHTML='';
+    const items=st.gallery.filter(g=>g.cat===st.cat);
+    $('#rows').innerHTML = items.length
+      ? `<div class="gal-grid">`+items.map(g=>
+          `<a data-gg="${g.id}"><img src="${g.img}" alt="" draggable="false"></a>`).join('')+`</div>`
+      : '<p class="pl-empty">아직 이미지가 없습니다.</p>';
+    $('#more-btn').style.display='none';
+    document.querySelectorAll('[data-gg]').forEach(el=>el.onclick=()=>{
+      const g=st.gallery.find(x=>x.id===el.dataset.gg);
+      if(g){ $('#lb-img').src=g.img; $('#lb').classList.add('show'); }
+    });
+    return;
+  }
   let items=st.posts;
   if(st.cat!=='recent') items=items.filter(p=>p.cat===st.cat);
   if(st.q) items=items.filter(p=>p.title.toLowerCase().includes(st.q));
@@ -489,10 +513,15 @@ async function removeCat(c){
 
 /* ---------- 관리 패널 ---------- */
 function refreshWriteCats(){
-  $('#w-cat').innerHTML=cats().map(c=>`<option>${esc(c)}</option>`).join('');
+  $('#w-cat').innerHTML=cats().filter(c=>!isG(c)).map(c=>`<option>${esc(c)}</option>`).join('');
+}
+function refreshGalCats(){
+  const g=gcats(), sel=$('#g-cat');
+  sel.innerHTML = `<option value="">일반 갤러리 (하단 스트립)</option>`+
+    g.map(c=>`<option>${esc(c)}</option>`).join('');
 }
 function openPanel(mode){
-  const groups={write:['write','galup'], deco:['wid','set','theme','bg']};
+  const groups={write:['write','galup'], deco:['wid','cats','set','theme','bg']};
   document.querySelectorAll('.tabs button').forEach(b=>{
     b.style.display=groups[mode].includes(b.dataset.tab)?'':'none';
   });
@@ -508,8 +537,79 @@ $('#s-dim').addEventListener('input',e=>{
 $('#s-color').addEventListener('input',e=>{
   document.documentElement.style.setProperty('--h', hueFromHex(e.target.value));
 });
-$('#btn-write').onclick=()=>{ refreshWriteCats(); openPanel('write'); };
-$('#btn-deco').onclick=()=>{ fillSettings(); fillWidgets(); openPanel('deco'); };
+$('#btn-write').onclick=()=>{ refreshWriteCats(); refreshGalCats(); openPanel('write'); };
+$('#btn-deco').onclick=()=>{ fillSettings(); fillWidgets(); renderCatMgr(); openPanel('deco'); };
+
+/* ---------- 카테고리 관리 (추가·삭제·이름 변경) ---------- */
+function renderCatMgr(){
+  const box=$('#cat-mgr'); if(!box) return;
+  box.innerHTML = cats().map((c,i)=>`
+    <div class="p-row">
+      <input data-ci="${i}" value="${esc(c)}">
+      <select data-ct="${i}" style="width:auto;margin-bottom:0">
+        <option value="post" ${!isG(c)?'selected':''}>글</option>
+        <option value="gallery" ${isG(c)?'selected':''}>사진</option>
+      </select>
+      <button class="btn" data-cs="${i}" style="font-size:12px">저장</button>
+      <button class="rmv" data-cd="${i}">✕</button>
+    </div>`).join('') || '<p class="pl-empty">카테고리가 없어요.</p>';
+  box.querySelectorAll('[data-ct]').forEach(s=>s.onchange=async()=>{
+    const name=cats()[+s.dataset.ct];
+    let g=[...gcats()];
+    if(s.value==='gallery'){ if(!g.includes(name)) g.push(name); }
+    else g=g.filter(x=>x!==name);
+    await updateDoc(doc(db,'pages',st.handle),{gcats:g});
+    st.page.gcats=g; refreshWriteCats(); refreshGalCats(); renderSide(); renderCatbar();
+    msg(`'${name}' → ${s.value==='gallery'?'사진':'글'} 카테고리로 변경!`);
+  });
+  box.querySelectorAll('[data-cs]').forEach(b=>b.onclick=async()=>{
+    const i=+b.dataset.cs, oldName=cats()[i],
+          nv=box.querySelector(`[data-ci="${i}"]`).value.trim();
+    if(!nv||nv===oldName) return;
+    if(cats().includes(nv)){ msg('이미 있는 이름이에요.'); return; }
+    msg('이름 바꾸는 중... (글도 함께 이사)');
+    try{
+      const next=[...cats()]; next[i]=nv;
+      await updateDoc(doc(db,'pages',st.handle),{cats:next});
+      st.page.cats=next;
+      if(isG(oldName)){
+        const g=gcats().map(x=>x===oldName?nv:x);
+        await updateDoc(doc(db,'pages',st.handle),{gcats:g}); st.page.gcats=g;
+      }
+      const moves=st.posts.filter(p=>p.cat===oldName);
+      await Promise.all(moves.map(p=>
+        updateDoc(doc(db,'pages',st.handle,'posts',p.id),{cat:nv})));
+      moves.forEach(p=>p.cat=nv);
+      const gmoves=st.gallery.filter(g2=>g2.cat===oldName);
+      await Promise.all(gmoves.map(g2=>
+        updateDoc(doc(db,'pages',st.handle,'gallery',g2.id),{cat:nv})));
+      gmoves.forEach(g2=>g2.cat=nv);
+      if(st.cat===oldName) st.cat=nv;
+      renderCatMgr(); refreshWriteCats(); renderCatbar(); renderSide(); renderList();
+      msg(`'${oldName}' → '${nv}' 완료! (글 ${moves.length}개 이사)`);
+    }catch(e){ msg('오류: '+e.message); }
+  });
+  box.querySelectorAll('[data-cd]').forEach(b=>b.onclick=async()=>{
+    await removeCat(cats()[+b.dataset.cd]); renderCatMgr();
+  });
+}
+$('#cat-add2').onclick=async()=>{
+  const name=$('#cat-new').value.trim(); if(!name) return;
+  if(cats().includes(name)){ msg('이미 있는 카테고리예요.'); return; }
+  const next=[...cats(),name];
+  await updateDoc(doc(db,'pages',st.handle),{cats:next});
+  st.page.cats=next; $('#cat-new').value='';
+  renderCatMgr(); refreshWriteCats(); renderCatbar(); renderSide();
+  msg(`'${name}' 추가 완료!`);
+};
+$('#w-catadd').onclick=async()=>{
+  const c=prompt('새 카테고리 이름'); if(!c) return;
+  const name=c.trim(); if(!name||cats().includes(name)) return;
+  const next=[...cats(),name];
+  await updateDoc(doc(db,'pages',st.handle),{cats:next});
+  st.page.cats=next; refreshWriteCats(); $('#w-cat').value=name;
+  renderCatbar(); renderSide();
+};
 
 /* ---------- 위젯 편집 탭 ---------- */
 let draft=[]; let editIdx=-1; let pdraft={ddays:[],bgm:{}};
@@ -644,6 +744,17 @@ document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('hidden',p.dataset.pane!==b.dataset.tab));
 });
 $('#w-secret').addEventListener('change',e=>$('#w-pw').style.display=e.target.checked?'':'none');
+let wImgs=[];
+$('#w-img').addEventListener('change',async e=>{
+  const f=e.target.files[0]; if(!f) return;
+  msg('이미지 압축 중...');
+  wImgs.push(await compress(f,850,.72));
+  const ta=$('#w-body'), tk=`\n[사진${wImgs.length}]\n`,
+        s=ta.selectionStart??ta.value.length;
+  ta.value = ta.value.slice(0,s)+tk+ta.value.slice(ta.selectionEnd??s);
+  e.target.value='';
+  msg(`사진 ${wImgs.length} 삽입됨 — 위치는 본문에서 [사진${wImgs.length}] 글자를 옮기면 돼요.`);
+});
 const msg=t=>$('#p-msg').textContent=t;
 
 $('#w-go').onclick=async()=>{
@@ -654,17 +765,22 @@ $('#w-go').onclick=async()=>{
   if(secret&&!pw){ msg('비밀글 비밀번호를 입력하세요.'); return; }
   msg('발행 중...');
   try{
-    const html=bodyHTML(raw);
+    let html=bodyHTML(raw);
+    wImgs.forEach((im,i)=>{
+      html=html.split(`[사진${i+1}]`).join(`<img src="${im}" alt="">`);
+    });
     const data={ title, cat, date:today(), ts:serverTimestamp(),
       secret, pinned:pin,
       excerpt: secret?'':raw.replace(/\s+/g,' ').trim().slice(0,70) };
     if(secret) data.enc=await encTxt(pw,html); else data.body=html;
+    if(JSON.stringify(data).length>900000){ msg('본문 이미지가 너무 많아요 — 사진 수를 줄여주세요.'); return; }
     if(pin) await Promise.all(st.posts.filter(p=>p.pinned).map(p=>
       updateDoc(doc(db,'pages',st.handle,'posts',p.id),{pinned:false})));
     await addDoc(collection(db,'pages',st.handle,'posts'),data);
     await loadContent(); renderWidgets(); renderList();
     ['w-title','w-pw','w-body'].forEach(i=>$('#'+i).value='');
     $('#w-secret').checked=false; $('#w-pin').checked=false; $('#w-pw').style.display='none';
+    wImgs=[];
     msg('발행 완료!');
   }catch(e){ msg('오류: '+e.message); }
 };
@@ -676,14 +792,18 @@ $('#g-go').onclick=async()=>{
     const img=await compress(f,1100,.8);
     if(img.length>900000){ msg('이미지가 너무 커요 — 더 작은 사진으로 시도해 주세요.'); return; }
     await addDoc(collection(db,'pages',st.handle,'gallery'),
-      {img,title:$('#g-title').value.trim(),ts:serverTimestamp()});
+      {img,title:$('#g-title').value.trim(),cat:$('#g-cat').value||'',ts:serverTimestamp()});
     await loadContent(); renderGal(); $('#g-title').value=''; $('#g-file').value='';
     msg('업로드 완료!');
   }catch(e){ msg('오류: '+e.message); }
 };
 
 let heroNew=null; let bgNew=null;
-let heroDraft=[]; let egateNew=null;
+let heroDraft=[]; let egateNew=null; let titleVal=null;
+$('#s-title').addEventListener('input',e=>{ titleVal=e.target.value;
+  $('#pg-name').style.color=titleVal; });
+$('#s-title-reset').onclick=()=>{ titleVal='';
+  $('#pg-name').style.color=''; msg('기본색으로 — [설정 저장]으로 확정.'); };
 function renderEgate(){
   const im = egateNew!==null ? egateNew : (st.page.enterImg||'');
   $('#s-egate-list').innerHTML = im
@@ -737,6 +857,7 @@ function fillSettings(){
   heroDraft=[...heroList()]; renderHeroList();
   $('#s-enter').value=p.enterText||'';
   egateNew=null; renderEgate();
+  titleVal=null; $('#s-title').value=p.titleColor||'#eeeeee';
   bgNew=null;
 }
 async function saveSettings(){
@@ -750,6 +871,7 @@ async function saveSettings(){
       heroImg: heroDraft[0]||'',
       enterText: $('#s-enter').value.trim(),
       enterImg: egateNew ?? st.page.enterImg ?? '',
+      titleColor: titleVal ?? st.page.titleColor ?? '',
       bgImg: bgNew ?? st.page.bgImg ?? '',
       hue: hueFromHex($('#s-color').value),
       headMode: $('#s-headmode').value,
