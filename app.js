@@ -182,13 +182,38 @@ function gcats(){ return st.page.gcats||[]; }
 const isG=c=>gcats().includes(c);
 function sideCfg(){
   let s;
-  if(st.page.side && st.page.side.length) s=st.page.side.filter(w=>w.t!=='notice');
+  if(st.page.side && st.page.side.length) s=st.page.side.filter(w=>w.t!=='notice'&&w.t!=='latest');
   else{
-    s=[{t:'search'},{t:'category'},{t:'latest'}];
+    s=[{t:'search'},{t:'category'}];
     if(st.page.ddays&&st.page.ddays.length) s.push({t:'dday'});
     if(ytId(st.page.bgm?.url)) s.push({t:'bgm'});
   }
   return s.map(w=>({col:DEFCOL[w.t]||'r', ...w}));
+}
+/* 홈 중앙 붙박이: 고정글 + 최신글 */
+function latestBlock(box){
+  const pin=st.posts.find(p=>p.pinned);
+  if(pin){
+    const pd=document.createElement('a'); pd.className='pin';
+    pd.innerHTML=`<span class="tag">◈ PINNED</span>
+      <p class="t">${esc(pin.title)}${pin.secret?' 🔒':''}</p>
+      ${pin.excerpt?`<p class="ex">${esc(pin.excerpt)}</p>`:''}
+      <p class="meta">${esc(pin.cat)} · ${esc(pin.date)}</p>`;
+    pd.onclick=()=>{ goBoard('recent'); openPost(pin.id); };
+    box.appendChild(pd);
+  }
+  const d=document.createElement('div'); d.className='side';
+  const arr=st.posts.filter(p=>!p.pinned).slice(0,5);
+  d.innerHTML=`<p class="label">LATEST</p><div class="mini-rows">`+
+    (arr.length?arr.map(p2=>`<a data-lid="${p2.id}">
+      <span class="dot">◈</span><span class="t">${esc(p2.title)}${p2.secret?' 🔒':''}</span>
+      <span class="dt">${esc((p2.date||'').slice(5))}</span></a>`).join('')
+    :'<p class="pl-empty">아직 글이 없습니다.</p>')+
+    `</div><p class="cat-add" style="display:block" id="latest-more">전체 보기 →</p>`;
+  box.appendChild(d);
+  d.querySelectorAll('[data-lid]').forEach(el=>el.onclick=()=>{
+    goBoard('recent'); openPost(el.dataset.lid); });
+  d.querySelector('#latest-more').onclick=()=>goBoard('recent');
 }
 const WNAME={latest:'최신글',profile:'프로필',search:'검색',category:'카테고리',
   dday:'디데이',bgm:'BGM',quote:'인용구',links:'링크',banner:'배너칸'};
@@ -281,6 +306,7 @@ function renderSide(){
   boxR.innerHTML=''; boxL.innerHTML='';
   hL.innerHTML=''; hC.innerHTML=''; hR.innerHTML='';
   if(headEl) (both?boxL:boxR).appendChild(headEl);
+  if(home) latestBlock(hC);
   sideCfg().forEach((w,wi)=>{
     const box = home
       ? (w.col==='l'?hL : w.col==='c'?hC : hR)
@@ -349,20 +375,6 @@ function renderSide(){
         fr.innerHTML=on?`<iframe style="width:100%;height:112px;border:0;border-radius:9px;margin-top:10px" src="${src}" allow="autoplay; encrypted-media"></iframe>`:'';
         btn.textContent=on?'❚❚':'▶';
         d.classList.toggle('playing',on); };
-      return;
-    }
-    if(w.t==='latest'){
-      const arr=st.posts.slice(0,5);
-      d.innerHTML=`<p class="label">LATEST</p><div class="mini-rows">`+
-        (arr.length?arr.map(p2=>`<a data-lid="${p2.id}">
-          <span class="dot">◈</span><span class="t">${esc(p2.title)}${p2.secret?' 🔒':''}</span>
-          <span class="dt">${esc((p2.date||'').slice(5))}</span></a>`).join('')
-        :'<p class="pl-empty">아직 글이 없습니다.</p>')+
-        `</div><p class="cat-add" style="display:block" id="latest-more">전체 보기 →</p>`;
-      box.appendChild(d);
-      d.querySelectorAll('[data-lid]').forEach(el=>el.onclick=()=>{
-        goBoard('recent'); openPost(el.dataset.lid); });
-      d.querySelector('#latest-more').onclick=()=>goBoard('recent');
       return;
     }
     if(w.t==='profile'){
@@ -624,7 +636,7 @@ $('#w-catadd').onclick=async()=>{
 /* ---------- 위젯 편집 탭 ---------- */
 let draft=[]; let editIdx=-1; let pdraft={ddays:[],bgm:{}};
 function fillWidgets(){
-  draft=JSON.parse(JSON.stringify(sideCfg())).filter(w=>w.t!=='notice');
+  draft=JSON.parse(JSON.stringify(sideCfg())).filter(w=>w.t!=='notice'&&w.t!=='latest');
   pdraft={ ddays:JSON.parse(JSON.stringify(st.page.ddays||[])),
            bgm:{url:st.page.bgm?.url||'', title:st.page.bgm?.title||''} };
   editIdx=-1; renderWidList(); $('#wid-edit').innerHTML='';
