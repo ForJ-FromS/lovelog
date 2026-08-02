@@ -460,9 +460,9 @@ function refreshWriteCats(){
   $('#w-cat').innerHTML=cats().map(c=>`<option>${esc(c)}</option>`).join('');
 }
 function openPanel(mode){
+  const groups={write:['write','galup'], deco:['wid','set','theme','bg']};
   document.querySelectorAll('.tabs button').forEach(b=>{
-    const isWrite=['write','galup'].includes(b.dataset.tab);
-    b.style.display=(mode==='write'?isWrite:!isWrite)?'':'none';
+    b.style.display=groups[mode].includes(b.dataset.tab)?'':'none';
   });
   const first = mode==='write'?'write':'wid';
   document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===first));
@@ -674,7 +674,7 @@ function fillSettings(){
   $('#s-dim').value=p.bgDim??78;
   heroNew=null; bgNew=null;
 }
-$('#s-go').onclick=async()=>{
+async function saveSettings(){
   msg('저장 중...');
   try{
     const gateIn=$('#s-gate').value;
@@ -700,7 +700,8 @@ $('#s-go').onclick=async()=>{
     msg('저장 완료!');
     enterPage(); renderCatbar();
   }catch(e){ msg('오류: '+e.message); }
-};
+}
+document.querySelectorAll('.s-go').forEach(b=>b.onclick=saveSettings);
 // 게이트 해제: 비번칸 비운 채 저장하면 유지, '없애기'는 명령어
 $('#s-gate').addEventListener('input',e=>{
   e.target.dataset.clear = e.target.value==='' ? '1':'0';
