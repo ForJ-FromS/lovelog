@@ -63,6 +63,8 @@
     text-shadow:0 2px 20px hsl(var(--h) 50% 10% / .9)}
   .enter-text{font-size:13.5px;color:hsl(var(--h) 25% 92% / .95);
     text-shadow:0 1px 10px hsl(var(--h) 50% 10% / .8)}
+  .thumb{width:88px;height:58px;object-fit:cover;border-radius:7px;
+    border:1px solid var(--line);display:block}
   .thumb-x{position:relative;display:inline-block}
   .thumb-x .rm2{position:absolute;top:-6px;right:-6px;width:18px;height:18px;
     border-radius:50%;border:none;background:hsl(6 55% 55%);color:#fff;
@@ -582,8 +584,13 @@
     <p class="p-h">헤더 사진 — 여러 장 올리면 자동 슬라이드</p>
     <div class="p-row"><label class="filelab">사진 추가 <input type="file" id="s-hero" accept="image/*"></label></div>
     <div class="p-row" id="s-hero-list"></div>
-    <p class="p-h">입장 화면 문구</p>
+    <p class="p-h">입장 화면</p>
     <input id="s-enter" placeholder="입장 대문에 뜰 한 줄 (예: 파도는 늘 낮은 곳에서 시작된다)">
+    <div class="p-row">
+      <label class="filelab">입장 화면 이미지 <input type="file" id="s-egate" accept="image/*"></label>
+      <button class="rmv" id="s-egate-clear" style="font-size:11px">이미지 제거</button>
+    </div>
+    <div class="p-row" id="s-egate-list"></div>
     <p class="p-h">대문 비밀번호</p>
     <input id="s-gate" type="password" placeholder="비우면 공개 홈 · 입력하면 비번 걸린 홈">
     <p class="note">가벼운 잠금이에요 — 진짜 비밀 내용은 글을 '비밀글'로 발행하세요(그건 암호화됩니다).</p>

@@ -94,8 +94,8 @@ async function loadPage(handle){
   const seen = sessionStorage.getItem('ent_'+handle);
   if(!st.mine && (needPw || !seen)){
     document.documentElement.style.setProperty('--h', st.page.hue ?? 222);
-    const imgs = heroList();
-    $('#enter-cover').style.backgroundImage = imgs[0]?`url(${imgs[0]})`:'';
+    const cover = st.page.enterImg || heroList()[0] || '';
+    $('#enter-cover').style.backgroundImage = cover?`url(${cover})`:'';
     $('#enter-over').textContent = '@'+handle.toUpperCase();
     $('#gate-name').textContent = st.page.name || handle;
     $('#enter-text').textContent = st.page.enterText || '';
@@ -519,13 +519,11 @@ function renderWidList(){
   $('#wid-list').innerHTML = draft.map((w,i)=>`
     <div class="wl">
       <span class="nm">${WNAME[w.t]||w.t}${w.t==='links'?` (${(w.items||[]).length})`:''}${w.t==='banner'?` (${(w.items||[]).length})`:''}</span>
-      ${(st.page.sidePos==='both'||$('#s-sidepos')?.value==='both')?`<button data-c="${i}" title="좌/우 기둥 이동">${w.col==='l'?'◧ 왼쪽':'◨ 오른쪽'}</button>`:''}
       ${['profile','quote','links','banner','dday','bgm'].includes(w.t)?`<button data-e="${i}">✎</button>`:''}
       <button data-u="${i}">↑</button><button data-d="${i}">↓</button><button data-x="${i}">✕</button>
     </div>`).join('') || '<p class="pl-empty">위젯이 없어요 — 아래에서 추가하세요.</p>';
   $('#wid-list').querySelectorAll('button').forEach(b=>b.onclick=()=>{
-    const {e,u,d,x,c}=b.dataset;
-    if(c!==undefined){ const w=draft[+c]; w.col=(w.col==='l')?'r':'l'; renderWidList(); return; }
+    const {e,u,d,x}=b.dataset;
     if(e!==undefined){ editIdx=+e; renderWidEdit(); return; }
     if(u!==undefined && +u>0){ const i=+u; [draft[i-1],draft[i]]=[draft[i],draft[i-1]]; }
     if(d!==undefined && +d<draft.length-1){ const i=+d; [draft[i+1],draft[i]]=[draft[i],draft[i+1]]; }
@@ -676,7 +674,13 @@ $('#g-go').onclick=async()=>{
 };
 
 let heroNew=null; let bgNew=null;
-let heroDraft=[];
+let heroDraft=[]; let egateNew=null;
+function renderEgate(){
+  const im = egateNew!==null ? egateNew : (st.page.enterImg||'');
+  $('#s-egate-list').innerHTML = im
+    ? `<img class="thumb" src="${im}">`
+    : '<span class="note">전용 이미지 없음 — 첫 헤더 사진이 대신 쓰여요.</span>';
+}
 function renderHeroList(){
   $('#s-hero-list').innerHTML = heroDraft.map((im,i)=>
     `<span class="thumb-x"><img class="thumb" src="${im}">
@@ -692,6 +696,14 @@ $('#s-hero').addEventListener('change',async e=>{
   renderHeroList(); msg('추가됨 — [설정 저장]을 눌러야 확정돼요.');
   e.target.value='';
 });
+$('#s-egate').addEventListener('change',async e=>{
+  const f=e.target.files[0]; if(!f) return;
+  msg('입장 이미지 압축 중...');
+  egateNew=await compress(f,1500,.75); renderEgate();
+  msg('추가됨 — [설정 저장]을 눌러야 확정돼요.'); e.target.value='';
+});
+$('#s-egate-clear').onclick=()=>{ egateNew=''; renderEgate();
+  msg('입장 이미지 제거 — [설정 저장]으로 확정.'); };
 $('#s-bg').addEventListener('change',async e=>{
   const f=e.target.files[0]; if(!f) return;
   msg('배경 이미지 압축 중...'); bgNew=await compress(f,1600,.7);
@@ -714,6 +726,7 @@ function fillSettings(){
   $('#s-dim').value=p.bgDim??78;
   heroDraft=[...heroList()]; renderHeroList();
   $('#s-enter').value=p.enterText||'';
+  egateNew=null; renderEgate();
   bgNew=null;
 }
 async function saveSettings(){
@@ -726,6 +739,7 @@ async function saveSettings(){
       heroImgs: heroDraft,
       heroImg: heroDraft[0]||'',
       enterText: $('#s-enter').value.trim(),
+      enterImg: egateNew ?? st.page.enterImg ?? '',
       bgImg: bgNew ?? st.page.bgImg ?? '',
       hue: hueFromHex($('#s-color').value),
       headMode: $('#s-headmode').value,
