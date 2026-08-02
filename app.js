@@ -304,7 +304,7 @@ function renderSide(){
         : `https://www.youtube.com/embed/${vid}?autoplay=1&loop=1&playlist=${vid}`;
       let on=false; const btn=d.querySelector('.bgm-btn2'), fr=d.querySelector('.bgm-fr');
       btn.onclick=()=>{ on=!on;
-        fr.innerHTML=on?`<iframe style="width:100%;height:0;border:0" src="${src}" allow="autoplay; encrypted-media"></iframe>`:'';
+        fr.innerHTML=on?`<iframe style="width:100%;height:112px;border:0;border-radius:9px;margin-top:10px" src="${src}" allow="autoplay; encrypted-media"></iframe>`:'';
         btn.textContent=on?'❚❚':'▶';
         d.classList.toggle('playing',on); };
       return;
@@ -342,8 +342,8 @@ function renderSide(){
     }
     if(w.t==='banner'){
       d.className+=' w-banner';
-      d.innerHTML=`<p class="label">BANNER</p>`+(w.items||[]).map(b=>
-        `<a ${b.url?`href="${esc(b.url)}" target="_blank" rel="noopener"`:''}><img src="${b.img}" alt="" draggable="false"></a>`).join('');
+      d.innerHTML=`<p class="label">BANNER</p><div class="bn-list">`+(w.items||[]).map(b=>
+        `<a ${b.url?`href="${esc(b.url)}" target="_blank" rel="noopener"`:''}><img src="${b.img}" alt="" draggable="false"></a>`).join('')+`</div>`;
       box.appendChild(d); return;
     }
   });
@@ -530,9 +530,13 @@ function renderWidEdit(){
     <div class="p-row"><input data-ll="${i}" placeholder="이름" value="${l.label||''}">
     <input data-lu="${i}" placeholder="https://..." value="${l.url||''}"></div>`).join('')+
     `<button class="btn" id="we-add" style="font-size:12px">+ 링크 줄 추가</button>`;
-  if(w.t==='banner') html+=(w.items||[]).map((b,i)=>`
+  if(w.t==='banner') html+=((w.items||[]).length?'' :
+    `<p class="note" style="margin:0 0 8px">이미지를 추가하면 배너마다 이동할 링크 주소 · ↑↓ 순서 · ✕ 삭제가 생겨요.</p>`)
+    +(w.items||[]).map((b,i)=>`
     <div class="p-row"><span style="font-size:11px;color:var(--muted)">배너 ${i+1}</span>
     <input data-bu="${i}" placeholder="눌렀을 때 이동할 주소 (선택)" value="${b.url||''}">
+    <button class="rmv" data-bup="${i}" title="위로">↑</button>
+    <button class="rmv" data-bdn="${i}" title="아래로">↓</button>
     <button class="rmv" data-br="${i}">✕</button></div>`).join('')+
     `<div class="p-row"><label class="filelab">배너 이미지 추가 <input type="file" id="we-bimg" accept="image/*"></label></div>`;
   html+=`<p class="note">입력은 즉시 반영돼요 — 마지막에 [위젯 구성 저장]만 누르면 저장 완료.</p>`;
@@ -566,6 +570,10 @@ function renderWidEdit(){
   $('#wid-edit').querySelectorAll('[data-lu]').forEach(i=>i.addEventListener('input',()=>{ w.items[i.dataset.lu].url=i.value.trim(); }));
   $('#wid-edit').querySelectorAll('[data-bu]').forEach(i=>i.addEventListener('input',()=>{ w.items[i.dataset.bu].url=i.value.trim(); }));
   $('#wid-edit').querySelectorAll('[data-br]').forEach(b=>b.onclick=()=>{ w.items.splice(+b.dataset.br,1); renderWidEdit(); renderWidList(); });
+  $('#wid-edit').querySelectorAll('[data-bup]').forEach(b=>b.onclick=()=>{
+    const i=+b.dataset.bup; if(i>0){ [w.items[i-1],w.items[i]]=[w.items[i],w.items[i-1]]; renderWidEdit(); }});
+  $('#wid-edit').querySelectorAll('[data-bdn]').forEach(b=>b.onclick=()=>{
+    const i=+b.dataset.bdn; if(i<w.items.length-1){ [w.items[i+1],w.items[i]]=[w.items[i],w.items[i+1]]; renderWidEdit(); }});
 }
 function syncWid(w){
   if(w && w.t==='links') w.items=(w.items||[]).filter(l=>l.label||l.url);
