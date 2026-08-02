@@ -3,241 +3,364 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LOVERS CLUB</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<title>LOVELOG</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#F7F6F3; --card:#FFFFFF; --ink:#2A2B31; --body:#5C5E66;
-    --muted:#9C9EA6; --line:#E8E7E2; --accent:#C2543F; --accent-soft:#F9EFEC;
+    --h:222;
+    --bg:hsl(var(--h) 10% 7%);
+    --card:hsl(var(--h) 12% 11%);
+    --card2:hsl(var(--h) 12% 9%);
+    --line:hsl(var(--h) 12% 19%);
+    --ink:hsl(var(--h) 20% 92%);
+    --body:hsl(var(--h) 12% 72%);
+    --muted:hsl(var(--h) 8% 46%);
+    --pri:hsl(var(--h) 45% 68%);
   }
   *{margin:0;padding:0;box-sizing:border-box}
-  body{background:var(--bg);color:var(--ink);
-    font-family:'Noto Sans KR',sans-serif;min-height:100vh;line-height:1.8}
-  a{color:inherit;text-decoration:none}
-  button,input,textarea{font-family:inherit;font-size:14px}
+  body{background:var(--bg);color:var(--body);
+    font-family:'Noto Sans KR',sans-serif;font-weight:300;
+    line-height:1.85;min-height:100vh;padding:44px 18px 70px}
+  a{text-decoration:none;color:inherit}
+  input,textarea,select,button{font-family:inherit;font-size:14px}
   .mono{font-family:'IBM Plex Mono',monospace}
-  img{display:block}
-
-  header{display:flex;justify-content:space-between;align-items:center;
-    padding:14px 22px;border-bottom:1px solid var(--line);background:var(--card);
-    position:sticky;top:0;z-index:10}
-  .brand{display:flex;align-items:baseline;gap:10px}
-  .brand b{font-weight:700}
-  .brand .mono{font-size:10px;color:var(--muted);letter-spacing:.2em}
-  #topbar-user{display:flex;align-items:center;gap:12px;font-size:12.5px;color:var(--body)}
-  .btn{border:1px solid var(--line);background:var(--card);color:var(--ink);
-    border-radius:9px;padding:8px 16px;cursor:pointer}
-  .btn:hover{border-color:var(--muted)}
-  .btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
-  .btn.primary:hover{opacity:.85}
-  .btn.small{padding:5px 12px;font-size:12px}
-
-  .wrap{max-width:820px;margin:0 auto;padding:34px 18px 80px}
   .hidden{display:none!important}
-  .label{font-family:'IBM Plex Mono',monospace;font-size:9px;
-    letter-spacing:.35em;color:var(--muted);margin-bottom:12px}
+  .wrap{max-width:900px;margin:0 auto}
 
+  /* ── 센터 뷰(로그인/가입/게이트) ── */
   .center{min-height:60vh;display:flex;flex-direction:column;
-    align-items:center;justify-content:center;text-align:center;gap:16px}
-  .center h1{font-size:22px;font-weight:700;letter-spacing:.04em}
-  .center p{font-size:13px;color:var(--body)}
-  .field{width:100%;max-width:340px;text-align:left;margin-top:4px}
-  .field label{display:block;font-size:11.5px;color:var(--body);margin-bottom:5px}
+    align-items:center;justify-content:center;text-align:center;gap:15px}
+  .center h1{font-family:'IBM Plex Mono',monospace;font-size:19px;
+    letter-spacing:.3em;text-indent:.3em;color:var(--ink)}
+  .center p{font-size:13px;color:var(--muted)}
+  .btn{border:1px solid var(--line);background:var(--card);color:var(--ink);
+    border-radius:10px;padding:9px 20px;cursor:pointer}
+  .btn:hover{border-color:var(--muted)}
+  .btn.pri{background:var(--pri);border-color:var(--pri);color:hsl(var(--h) 30% 12%);font-weight:500}
+  .field{width:100%;max-width:320px;text-align:left}
+  .field label{display:block;font-size:11px;color:var(--muted);margin-bottom:5px}
   .field input{width:100%;padding:11px 13px;border:1px solid var(--line);
-    border-radius:10px;background:var(--bg);outline:none}
-  .field input:focus{border-color:var(--muted)}
-  .hint{font-size:11px;color:var(--muted)}
-  .err{font-size:12px;color:var(--accent);min-height:18px}
+    border-radius:10px;background:var(--card2);color:var(--ink);outline:none}
+  .err{font-size:12px;color:hsl(6 60% 66%);min-height:18px}
 
-  /* ── 페이지 ── */
-  .banner{height:200px;border-radius:16px;position:relative;overflow:hidden;
-    background:linear-gradient(120deg,#E9E4DC,#F3EEE7 45%,#EBE2D8);
-    border:1px solid var(--line);background-size:cover;background-position:center}
-  .head-row{display:flex;align-items:flex-end;gap:16px;margin:-38px 0 0 26px;position:relative}
-  .avatar{width:82px;height:82px;border-radius:50%;overflow:hidden;
-    background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;
-    font-size:27px;font-weight:700;border:4px solid var(--bg)}
-  .avatar img{width:100%;height:100%;object-fit:cover}
-  .who .name{font-size:20px;font-weight:700}
-  .who .handle{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted)}
-  .bio{margin:16px 2px 0;font-size:13.5px;color:var(--body);white-space:pre-wrap}
-  .tags{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
-  .tag{border:1px solid var(--line);border-radius:999px;padding:4px 13px;
-    font-size:12px;color:var(--body);background:var(--card)}
+  /* ── 상단 우측 인장 / 우하단 관리 ── */
+  .seal{position:fixed;top:14px;right:18px;z-index:9;display:flex;gap:14px;align-items:center;
+    font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.25em;color:var(--muted)}
+  .seal a{cursor:pointer}
+  .seal a:hover{color:var(--ink)}
+  #btn-pen{position:fixed;right:20px;bottom:20px;z-index:9;
+    width:44px;height:44px;border-radius:50%;border:1px solid var(--line);
+    background:var(--card);color:var(--body);font-size:16px;cursor:pointer}
+  #btn-pen:hover{color:var(--ink)}
 
-  #widgets{margin-top:24px;display:flex;flex-direction:column;gap:14px}
-  .w-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px}
+  /* ═══ 헤더(대문) — 레이아웃 차용, 장식은 중립 ═══ */
+  .head{position:relative;border:1px solid var(--line);border-radius:16px;
+    overflow:hidden;min-height:190px;display:flex;align-items:flex-end;
+    background:linear-gradient(170deg,var(--card),var(--card2))}
+  .head .bgimg{position:absolute;inset:0;background-size:cover;background-position:center}
+  .head .shade{position:absolute;inset:0;
+    background:linear-gradient(180deg, hsl(var(--h) 10% 7% / .1) 30%, hsl(var(--h) 10% 7% / .82))}
+  .head .in{position:relative;padding:26px 28px 20px;width:100%}
+  .head .over{font-family:'IBM Plex Mono',monospace;font-size:9px;
+    letter-spacing:.4em;color:var(--muted)}
+  .head h1{font-family:'IBM Plex Mono',monospace;font-size:clamp(21px,4vw,29px);
+    font-weight:600;letter-spacing:.12em;color:var(--ink);line-height:1.4}
+  .head .sub{font-size:12px;color:var(--body);margin-top:2px}
+  .head .dday{position:absolute;right:24px;bottom:18px;text-align:right}
+  .head .dday .n{font-family:'IBM Plex Mono',monospace;font-size:20px;color:var(--pri)}
+  .head .dday .t{font-family:'IBM Plex Mono',monospace;font-size:8px;
+    letter-spacing:.2em;color:var(--muted)}
 
-  /* 디데이 */
-  .dday-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
-  .dday{border:1px solid var(--line);border-radius:13px;padding:14px 16px;background:var(--bg)}
-  .dday .n{font-family:'IBM Plex Mono',monospace;font-size:21px;font-weight:500;color:var(--accent)}
-  .dday .t{font-size:12px;color:var(--body);margin-top:2px}
-  .dday .d{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted)}
+  /* ═══ 2단 ═══ */
+  .cols{display:grid;grid-template-columns:1fr 216px;gap:18px;margin-top:18px;align-items:start}
+  @media(max-width:720px){.cols{grid-template-columns:1fr}}
 
-  /* 커플/캐릭터 칸 */
-  .duo{display:flex;gap:18px;align-items:flex-start}
-  .duo .ph{width:150px;flex:none;aspect-ratio:3/4;border-radius:12px;overflow:hidden;
-    border:1px solid var(--line);background:var(--bg)}
-  .duo .ph img{width:100%;height:100%;object-fit:cover}
-  .duo .tx h3{font-size:16px;font-weight:700}
-  .duo .tx p{margin-top:8px;font-size:13px;color:var(--body);white-space:pre-wrap}
-  @media(max-width:560px){.duo{flex-direction:column}.duo .ph{width:100%;aspect-ratio:16/9}}
+  .sec-head{display:flex;justify-content:space-between;align-items:baseline;
+    border-bottom:1px solid var(--line);padding-bottom:9px;margin-bottom:10px}
+  .sec-head h2{font-family:'IBM Plex Mono',monospace;font-size:10px;
+    font-weight:500;letter-spacing:.35em;color:var(--ink)}
+  .sec-head .en{font-family:'IBM Plex Mono',monospace;font-size:8.5px;
+    letter-spacing:.25em;color:var(--muted)}
 
-  /* BGM */
-  .bgm-frame{aspect-ratio:16/9;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
-  .bgm-frame iframe{width:100%;height:100%;border:0}
-  .bgm-title{margin-top:10px;font-size:12.5px;color:var(--body)}
+  .pin{display:block;border:1px solid var(--line);border-left:3px solid var(--pri);
+    border-radius:10px;background:var(--card);padding:16px 18px;margin-bottom:10px;cursor:pointer}
+  .pin .tag{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.3em;color:var(--pri)}
+  .pin .t{margin-top:4px;font-size:15px;font-weight:500;color:var(--ink)}
+  .pin .ex{margin-top:2px;font-size:12.5px;color:var(--muted)}
+  .pin .meta{margin-top:8px;font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted)}
 
-  /* 소유자 전용 */
-  #btn-deco{position:fixed;right:22px;bottom:22px;z-index:40;
-    border:none;border-radius:999px;padding:13px 22px;cursor:pointer;
-    background:var(--ink);color:#fff;font-size:14px;
-    box-shadow:0 10px 24px -10px rgba(42,43,49,.5)}
-  .empty-slot{border:1.5px dashed var(--line);border-radius:14px;padding:18px;
-    color:var(--muted);font-size:12.5px;text-align:center}
+  #rows{list-style:none}
+  .row{display:grid;grid-template-columns:52px 1fr auto;gap:12px;align-items:baseline;
+    padding:12px 6px;border-bottom:1px solid hsl(var(--h) 12% 15%);cursor:pointer}
+  .row:hover .t{color:var(--ink)}
+  .row .d{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--muted)}
+  .row .t{font-size:14px;color:var(--body)}
+  .row .k{font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:var(--muted)}
+  .more{display:block;text-align:center;margin-top:12px;cursor:pointer;
+    font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.3em;color:var(--muted)}
+  .more:hover{color:var(--ink)}
+  .pl-empty{font-size:12px;color:var(--muted);padding:10px 4px}
 
-  /* ── 꾸미기 패널 ── */
-  #panel{position:fixed;inset:0;background:rgba(30,30,36,.45);
-    display:none;align-items:flex-start;justify-content:center;z-index:50;
-    padding:30px 14px;overflow:auto}
+  /* ── 글 읽기 ── */
+  #post-view article{border:1px solid var(--line);border-radius:12px;
+    background:var(--card);padding:clamp(22px,4vw,40px)}
+  #pv-meta{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.15em;color:var(--muted)}
+  #pv-title{margin-top:6px;font-size:20px;font-weight:600;color:var(--ink)}
+  #pv-body{margin-top:18px;padding-top:18px;border-top:1px solid var(--line);
+    font-size:14px;line-height:2.05;color:var(--body)}
+  #pv-body p{margin-bottom:1em}
+  .pv-actions{margin-top:24px;padding-top:14px;border-top:1px solid var(--line);
+    display:flex;gap:8px}
+  .pv-actions button{border:1px solid var(--line);background:none;color:var(--muted);
+    border-radius:8px;padding:7px 14px;font-size:12px;cursor:pointer}
+  .pv-actions button:hover{color:var(--ink)}
+  .back{display:inline-flex;margin-bottom:12px;cursor:pointer;
+    border:1px solid var(--line);border-radius:999px;background:var(--card);
+    padding:7px 18px;font-family:'IBM Plex Mono',monospace;font-size:9px;
+    letter-spacing:.2em;color:var(--muted)}
+  .back:hover{color:var(--ink)}
+
+  /* ── 사이드 ── */
+  aside{display:flex;flex-direction:column;gap:13px}
+  .side{border:1px solid var(--line);border-radius:12px;background:var(--card);padding:15px 17px}
+  .label{font-family:'IBM Plex Mono',monospace;font-size:8.5px;
+    letter-spacing:.3em;color:var(--muted);margin-bottom:9px}
+  .s-search{display:flex;align-items:center;gap:8px;border:1px solid var(--line);
+    border-radius:9px;background:var(--card2);padding:8px 12px}
+  .s-search input{border:none;background:none;outline:none;width:100%;
+    font-size:12px;color:var(--ink)}
+  #cats{list-style:none}
+  #cats a{display:flex;justify-content:space-between;align-items:baseline;gap:6px;
+    padding:6px 2px;font-size:12.5px;color:var(--body);cursor:pointer;
+    border-bottom:1px dashed hsl(var(--h) 12% 17%)}
+  #cats li:last-child a{border-bottom:none}
+  #cats a:hover,#cats a.on{color:var(--pri)}
+  #cats .n{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted)}
+  #cats .x{color:var(--muted);font-size:10px;padding:0 3px}
+  #cats .x:hover{color:hsl(6 60% 66%)}
+  .cat-add{margin-top:8px;font-size:11px;color:var(--muted);cursor:pointer;text-align:center}
+  .cat-add:hover{color:var(--pri)}
+  .dd-item{display:flex;justify-content:space-between;align-items:baseline;padding:3px 0}
+  .dd-item .t{font-size:11.5px;color:var(--body)}
+  .dd-item .n{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--pri)}
+  .bgm-play{display:flex;align-items:center;gap:10px;cursor:pointer}
+  .bgm-play .ic{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;color:var(--pri);flex:none}
+  .bgm-play .t{font-size:12px;color:var(--body);overflow:hidden;
+    text-overflow:ellipsis;white-space:nowrap}
+  #bgm-frame{margin-top:10px}
+  #bgm-frame iframe{width:100%;height:0;border:0}
+  .note{font-size:10px;color:var(--muted);margin-top:6px}
+
+  /* ── 갤러리 스트립 ── */
+  .strip-sec{margin-top:24px}
+  #gal{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  @media(max-width:620px){#gal{grid-template-columns:repeat(2,1fr)}}
+  #gal a{position:relative;aspect-ratio:4/3;border-radius:9px;overflow:hidden;
+    border:1px solid var(--line);display:block;cursor:pointer;background:var(--card2)}
+  #gal img{width:100%;height:100%;object-fit:cover;display:block}
+
+  /* ── 라이트박스 ── */
+  #lb{position:fixed;inset:0;background:rgba(5,6,9,.9);z-index:60;
+    display:none;align-items:center;justify-content:center;padding:26px}
+  #lb.show{display:flex}
+  #lb img{max-width:94vw;max-height:86vh;border-radius:10px}
+
+  /* ── 관리 패널 ── */
+  #panel{position:fixed;inset:0;background:rgba(5,6,9,.7);z-index:70;
+    display:none;align-items:flex-start;justify-content:center;overflow:auto;padding:30px 14px}
   #panel.show{display:flex}
-  .p-card{background:var(--card);border-radius:18px;width:min(640px,100%);
-    padding:26px 24px;position:relative;margin-bottom:40px}
-  .p-x{position:absolute;top:16px;right:18px;border:none;background:none;
-    cursor:pointer;font-size:15px;color:var(--muted)}
+  .p-card{background:var(--card);border:1px solid var(--line);border-radius:16px;
+    width:min(620px,100%);padding:24px 22px;position:relative;margin-bottom:40px}
+  .p-x{position:absolute;top:14px;right:16px;border:none;background:none;
+    color:var(--muted);cursor:pointer;font-size:14px}
   .p-x:hover{color:var(--ink)}
-  .p-sec{border-top:1px solid var(--line);padding:18px 0}
-  .p-sec:first-of-type{border-top:none;padding-top:4px}
-  .p-sec h4{font-size:13px;font-weight:700;margin-bottom:10px}
-  .p-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
-  .p-row input[type=text],.p-row input[type=date],.p-row textarea{
-    flex:1;min-width:150px;padding:10px 12px;border:1px solid var(--line);
-    border-radius:9px;background:var(--bg);outline:none}
-  .p-row textarea{min-height:80px;resize:vertical;width:100%}
-  .p-row input:focus,.p-row textarea:focus{border-color:var(--muted)}
-  .p-file{font-size:12px;color:var(--body)}
-  .p-hint{font-size:11px;color:var(--muted);margin-top:4px}
-  .thumb{width:56px;height:56px;border-radius:9px;object-fit:cover;border:1px solid var(--line)}
-  .dd-row{display:flex;gap:8px;margin-bottom:8px;align-items:center}
-  .dd-row input[type=text]{flex:2;min-width:0}
-  .dd-row input[type=date]{flex:1.4;min-width:0}
-  .dd-row .rm{border:1px solid var(--line);background:none;border-radius:8px;
+  .tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+  .tabs button{border:1px solid var(--line);background:none;color:var(--body);
+    border-radius:999px;padding:6px 14px;font-size:12px;cursor:pointer}
+  .tabs button.on{background:var(--pri);border-color:var(--pri);color:hsl(var(--h) 30% 12%)}
+  .pane input:not([type=file]):not([type=checkbox]),.pane select,.pane textarea{
+    width:100%;margin-bottom:9px;padding:10px 12px;font-size:13px;
+    border:1px solid var(--line);border-radius:9px;background:var(--card2);
+    color:var(--ink);outline:none}
+  .pane textarea{min-height:170px;resize:vertical;line-height:1.9}
+  .p-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:9px}
+  .p-row select{width:auto;margin-bottom:0}
+  .p-row input{margin-bottom:0!important;flex:1;min-width:0}
+  .chk{font-size:12px;display:inline-flex;gap:5px;align-items:center;white-space:nowrap;color:var(--body)}
+  .go{border:none;border-radius:9px;padding:11px 0;width:100%;cursor:pointer;
+    background:var(--pri);color:hsl(var(--h) 30% 12%);font-size:13px;font-weight:500}
+  #p-msg{margin-top:10px;font-size:12px;color:var(--body);min-height:18px}
+  .p-h{font-size:12px;font-weight:500;color:var(--ink);margin:14px 0 8px;
+    padding-top:12px;border-top:1px solid var(--line)}
+  .p-h:first-of-type{border-top:none;padding-top:0;margin-top:0}
+  .filelab{font-size:12px;color:var(--body)}
+  .rmv{border:1px solid var(--line);background:none;border-radius:8px;
     padding:8px 11px;cursor:pointer;color:var(--muted)}
-  #p-msg{margin-top:12px;font-size:12px;color:var(--body);min-height:18px}
+  footer{margin-top:36px;text-align:center;
+    font-family:'IBM Plex Mono',monospace;font-size:8.5px;
+    letter-spacing:.3em;color:var(--muted)}
 </style>
 </head>
 <body>
 
-<header>
-  <a class="brand" href="./"><b>LOVERS CLUB</b><span class="mono">v2</span></a>
-  <div id="topbar-user"></div>
-</header>
+<div class="seal"><span id="seal-txt">LOVELOG</span><a id="seal-auth"></a></div>
 
 <div class="wrap">
 
-  <div id="view-setup" class="center hidden">
-    <h1>거의 다 왔어요</h1>
-    <p>firebase-config.js에 파이어베이스 설정을 붙여넣어 주세요.</p>
-  </div>
+  <div id="view-setup" class="center hidden"><h1>SETUP</h1>
+    <p>firebase-config.js에 설정을 붙여넣어 주세요.</p></div>
 
   <div id="view-loading" class="center"><p class="mono">LOADING...</p></div>
 
   <div id="view-login" class="center hidden">
-    <h1>LOVERS CLUB</h1>
-    <p>지인 전용 갠홈 클럽입니다.<br>초대코드가 있어야 가입할 수 있어요.</p>
-    <button class="btn primary" id="btn-login">Google로 계속하기</button>
+    <h1>LOVELOG</h1>
+    <p>지인 전용 갠홈 클럽 — 초대코드가 있어야 가입할 수 있어요.</p>
+    <button class="btn pri" id="btn-login">Google로 계속하기</button>
   </div>
 
   <div id="view-signup" class="center hidden">
-    <h1>클럽 가입</h1>
-    <p>초대코드와 페이지 주소를 정해주세요.</p>
+    <h1>JOIN</h1>
     <div class="field"><label>초대코드</label><input id="in-invite"></div>
-    <div class="field"><label>페이지 주소 (영문 소문자·숫자·하이픈, 2~20자)</label>
-      <input id="in-handle" placeholder="예: syndrome"></div>
-    <div class="field"><label>표시 이름</label><input id="in-name"></div>
+    <div class="field"><label>페이지 주소 (영문 소문자·숫자·하이픈 2~20자)</label><input id="in-handle"></div>
+    <div class="field"><label>홈 이름</label><input id="in-name" placeholder="예: FROST BIRD 같은 내 홈 이름"></div>
     <p class="err" id="signup-err"></p>
-    <button class="btn primary" id="btn-signup">페이지 만들기</button>
+    <button class="btn pri" id="btn-signup">페이지 만들기</button>
   </div>
 
+  <!-- 대문 비밀번호 게이트 -->
+  <div id="view-gate" class="center hidden">
+    <h1 id="gate-name">—</h1>
+    <p>비공개 홈입니다. 비밀번호를 입력해 주세요.</p>
+    <div class="field"><input id="gate-pw" type="password" placeholder="비밀번호"></div>
+    <p class="err" id="gate-err"></p>
+    <button class="btn pri" id="gate-go">입장</button>
+  </div>
+
+  <!-- ═══ 페이지 ═══ -->
   <div id="view-page" class="hidden">
-    <div class="banner" id="pg-banner"></div>
-    <div class="head-row">
-      <div class="avatar" id="pg-avatar">?</div>
-      <div class="who">
-        <p class="name" id="pg-name">—</p>
-        <p class="handle" id="pg-handle">@—</p>
+
+    <div class="head">
+      <div class="bgimg" id="pg-hero"></div>
+      <div class="shade"></div>
+      <div class="in">
+        <p class="over" id="pg-over">PRIVATE HOME</p>
+        <h1 id="pg-name">—</h1>
+        <p class="sub" id="pg-sub"></p>
       </div>
-    </div>
-    <p class="bio" id="pg-bio"></p>
-    <div class="tags" id="pg-tags"></div>
-    <div id="widgets"></div>
-  </div>
-
-</div>
-
-<button id="btn-deco" class="hidden">✎ 꾸미기</button>
-
-<!-- 꾸미기 패널 -->
-<div id="panel">
-  <div class="p-card">
-    <button class="p-x" id="p-close">✕</button>
-    <p class="label">DECORATE — 내 페이지 꾸미기</p>
-
-    <div class="p-sec">
-      <h4>프로필</h4>
-      <div class="p-row"><input type="text" id="e-name" placeholder="표시 이름"></div>
-      <div class="p-row"><textarea id="e-bio" placeholder="소개 (여러 줄 가능)"></textarea></div>
-      <div class="p-row"><input type="text" id="e-tags" placeholder="태그 (쉼표로 구분 · 예: only ARCH, 드림, CBC open)"></div>
-      <div class="p-row" style="align-items:center">
-        <img class="thumb hidden" id="e-banner-th">
-        <label class="p-file">배너 이미지 <input type="file" id="e-banner" accept="image/*"></label>
-      </div>
-      <div class="p-row" style="align-items:center">
-        <img class="thumb hidden" id="e-avatar-th">
-        <label class="p-file">프로필 사진 <input type="file" id="e-avatar" accept="image/*"></label>
-      </div>
-      <p class="p-hint">이미지는 자동으로 압축돼요. 크게 보이는 배너는 가로로 긴 사진 추천!</p>
+      <div class="dday" id="pg-dday-main"></div>
     </div>
 
-    <div class="p-sec">
-      <h4>디데이</h4>
-      <div id="e-ddays"></div>
-      <button class="btn small" id="e-dd-add">+ 디데이 추가</button>
+    <div class="cols">
+      <main>
+        <div id="list-view">
+          <div class="sec-head"><h2 id="v-label">RECENT</h2><span class="en">ARCHIVE</span></div>
+          <div id="pin-slot"></div>
+          <ul id="rows"></ul>
+          <a class="more" id="more-btn">MORE →</a>
+        </div>
+
+        <div id="post-view" class="hidden">
+          <span class="back" id="pv-back">‹ BACK</span>
+          <article>
+            <p id="pv-meta">—</p>
+            <h1 id="pv-title">—</h1>
+            <div id="pv-body"></div>
+            <div class="pv-actions">
+              <button id="pv-copy">🔗 링크 복사</button>
+              <button id="pv-del" class="hidden">🗑 삭제</button>
+            </div>
+          </article>
+        </div>
+      </main>
+
+      <aside>
+        <div class="side">
+          <p class="label">SEARCH</p>
+          <div class="s-search">⌕ <input id="q" placeholder="search"></div>
+        </div>
+        <div class="side">
+          <p class="label">CATEGORY</p>
+          <ul id="cats"></ul>
+          <p class="cat-add hidden" id="cat-add">＋ 카테고리 추가</p>
+        </div>
+        <div class="side hidden" id="side-dday">
+          <p class="label">D-DAY</p>
+          <div id="dd-list"></div>
+        </div>
+        <div class="side hidden" id="side-bgm">
+          <p class="label">BGM</p>
+          <div class="bgm-play" id="bgm-btn">
+            <span class="ic">▶</span><span class="t" id="bgm-title">—</span>
+          </div>
+          <div id="bgm-frame"></div>
+        </div>
+      </aside>
     </div>
 
-    <div class="p-sec">
-      <h4>커플 설명칸</h4>
-      <div class="p-row"><input type="text" id="e-cp-title" placeholder="제목 (예: 제스테 × 유월)"></div>
-      <div class="p-row" style="align-items:center">
-        <img class="thumb hidden" id="e-cp-th">
-        <label class="p-file">이미지 <input type="file" id="e-cp-img" accept="image/*"></label>
-      </div>
-      <div class="p-row"><textarea id="e-cp-text" placeholder="두 사람 이야기, 관계 요약..."></textarea></div>
+    <div class="strip-sec">
+      <div class="sec-head"><h2>GALLERY</h2><span class="en" id="gal-more" style="cursor:pointer">MORE</span></div>
+      <div id="gal"></div>
     </div>
 
-    <div class="p-sec">
-      <h4>캐릭터 단독 소개칸</h4>
-      <div class="p-row"><input type="text" id="e-ch-title" placeholder="캐릭터 이름"></div>
-      <div class="p-row" style="align-items:center">
-        <img class="thumb hidden" id="e-ch-th">
-        <label class="p-file">이미지 <input type="file" id="e-ch-img" accept="image/*"></label>
-      </div>
-      <div class="p-row"><textarea id="e-ch-text" placeholder="설정, 소속, 능력, 소개..."></textarea></div>
-    </div>
-
-    <div class="p-sec">
-      <h4>BGM</h4>
-      <div class="p-row"><input type="text" id="e-bgm-url" placeholder="유튜브 링크 붙여넣기"></div>
-      <div class="p-row"><input type="text" id="e-bgm-title" placeholder="곡 제목 · 아티스트 (선택)"></div>
-    </div>
-
-    <button class="btn primary" id="p-save" style="width:100%;padding:12px 0">저장</button>
-    <p id="p-msg"></p>
   </div>
 </div>
 
+<button id="btn-pen" class="hidden">✎</button>
+
+<!-- 라이트박스 -->
+<div id="lb"><img id="lb-img" alt=""></div>
+
+<!-- 관리 패널 -->
+<div id="panel"><div class="p-card">
+  <button class="p-x" id="p-close">✕</button>
+  <div class="tabs">
+    <button data-tab="write" class="on">새 글</button>
+    <button data-tab="galup">갤러리</button>
+    <button data-tab="set">홈 설정</button>
+  </div>
+
+  <div class="pane" data-pane="write">
+    <input id="w-title" placeholder="제목">
+    <div class="p-row">
+      <select id="w-cat"></select>
+      <label class="chk"><input type="checkbox" id="w-secret"> 비밀글</label>
+      <input id="w-pw" placeholder="비밀번호" style="display:none">
+      <label class="chk"><input type="checkbox" id="w-pin"> 고정</label>
+    </div>
+    <textarea id="w-body" placeholder="본문"></textarea>
+    <button class="go" id="w-go">발행</button>
+  </div>
+
+  <div class="pane hidden" data-pane="galup">
+    <input id="g-title" placeholder="이미지 제목 (선택)">
+    <label class="filelab">이미지 선택 <input type="file" id="g-file" accept="image/*"></label>
+    <button class="go" id="g-go" style="margin-top:10px">업로드</button>
+  </div>
+
+  <div class="pane hidden" data-pane="set">
+    <p class="p-h">기본</p>
+    <input id="s-name" placeholder="홈 이름">
+    <input id="s-sub" placeholder="부제 (선택)">
+    <div class="p-row"><label class="filelab">대문 이미지 <input type="file" id="s-hero" accept="image/*"></label></div>
+    <p class="p-h">디데이</p>
+    <div id="s-ddays"></div>
+    <button class="btn" id="s-dd-add" style="font-size:12px;padding:6px 12px">+ 디데이 추가</button>
+    <p class="p-h">BGM (유튜브 링크)</p>
+    <input id="s-bgm-url" placeholder="https://youtu.be/...">
+    <input id="s-bgm-title" placeholder="곡 제목 (선택)">
+    <p class="p-h">대문 비밀번호</p>
+    <input id="s-gate" type="password" placeholder="비우면 공개 홈 · 입력하면 비번 걸린 홈">
+    <p class="note">가벼운 잠금이에요 — 진짜 비밀 내용은 글을 '비밀글'로 발행하세요(그건 암호화됩니다).</p>
+    <p class="p-h">테마 색 (0~360)</p>
+    <input id="s-hue" type="number" min="0" max="360" placeholder="222">
+    <button class="go" id="s-go" style="margin-top:6px">설정 저장</button>
+  </div>
+
+  <p id="p-msg"></p>
+</div></div>
+
+<footer>LOVELOG</footer>
 <script type="module" src="./app.js"></script>
 </body>
 </html>
