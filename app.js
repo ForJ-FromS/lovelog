@@ -122,10 +122,11 @@ async function enterPage(){
   $('#btn-deco').classList.toggle('hidden',!st.mine);
   show('view-page');
   await loadContent();
-  renderSide(); renderList(); renderGal();
+  st.cat='home'; applyView();
+  renderWidgets(); renderCatbar(); renderList(); renderGal();
   // 딥링크 ?p=
   const pm=new URLSearchParams(location.search).get('p');
-  if(pm) openPost(pm);
+  if(pm){ st.cat='recent'; applyView(); renderList(); openPost(pm); }
 }
 async function loadContent(){
   const [ps,gs]=await Promise.all([
@@ -139,14 +140,38 @@ async function loadContent(){
 /* ---------- 사이드 위젯 렌더 ---------- */
 function cats(){ return st.page.cats||['archive','ooc']; }
 function sideCfg(){
-  if(st.page.side && st.page.side.length) return st.page.side.filter(w=>w.t!=='notice');
-  const s=[{t:'search'},{t:'category'}];
-  if(st.page.ddays&&st.page.ddays.length) s.push({t:'dday'});
-  if(ytId(st.page.bgm?.url)) s.push({t:'bgm'});
-  return s;
+  let s;
+  if(st.page.side && st.page.side.length) s=st.page.side.filter(w=>w.t!=='notice');
+  else{
+    s=[{t:'search'},{t:'category'}];
+    if(st.page.ddays&&st.page.ddays.length) s.push({t:'dday'});
+    if(ytId(st.page.bgm?.url)) s.push({t:'bgm'});
+  }
+  if(!s.some(w=>w.t==='latest')) s=[...s,{t:'latest'}];
+  return s.map(w=>({col:DEFCOL[w.t]||'r', ...w}));
 }
-const WNAME={profile:'프로필',search:'검색',category:'카테고리',dday:'디데이',
-  bgm:'BGM',quote:'인용구',links:'링크',banner:'배너칸'};
+const WNAME={latest:'최신글',profile:'프로필',search:'검색',category:'카테고리',
+  dday:'디데이',bgm:'BGM',quote:'인용구',links:'링크',banner:'배너칸'};
+const DEFCOL={search:'l',category:'l',profile:'l',latest:'c',quote:'c',
+  dday:'r',bgm:'r',links:'r',banner:'r'};
+function goHome(){ st.cat='home'; applyView(); renderWidgets(); renderCatbar(); }
+function goBoard(cat){ st.cat=cat||'recent'; applyView(); renderWidgets(); renderList(); backToList(); renderCatbar(); }
+function renderCatbar(){
+  const bar=$('#catbar');
+  if(st.page.catBar===false){ bar.classList.add('hidden'); return; }
+  bar.classList.remove('hidden');
+  bar.innerHTML = `<a data-c="home" class="${st.cat==='home'?'on':''}">HOME</a>`+
+    cats().map(c=>`<a data-c="${esc(c)}" class="${st.cat===c?'on':''}">${esc(c.toUpperCase())}</a>`).join('')+
+    `<a data-c="recent" class="${st.cat==='recent'?'on':''}">ALL</a>`;
+  bar.querySelectorAll('a').forEach(el=>el.onclick=()=>{
+    el.dataset.c==='home' ? goHome() : goBoard(el.dataset.c);
+  });
+}
+function applyView(){
+  const home = st.cat==='home';
+  $('#home-grid').classList.toggle('hidden', !home);
+  $('#board').classList.toggle('hidden', home);
+}
 
 /* ── 위젯 드래그 앤 드롭 (주인장 전용) ── */
 function bindDrag(d){
@@ -169,7 +194,7 @@ function bindDrag(d){
     dropWidget(+e.dataTransfer.getData('text/plain'), +d.dataset.wi, d.parentElement.id);
   });
 }
-['aside','aside-l'].forEach(id=>{
+['aside','aside-l','hcol-l','hcol-c','hcol-r'].forEach(id=>{
   const c=document.getElementById(id); if(!c) return;
   c.addEventListener('dragover',e=>{ e.preventDefault();
     if(e.target===c) c.classList.add('dropzone-end'); });
@@ -186,7 +211,10 @@ async function dropWidget(from, to, contId){
   const arr=JSON.parse(JSON.stringify(sideCfg()));
   if(from<0||from>=arr.length) return;
   const [w]=arr.splice(from,1);
-  w.col = contId==='aside-l' ? 'l' : 'r';
+  w.col = contId==='hcol-l' ? 'l'
+        : contId==='hcol-c' ? 'c'
+        : contId==='hcol-r' ? 'r'
+        : contId==='aside-l' ? 'l' : 'r';
   if(to<0){ arr.push(w); }
   else{
     let ins=to; if(from<to) ins=to-1;
@@ -198,14 +226,21 @@ async function dropWidget(from, to, contId){
   try{ await updateDoc(doc(db,'pages',st.handle),{side:arr}); }
   catch(e){ alert('순서 저장 실패: '+e.message); }
 }
+function renderWidgets(){ renderSide(); }
 function renderSide(){
-  const p=st.page, boxR=$('#aside'), boxL=$('#aside-l');
+  const p=st.page;
+  const home = st.cat==='home';
+  const boxR=$('#aside'), boxL=$('#aside-l'),
+        hL=$('#hcol-l'), hC=$('#hcol-c'), hR=$('#hcol-r');
   const both = p.sidePos==='both';
   const headEl=document.querySelector('#aside .head, #aside-l .head');
   boxR.innerHTML=''; boxL.innerHTML='';
+  hL.innerHTML=''; hC.innerHTML=''; hR.innerHTML='';
   if(headEl) (both?boxL:boxR).appendChild(headEl);
   sideCfg().forEach((w,wi)=>{
-    const box = (both && w.col==='l') ? boxL : boxR;
+    const box = home
+      ? (w.col==='l'?hL : w.col==='c'?hC : hR)
+      : ((both && w.col==='l') ? boxL : boxR);
     const d=document.createElement('div'); d.className='side';
     d.dataset.wi=wi; bindDrag(d);
     if(w.t==='search'){
@@ -227,7 +262,7 @@ function renderSide(){
       box.appendChild(d);
       d.querySelectorAll('#cats a').forEach(el=>el.onclick=e=>{
         if(e.target.dataset.x){ removeCat(e.target.dataset.x); return; }
-        st.cat=el.dataset.c; renderSide(); renderList(); backToList(); });
+        goBoard(el.dataset.c); });
       const ca=d.querySelector('#cat-add'); if(ca) ca.onclick=addCat;
       return;
     }
@@ -236,8 +271,10 @@ function renderSide(){
         if(st.mine){ d.innerHTML=`<p class="label">D-DAY</p><p style="font-size:11px;color:var(--muted)">✦ 꾸미기 → 위젯 → 디데이 ✎에서 날짜를 추가하세요</p>`; box.appendChild(d); }
         return;
       }
-      d.innerHTML=`<p class="label">D-DAY</p>`+p.ddays.map(x=>
-        `<div class="dd-item"><span class="t">${esc(x.title)}</span><span class="n">${esc(dday(x.date))}</span></div>`).join('');
+      d.innerHTML=`<p class="label">D-DAY</p>`+p.ddays.map(x=> x.img
+        ? `<div class="dd-card" style="background-image:url(${x.img})">
+             <div class="in2"><span class="t">${esc(x.title)}</span><span class="n">${esc(dday(x.date))}</span></div></div>`
+        : `<div class="dd-item"><span class="t">${esc(x.title)}</span><span class="n">${esc(dday(x.date))}</span></div>`).join('');
       box.appendChild(d); return;
     }
     if(w.t==='bgm'){
@@ -254,6 +291,20 @@ function renderSide(){
       btn.onclick=()=>{ on=!on;
         fr.innerHTML=on?`<iframe style="width:100%;height:0;border:0" src="https://www.youtube.com/embed/${vid}?autoplay=1&loop=1&playlist=${vid}" allow="autoplay; encrypted-media"></iframe>`:'';
         btn.querySelector('.ic').textContent=on?'■':'▶'; };
+      return;
+    }
+    if(w.t==='latest'){
+      const arr=st.posts.slice(0,5);
+      d.innerHTML=`<p class="label">LATEST</p><div class="mini-rows">`+
+        (arr.length?arr.map(p2=>`<a data-lid="${p2.id}">
+          <span class="dot">◈</span><span class="t">${esc(p2.title)}${p2.secret?' 🔒':''}</span>
+          <span class="dt">${esc((p2.date||'').slice(5))}</span></a>`).join('')
+        :'<p class="pl-empty">아직 글이 없습니다.</p>')+
+        `</div><p class="cat-add" style="display:block" id="latest-more">전체 보기 →</p>`;
+      box.appendChild(d);
+      d.querySelectorAll('[data-lid]').forEach(el=>el.onclick=()=>{
+        goBoard('recent'); openPost(el.dataset.lid); });
+      d.querySelector('#latest-more').onclick=()=>goBoard('recent');
       return;
     }
     if(w.t==='profile'){
@@ -336,6 +387,7 @@ function backToList(){ $('#post-view').classList.add('hidden');
   $('#list-view').classList.remove('hidden'); st.cur=null;
   history.replaceState(null,'','./?u='+st.handle); }
 $('#pv-back').onclick=backToList;
+$('#go-home').onclick=goHome;
 async function openPost(id){
   const p=st.posts.find(x=>x.id===id); if(!p) return;
   let body;
@@ -363,7 +415,7 @@ $('#pv-del').onclick=async()=>{
   if(!confirm('「'+p.title+'」 글을 삭제할까요?')) return;
   await deleteDoc(doc(db,'pages',st.handle,'posts',p.id));
   st.posts=st.posts.filter(x=>x.id!==p.id);
-  backToList(); renderCats(); renderList();
+  backToList(); renderWidgets(); renderList();
 };
 
 /* ---------- 검색: search 위젯 내부에서 바인딩 ---------- */
@@ -457,9 +509,13 @@ function renderWidEdit(){
   if(w.t==='dday') html+=pdraft.ddays.map((d,i)=>`
     <div class="p-row"><input data-dt="${i}" placeholder="제목" value="${esc(d.title)}">
     <input type="date" data-dd="${i}" value="${esc(d.date)}" style="flex:.8">
-    <button class="rmv" data-dr="${i}">✕</button></div>`).join('')+
+    <button class="rmv" data-dr="${i}">✕</button></div>
+    <div class="p-row" style="margin-top:-4px">
+      <label class="filelab" style="font-size:11px">📷 사진 ${d.img?'(있음)':''} <input type="file" data-dimg="${i}" accept="image/*"></label>
+      ${d.img?`<button class="rmv" data-dximg="${i}" style="font-size:10px">사진 제거</button>`:''}
+    </div>`).join('')+
     `<button class="btn" id="we-ddadd" style="font-size:12px">+ 디데이 추가</button>
-    <p class="note">첫 번째 디데이는 대문에도 표시돼요.</p>`;
+    <p class="note">첫 번째 디데이는 대문에도 표시돼요. 사진을 넣으면 이미지 카드가 됩니다.</p>`;
   if(w.t==='bgm') html+=`
     <input id="we-burl" placeholder="유튜브 링크 https://youtu.be/..." value="${esc(pdraft.bgm.url)}">
     <input id="we-btitle" placeholder="곡 제목 (선택)" value="${esc(pdraft.bgm.title)}">`;
@@ -492,6 +548,13 @@ function renderWidEdit(){
   $('#wid-edit').querySelectorAll('[data-dt]').forEach(i=>i.addEventListener('input',()=>{ pdraft.ddays[i.dataset.dt].title=i.value; }));
   $('#wid-edit').querySelectorAll('[data-dd]').forEach(i=>i.addEventListener('change',()=>{ pdraft.ddays[i.dataset.dd].date=i.value; }));
   $('#wid-edit').querySelectorAll('[data-dr]').forEach(b=>b.onclick=()=>{ pdraft.ddays.splice(+b.dataset.dr,1); renderWidEdit(); });
+  $('#wid-edit').querySelectorAll('[data-dimg]').forEach(inp=>inp.addEventListener('change',async e=>{
+    const f=e.target.files[0]; if(!f) return; msg('사진 압축 중...');
+    pdraft.ddays[inp.dataset.dimg].img=await compress(f,600,.75);
+    renderWidEdit(); msg('사진 반영됨 — [위젯 구성 저장]까지!');
+  }));
+  $('#wid-edit').querySelectorAll('[data-dximg]').forEach(b=>b.onclick=()=>{
+    delete pdraft.ddays[+b.dataset.dximg].img; renderWidEdit(); });
   const bu=$('#we-burl'); if(bu) bu.addEventListener('input',()=>{ pdraft.bgm.url=bu.value.trim(); });
   const bt=$('#we-btitle'); if(bt) bt.addEventListener('input',()=>{ pdraft.bgm.title=bt.value.trim(); });
   $('#wid-edit').querySelectorAll('[data-ll]').forEach(i=>i.addEventListener('input',()=>{ w.items[i.dataset.ll].label=i.value; }));
@@ -514,7 +577,7 @@ $('#wid-save').onclick=async()=>{
   if(editIdx>=0 && draft[editIdx]) syncWid(draft[editIdx]);
   msg('저장 중...');
   try{
-    if(JSON.stringify(draft).length>700000){
+    if(JSON.stringify(draft).length+JSON.stringify(pdraft.ddays).length>750000){
       msg('위젯 이미지 용량이 너무 커요 — 배너/사진 수를 줄여주세요.');
       alert('이미지 용량이 커서 저장하지 못했어요. 배너나 사진 수를 줄여주세요.'); return; }
     const dd=pdraft.ddays.filter(x=>x.title&&x.date);
@@ -551,7 +614,7 @@ $('#w-go').onclick=async()=>{
     if(pin) await Promise.all(st.posts.filter(p=>p.pinned).map(p=>
       updateDoc(doc(db,'pages',st.handle,'posts',p.id),{pinned:false})));
     await addDoc(collection(db,'pages',st.handle,'posts'),data);
-    await loadContent(); renderCats(); renderList();
+    await loadContent(); renderWidgets(); renderList();
     ['w-title','w-pw','w-body'].forEach(i=>$('#'+i).value='');
     $('#w-secret').checked=false; $('#w-pin').checked=false; $('#w-pw').style.display='none';
     msg('발행 완료!');
@@ -594,6 +657,7 @@ function fillSettings(){
   $('#s-sidepos').value=p.sidePos||'right';
   $('#s-light').checked=!!p.light;
   $('#s-glass').checked=!!p.glass;
+  $('#s-catbar').checked=p.catBar!==false;
   $('#s-dim').value=p.bgDim??78;
   heroNew=null; bgNew=null;
 }
@@ -611,6 +675,7 @@ $('#s-go').onclick=async()=>{
       sidePos: $('#s-sidepos').value,
       light: $('#s-light').checked,
       glass: $('#s-glass').checked,
+      catBar: $('#s-catbar').checked,
       bgDim: parseInt($('#s-dim').value)||78,
       updatedAt:serverTimestamp()
     };
@@ -620,7 +685,7 @@ $('#s-go').onclick=async()=>{
     await updateDoc(doc(db,'pages',st.handle),data);
     st.page={...st.page,...data};
     msg('저장 완료!');
-    enterPage();
+    enterPage(); renderCatbar();
   }catch(e){ msg('오류: '+e.message); }
 };
 // 게이트 해제: 비번칸 비운 채 저장하면 유지, '없애기'는 명령어
