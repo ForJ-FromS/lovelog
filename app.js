@@ -179,7 +179,7 @@ function renderSide(){
     if(w.t==='profile'){
       d.className+=' w-profile';
       d.innerHTML=`<p class="label">PROFILE</p>`+
-        (w.img?`<img src="${w.img}" alt="">`:'')+
+        (w.img?`<img class="s-${esc(w.shape||'circle')}" src="${w.img}" alt="">`:'')+
         (w.text?`<p>${esc(w.text)}</p>`:'');
       box.appendChild(d); return;
     }
@@ -352,6 +352,13 @@ function renderWidEdit(){
   let html=`<p class="p-h">${WNAME[w.t]} 편집</p>`;
   if(w.t==='profile') html+=`
     <div class="p-row"><label class="filelab">사진 <input type="file" id="we-img" accept="image/*"></label></div>
+    <div class="p-row"><select id="we-shape">
+      <option value="circle">원형</option>
+      <option value="rounded">둥근 사각</option>
+      <option value="square">사각</option>
+      <option value="frame">액자 (흰 테두리)</option>
+      <option value="tall">큰 카드형 (가로 꽉 채움)</option>
+    </select></div>
     <textarea id="we-text" placeholder="한 줄 소개 (선택)" style="min-height:70px">${w.text||''}</textarea>`;
   if(w.t==='notice'||w.t==='quote') html+=`
     <textarea id="we-text" placeholder="${w.t==='notice'?'공지 내용':'문장'}" style="min-height:90px">${w.text||''}</textarea>`;
@@ -364,27 +371,29 @@ function renderWidEdit(){
     <input data-bu="${i}" placeholder="눌렀을 때 이동할 주소 (선택)" value="${b.url||''}">
     <button class="rmv" data-br="${i}">✕</button></div>`).join('')+
     `<div class="p-row"><label class="filelab">배너 이미지 추가 <input type="file" id="we-bimg" accept="image/*"></label></div>`;
-  html+=`<button class="btn" id="we-ok" style="margin-top:8px;font-size:12px">이 위젯 반영</button>`;
+  html+=`<p class="note">입력은 즉시 반영돼요 — 마지막에 [위젯 구성 저장]만 누르면 저장 완료.</p>`;
   $('#wid-edit').innerHTML=html;
+  // 라이브 바인딩: 쓰는 즉시 draft에 반영
+  const t=$('#we-text'); if(t) t.addEventListener('input',()=>{ w.text=t.value; });
+  const sh=$('#we-shape'); if(sh){ sh.value=w.shape||'circle';
+    sh.addEventListener('change',()=>{ w.shape=sh.value; }); }
   const img=$('#we-img'); if(img) img.addEventListener('change',async e=>{
     const f=e.target.files[0]; if(!f) return; msg('사진 압축 중...');
-    w.img=await compress(f,400,.8); msg('사진 준비 완료 — [이 위젯 반영]을 눌러주세요.');
+    w.img=await compress(f,500,.8); msg('사진 반영됨 — [위젯 구성 저장]을 눌러주세요.');
   });
   const badd=$('#we-bimg'); if(badd) badd.addEventListener('change',async e=>{
     const f=e.target.files[0]; if(!f) return; msg('배너 압축 중...');
-    w.items=w.items||[]; w.items.push({img:await compress(f,800,.8),url:''});
-    renderWidEdit(); msg('');
+    w.items=w.items||[]; w.items.push({img:await compress(f,700,.75),url:''});
+    renderWidEdit(); renderWidList(); msg('배너 추가됨 — [위젯 구성 저장]을 눌러주세요.');
   });
-  const ladd=$('#we-add'); if(ladd) ladd.onclick=()=>{ syncWid(w); w.items=w.items||[]; w.items.push({label:'',url:''}); renderWidEdit(); };
-  $('#wid-edit').querySelectorAll('[data-br]').forEach(b=>b.onclick=()=>{ w.items.splice(+b.dataset.br,1); renderWidEdit(); });
-  $('#we-ok').onclick=()=>{ syncWid(w); renderWidList(); msg('반영됨 — 아래 [위젯 구성 저장]까지 눌러야 저장돼요.'); };
+  const ladd=$('#we-add'); if(ladd) ladd.onclick=()=>{ w.items=w.items||[]; w.items.push({label:'',url:''}); renderWidEdit(); };
+  $('#wid-edit').querySelectorAll('[data-ll]').forEach(i=>i.addEventListener('input',()=>{ w.items[i.dataset.ll].label=i.value; }));
+  $('#wid-edit').querySelectorAll('[data-lu]').forEach(i=>i.addEventListener('input',()=>{ w.items[i.dataset.lu].url=i.value.trim(); }));
+  $('#wid-edit').querySelectorAll('[data-bu]').forEach(i=>i.addEventListener('input',()=>{ w.items[i.dataset.bu].url=i.value.trim(); }));
+  $('#wid-edit').querySelectorAll('[data-br]').forEach(b=>b.onclick=()=>{ w.items.splice(+b.dataset.br,1); renderWidEdit(); renderWidList(); });
 }
 function syncWid(w){
-  const t=$('#we-text'); if(t) w.text=t.value.trim();
-  $('#wid-edit').querySelectorAll('[data-ll]').forEach(i=>{ w.items[i.dataset.ll].label=i.value.trim(); });
-  $('#wid-edit').querySelectorAll('[data-lu]').forEach(i=>{ w.items[i.dataset.lu].url=i.value.trim(); });
-  $('#wid-edit').querySelectorAll('[data-bu]').forEach(i=>{ w.items[i.dataset.bu].url=i.value.trim(); });
-  if(w.t==='links') w.items=(w.items||[]).filter(l=>l.label||l.url);
+  if(w && w.t==='links') w.items=(w.items||[]).filter(l=>l.label||l.url);
 }
 $('#wid-add').onclick=()=>{
   const t=$('#wid-type').value;
@@ -398,11 +407,13 @@ $('#wid-save').onclick=async()=>{
   if(editIdx>=0 && draft[editIdx]) syncWid(draft[editIdx]);
   msg('저장 중...');
   try{
-    if(JSON.stringify(draft).length>500000){ msg('위젯 이미지 용량이 너무 커요.'); return; }
+    if(JSON.stringify(draft).length>700000){
+      msg('위젯 이미지 용량이 너무 커요 — 배너/사진 수를 줄여주세요.');
+      alert('이미지 용량이 커서 저장하지 못했어요. 배너나 사진 수를 줄여주세요.'); return; }
     await updateDoc(doc(db,'pages',st.handle),{side:draft});
     st.page.side=JSON.parse(JSON.stringify(draft));
     renderSide(); msg('위젯 구성 저장 완료!');
-  }catch(e){ msg('오류: '+e.message); }
+  }catch(e){ msg('오류: '+e.message); alert('저장 실패: '+e.message); }
 };
 $('#p-close').onclick=()=>$('#panel').classList.remove('show');
 $('#panel').addEventListener('click',e=>{ if(e.target.id==='panel') $('#panel').classList.remove('show'); });
