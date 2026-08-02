@@ -138,6 +138,8 @@ async function enterPage(){
   $('#pg-dday-main').innerHTML = dd0?`<p class="n">${esc(dday(dd0.date))}</p><p class="t">${esc(dd0.title)}</p>`:'';
   // 레이아웃 · 테마
   document.body.classList.toggle('light', !!p.light);
+  document.body.classList.remove('theme-win98','theme-vhs');
+  if(p.theme && p.theme!=='default') document.body.classList.add('theme-'+p.theme);
   document.body.classList.toggle('side-left', p.sidePos==='left');
   document.body.classList.toggle('side-both', p.sidePos==='both');
   document.documentElement.style.setProperty('--dim', (p.bgDim??78)/100);
@@ -723,6 +725,7 @@ function fillSettings(){
   $('#s-light').checked=!!p.light;
   $('#s-glass').checked=!!p.glass;
   $('#s-catstyle').value=catStyle();
+  $('#s-theme').value=p.theme||'default';
   $('#s-dim').value=p.bgDim??78;
   heroDraft=[...heroList()]; renderHeroList();
   $('#s-enter').value=p.enterText||'';
@@ -747,6 +750,7 @@ async function saveSettings(){
       light: $('#s-light').checked,
       glass: $('#s-glass').checked,
       catStyle: $('#s-catstyle').value,
+      theme: $('#s-theme').value,
       bgDim: parseInt($('#s-dim').value)||78,
       updatedAt:serverTimestamp()
     };
