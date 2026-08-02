@@ -110,6 +110,8 @@ async function enterPage(){
   // 레이아웃 · 테마
   document.body.classList.toggle('light', !!p.light);
   document.body.classList.toggle('side-left', p.sidePos==='left');
+  document.body.classList.toggle('side-both', p.sidePos==='both');
+  document.documentElement.style.setProperty('--dim', (p.bgDim??78)/100);
   document.body.classList.toggle('glass', !!p.glass);
   $('#bgphoto').style.backgroundImage = p.bgImg?`url(${p.bgImg})`:'';
   const headEl=document.querySelector('.head');
@@ -146,11 +148,13 @@ function sideCfg(){
 const WNAME={profile:'프로필',search:'검색',category:'카테고리',dday:'디데이',
   bgm:'BGM',quote:'인용구',links:'링크',banner:'배너칸'};
 function renderSide(){
-  const p=st.page, box=$('#aside');
-  // 세로 헤더 모드면 head를 유지한 채 위젯만 갱신
-  const headEl=box.querySelector('.head');
-  box.innerHTML=''; if(headEl) box.appendChild(headEl);
+  const p=st.page, boxR=$('#aside'), boxL=$('#aside-l');
+  const both = p.sidePos==='both';
+  const headEl=document.querySelector('#aside .head, #aside-l .head');
+  boxR.innerHTML=''; boxL.innerHTML='';
+  if(headEl) (both?boxL:boxR).appendChild(headEl);
   sideCfg().forEach(w=>{
+    const box = (both && w.col==='l') ? boxL : boxR;
     const d=document.createElement('div'); d.className='side';
     if(w.t==='search'){
       d.innerHTML=`<p class="label">SEARCH</p>
@@ -201,10 +205,11 @@ function renderSide(){
       return;
     }
     if(w.t==='profile'){
-      d.className+=' w-profile';
-      d.innerHTML=`<p class="label">PROFILE</p>`+
-        (w.img?`<img class="s-${esc(w.shape||'circle')}" src="${w.img}" alt="">`:'')+
-        (w.text?`<p>${esc(w.text)}</p>`:'');
+      const shape=w.shape||'full';
+      d.className+=' w-profile'+(shape==='full'?' full':'');
+      d.innerHTML=(w.img?`<img class="s-${esc(shape)}" src="${w.img}" alt="" draggable="false">`:'')+
+        `<div class="tx">`+(w.text?`<p>${esc(w.text)}</p>`:'')+
+        `<p class="hd">@${esc(st.handle)}</p></div>`;
       box.appendChild(d); return;
     }
     if(w.t==='quote'){
@@ -347,6 +352,9 @@ function openPanel(mode){
   $('#panel').classList.toggle('big', mode==='deco');
   msg(''); $('#panel').classList.add('show');
 }
+$('#s-dim').addEventListener('input',e=>{
+  document.documentElement.style.setProperty('--dim', e.target.value/100);
+});
 $('#s-color').addEventListener('input',e=>{
   document.documentElement.style.setProperty('--h', hueFromHex(e.target.value));
 });
@@ -365,11 +373,13 @@ function renderWidList(){
   $('#wid-list').innerHTML = draft.map((w,i)=>`
     <div class="wl">
       <span class="nm">${WNAME[w.t]||w.t}${w.t==='links'?` (${(w.items||[]).length})`:''}${w.t==='banner'?` (${(w.items||[]).length})`:''}</span>
+      ${(st.page.sidePos==='both'||$('#s-sidepos')?.value==='both')?`<button data-c="${i}" title="좌/우 기둥 이동">${w.col==='l'?'◧ 왼쪽':'◨ 오른쪽'}</button>`:''}
       ${['profile','quote','links','banner','dday','bgm'].includes(w.t)?`<button data-e="${i}">✎</button>`:''}
       <button data-u="${i}">↑</button><button data-d="${i}">↓</button><button data-x="${i}">✕</button>
     </div>`).join('') || '<p class="pl-empty">위젯이 없어요 — 아래에서 추가하세요.</p>';
   $('#wid-list').querySelectorAll('button').forEach(b=>b.onclick=()=>{
-    const {e,u,d,x}=b.dataset;
+    const {e,u,d,x,c}=b.dataset;
+    if(c!==undefined){ const w=draft[+c]; w.col=(w.col==='l')?'r':'l'; renderWidList(); return; }
     if(e!==undefined){ editIdx=+e; renderWidEdit(); return; }
     if(u!==undefined && +u>0){ const i=+u; [draft[i-1],draft[i]]=[draft[i],draft[i-1]]; }
     if(d!==undefined && +d<draft.length-1){ const i=+d; [draft[i+1],draft[i]]=[draft[i],draft[i+1]]; }
@@ -383,11 +393,11 @@ function renderWidEdit(){
   if(w.t==='profile') html+=`
     <div class="p-row"><label class="filelab">사진 <input type="file" id="we-img" accept="image/*"></label></div>
     <div class="p-row"><select id="we-shape">
+      <option value="full">카드 꽉 채움 (기본)</option>
       <option value="circle">원형</option>
       <option value="rounded">둥근 사각</option>
       <option value="square">사각</option>
       <option value="frame">액자 (흰 테두리)</option>
-      <option value="tall">큰 카드형 (가로 꽉 채움)</option>
     </select></div>
     <textarea id="we-text" placeholder="한 줄 소개 (선택)" style="min-height:70px">${w.text||''}</textarea>`;
   if(w.t==='quote') html+=`
@@ -414,7 +424,7 @@ function renderWidEdit(){
   $('#wid-edit').innerHTML=html;
   // 라이브 바인딩: 쓰는 즉시 draft에 반영
   const t=$('#we-text'); if(t) t.addEventListener('input',()=>{ w.text=t.value; });
-  const sh=$('#we-shape'); if(sh){ sh.value=w.shape||'circle';
+  const sh=$('#we-shape'); if(sh){ sh.value=w.shape||'full';
     sh.addEventListener('change',()=>{ w.shape=sh.value; }); }
   const img=$('#we-img'); if(img) img.addEventListener('change',async e=>{
     const f=e.target.files[0]; if(!f) return; msg('사진 압축 중...');
@@ -532,6 +542,7 @@ function fillSettings(){
   $('#s-sidepos').value=p.sidePos||'right';
   $('#s-light').checked=!!p.light;
   $('#s-glass').checked=!!p.glass;
+  $('#s-dim').value=p.bgDim??78;
   heroNew=null; bgNew=null;
 }
 $('#s-go').onclick=async()=>{
@@ -548,6 +559,7 @@ $('#s-go').onclick=async()=>{
       sidePos: $('#s-sidepos').value,
       light: $('#s-light').checked,
       glass: $('#s-glass').checked,
+      bgDim: parseInt($('#s-dim').value)||78,
       updatedAt:serverTimestamp()
     };
     if(gateIn) data.gate=await sha256(gateIn);

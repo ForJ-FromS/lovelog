@@ -65,8 +65,12 @@
     background:hsl(var(--h) 40% 99% / .6)}
   #bgphoto{position:fixed;inset:0;z-index:-1;background-size:cover;background-position:center}
   #bgphoto::after{content:'';position:absolute;inset:0;
-    background:hsl(var(--h) 32% 9% / .78)}
-  body.light #bgphoto::after{background:hsl(var(--h) 35% 95% / .8)}
+    background:hsl(var(--h) 32% 9% / var(--dim,.78))}
+  body.light #bgphoto::after{background:hsl(var(--h) 35% 95% / var(--dim,.8))}
+  body.side-both .cols{grid-template-columns:252px 1fr 252px}
+  #aside-l{order:-1;display:none;flex-direction:column;gap:13px}
+  body.side-both #aside-l{display:flex}
+  @media(max-width:900px){body.side-both .cols{grid-template-columns:1fr}}
   .fab{position:fixed;right:20px;bottom:20px;z-index:9;
     width:44px;height:44px;border-radius:50%;border:1px solid var(--line);
     background:var(--card);color:var(--body);font-size:16px;cursor:pointer}
@@ -278,14 +282,20 @@
   body.light .head h1{text-shadow:none}
   /* ── 위젯 ── */
   .w-profile{text-align:center}
+  .w-profile.full{padding:0}
+  .w-profile.full::before{display:none}
+  .w-profile.full img{width:100%;height:auto;max-height:300px;object-fit:cover;
+    display:block;border-radius:12px 12px 0 0;margin:0;border:none}
+  .w-profile.full .tx{padding:11px 15px 13px}
   .w-profile img{width:76px;height:76px;border-radius:50%;object-fit:cover;
-    margin:2px auto 8px;display:block;border:2px solid var(--line)}
+    margin:6px auto 8px;display:block;border:2px solid var(--line)}
   .w-profile img.s-rounded{border-radius:18px}
   .w-profile img.s-square{border-radius:4px}
   .w-profile img.s-frame{border-radius:2px;border:none;background:#fff;
     padding:6px;width:88px;height:96px;object-fit:cover;
     box-shadow:0 8px 18px -10px rgba(0,0,0,.45)}
-  .w-profile img.s-tall{width:100%;height:auto;max-height:220px;border-radius:12px}
+  .w-profile .tx p{font-size:12px;color:var(--body);white-space:pre-wrap}
+  .w-profile .tx .hd{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted)}
   .w-profile p{font-size:12px;color:var(--body);white-space:pre-wrap}
   .w-notice p{font-size:12px;color:var(--body);white-space:pre-wrap}
   .w-quote{text-align:center}
@@ -388,6 +398,7 @@
         </div>
       </main>
 
+      <aside id="aside-l"></aside>
       <aside id="aside"></aside>
     </div>
 
@@ -470,6 +481,7 @@
       <select id="s-sidepos">
         <option value="right">사이드바 — 오른쪽</option>
         <option value="left">사이드바 — 왼쪽</option>
+        <option value="both">사이드바 — 양쪽</option>
       </select>
     </div>
     <div class="p-row">
@@ -479,6 +491,10 @@
     <div class="p-row">
       <label class="filelab">배경 이미지 <input type="file" id="s-bg" accept="image/*"></label>
       <button class="rmv" id="s-bg-clear" style="font-size:11px">배경 제거</button>
+    </div>
+    <div class="p-row" style="align-items:center">
+      <span style="font-size:12px;color:var(--body)">배경 덮개 농도 (왼쪽=선명 · 오른쪽=차분)</span>
+      <input type="range" id="s-dim" min="15" max="95" value="78" style="flex:1;min-width:120px">
     </div>
     <div class="p-row" style="align-items:center">
       <span style="font-size:12px;color:var(--body)">테마 색 — 찍으면 홈 전체가 이 색으로 물들어요</span>
