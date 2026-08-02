@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LOVERS CLUB</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F7F6F3;
+    --card:#FFFFFF;
+    --ink:#2A2B31;
+    --body:#5C5E66;
+    --muted:#9C9EA6;
+    --line:#E8E7E2;
+    --accent:#C2543F;
+    --accent-soft:#F9EFEC;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    background:var(--bg);color:var(--ink);
+    font-family:'Noto Sans KR',sans-serif;font-weight:400;
+    min-height:100vh;line-height:1.8;
+  }
+  a{color:inherit;text-decoration:none}
+  button,input{font-family:inherit;font-size:14px}
+  .mono{font-family:'IBM Plex Mono',monospace}
+
+  /* ── 상단바 ── */
+  header{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:14px 22px;border-bottom:1px solid var(--line);background:var(--card);
+    position:sticky;top:0;z-index:10;
+  }
+  .brand{display:flex;align-items:baseline;gap:10px}
+  .brand b{font-weight:700;letter-spacing:.02em}
+  .brand .mono{font-size:10px;color:var(--muted);letter-spacing:.2em}
+  #topbar-user{display:flex;align-items:center;gap:12px;font-size:12.5px;color:var(--body)}
+  .btn{
+    border:1px solid var(--line);background:var(--card);color:var(--ink);
+    border-radius:9px;padding:8px 16px;cursor:pointer;
+  }
+  .btn:hover{border-color:var(--muted)}
+  .btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .btn.primary:hover{opacity:.85}
+
+  .wrap{max-width:760px;margin:0 auto;padding:34px 18px 70px}
+  .hidden{display:none!important}
+
+  /* ── 카드 공통 ── */
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:26px 24px;
+  }
+  .label{font-family:'IBM Plex Mono',monospace;font-size:9px;
+    letter-spacing:.35em;color:var(--muted);margin-bottom:12px}
+
+  /* ── 로그인/가입 ── */
+  .center{min-height:60vh;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;text-align:center;gap:16px}
+  .center h1{font-size:22px;font-weight:700;letter-spacing:.04em}
+  .center p{font-size:13px;color:var(--body)}
+  .field{width:100%;max-width:340px;text-align:left;margin-top:4px}
+  .field label{display:block;font-size:11.5px;color:var(--body);margin-bottom:5px}
+  .field input{
+    width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10px;
+    background:var(--bg);outline:none;
+  }
+  .field input:focus{border-color:var(--muted)}
+  .hint{font-size:11px;color:var(--muted)}
+  .err{font-size:12px;color:var(--accent);min-height:18px}
+
+  /* ── 내 페이지 ── */
+  .banner{
+    height:170px;border-radius:16px;position:relative;overflow:hidden;
+    background:linear-gradient(120deg,#E9E4DC,#F3EEE7 45%,#EBE2D8);
+    border:1px solid var(--line);
+  }
+  .banner .hint-bn{position:absolute;right:14px;bottom:12px;
+    font-family:'IBM Plex Mono',monospace;font-size:8.5px;
+    letter-spacing:.25em;color:#B5AF a4;color:#B0AA9E}
+  .head-row{display:flex;align-items:flex-end;gap:16px;
+    margin:-38px 0 0 26px;position:relative}
+  .avatar{
+    width:76px;height:76px;border-radius:50%;
+    background:var(--ink);color:#fff;
+    display:flex;align-items:center;justify-content:center;
+    font-size:26px;font-weight:700;
+    border:4px solid var(--bg);
+  }
+  .who .name{font-size:19px;font-weight:700}
+  .who .handle{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted)}
+  .bio{margin:16px 2px 0;font-size:13.5px;color:var(--body)}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:22px}
+  @media(max-width:620px){.grid{grid-template-columns:1fr}}
+  .slot{
+    border:1.5px dashed var(--line);border-radius:14px;
+    padding:20px;min-height:96px;
+    display:flex;flex-direction:column;justify-content:center;gap:4px;
+    color:var(--muted);background:transparent;
+  }
+  .slot b{font-size:13px;color:var(--body);font-weight:500}
+  .slot span{font-size:11px}
+
+  .edit-row{display:flex;gap:8px;margin-top:18px;flex-wrap:wrap}
+  .edit-row input{flex:1;min-width:180px;padding:10px 12px;
+    border:1px solid var(--line);border-radius:9px;background:var(--bg);outline:none}
+
+  #msg{margin-top:12px;font-size:12px;color:var(--body);min-height:18px}
+
+  footer{max-width:760px;margin:0 auto;padding:0 18px 40px;
+    font-family:'IBM Plex Mono',monospace;font-size:9px;
+    letter-spacing:.25em;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<header>
+  <a class="brand" href="./">
+    <b>LOVERS CLUB</b><span class="mono">SKELETON v1</span>
+  </a>
+  <div id="topbar-user"></div>
+</header>
+
+<div class="wrap">
+
+  <!-- 준비 안내 (설정 전) -->
+  <div id="view-setup" class="center hidden">
+    <h1>거의 다 왔어요</h1>
+    <p>firebase-config.js에 파이어베이스 설정을 붙여넣으면 시작됩니다.<br>
+    함께 담긴 <b>시작가이드-1단계.md</b>를 따라와 주세요.</p>
+  </div>
+
+  <!-- 로딩 -->
+  <div id="view-loading" class="center"><p class="mono">LOADING...</p></div>
+
+  <!-- 로그인 -->
+  <div id="view-login" class="center hidden">
+    <h1>LOVERS CLUB</h1>
+    <p>지인 전용 갠홈 클럽입니다.<br>초대코드가 있어야 가입할 수 있어요.</p>
+    <button class="btn primary" id="btn-login">Google로 계속하기</button>
+  </div>
+
+  <!-- 가입 (초대코드 + 핸들) -->
+  <div id="view-signup" class="center hidden">
+    <h1>클럽 가입</h1>
+    <p>초대코드와 페이지 주소를 정해주세요.</p>
+    <div class="field">
+      <label>초대코드</label>
+      <input id="in-invite" placeholder="받은 코드를 입력">
+    </div>
+    <div class="field">
+      <label>페이지 주소 (영문 소문자·숫자·하이픈, 2~20자)</label>
+      <input id="in-handle" placeholder="예: syndrome">
+      <p class="hint">나중에 도메인/<b>이-주소</b> 형태로 공개됩니다</p>
+    </div>
+    <div class="field">
+      <label>표시 이름</label>
+      <input id="in-name" placeholder="페이지에 보일 이름">
+    </div>
+    <p class="err" id="signup-err"></p>
+    <button class="btn primary" id="btn-signup">페이지 만들기</button>
+  </div>
+
+  <!-- 페이지 (내 것/남의 것 공용) -->
+  <div id="view-page" class="hidden">
+    <div class="banner"><span class="hint-bn">BANNER — 다음 단계에서 이미지 업로드</span></div>
+    <div class="head-row">
+      <div class="avatar" id="pg-avatar">?</div>
+      <div class="who">
+        <p class="name" id="pg-name">—</p>
+        <p class="handle" id="pg-handle">@—</p>
+      </div>
+    </div>
+    <p class="bio" id="pg-bio"></p>
+
+    <!-- 내 페이지일 때만: 간단 수정 -->
+    <div id="pg-edit" class="card hidden" style="margin-top:20px">
+      <p class="label">QUICK EDIT — 저장이 진짜 되는지 확인용</p>
+      <div class="edit-row">
+        <input id="ed-name" placeholder="표시 이름">
+        <input id="ed-bio" placeholder="한 줄 소개">
+        <button class="btn primary" id="btn-save">저장</button>
+      </div>
+      <p id="msg"></p>
+    </div>
+
+    <!-- 앞으로 채워질 위젯 자리들 -->
+    <div class="grid">
+      <div class="slot"><b>D-DAY 위젯</b><span>2단계</span></div>
+      <div class="slot"><b>커플 설명칸</b><span>2단계</span></div>
+      <div class="slot"><b>캐릭터 단독 소개칸</b><span>2단계</span></div>
+      <div class="slot"><b>BGM 플레이어</b><span>2단계</span></div>
+      <div class="slot"><b>글쓰기 · OOC / 서사 / 타임라인</b><span>3단계</span></div>
+      <div class="slot"><b>갤러리 · 로그 업로드</b><span>4단계</span></div>
+      <div class="slot"><b>방명록</b><span>5단계</span></div>
+      <div class="slot"><b>배너(이웃 링크) 칸</b><span>5단계</span></div>
+    </div>
+  </div>
+
+</div>
+
+<footer>ⓒ LOVERS CLUB · SKELETON</footer>
+
+<script type="module" src="./app.js"></script>
+</body>
+</html>
