@@ -531,7 +531,10 @@
     <div class="p-row">
       <label class="chk"><input type="checkbox" id="s-light"> 밝은 테마</label>
       <label class="chk"><input type="checkbox" id="s-glass"> 카드 투명화 (배경이 비쳐 보임)</label>
-      <label class="chk"><input type="checkbox" id="s-catbar" checked> 카테고리 상단 알약 바</label>
+      <select id="s-catstyle">
+        <option value="bar">카테고리 — 상단 알약 바</option>
+        <option value="widget">카테고리 — 사이드 위젯</option>
+      </select>
     </div>
     <div class="p-row">
       <label class="filelab">배경 이미지 <input type="file" id="s-bg" accept="image/*"></label>

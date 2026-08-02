@@ -117,7 +117,7 @@ async function enterPage(){
   const headEl=document.querySelector('.head');
   if(p.headMode==='side'){ headEl.classList.add('v'); $('#aside').prepend(headEl); }
   else { headEl.classList.remove('v');
-    const cols=document.querySelector('.cols'); cols.parentNode.insertBefore(headEl, cols); }
+    const anchor=$('#catbar'); anchor.parentNode.insertBefore(headEl, anchor); }
   $('#btn-write').classList.toggle('hidden',!st.mine);
   $('#btn-deco').classList.toggle('hidden',!st.mine);
   show('view-page');
@@ -156,9 +156,12 @@ const DEFCOL={search:'l',category:'l',profile:'l',latest:'c',quote:'c',
   dday:'r',bgm:'r',links:'r',banner:'r'};
 function goHome(){ st.cat='home'; applyView(); renderWidgets(); renderCatbar(); }
 function goBoard(cat){ st.cat=cat||'recent'; applyView(); renderWidgets(); renderList(); backToList(); renderCatbar(); }
+function catStyle(){
+  return st.page.catStyle || (st.page.catBar===false ? 'widget' : 'bar');
+}
 function renderCatbar(){
   const bar=$('#catbar');
-  if(st.page.catBar===false){ bar.classList.add('hidden'); return; }
+  if(catStyle()!=='bar'){ bar.classList.add('hidden'); return; }
   bar.classList.remove('hidden');
   bar.innerHTML = `<a data-c="home" class="${st.cat==='home'?'on':''}">HOME</a>`+
     cats().map(c=>`<a data-c="${esc(c)}" class="${st.cat===c?'on':''}">${esc(c.toUpperCase())}</a>`).join('')+
@@ -252,6 +255,7 @@ function renderSide(){
       return;
     }
     if(w.t==='category'){
+      if(catStyle()==='bar') return;   // 알약 바 모드에선 사이드 카테고리 숨김
       const cnt=c=>st.posts.filter(x=>x.cat===c).length;
       d.innerHTML=`<p class="label">CATEGORY</p><ul id="cats">`+
         cats().map(c=>`<li><a data-c="${esc(c)}" class="${st.cat===c?'on':''}">
@@ -657,7 +661,7 @@ function fillSettings(){
   $('#s-sidepos').value=p.sidePos||'right';
   $('#s-light').checked=!!p.light;
   $('#s-glass').checked=!!p.glass;
-  $('#s-catbar').checked=p.catBar!==false;
+  $('#s-catstyle').value=catStyle();
   $('#s-dim').value=p.bgDim??78;
   heroNew=null; bgNew=null;
 }
@@ -675,7 +679,7 @@ $('#s-go').onclick=async()=>{
       sidePos: $('#s-sidepos').value,
       light: $('#s-light').checked,
       glass: $('#s-glass').checked,
-      catBar: $('#s-catbar').checked,
+      catStyle: $('#s-catstyle').value,
       bgDim: parseInt($('#s-dim').value)||78,
       updatedAt:serverTimestamp()
     };
