@@ -14,6 +14,8 @@ import { firebaseConfig } from './firebase-config.js';
 const $ = s => document.querySelector(s);
 const esc = s => String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const VIEWS=['view-setup','view-loading','view-login','view-signup','view-gate','view-page'];
+const CLEAN = !location.hostname.endsWith('github.io');   // 커스텀 도메인이면 깔끔 주소
+const urlFor=(h,p)=> CLEAN ? '/'+h+(p?'/'+p:'') : './?u='+h+(p?'&p='+p:'');
 const show = id => VIEWS.forEach(v=>$('#'+v).classList.toggle('hidden',v!==id));
 const enc=new TextEncoder(), dec=new TextDecoder();
 
@@ -355,7 +357,7 @@ function renderSide(){
     }
     if(w.t==='profile'){
       d.className+=' w-profile';
-      d.innerHTML=(w.img?`<img src="${w.img}" alt="" draggable="false">`:'')+
+      d.innerHTML=(w.img?`<img src="${w.img}" alt="" draggable="false" style="max-height:${+(w.h)||210}px">`:'')+
         (w.text?`<p class="cap">${esc(w.text)}</p>`:'');
       box.appendChild(d); return;
     }
@@ -429,7 +431,7 @@ document.addEventListener('contextmenu',e=>{
 /* ---------- 글 읽기 ---------- */
 function backToList(){ $('#post-view').classList.add('hidden');
   $('#list-view').classList.remove('hidden'); st.cur=null;
-  history.replaceState(null,'','./?u='+st.handle); }
+  history.replaceState(null,'',urlFor(st.handle)); }
 $('#pv-back').onclick=backToList;
 $('#go-home').onclick=goHome;
 async function openPost(id){
@@ -446,11 +448,11 @@ async function openPost(id){
   $('#pv-del').classList.toggle('hidden',!st.mine);
   $('#list-view').classList.add('hidden');
   $('#post-view').classList.remove('hidden');
-  history.replaceState(null,'','./?u='+st.handle+'&p='+id);
+  history.replaceState(null,'',urlFor(st.handle,id));
   window.scrollTo({top:0});
 }
 $('#pv-copy').onclick=()=>{
-  const url=location.origin+location.pathname+'?u='+st.handle+'&p='+(st.cur?.id||'');
+  const url=location.origin+urlFor(st.handle, st.cur?.id||'');
   (navigator.clipboard?navigator.clipboard.writeText(url).then(()=>alert('링크를 복사했어요!\n'+url))
     :Promise.reject()).catch(()=>prompt('이 링크를 복사하세요',url));
 };
@@ -538,6 +540,10 @@ function renderWidEdit(){
   let html=`<p class="p-h">${WNAME[w.t]} 편집</p>`;
   if(w.t==='profile') html+=`
     <div class="p-row"><label class="filelab">사진 <input type="file" id="we-img" accept="image/*"></label></div>
+    <div class="p-row" style="align-items:center">
+      <span style="font-size:12px;color:var(--muted)">사진 높이</span>
+      <input type="range" id="we-h" min="120" max="320" value="${+(w.h)||210}" style="flex:1;min-width:100px">
+    </div>
     <textarea id="we-text" placeholder="아래 캡션 (선택 — 비우면 사진만 꽉 차게)" style="min-height:60px">${w.text||''}</textarea>`;
   if(w.t==='quote') html+=`
     <textarea id="we-text" placeholder="걸어둘 문장" style="min-height:90px">${w.text||''}</textarea>`;
@@ -571,6 +577,7 @@ function renderWidEdit(){
   $('#wid-edit').innerHTML=html;
   // 라이브 바인딩: 쓰는 즉시 draft에 반영
   const t=$('#we-text'); if(t) t.addEventListener('input',()=>{ w.text=t.value; });
+  const hg=$('#we-h'); if(hg) hg.addEventListener('input',()=>{ w.h=+hg.value; });
   const img=$('#we-img'); if(img) img.addEventListener('change',async e=>{
     const f=e.target.files[0]; if(!f) return; msg('사진 압축 중...');
     w.img=await compress(f,500,.8); msg('사진 반영됨 — [위젯 구성 저장]을 눌러주세요.');
@@ -790,7 +797,7 @@ async function signup(){
       tx.update(iv,{used:true,usedBy:st.me.uid,usedAt:serverTimestamp()});
     });
     st.myHandle=handle; renderSeal();
-    history.replaceState(null,'','./?u='+handle); loadPage(handle);
+    history.replaceState(null,'',urlFor(handle)); loadPage(handle);
   }catch(e){ err.textContent=e.message; }
 }
 $('#btn-login').onclick=()=>signInWithPopup(auth,new GoogleAuthProvider()).catch(()=>{});
@@ -807,5 +814,5 @@ onAuthStateChanged(auth,async user=>{
   if(viewing) loadPage(viewing);
   else if(!st.me) show('view-login');
   else if(!st.myHandle) show('view-signup');
-  else { history.replaceState(null,'','./?u='+st.myHandle); loadPage(st.myHandle); }
+  else { history.replaceState(null,'',urlFor(st.myHandle)); loadPage(st.myHandle); }
 });

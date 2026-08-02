@@ -438,15 +438,16 @@
   body.theme-win98 footer::before{content:'─── ▣ ───'}
   /* ═══ 테마 프리셋: VHS ═══ */
   body.theme-vhs{
-    --bg:hsl(260 15% 6%); --card:hsl(260 12% 10%); --card2:hsl(260 14% 8%);
-    --line:hsl(260 12% 24%); --ink:hsl(0 0% 94%); --body:hsl(260 8% 72%);
-    --muted:hsl(260 6% 48%); --pri:hsl(340 80% 62%)}
+    --bg:hsl(var(--h) 15% 6%); --card:hsl(var(--h) 12% 10%); --card2:hsl(var(--h) 14% 8%);
+    --line:hsl(var(--h) 12% 24%); --ink:hsl(0 0% 94%); --body:hsl(var(--h) 8% 72%);
+    --muted:hsl(var(--h) 6% 48%); --pri:hsl(calc(var(--h) + 118) 80% 62%)}
   body.theme-vhs::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:98;
     background:repeating-linear-gradient(0deg, rgba(255,255,255,.025) 0 1px, transparent 1px 3px)}
   body.theme-vhs .seal::before{content:'● REC ';color:hsl(0 80% 58%);
     animation:blink 1.1s steps(1) infinite}
   @keyframes blink{50%{opacity:0}}
-  body.theme-vhs .head h1{text-shadow:1.5px 0 hsl(340 90% 60% / .6), -1.5px 0 hsl(190 90% 60% / .6)}
+  body.theme-vhs .head h1{text-shadow:1.5px 0 hsl(calc(var(--h) + 118) 90% 60% / .6),
+    -1.5px 0 hsl(calc(var(--h) - 32) 90% 60% / .6)}
   body.theme-vhs .label::before{content:'▮▶ '}
   body.theme-vhs footer::before{content:'─── ▶ PLAY ───'}
   footer{margin-top:36px;text-align:center;
