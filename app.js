@@ -405,10 +405,11 @@ function renderList(){
     const items = st.cat==='__gal' ? st.gallery : st.gallery.filter(g=>g.cat===st.cat);
     $('#rows').innerHTML = items.length
       ? `<div class="gal-grid">`+items.map(g=>
-          `<a data-gg="${g.id}"><img src="${g.img}" alt="" draggable="false"></a>`).join('')+`</div>`
+          `<a data-gg="${g.id}"><img src="${g.img}" alt="" draggable="false">${st.mine?`<i class="gdel" data-gx="${g.id}">✕</i>`:''}</a>`).join('')+`</div>`
       : '<p class="pl-empty">아직 이미지가 없습니다.</p>';
     $('#more-btn').style.display='none';
-    document.querySelectorAll('[data-gg]').forEach(el=>el.onclick=()=>{
+    document.querySelectorAll('[data-gg]').forEach(el=>el.onclick=e=>{
+      if(e.target.dataset.gx){ e.stopPropagation(); delGal(e.target.dataset.gx); return; }
       const g=st.gallery.find(x=>x.id===el.dataset.gg);
       if(g){ $('#lb-img').src=g.img; $('#lb').classList.add('show'); }
     });
@@ -440,12 +441,20 @@ function renderList(){
 function renderGal(all){
   const arr=all?st.gallery:st.gallery.slice(0,4);
   $('#gal').innerHTML = arr.length?arr.map(g=>
-    `<a data-g="${g.id}"><img src="${g.img}" alt="" draggable="false"></a>`).join('')
+    `<a data-g="${g.id}"><img src="${g.img}" alt="" draggable="false">${st.mine?`<i class="gdel" data-gx="${g.id}">✕</i>`:''}</a>`).join('')
     :'<p class="pl-empty">아직 이미지가 없습니다.</p>';
-  document.querySelectorAll('#gal a').forEach(a=>a.onclick=()=>{
+  document.querySelectorAll('#gal a').forEach(a=>a.onclick=e=>{
+    if(e.target.dataset.gx){ e.stopPropagation(); delGal(e.target.dataset.gx); return; }
     const g=st.gallery.find(x=>x.id===a.dataset.g);
     if(g){ $('#lb-img').src=g.img; $('#lb').classList.add('show'); }
   });
+}
+async function delGal(id){
+  const g=st.gallery.find(x=>x.id===id); if(!g) return;
+  if(!confirm('이 이미지를 삭제할까요?'+(g.title?`\n(${g.title})`:''))) return;
+  await deleteDoc(doc(db,'pages',st.handle,'gallery',id));
+  st.gallery=st.gallery.filter(x=>x.id!==id);
+  renderGal(); if(st.cat==='__gal'||isG(st.cat)) renderList(); renderSide();
 }
 $('#gal-more').onclick=()=>goBoard('__gal');
 $('#lb').onclick=()=>$('#lb').classList.remove('show');

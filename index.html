@@ -229,7 +229,11 @@
   .gal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding-top:4px}
   @media(max-width:640px){.gal-grid{grid-template-columns:repeat(2,1fr)}}
   .gal-grid a{aspect-ratio:4/3;border-radius:9px;overflow:hidden;cursor:pointer;
-    border:1px solid var(--line);background:var(--card2);display:block}
+    border:1px solid var(--line);background:var(--card2);display:block;position:relative}
+  .gdel{position:absolute;top:6px;right:6px;z-index:2;width:22px;height:22px;
+    border-radius:50%;background:rgba(8,9,14,.75);color:#fff;font-size:11px;
+    font-style:normal;display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .gdel:hover{background:hsl(6 60% 45%)}
   .gal-grid img{width:100%;height:100%;object-fit:cover;display:block;
     user-select:none;-webkit-user-drag:none;-webkit-touch-callout:none}
   .pv-actions{margin-top:24px;padding-top:14px;border-top:1px solid var(--line);
