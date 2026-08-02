@@ -8,23 +8,23 @@
 <style>
   :root{
     --h:222;
-    --bg:hsl(var(--h) 10% 7%);
-    --card:hsl(var(--h) 12% 11%);
-    --card2:hsl(var(--h) 12% 9%);
-    --line:hsl(var(--h) 12% 19%);
-    --ink:hsl(var(--h) 20% 92%);
-    --body:hsl(var(--h) 12% 72%);
-    --muted:hsl(var(--h) 8% 46%);
-    --pri:hsl(var(--h) 45% 68%);
+    --bg:hsl(var(--h) 32% 9%);
+    --card:hsl(var(--h) 28% 13%);
+    --card2:hsl(var(--h) 30% 10%);
+    --line:hsl(var(--h) 28% 23%);
+    --ink:hsl(var(--h) 35% 93%);
+    --body:hsl(var(--h) 20% 74%);
+    --muted:hsl(var(--h) 15% 50%);
+    --pri:hsl(var(--h) 60% 66%);
   }
   *{margin:0;padding:0;box-sizing:border-box}
   body{background:var(--bg);color:var(--body);
     font-family:'Noto Sans KR',sans-serif;font-weight:300;
     line-height:1.85;min-height:100vh;padding:44px 18px 70px;
     background-image:
-      radial-gradient(ellipse 55% 40% at 15% 0%, hsl(var(--h) 40% 22% / .5), transparent 65%),
-      radial-gradient(ellipse 50% 45% at 90% 90%, hsl(var(--h) 40% 18% / .55), transparent 65%),
-      radial-gradient(hsl(var(--h) 20% 24% / .5) 1px, transparent 1px);
+      radial-gradient(ellipse 55% 40% at 15% 0%, hsl(var(--h) 55% 26% / .65), transparent 65%),
+      radial-gradient(ellipse 50% 45% at 90% 90%, hsl(var(--h) 55% 22% / .7), transparent 65%),
+      radial-gradient(hsl(var(--h) 35% 30% / .55) 1px, transparent 1px);
     background-size:auto,auto,26px 26px;background-attachment:fixed}
   a{text-decoration:none;color:inherit}
   input,textarea,select,button{font-family:inherit;font-size:14px}
@@ -53,6 +53,20 @@
     font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.25em;color:var(--muted)}
   .seal a{cursor:pointer}
   .seal a:hover{color:var(--ink)}
+  body.side-left .cols{grid-template-columns:252px 1fr}
+  body.side-left aside{order:-1}
+  body.glass .side{background:hsl(var(--h) 28% 13% / .55);
+    backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
+  body.light.glass .side{background:hsl(var(--h) 40% 99% / .55)}
+  body.glass .head,body.glass #post-view article{
+    background:hsl(var(--h) 28% 13% / .6);
+    backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
+  body.light.glass .head,body.light.glass #post-view article{
+    background:hsl(var(--h) 40% 99% / .6)}
+  #bgphoto{position:fixed;inset:0;z-index:-1;background-size:cover;background-position:center}
+  #bgphoto::after{content:'';position:absolute;inset:0;
+    background:hsl(var(--h) 32% 9% / .78)}
+  body.light #bgphoto::after{background:hsl(var(--h) 35% 95% / .8)}
   .fab{position:fixed;right:20px;bottom:20px;z-index:9;
     width:44px;height:44px;border-radius:50%;border:1px solid var(--line);
     background:var(--card);color:var(--body);font-size:16px;cursor:pointer}
@@ -208,10 +222,11 @@
 
   /* ── 관리 패널 ── */
   #panel{position:fixed;inset:0;background:rgba(5,6,9,.7);z-index:70;
-    display:none;align-items:flex-start;justify-content:center;overflow:auto;padding:30px 14px}
+    display:none;align-items:center;justify-content:center;padding:20px 14px}
   #panel.show{display:flex}
   .p-card{background:var(--card);border:1px solid var(--line);border-radius:16px;
-    width:min(700px,100%);padding:26px 24px;position:relative;margin-bottom:40px}
+    width:min(700px,100%);padding:26px 24px;position:relative;
+    max-height:90vh;overflow:auto}
   .p-x{position:absolute;top:14px;right:16px;border:none;background:none;
     color:var(--muted);cursor:pointer;font-size:14px}
   .p-x:hover{color:var(--ink)}
@@ -302,6 +317,7 @@
 </head>
 <body>
 
+<div id="bgphoto"></div>
 <div class="seal"><span id="seal-txt">LOVELOG</span><a id="seal-auth"></a></div>
 
 <div class="wrap">
@@ -451,7 +467,18 @@
         <option value="wide">헤더 — 가로 (상단 와이드)</option>
         <option value="side">헤더 — 세로 (사이드 프로필형)</option>
       </select>
+      <select id="s-sidepos">
+        <option value="right">사이드바 — 오른쪽</option>
+        <option value="left">사이드바 — 왼쪽</option>
+      </select>
+    </div>
+    <div class="p-row">
       <label class="chk"><input type="checkbox" id="s-light"> 밝은 테마</label>
+      <label class="chk"><input type="checkbox" id="s-glass"> 카드 투명화 (배경이 비쳐 보임)</label>
+    </div>
+    <div class="p-row">
+      <label class="filelab">배경 이미지 <input type="file" id="s-bg" accept="image/*"></label>
+      <button class="rmv" id="s-bg-clear" style="font-size:11px">배경 제거</button>
     </div>
     <div class="p-row" style="align-items:center">
       <span style="font-size:12px;color:var(--body)">테마 색 — 찍으면 홈 전체가 이 색으로 물들어요</span>

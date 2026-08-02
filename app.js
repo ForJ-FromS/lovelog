@@ -99,6 +99,7 @@ async function loadPage(handle){
 }
 async function enterPage(){
   const p=st.page, h=st.handle;
+  document.documentElement.style.setProperty('--h', p.hue ?? 222);
   document.title=(p.name||h)+' — LOVELOG';
   $('#pg-name').textContent=p.name||h;
   $('#pg-sub').textContent=p.sub||'';
@@ -108,6 +109,9 @@ async function enterPage(){
   $('#pg-dday-main').innerHTML = dd0?`<p class="n">${esc(dday(dd0.date))}</p><p class="t">${esc(dd0.title)}</p>`:'';
   // 레이아웃 · 테마
   document.body.classList.toggle('light', !!p.light);
+  document.body.classList.toggle('side-left', p.sidePos==='left');
+  document.body.classList.toggle('glass', !!p.glass);
+  $('#bgphoto').style.backgroundImage = p.bgImg?`url(${p.bgImg})`:'';
   const headEl=document.querySelector('.head');
   if(p.headMode==='side'){ headEl.classList.add('v'); $('#aside').prepend(headEl); }
   else { headEl.classList.remove('v');
@@ -343,6 +347,9 @@ function openPanel(mode){
   $('#panel').classList.toggle('big', mode==='deco');
   msg(''); $('#panel').classList.add('show');
 }
+$('#s-color').addEventListener('input',e=>{
+  document.documentElement.style.setProperty('--h', hueFromHex(e.target.value));
+});
 $('#btn-write').onclick=()=>{ refreshWriteCats(); openPanel('write'); };
 $('#btn-deco').onclick=()=>{ fillSettings(); fillWidgets(); openPanel('deco'); };
 
@@ -502,18 +509,30 @@ $('#g-go').onclick=async()=>{
   }catch(e){ msg('오류: '+e.message); }
 };
 
-let heroNew=null;
+let heroNew=null; let bgNew=null;
 $('#s-hero').addEventListener('change',async e=>{
   const f=e.target.files[0]; if(!f) return;
   msg('대문 이미지 압축 중...'); heroNew=await compress(f,1600,.78); msg('');
 });
+$('#s-bg').addEventListener('change',async e=>{
+  const f=e.target.files[0]; if(!f) return;
+  msg('배경 이미지 압축 중...'); bgNew=await compress(f,1600,.7);
+  document.documentElement && ($('#bgphoto').style.backgroundImage=`url(${bgNew})`);
+  msg('배경 미리보기 적용 — [설정 저장]을 눌러야 저장돼요.');
+});
+$('#s-bg-clear').onclick=()=>{
+  bgNew=''; $('#bgphoto').style.backgroundImage='';
+  msg('배경 제거 — [설정 저장]을 눌러야 확정돼요.');
+};
 function fillSettings(){
   const p=st.page;
   $('#s-name').value=p.name||''; $('#s-sub').value=p.sub||'';
   $('#s-gate').value=''; $('#s-color').value=hexFromHue(p.hue??222);
   $('#s-headmode').value=p.headMode||'wide';
+  $('#s-sidepos').value=p.sidePos||'right';
   $('#s-light').checked=!!p.light;
-  heroNew=null;
+  $('#s-glass').checked=!!p.glass;
+  heroNew=null; bgNew=null;
 }
 $('#s-go').onclick=async()=>{
   msg('저장 중...');
@@ -523,9 +542,12 @@ $('#s-go').onclick=async()=>{
       name:$('#s-name').value.trim()||st.handle,
       sub:$('#s-sub').value.trim(),
       heroImg: heroNew ?? st.page.heroImg ?? '',
+      bgImg: bgNew ?? st.page.bgImg ?? '',
       hue: hueFromHex($('#s-color').value),
       headMode: $('#s-headmode').value,
+      sidePos: $('#s-sidepos').value,
       light: $('#s-light').checked,
+      glass: $('#s-glass').checked,
       updatedAt:serverTimestamp()
     };
     if(gateIn) data.gate=await sha256(gateIn);
