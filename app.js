@@ -23,6 +23,9 @@ const app=initializeApp(firebaseConfig), auth=getAuth(app), db=getFirestore(app)
 const st = { me:null, myHandle:null, handle:null, page:null, posts:[], gallery:[],
              cat:'recent', q:'', cur:null, curBody:null, mine:false };
 
+const heroList=()=> (st.page?.heroImgs&&st.page.heroImgs.length)
+  ? st.page.heroImgs : (st.page?.heroImg?[st.page.heroImg]:[]);
+
 /* ---------- 유틸 ---------- */
 const b64=b=>btoa(String.fromCharCode(...new Uint8Array(b)));
 const ub64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
@@ -85,14 +88,27 @@ async function loadPage(handle){
   st.page=snap.data();
   st.mine = st.me && st.page.owner===st.me.uid;
   document.documentElement.style.setProperty('--h', st.page.hue ?? 222);
-  // 대문 비밀번호
-  if(st.page.gate && !st.mine && sessionStorage.getItem('gate_'+handle)!==st.page.gate){
+  // 입장 대문: 방문 시 1회(세션) + 비번 홈은 비번 입력
+  const needPw = st.page.gate && !st.mine
+    && sessionStorage.getItem('gate_'+handle)!==st.page.gate;
+  const seen = sessionStorage.getItem('ent_'+handle);
+  if(!st.mine && (needPw || !seen)){
+    document.documentElement.style.setProperty('--h', st.page.hue ?? 222);
+    const imgs = heroList();
+    $('#enter-cover').style.backgroundImage = imgs[0]?`url(${imgs[0]})`:'';
+    $('#enter-over').textContent = '@'+handle.toUpperCase();
     $('#gate-name').textContent = st.page.name || handle;
+    $('#enter-text').textContent = st.page.enterText || '';
+    $('#gate-pw-wrap').classList.toggle('hidden', !needPw);
     show('view-gate');
     $('#gate-go').onclick = async ()=>{
-      const h=await sha256($('#gate-pw').value);
-      if(h===st.page.gate){ sessionStorage.setItem('gate_'+handle,h); enterPage(); }
-      else $('#gate-err').textContent='비밀번호가 맞지 않아요.';
+      if(needPw){
+        const hsh=await sha256($('#gate-pw').value);
+        if(hsh!==st.page.gate){ $('#gate-err').textContent='비밀번호가 맞지 않아요.'; return; }
+        sessionStorage.setItem('gate_'+handle, hsh);
+      }
+      sessionStorage.setItem('ent_'+handle,'1');
+      enterPage();
     };
     return;
   }
@@ -105,7 +121,19 @@ async function enterPage(){
   $('#pg-name').textContent=p.name||h;
   $('#pg-sub').textContent=p.sub||'';
   $('#pg-over').textContent='@'+h.toUpperCase();
-  $('#pg-hero').style.backgroundImage = p.heroImg?`url(${p.heroImg})`:'';
+  const hs=heroList();
+  clearInterval(st.heroTimer);
+  const hA=$('#pg-hero'), hB=$('#pg-hero2');
+  hA.style.backgroundImage = hs[0]?`url(${hs[0]})`:''; hA.style.opacity=1; hB.style.opacity=0;
+  if(hs.length>1){
+    let i=0, front=true;
+    st.heroTimer=setInterval(()=>{
+      i=(i+1)%hs.length;
+      const showEl=front?hB:hA, hideEl=front?hA:hB;
+      showEl.style.backgroundImage=`url(${hs[i]})`;
+      showEl.style.opacity=1; hideEl.style.opacity=0; front=!front;
+    }, 5000);
+  }
   const dd0=(p.ddays||[])[0];
   $('#pg-dday-main').innerHTML = dd0?`<p class="n">${esc(dday(dd0.date))}</p><p class="t">${esc(dd0.title)}</p>`:'';
   // 레이아웃 · 테마
@@ -648,9 +676,21 @@ $('#g-go').onclick=async()=>{
 };
 
 let heroNew=null; let bgNew=null;
+let heroDraft=[];
+function renderHeroList(){
+  $('#s-hero-list').innerHTML = heroDraft.map((im,i)=>
+    `<span class="thumb-x"><img class="thumb" src="${im}">
+     <button class="rm2" data-hx="${i}">✕</button></span>`).join('')
+    || '<span class="note">아직 사진이 없어요 — 위에서 추가하세요.</span>';
+  $('#s-hero-list').querySelectorAll('[data-hx]').forEach(b=>b.onclick=()=>{
+    heroDraft.splice(+b.dataset.hx,1); renderHeroList(); });
+}
 $('#s-hero').addEventListener('change',async e=>{
   const f=e.target.files[0]; if(!f) return;
-  msg('대문 이미지 압축 중...'); heroNew=await compress(f,1600,.78); msg('');
+  msg('헤더 사진 압축 중...');
+  heroDraft.push(await compress(f,1500,.75));
+  renderHeroList(); msg('추가됨 — [설정 저장]을 눌러야 확정돼요.');
+  e.target.value='';
 });
 $('#s-bg').addEventListener('change',async e=>{
   const f=e.target.files[0]; if(!f) return;
@@ -672,7 +712,9 @@ function fillSettings(){
   $('#s-glass').checked=!!p.glass;
   $('#s-catstyle').value=catStyle();
   $('#s-dim').value=p.bgDim??78;
-  heroNew=null; bgNew=null;
+  heroDraft=[...heroList()]; renderHeroList();
+  $('#s-enter').value=p.enterText||'';
+  bgNew=null;
 }
 async function saveSettings(){
   msg('저장 중...');
@@ -681,7 +723,9 @@ async function saveSettings(){
     const data={
       name:$('#s-name').value.trim()||st.handle,
       sub:$('#s-sub').value.trim(),
-      heroImg: heroNew ?? st.page.heroImg ?? '',
+      heroImgs: heroDraft,
+      heroImg: heroDraft[0]||'',
+      enterText: $('#s-enter').value.trim(),
       bgImg: bgNew ?? st.page.bgImg ?? '',
       hue: hueFromHex($('#s-color').value),
       headMode: $('#s-headmode').value,
