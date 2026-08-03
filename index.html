@@ -140,6 +140,7 @@
   /* ═══ 헤더(대문) — 레이아웃 차용, 장식은 중립 ═══ */
   .head{position:relative;border:1px solid var(--line);border-radius:16px;
     overflow:hidden;min-height:var(--headH,380px);display:flex;align-items:flex-end;
+    transition:min-height .7s ease;
     background:linear-gradient(170deg,var(--card),var(--card2))}
   .head::before,.head::after{content:'';position:absolute;z-index:3;
     width:16px;height:16px;border:1.5px solid hsl(var(--h) calc(40% * var(--sf,1)) 62% / .8)}
@@ -407,7 +408,7 @@
 
   /* ── 세로 헤더 모드 ── */
   .head.v{min-height:0;display:block;margin-bottom:0}
-  .head.v .bgimg{position:static;height:var(--headH,150px);display:block}
+  .head.v .bgimg{position:static;height:var(--headH,150px);display:block;transition:height .7s ease}
   .head.v .shade{display:none}
   .head.v .in{padding:16px 18px 14px}
   .head.v h1{font-size:17px}
@@ -1110,6 +1111,16 @@
       <span class="note">투명 배경 PNG · 32~64px 권장</span>
     </div>
     <p class="p-h">커스텀 CSS — 아는 사람만 만지세요</p>
+    <div class="p-row" style="align-items:center">
+      <select id="s-csspre" style="flex:1;margin-bottom:0">
+        <option value="rain">🌧 비 오는 창가 — 테마색 빗줄기가 스르르</option>
+        <option value="film">🎞 필름 카메라 — 비네트 + 미세 그레인</option>
+        <option value="crt">📺 CRT 스캔라인 — 가로줄 + 색수차 제목</option>
+        <option value="scrap">✂ 점선 스크랩북 — 점선 테두리 카드</option>
+      </select>
+      <button class="rmv" id="s-csspre-add" style="font-size:11px">넣어보기</button>
+    </div>
+    <p class="note" style="margin-top:-4px">고르고 [넣어보기] → 바로 미리보기 · 아래 칸에 코드가 들어가요. 지우려면 그 부분만 지우거나 [비우기].</p>
     <textarea id="s-css" placeholder="/* 예: .side{border-radius:0} */" style="min-height:110px;font-family:'IBM Plex Mono',monospace;font-size:12px"></textarea>
     <div class="p-row">
       <button class="rmv" id="s-css-clear" style="font-size:11px">비우기</button>
@@ -1144,6 +1155,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=75"></script>
+<script type="module" src="./app.js?v=77"></script>
 </body>
 </html>

@@ -52,6 +52,7 @@ async function resolveImgs(p){
 }
 function autoHeadHeight(o){
   const head=document.querySelector('.head'); if(!head||!o||!o.img) return;
+  st.autoHero=o;                                            // resize·슬라이드 재계산용
   if(st.page?.headFit!=='auto'){ head.style.removeProperty('min-height'); return; }
   const im=new Image();
   im.onload=()=>{
@@ -65,6 +66,9 @@ function autoHeadHeight(o){
   };
   im.src=o.img;
 }
+let hhRszT=null;
+window.addEventListener('resize',()=>{ clearTimeout(hhRszT);        // 창 크기 변경 시 auto 높이 재계산
+  hhRszT=setTimeout(()=>{ if(st.page?.headFit==='auto'&&st.autoHero) autoHeadHeight(st.autoHero); },180); });
 const setHeroBg=(el,o)=>{ el.style.backgroundImage=`url(${o.img})`;
   el.style.backgroundPosition=`${o.x}% ${o.y}%`;
   const fit = st.page?.headFit==='contain' ? 'contain' : 'cover';   // auto도 cover로 채움(높이를 사진에 맞추므로 잘림 없음)
@@ -363,6 +367,7 @@ async function enterPage(){
       i=(i+1)%hs.length;
       const showEl=front?hB:hA, hideEl=front?hA:hB;
       setHeroBg(showEl,hs[i]);
+      autoHeadHeight(hs[i]);                               // auto면 이 사진 비율로 높이도 전환
       showEl.style.opacity=1; hideEl.style.opacity=0; front=!front;
     }, 5000);
   }
@@ -1205,10 +1210,16 @@ function openPanel(mode){
   $('#panel').classList.toggle('big', mode==='deco');
   msg(''); $('#panel').classList.add('show');
 }
+function hhSliderSync(){                                     // auto면 수동 높이 슬라이더 잠금
+  const a=$('#s-headfit').value==='auto', sl=$('#s-headh');
+  sl.disabled=a; sl.style.opacity=a?'.35':'';
+  $('#s-headh-v').textContent=a?'자동':(sl.value+'px'); }
 $('#s-headh').addEventListener('input',e=>{
+  if($('#s-headfit').value==='auto') return;
   $('#s-headh-v').textContent=e.target.value+'px';
   document.documentElement.style.setProperty('--headH', e.target.value+'px'); });
 $('#s-headfit').addEventListener('change',e=>{
+  hhSliderSync();
   document.body.classList.toggle('head-contain', e.target.value==='contain');
   const head=document.querySelector('.head');
   if(e.target.value!=='auto' && head) head.style.removeProperty('min-height');
@@ -1997,6 +2008,47 @@ $('#s-cur').addEventListener('change',async e=>{
 });
 $('#s-cur-clear').onclick=()=>{ curNew=''; msg('기본 커서로 — [설정 저장]으로 확정돼요.'); };
 $('#s-css-clear').onclick=()=>{ $('#s-css').value=''; msg('CSS 비움 — [설정 저장]으로 확정돼요.'); };
+
+/* ── 컨셉 CSS 프리셋 모음 ── */
+const CSS_PRESETS={
+  rain:{ nm:'비 오는 창가', css:
+`/* ═ 프리셋: 비 오는 창가 ═ */
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:4;opacity:.28;
+background-image:linear-gradient(78deg,transparent 46%,var(--pri) 49%,transparent 52%);
+background-size:64px 150px;
+animation:pzRain .75s linear infinite}
+@keyframes pzRain{from{background-position:0 0}to{background-position:0 150px}}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:4;
+background:radial-gradient(ellipse at 50% -10%,hsl(var(--h) 30% 20% / .25),transparent 55%)}`},
+  film:{ nm:'필름 카메라', css:
+`/* ═ 프리셋: 필름 카메라 ═ */
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:5;
+background:radial-gradient(ellipse at center,transparent 52%,rgba(0,0,0,.32) 100%)}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:5;opacity:.05;
+background:
+repeating-linear-gradient(0deg,rgba(255,255,255,.6) 0 1px,transparent 1px 3px),
+repeating-linear-gradient(90deg,rgba(0,0,0,.6) 0 1px,transparent 1px 4px)}
+.head .bgimg,#bgphoto{filter:saturate(.85) contrast(1.05) sepia(.08)}`},
+  crt:{ nm:'CRT 스캔라인', css:
+`/* ═ 프리셋: CRT 스캔라인 ═ */
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:6;
+background:repeating-linear-gradient(0deg,rgba(0,0,0,.12) 0 1px,transparent 1px 3px)}
+.head h1{text-shadow:1px 0 hsl(calc(var(--h) + 120) 80% 65% / .45),
+-1px 0 hsl(calc(var(--h) - 120) 80% 65% / .45)}`},
+  scrap:{ nm:'점선 스크랩북', css:
+`/* ═ 프리셋: 점선 스크랩북 ═ */
+.side,.head,#post-view article{border-style:dashed;border-width:1.5px}
+.label{border-bottom:1px dotted var(--line);padding-bottom:4px}`}
+};
+$('#s-csspre-add').onclick=()=>{
+  const k=$('#s-csspre').value, pr=CSS_PRESETS[k]; if(!pr) return;
+  const box=$('#s-css');
+  if(box.value.includes(`프리셋: ${pr.nm}`)){ msg('이미 들어있는 프리셋이에요.'); return; }
+  box.value=(box.value.trim()?box.value.trim()+'\n\n':'')+pr.css;
+  let ucss=document.getElementById('user-css');
+  if(ucss) ucss.textContent=box.value;                       // 즉시 미리보기
+  msg(`'${pr.nm}' 넣었어요 — 마음에 들면 [설정 저장]! (겹치면 아래 프리셋이 우선돼요)`);
+};
 $('#s-bg').addEventListener('change',async e=>{
   const f=e.target.files[0]; if(!f) return;
   msg('배경 이미지 업로드 중...'); bgNew=await upFile(f,2400,.9,260);
@@ -2015,6 +2067,7 @@ function fillSettings(){
   $('#s-gate').value=''; gateClear=false; renderGateState(); priVal=null; $('#s-pri').value=p.priColor||'#9db4ff'; $('#s-color').value=hslToHex(p.hue??222, p.sat??60, p.lum??62);
   $('#s-headmode').value=p.headMode||'wide'; $('#s-headh').value=p.headH||380; $('#s-headfit').value=p.headFit||'cover'; $('#s-headh-v').textContent=(p.headH||380)+'px';
   $('#s-sidepos').value=p.sidePos||'right';
+  hhSliderSync();
   $('#s-light').checked=!!p.light;
   $('#s-glass').checked=!!p.glass;
   $('#s-catstyle').value=catStyle();
