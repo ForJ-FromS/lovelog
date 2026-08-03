@@ -54,8 +54,28 @@ function compress(file,maxW,q){ return new Promise((res,rej)=>{
   const img=new Image(); img.onload=()=>{ const sc=Math.min(1,maxW/img.width),
     c=document.createElement('canvas'); c.width=Math.round(img.width*sc);
     c.height=Math.round(img.height*sc);
-    c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-    res(c.toDataURL('image/jpeg',q)); }; img.onerror=rej; img.src=URL.createObjectURL(file); });}
+    const x=c.getContext('2d'); x.drawImage(img,0,0,c.width,c.height);
+    let alpha=false;
+    if(file.type!=='image/jpeg'){
+      try{ const d=x.getImageData(0,0,c.width,c.height).data;
+        const step=Math.max(4,(Math.floor(d.length/4/6000)||1)*4);
+        for(let i=3;i<d.length;i+=step){ if(d[i]<250){ alpha=true; break; } }
+      }catch(_){}
+    }
+    res(alpha ? c.toDataURL('image/png') : c.toDataURL('image/jpeg',q)); };
+  img.onerror=rej; img.src=URL.createObjectURL(file); });}
+async function compressTo(file,maxW,targetKB){
+  let w=maxW, out='';
+  for(let pass=0; pass<3; pass++){
+    for(const q of [.72,.6,.5,.42,.34]){
+      out=await compress(file,w,q);
+      if(out.length<=targetKB*1370) return out;
+    }
+    w=Math.round(w*.8);
+  }
+  return out;
+}
+const kb=s=>Math.round(String(s||'').length/1370);
 function hexToHsl(hex){
   const r=parseInt(hex.slice(1,3),16)/255,g=parseInt(hex.slice(3,5),16)/255,b=parseInt(hex.slice(5,7),16)/255;
   const mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn,l=(mx+mn)/2;
@@ -511,7 +531,7 @@ function renderSide(){
     }
     if(w.t==='quote'){
       d.className+=' w-quote';
-      d.innerHTML=`<span class="qm">❝</span><p>${esc(w.text||'')}</p>`;
+      d.innerHTML=`<span class="qm">❝</span><p>${esc(w.text||'').replace(/\n/g,'<br>')}</p>`;
       box.appendChild(d); return;
     }
     if(w.t==='links'){
@@ -1037,9 +1057,10 @@ $('#wid-save').onclick=async()=>{
   if(editIdx>=0 && draft[editIdx]) syncWid(draft[editIdx]);
   msg('저장 중...');
   try{
-    if(JSON.stringify(draft).length+JSON.stringify(pdraft.ddays).length>750000){
+    const wsz=JSON.stringify(draft).length+JSON.stringify(pdraft.ddays).length;
+    if(wsz>750000){
       msg('위젯 이미지 용량이 너무 커요 — 배너/사진 수를 줄여주세요.');
-      alert('이미지 용량이 커서 저장하지 못했어요. 배너나 사진 수를 줄여주세요.'); return; }
+      alert('위젯 이미지 용량 초과!\n\n위젯 합산 한도: 약 750KB\n현재: 약 '+Math.round(wsz/1370)+'KB\n\n배너·프로필·디데이 사진 수를 줄이거나 다시 올려주세요.'); return; }
     const dd=pdraft.ddays.filter(x=>x.title&&x.date);
     await updateDoc(doc(db,'pages',st.handle),{side:draft, ddays:dd, bgm:pdraft.bgm});
     st.page.side=JSON.parse(JSON.stringify(draft));
@@ -1154,14 +1175,14 @@ function renderHeroList(){
 $('#s-hero').addEventListener('change',async e=>{
   const f=e.target.files[0]; if(!f) return;
   msg('헤더 사진 압축 중...');
-  heroDraft.push({img:await compress(f,1500,.75),x:50,y:50,z:100});
+  heroDraft.push({img:await compressTo(f,1500,230),x:50,y:50,z:100});
   renderHeroList(); msg('추가됨 — [설정 저장]을 눌러야 확정돼요.');
   e.target.value='';
 });
 $('#s-egate').addEventListener('change',async e=>{
   const f=e.target.files[0]; if(!f) return;
   msg('입장 이미지 압축 중...');
-  egateNew=await compress(f,1500,.75); renderEgate();
+  egateNew=await compressTo(f,1500,240); renderEgate();
   msg('추가됨 — [설정 저장]을 눌러야 확정돼요.'); e.target.value='';
 });
 $('#s-egate-clear').onclick=()=>{ egateNew=''; renderEgate();
@@ -1194,7 +1215,7 @@ $('#s-cur-clear').onclick=()=>{ curNew=''; msg('기본 커서로 — [설정 저
 $('#s-css-clear').onclick=()=>{ $('#s-css').value=''; msg('CSS 비움 — [설정 저장]으로 확정돼요.'); };
 $('#s-bg').addEventListener('change',async e=>{
   const f=e.target.files[0]; if(!f) return;
-  msg('배경 이미지 압축 중...'); bgNew=await compress(f,1600,.7);
+  msg('배경 이미지 압축 중...'); bgNew=await compressTo(f,1600,260);
   document.documentElement && ($('#bgphoto').style.backgroundImage=`url(${bgNew})`);
   document.body.classList.add('has-bg');
   msg('배경 미리보기 적용 — [설정 저장]을 눌러야 저장돼요.');
@@ -1258,7 +1279,11 @@ async function saveSettings(){
     };
     if(gateIn) data.gate=await sha256(gateIn);
     else if(gateIn==='' && $('#s-gate').dataset.clear==='1') data.gate='';
-    if(JSON.stringify(data).length>900000){ msg('이미지 용량이 커서 저장할 수 없어요.'); return; }
+    if(JSON.stringify(data).length>900000){
+      const heroKB=(data.heroImgs||[]).reduce((t,o)=>t+kb(o.img||o),0);
+      msg('이미지 용량 초과 — 자세한 내용은 안내창을 확인하세요.');
+      alert('저장 용량 초과!\n\n홈 전체 꾸미기 합산 한도: 약 900KB\n(서버 문서 1MB 제한 때문이에요)\n\n현재 이 설정의 용량:\n· 헤더 사진 '+(data.heroImgs||[]).length+'장 — 약 '+heroKB+'KB\n· 입장 화면 이미지 — 약 '+kb(data.enterImg)+'KB\n· 배경 이미지 — 약 '+kb(data.bgImg)+'KB\n\n가장 큰 항목을 지우고 다시 올려보세요 — 새로 올리면 자동 압축이 더 강하게 걸려요.');
+      return; }
     await updateDoc(doc(db,'pages',st.handle),data);
     st.page={...st.page,...data};
     msg('저장 완료!');
