@@ -305,7 +305,7 @@ function gcats(){ return st.page.gcats||[]; }
 const isG=c=>gcats().includes(c);
 function sideCfg(){
   let s;
-  if(st.page.side && st.page.side.length) s=st.page.side.filter(w=>w.t!=='notice'&&w.t!=='latest');
+  if(st.page.side && st.page.side.length) s=st.page.side.filter(w=>w.t!=='notice');
   else{
     s=[{t:'search'},{t:'category'}];
     if(st.page.ddays&&st.page.ddays.length) s.push({t:'dday'});
@@ -337,6 +337,7 @@ function latestBlock(box){
   d.querySelectorAll('[data-lid]').forEach(el=>el.onclick=()=>{
     goBoard('recent'); openPost(el.dataset.lid); });
   d.querySelector('#latest-more').onclick=()=>goBoard('recent');
+  return d;
 }
 const WNAME={latest:'최신글',profile:'프로필',search:'검색',category:'카테고리',
   dday:'디데이',bgm:'BGM',quote:'인용구',links:'링크',banner:'배너칸'};
@@ -451,7 +452,7 @@ function renderSide(){
   boxR.innerHTML=''; boxL.innerHTML='';
   hL.innerHTML=''; hC.innerHTML=''; hR.innerHTML='';
   if(headEl) (both?boxL:boxR).appendChild(headEl);
-  if(home) latestBlock(hC);
+  if(home && !sideCfg().some(w=>w.t==='latest')) latestBlock(hC);
   sideCfg().forEach((w,wi)=>{
     const pos = p.sidePos==='left'?'l' : p.sidePos==='both'?'b' : 'r';
     const box = home
@@ -459,6 +460,12 @@ function renderSide(){
         : pos==='l' ? (w.col==='c'?hC : hL)
         : (w.col==='c'?hC : hR))
       : ((both && w.col==='l') ? boxL : boxR);
+    if(w.t==='latest'){
+      if(!home) return;
+      const el=latestBlock(box);
+      el.dataset.wi=wi; bindDrag(el);
+      return;
+    }
     const d=document.createElement('div'); d.className='side sw-'+w.t;
     d.dataset.wi=wi; bindDrag(d);
     if(w.t==='search'){
@@ -946,7 +953,7 @@ $('#w-catadd').onclick=async()=>{
 /* ---------- 위젯 편집 탭 ---------- */
 let draft=[]; let editIdx=-1; let pdraft={ddays:[],bgm:{}};
 function fillWidgets(){
-  draft=JSON.parse(JSON.stringify(sideCfg())).filter(w=>w.t!=='notice'&&w.t!=='latest');
+  draft=JSON.parse(JSON.stringify(sideCfg())).filter(w=>w.t!=='notice');
   pdraft={ ddays:JSON.parse(JSON.stringify(st.page.ddays||[])),
            bgm:{url:st.page.bgm?.url||'', title:st.page.bgm?.title||''} };
   editIdx=-1; renderWidList(); $('#wid-edit').innerHTML='';
@@ -1047,6 +1054,7 @@ function syncWid(w){
 }
 $('#wid-add').onclick=()=>{
   const t=$('#wid-type').value;
+  if(t==='latest' && draft.some(w=>w.t==='latest')){ msg('최신글 블록은 하나만 둘 수 있어요.'); return; }
   if(['search','category','dday','bgm','profile'].includes(t) && draft.some(w=>w.t===t)){
     msg('이미 있는 위젯이에요.'); return; }
   draft.push(t==='links'?{t,items:[]}:t==='banner'?{t,items:[]}:{t});
