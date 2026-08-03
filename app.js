@@ -71,6 +71,10 @@ function dday(dstr){ const d=new Date(dstr+'T00:00:00'), n=new Date(); n.setHour
 const today=()=>{ const d=new Date();
   return d.getFullYear()+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+String(d.getDate()).padStart(2,'0'); };
 const bodyHTML=t=>t.split(/\n{2,}/).map(p=>'<p>'+esc(p).replace(/\n/g,'<br>')+'</p>').join('');
+const cleanHTML=h=>h
+  .replace(/<script[\s\S]*?<\/script\s*>/gi,'')
+  .replace(/\son\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi,'')
+  .replace(/javascript:/gi,'');
 const htmlText=h=>{ const d2=document.createElement('div');
   d2.innerHTML=String(h).replace(/<br\s*\/?>/gi,'\n').replace(/<\/p>/gi,'\n\n');
   return d2.textContent.replace(/\n{3,}/g,'\n\n').trim(); };
@@ -218,6 +222,7 @@ async function enterPage(){
   document.documentElement.style.setProperty('--dim', (p.bgDim??78)/100);
   document.body.classList.toggle('glass', !!p.glass);
   $('#bgphoto').style.backgroundImage = p.bgImg?`url(${p.bgImg})`:'';
+  document.body.classList.toggle('has-bg', !!p.bgImg);
   const headEl=document.querySelector('.head');
   if(p.headMode==='side'){ headEl.classList.add('v'); $('#aside').prepend(headEl); }
   else { headEl.classList.remove('v');
@@ -228,7 +233,7 @@ async function enterPage(){
   await loadContent();
   if(homeStyle()==='blog'){ st.cat='recent'; applyView(); }
   else { st.cat='home'; applyView(); }
-  document.querySelector('.strip-sec').classList.toggle('hidden', !galOn());
+  document.querySelector('.strip-sec').classList.toggle('hidden', !(galOn()&&stripOn()));
   renderWidgets(); renderCatbar(); renderList(); renderGal(); renderStickers();
   // 딥링크 ?p=
   const pm=new URLSearchParams(location.search).get('p');
@@ -271,7 +276,7 @@ function latestBlock(box){
     pd.onclick=()=>{ goBoard('recent'); openPost(pin.id); };
     box.appendChild(pd);
   }
-  const d=document.createElement('div'); d.className='side';
+  const d=document.createElement('div'); d.className='side sw-'+w.t;
   const arr=st.posts.filter(p=>!p.pinned).slice(0,5);
   d.innerHTML=`<p class="label">LATEST</p><div class="mini-rows">`+
     (arr.length?arr.map(p2=>`<a data-lid="${p2.id}">
@@ -290,6 +295,7 @@ const DEFCOL={search:'l',category:'l',profile:'l',latest:'c',quote:'c',
   dday:'r',bgm:'r',links:'r',banner:'r'};
 const homeStyle=()=>st.page?.homeStyle||'grid';
 const galOn=()=>st.page?.galOn!==false;
+const stripOn=()=>st.page?.stripOn!==false;
 function goHome(){
   if(homeStyle()==='blog'){ goBoard('recent'); return; }
   st.cat='home'; applyView(); renderWidgets(); renderCatbar();
@@ -320,6 +326,8 @@ function applyView(){
   const home = st.cat==='home';
   $('#home-grid').classList.toggle('hidden', !home);
   $('#board').classList.toggle('hidden', home);
+  const isHomeView = home || (homeStyle()==='blog' && st.cat==='recent');
+  document.body.classList.toggle('in-board', !isHomeView);
 }
 
 /* ── 위젯 드래그 앤 드롭 (주인장 전용) ── */
@@ -391,7 +399,7 @@ function renderSide(){
     const box = home
       ? (w.col==='l'?hL : w.col==='c'?hC : hR)
       : ((both && w.col==='l') ? boxL : boxR);
-    const d=document.createElement('div'); d.className='side';
+    const d=document.createElement('div'); d.className='side sw-'+w.t;
     d.dataset.wi=wi; bindDrag(d);
     if(w.t==='search'){
       d.innerHTML=`<p class="label">SEARCH</p>
@@ -407,17 +415,13 @@ function renderSide(){
                            : st.posts.filter(x=>x.cat===c).length;
       d.innerHTML=`<p class="label">CATEGORY</p><ul id="cats">`+
         cats().map(c=>`<li><a data-c="${esc(c)}" class="${st.cat===c?'on':''}">
-          <span>${esc(c)}${st.mine?` <span class="x" data-x="${esc(c)}">✕</span>`:''}</span>
+          <span>${esc(c)}</span>
           <span class="n">${cnt(c)}</span></a></li>`).join('')+
         (galOn()?`<li><a data-c="__gal" class="${st.cat==='__gal'?'on':''}"><span>GALLERY</span><span class="n">${st.gallery.length}</span></a></li>`:'')+
         `<li><a data-c="__gb" class="${st.cat==='__gb'?'on':''}"><span>GUESTBOOK</span><span class="n">${st.guest.length}</span></a></li>`+
-        `<li><a data-c="recent" class="${st.cat==='recent'?'on':''}"><span>전체</span><span class="n">${st.posts.length}</span></a></li></ul>`+
-        (st.mine?'<p class="cat-add" id="cat-add">＋ 카테고리 추가</p>':'');
+        `<li><a data-c="recent" class="${st.cat==='recent'?'on':''}"><span>전체</span><span class="n">${st.posts.length}</span></a></li></ul>`;
       box.appendChild(d);
-      d.querySelectorAll('#cats a').forEach(el=>el.onclick=e=>{
-        if(e.target.dataset.x){ removeCat(e.target.dataset.x); return; }
-        goBoard(el.dataset.c); });
-      const ca=d.querySelector('#cat-add'); if(ca) ca.onclick=addCat;
+      d.querySelectorAll('#cats a').forEach(el=>el.onclick=()=>goBoard(el.dataset.c));
       return;
     }
     if(w.t==='dday'){
@@ -507,7 +511,24 @@ function renderGuest(){
     st.guest=st.guest.filter(x=>x.id!==b.dataset.gbd); renderGuest();
   });
 }
+function switchTab(name){
+  document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===name));
+  document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('hidden',p.dataset.pane!==name));
+}
+function updateBoardWrite(){
+  const b=$('#board-write'); if(!b) return;
+  const c=st.cat;
+  const ok = st.mine && c!=='home' && c!=='__gb';
+  b.classList.toggle('hidden', !ok);
+  if(!ok) return;
+  b.onclick=()=>{
+    refreshWriteCats(); refreshGalCats(); openPanel('write');
+    if(c==='__gal' || isG(c)){ switchTab('galup'); if(isG(c)) $('#g-cat').value=c; }
+    else if(c!=='recent'){ $('#w-cat').value=c; }
+  };
+}
 function renderList(){
+  updateBoardWrite();
   if(st.cat==='__gb'){ $('#guest-view').classList.remove('hidden');
     $('#list-view').classList.add('hidden'); renderGuest(); return; }
   $('#guest-view').classList.add('hidden');
@@ -806,7 +827,8 @@ function renderCatFix(){
   box.innerHTML =
     row('home','HOME')+
     row('__gal','GALLERY',
-      `<button class="btn" id="gal-toggle" style="font-size:11px">${galOn()?'숨기기 (알약·하단 갤러리 제거)':'표시하기'}</button>`)+
+      `<button class="btn" id="gal-toggle" style="font-size:11px">${galOn()?'숨기기 (알약·하단 갤러리 제거)':'표시하기'}</button>`+
+      (galOn()?`<button class="btn" id="strip-toggle" style="font-size:11px">${stripOn()?'하단 스트립 끄기':'하단 스트립 켜기'}</button>`:''))+
     row('__gb','GUESTBOOK')+
     (homeStyle()==='blog'?'':row('recent','ALL'));
   bindCatImg(box);
@@ -814,9 +836,16 @@ function renderCatFix(){
     const next=!galOn();
     await updateDoc(doc(db,'pages',st.handle),{galOn:next});
     st.page.galOn=next;
-    document.querySelector('.strip-sec').classList.toggle('hidden', !next);
+    document.querySelector('.strip-sec').classList.toggle('hidden', !(next&&stripOn()));
     if(!next && (st.cat==='__gal')) goHome();
     renderCatbar(); renderSide(); renderCatFix();
+  };
+  const sp=$('#strip-toggle'); if(sp) sp.onclick=async()=>{
+    const next=!stripOn();
+    await updateDoc(doc(db,'pages',st.handle),{stripOn:next});
+    st.page.stripOn=next;
+    document.querySelector('.strip-sec').classList.toggle('hidden', !(galOn()&&next));
+    renderCatFix();
   };
 }
 $('#cat-add2').onclick=async()=>{
@@ -868,7 +897,7 @@ function renderWidEdit(){
     <div class="p-row"><label class="filelab">사진 <input type="file" id="we-img" accept="image/*"></label></div>
     <div class="p-row" style="align-items:center">
       <span style="font-size:12px;color:var(--muted)">사진 높이</span>
-      <input type="range" id="we-h" min="120" max="320" value="${+(w.h)||210}" style="flex:1;min-width:100px">
+      <input type="range" id="we-h" min="120" max="480" value="${+(w.h)||210}" style="flex:1;min-width:100px">
     </div>
     <textarea id="we-text" placeholder="아래 캡션 (선택 — 비우면 사진만 꽉 차게)" style="min-height:60px">${w.text||''}</textarea>`;
   if(w.t==='quote') html+=`
@@ -986,19 +1015,19 @@ const msg=t=>$('#p-msg').textContent=t;
 $('#w-go').onclick=async()=>{
   const title=$('#w-title').value.trim(), cat=$('#w-cat').value,
         secret=$('#w-secret').checked, pw=$('#w-pw').value, pin=$('#w-pin').checked,
-        cmtOff=!$('#w-cmt').checked,
+        cmtOff=!$('#w-cmt').checked, asHtml=$('#w-html').checked,
         raw=$('#w-body').value;
   if(!title){ msg('제목을 입력하세요.'); return; }
   if(secret&&!pw){ msg('비밀글 비밀번호를 입력하세요.'); return; }
   msg('발행 중...');
   try{
-    let html=bodyHTML(raw);
+    let html=asHtml?cleanHTML(raw):bodyHTML(raw);
     wImgs.forEach((im,i)=>{
       html=html.split(`[사진${i+1}]`).join(`<img src="${im}" alt="">`);
     });
     const data={ title, cat, date:today(), ts:serverTimestamp(),
       secret, pinned:pin, cmtOff,
-      excerpt: secret?'':raw.replace(/\s+/g,' ').trim().slice(0,70) };
+      excerpt: secret?'':(asHtml?raw.replace(/<[^>]+>/g,' '):raw).replace(/\s+/g,' ').trim().slice(0,70) };
     if(secret) data.enc=await encTxt(pw,html); else data.body=html;
     if(JSON.stringify(data).length>900000){ msg('본문 이미지가 너무 많아요 — 사진 수를 줄여주세요.'); return; }
     if(pin) await Promise.all(st.posts.filter(p=>p.pinned).map(p=>
@@ -1007,7 +1036,7 @@ $('#w-go').onclick=async()=>{
     await loadContent(); renderWidgets(); renderList();
     ['w-title','w-pw','w-body'].forEach(i=>$('#'+i).value='');
     $('#w-secret').checked=false; $('#w-pin').checked=false; $('#w-pw').style.display='none';
-    $('#w-cmt').checked=true;
+    $('#w-cmt').checked=true; $('#w-html').checked=false;
     wImgs=[];
     msg('발행 완료!');
   }catch(e){ msg('오류: '+e.message); }
@@ -1075,10 +1104,12 @@ $('#s-bg').addEventListener('change',async e=>{
   const f=e.target.files[0]; if(!f) return;
   msg('배경 이미지 압축 중...'); bgNew=await compress(f,1600,.7);
   document.documentElement && ($('#bgphoto').style.backgroundImage=`url(${bgNew})`);
+  document.body.classList.add('has-bg');
   msg('배경 미리보기 적용 — [설정 저장]을 눌러야 저장돼요.');
 });
 $('#s-bg-clear').onclick=()=>{
   bgNew=''; $('#bgphoto').style.backgroundImage='';
+  document.body.classList.remove('has-bg');
   msg('배경 제거 — [설정 저장]을 눌러야 확정돼요.');
 };
 function fillSettings(){
