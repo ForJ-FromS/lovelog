@@ -50,9 +50,22 @@ async function resolveImgs(p){
     if(p.bgRef) p.bgImg=m[p.bgRef]||p.bgImg||'';
   }catch(e){}
 }
+function autoHeadHeight(o){
+  const head=document.querySelector('.head'); if(!head||!o||!o.img) return;
+  if(st.page?.headFit!=='auto'){ head.style.removeProperty('min-height'); return; }
+  const im=new Image();
+  im.onload=()=>{
+    const w=head.clientWidth||600;
+    const px=Math.max(160,Math.min(900,Math.round(w*(im.naturalHeight/im.naturalWidth))));
+    if(head.classList.contains('v'))
+      document.documentElement.style.setProperty('--headH', px+'px');
+    else head.style.minHeight=px+'px';
+  };
+  im.src=o.img;
+}
 const setHeroBg=(el,o)=>{ el.style.backgroundImage=`url(${o.img})`;
   el.style.backgroundPosition=`${o.x}% ${o.y}%`;
-  const fit = st.page?.headFit==='contain' ? 'contain' : 'cover';
+  const fit = st.page?.headFit==='contain' ? 'contain' : 'cover';   // auto도 cover로 채움(높이를 사진에 맞추므로 잘림 없음)
   el.style.backgroundSize = o.z>100 ? o.z+'% auto' : fit;
   el.style.backgroundRepeat='no-repeat'; };
 
@@ -331,7 +344,7 @@ async function enterPage(){
   const hs=heroObjs();
   clearInterval(st.heroTimer);
   const hA=$('#pg-hero'), hB=$('#pg-hero2');
-  if(hs[0]) setHeroBg(hA,hs[0]); else hA.style.backgroundImage='';
+  if(hs[0]){ setHeroBg(hA,hs[0]); autoHeadHeight(hs[0]); } else hA.style.backgroundImage='';
   hA.style.opacity=1; hB.style.opacity=0;
   if(hs.length>1){
     let i=0, front=true;
@@ -1156,6 +1169,12 @@ $('#s-headh').addEventListener('input',e=>{
   document.documentElement.style.setProperty('--headH', e.target.value+'px'); });
 $('#s-headfit').addEventListener('change',e=>{
   document.body.classList.toggle('head-contain', e.target.value==='contain');
+  const head=document.querySelector('.head');
+  if(e.target.value!=='auto' && head) head.style.removeProperty('min-height');
+  if(e.target.value==='auto'){
+    const o=(heroDraft[0]||heroObjs()[0]);
+    if(o){ const prev=st.page.headFit; st.page.headFit='auto'; autoHeadHeight(o); st.page.headFit=prev; }
+  }
   const el=$('#pg-hero'), el2=$('#pg-hero2');
   [el,el2].forEach(x=>{ if(x&&x.style.backgroundImage && !/%/.test(x.style.backgroundSize))
     x.style.backgroundSize = e.target.value==='contain'?'contain':'cover'; }); });

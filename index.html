@@ -956,11 +956,12 @@
       <input type="range" id="s-headh" min="180" max="620" step="10" style="flex:1;min-width:120px;margin-bottom:0">
       <span id="s-headh-v" style="font-size:11px;color:var(--muted);width:52px;text-align:right"></span>
       <select id="s-headfit" style="flex:.9">
+        <option value="auto">사진 비율에 맞추기 (여백 없음)</option>
         <option value="cover">꽉 채우기 (잘릴 수 있음)</option>
         <option value="contain">전체 보이기 (여백 생김)</option>
       </select>
     </div>
-    <p class="note" style="margin-top:-4px">세로로 긴 사진이면 높이를 키우거나 '전체 보이기'로 바꿔보세요.</p>
+    <p class="note" style="margin-top:-4px">세로로 긴 사진이면 <b>'사진 비율에 맞추기'</b>를 고르세요 — 높이가 사진에 맞춰져 여백도 잘림도 없어요.</p>
     <p class="p-h">헤더 사진 — 여러 장 올리면 자동 슬라이드</p>
     <p class="note" style="margin-top:-4px">사진은 <b>별도 저장소</b>에 올라가요 — 용량 제한 없이 원본 화질에 가깝게 저장돼요</p>
     <div class="p-row"><label class="filelab">사진 추가 <input type="file" id="s-hero" accept="image/*"></label></div>
@@ -1129,6 +1130,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=69"></script>
+<script type="module" src="./app.js?v=70"></script>
 </body>
 </html>
