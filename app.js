@@ -284,6 +284,7 @@ async function enterPage(){
   let ccss=document.getElementById('cursor-css');
   if(!ccss){ ccss=document.createElement('style'); ccss.id='cursor-css'; document.head.appendChild(ccss); }
   ccss.textContent = p.curImg ? `body,body *{cursor:url(${p.curImg}) 4 4, auto !important}` : '';
+  spkSync();
   $('#bgphoto').style.backgroundImage = p.bgImg?`url(${p.bgImg})`:'';
   document.body.classList.toggle('has-bg', !!p.bgImg);
   const headEl=document.querySelector('.head');
@@ -353,9 +354,9 @@ function latestBlock(box){
   d.querySelector('#latest-more').onclick=()=>goBoard('recent');
   return d;
 }
-const WNAME={latest:'최신글',notice:'공지',profile:'프로필',search:'검색',category:'카테고리',
+const WNAME={latest:'최신글',notice:'공지',chat:'채팅로그',profile:'프로필',search:'검색',category:'카테고리',
   dday:'디데이',bgm:'BGM',quote:'인용구',links:'링크',banner:'배너칸'};
-const DEFCOL={search:'l',category:'l',profile:'l',latest:'c',quote:'c',notice:'c',
+const DEFCOL={search:'l',category:'l',profile:'l',latest:'c',quote:'c',notice:'c',chat:'c',
   dday:'r',bgm:'r',links:'r',banner:'r'};
 const homeStyle=()=>st.page?.homeStyle||'grid';
 const galOn=()=>st.page?.galOn!==false;
@@ -447,6 +448,31 @@ async function dropWidget(from, to, contId){
   try{ await updateDoc(doc(db,'pages',st.handle),{side:arr}); }
   catch(e){ alert('순서 저장 실패: '+e.message); }
 }
+let spkOn=false, spkPri='#9db4ff', spkLast=0;
+function spkSync(){
+  spkOn=!!st.page?.sparkle;
+  spkPri=getComputedStyle(document.body).getPropertyValue('--pri').trim()||'#9db4ff';
+}
+document.addEventListener('mousemove',e=>{
+  if(!spkOn) return;
+  const now=performance.now(); if(now-spkLast<22) return; spkLast=now;
+  const cols=[spkPri,spkPri,'#ffffff','#fff3d8'];
+  for(let i=0;i<2;i++){
+    const s=document.createElement('div');
+    const size=3+Math.random()*4;
+    s.style.cssText='position:fixed;pointer-events:none;z-index:9999;border-radius:50%;'
+      +'left:'+(e.clientX+(Math.random()*16-8))+'px;top:'+(e.clientY+(Math.random()*16-8))+'px;'
+      +'width:'+size+'px;height:'+size+'px;'
+      +'background:'+cols[Math.floor(Math.random()*cols.length)]+';'
+      +'box-shadow:0 0 5px '+spkPri+';'
+      +'transition:transform .7s ease-out, opacity .7s ease-out';
+    document.body.appendChild(s);
+    requestAnimationFrame(()=>{ 
+      s.style.transform='translate('+(Math.random()*30-15)+'px,'+(20+Math.random()*20)+'px) scale(.2)';
+      s.style.opacity='0'; });
+    setTimeout(()=>s.remove(),760);
+  }
+});
 document.addEventListener('contextmenu',e=>{
   if(!st.page || st.page.protectImg===false) return;
   if(e.target.closest('img,#pg-hero,#pg-hero2,.g-item,.stk,.pin')) e.preventDefault();
@@ -561,6 +587,19 @@ function renderSide(){
       d.className+=' w-profile';
       d.innerHTML=(w.img?`<img src="${w.img}" alt="" draggable="false" style="max-height:${+(w.h)||210}px">`:'')+
         (w.text?`<p class="cap">${esc(w.text)}</p>`:'');
+      box.appendChild(d); return;
+    }
+    if(w.t==='chat'){
+      const ls=(w.lines||[]).filter(l=>l.text);
+      if(!ls.length && !st.mine) return;
+      d.className+=' w-chat ch-'+(w.style||'msg');
+      const imgs=w.imgs!==false;
+      d.innerHTML=`<p class="label">CHAT</p>`+(ls.length?`<div class="ch-box">`+ls.map(l=>`
+        <div class="ch-line ${l.side==='r'?'r':'l'}">
+          ${imgs&&l.img?`<img class="ch-p" src="${l.img}" alt="" draggable="false">`:''}
+          <div class="ch-b">${l.name?`<span class="ch-n">${esc(l.name)}</span>`:''}<p>${esc(l.text)}</p></div>
+        </div>`).join('')+`</div>`
+        :'<p class="pl-empty">✎ 편집에서 대사를 추가해주세요.</p>');
       box.appendChild(d); return;
     }
     if(w.t==='notice'){
@@ -735,6 +774,31 @@ async function delGal(id){
 }
 $('#gal-more').onclick=()=>goBoard('__gal');
 $('#lb').onclick=()=>$('#lb').classList.remove('show');
+let spkOn=false, spkPri='#9db4ff', spkLast=0;
+function spkSync(){
+  spkOn=!!st.page?.sparkle;
+  spkPri=getComputedStyle(document.body).getPropertyValue('--pri').trim()||'#9db4ff';
+}
+document.addEventListener('mousemove',e=>{
+  if(!spkOn) return;
+  const now=performance.now(); if(now-spkLast<22) return; spkLast=now;
+  const cols=[spkPri,spkPri,'#ffffff','#fff3d8'];
+  for(let i=0;i<2;i++){
+    const s=document.createElement('div');
+    const size=3+Math.random()*4;
+    s.style.cssText='position:fixed;pointer-events:none;z-index:9999;border-radius:50%;'
+      +'left:'+(e.clientX+(Math.random()*16-8))+'px;top:'+(e.clientY+(Math.random()*16-8))+'px;'
+      +'width:'+size+'px;height:'+size+'px;'
+      +'background:'+cols[Math.floor(Math.random()*cols.length)]+';'
+      +'box-shadow:0 0 5px '+spkPri+';'
+      +'transition:transform .7s ease-out, opacity .7s ease-out';
+    document.body.appendChild(s);
+    requestAnimationFrame(()=>{ 
+      s.style.transform='translate('+(Math.random()*30-15)+'px,'+(20+Math.random()*20)+'px) scale(.2)';
+      s.style.opacity='0'; });
+    setTimeout(()=>s.remove(),760);
+  }
+});
 document.addEventListener('contextmenu',e=>{
   if(e.target.closest&&(e.target.closest('#gal')||e.target.closest('#lb'))) e.preventDefault();
 });
@@ -1017,7 +1081,7 @@ function renderWidList(){
   $('#wid-list').innerHTML = draft.map((w,i)=>`
     <div class="wl">
       <span class="nm">${WNAME[w.t]||w.t}${w.t==='links'?` (${(w.items||[]).length})`:''}${w.t==='banner'?` (${(w.items||[]).length})`:''}</span>
-      ${['profile','quote','links','banner','dday','bgm','notice'].includes(w.t)?`<button data-e="${i}">✎</button>`:''}
+      ${['profile','quote','links','banner','dday','bgm','notice','chat'].includes(w.t)?`<button data-e="${i}">✎</button>`:''}
       <button data-u="${i}">↑</button><button data-d="${i}">↓</button><button data-x="${i}">✕</button>
     </div>`).join('') || '<p class="pl-empty">위젯이 없어요 — 아래에서 추가하세요.</p>';
   $('#wid-list').querySelectorAll('button').forEach(b=>b.onclick=()=>{
@@ -1070,19 +1134,55 @@ function renderWidEdit(){
     <button class="rmv" data-bdn="${i}" title="아래로">↓</button>
     <button class="rmv" data-br="${i}">✕</button></div>`).join('')+
     `<div class="p-row"><label class="filelab">배너 이미지 추가 <input type="file" id="we-bimg" accept="image/*"></label></div>`;
+  if(w.t==='chat') html+=`
+    <div class="p-row" style="align-items:center">
+      <select id="we-chst" style="flex:1">
+        <option value="msg" ${(w.style||'msg')==='msg'?'selected':''}>메신저 말풍선</option>
+        <option value="retro" ${w.style==='retro'?'selected':''}>레트로 창 (Win98풍)</option>
+        <option value="script" ${w.style==='script'?'selected':''}>대본형 (미니멀)</option>
+      </select>
+      <label class="chk"><input type="checkbox" id="we-chimg" ${w.imgs!==false?'checked':''}> 프사 표시</label>
+    </div>`
+    +(w.lines||[]).map((l,i)=>`
+    <div class="p-row" style="align-items:center">
+      <select data-chs="${i}" style="flex:.45;min-width:58px">
+        <option value="l" ${l.side!=='r'?'selected':''}>◀</option>
+        <option value="r" ${l.side==='r'?'selected':''}>▶</option></select>
+      <input data-chn="${i}" placeholder="이름" value="${esc(l.name||'')}" style="flex:.6;min-width:64px">
+      <input data-cht="${i}" placeholder="대사" value="${esc(l.text||'')}" style="flex:1.6">
+      <label class="filelab" style="font-size:10px">${l.img?'📷✓':'프사'}<input type="file" data-chp="${i}" accept="image/*"></label>
+      ${l.img?`<button class="rmv" data-chpx="${i}" style="font-size:10px">프사✕</button>`:''}
+      <button class="rmv" data-chx="${i}">✕</button>
+    </div>`).join('')
+    +`<button class="btn" id="we-chadd" style="font-size:12px">+ 대사 추가</button>`;
   html+=`<p class="note">입력은 즉시 반영돼요 — 마지막에 [위젯 구성 저장]만 누르면 저장 완료.</p>`;
   $('#wid-edit').innerHTML=html;
   // 라이브 바인딩: 쓰는 즉시 draft에 반영
   const t=$('#we-text'); if(t) t.addEventListener('input',()=>{ w.text=t.value; });
   const ntt=$('#we-ntt'); if(ntt) ntt.addEventListener('input',()=>{ w.title=ntt.value; });
+  const chst=$('#we-chst'); if(chst) chst.addEventListener('change',()=>{ w.style=chst.value; });
+  const chimg=$('#we-chimg'); if(chimg) chimg.addEventListener('change',()=>{ w.imgs=chimg.checked; });
+  const chadd=$('#we-chadd'); if(chadd) chadd.onclick=()=>{
+    w.lines=w.lines||[]; w.lines.push({side:w.lines.length%2?'r':'l',text:''}); renderWidEdit(); };
+  $('#wid-edit').querySelectorAll('[data-chs]').forEach(s=>s.addEventListener('change',()=>{ w.lines[s.dataset.chs].side=s.value; }));
+  $('#wid-edit').querySelectorAll('[data-chn]').forEach(i2=>i2.addEventListener('input',()=>{ w.lines[i2.dataset.chn].name=i2.value; }));
+  $('#wid-edit').querySelectorAll('[data-cht]').forEach(i2=>i2.addEventListener('input',()=>{ w.lines[i2.dataset.cht].text=i2.value; }));
+  $('#wid-edit').querySelectorAll('[data-chp]').forEach(inp=>inp.addEventListener('change',async e=>{
+    const f=e.target.files[0]; if(!f) return;
+    w.lines[inp.dataset.chp].img=await compressTo(f,128,25);
+    renderWidEdit(); msg('프사 반영됨 — [위젯 구성 저장]까지!'); }));
+  $('#wid-edit').querySelectorAll('[data-chpx]').forEach(b=>b.onclick=()=>{
+    delete w.lines[b.dataset.chpx].img; renderWidEdit(); });
+  $('#wid-edit').querySelectorAll('[data-chx]').forEach(b=>b.onclick=()=>{
+    w.lines.splice(+b.dataset.chx,1); renderWidEdit(); });
   const hg=$('#we-h'); if(hg) hg.addEventListener('input',()=>{ w.h=+hg.value; });
   const img=$('#we-img'); if(img) img.addEventListener('change',async e=>{
     const f=e.target.files[0]; if(!f) return; msg('사진 압축 중...');
-    w.img=await compress(f,500,.8); msg('사진 반영됨 — [위젯 구성 저장]을 눌러주세요.');
+    w.img=await compressTo(f,500,120); msg('사진 반영됨 — [위젯 구성 저장]을 눌러주세요.');
   });
   const badd=$('#we-bimg'); if(badd) badd.addEventListener('change',async e=>{
     const f=e.target.files[0]; if(!f) return; msg('배너 압축 중...');
-    w.items=w.items||[]; w.items.push({img:await compress(f,700,.75),url:''});
+    w.items=w.items||[]; w.items.push({img:await compressTo(f,700,110),url:''});
     renderWidEdit(); renderWidList(); msg('배너 추가됨 — [위젯 구성 저장]을 눌러주세요.');
   });
   const ladd=$('#we-add'); if(ladd) ladd.onclick=()=>{ w.items=w.items||[]; w.items.push({label:'',url:''}); renderWidEdit(); };
@@ -1092,7 +1192,7 @@ function renderWidEdit(){
   $('#wid-edit').querySelectorAll('[data-dr]').forEach(b=>b.onclick=()=>{ pdraft.ddays.splice(+b.dataset.dr,1); renderWidEdit(); });
   $('#wid-edit').querySelectorAll('[data-dimg]').forEach(inp=>inp.addEventListener('change',async e=>{
     const f=e.target.files[0]; if(!f) return; msg('사진 압축 중...');
-    pdraft.ddays[inp.dataset.dimg].img=await compress(f,600,.75);
+    pdraft.ddays[inp.dataset.dimg].img=await compressTo(f,600,100);
     renderWidEdit(); msg('사진 반영됨 — [위젯 구성 저장]까지!');
   }));
   $('#wid-edit').querySelectorAll('[data-dximg]').forEach(b=>b.onclick=()=>{
@@ -1118,16 +1218,18 @@ $('#wid-add').onclick=()=>{
     msg('이미 있는 위젯이에요.'); return; }
   draft.push(t==='links'?{t,items:[]}:t==='banner'?{t,items:[]}:{t});
   editIdx=draft.length-1; renderWidList();
-  if(['profile','quote','links','banner','dday','bgm','notice'].includes(t)) renderWidEdit();
+  if(['profile','quote','links','banner','dday','bgm','notice','chat'].includes(t)) renderWidEdit();
 };
 $('#wid-save').onclick=async()=>{
   if(editIdx>=0 && draft[editIdx]) syncWid(draft[editIdx]);
   msg('저장 중...');
   try{
-    const wsz=JSON.stringify(draft).length+JSON.stringify(pdraft.ddays).length;
-    if(wsz>750000){
-      msg('위젯 이미지 용량이 너무 커요 — 배너/사진 수를 줄여주세요.');
-      alert('위젯 이미지 용량 초과!\n\n위젯 합산 한도: 약 750KB\n현재: 약 '+Math.round(wsz/1370)+'KB\n\n배너·프로필·디데이 사진 수를 줄이거나 다시 올려주세요.'); return; }
+    const projected={...st.page, side:draft, ddays:pdraft.ddays, bgm:pdraft.bgm};
+    const tot=JSON.stringify(projected).length;
+    if(tot>980000){
+      const wKB=Math.round((JSON.stringify(draft).length+JSON.stringify(pdraft.ddays).length)/1370);
+      msg('용량 초과 — 안내창을 확인하세요.');
+      alert('홈 전체 용량 초과!\n\n서버는 홈 하나당 약 1MB까지 받아요.\n지금 합산: 약 '+Math.round(tot/1370)+'KB\n· 위젯 사진(프로필·배너·디데이): 약 '+wKB+'KB\n· 꾸미기 사진(헤더·대문·배경): 약 '+Math.round((tot-JSON.stringify(draft).length-JSON.stringify(pdraft.ddays).length)/1370)+'KB\n\n배너·헤더 등 큰 사진을 지우거나 다시 올리면(자동 압축 강화) 들어가요.'); return; }
     const dd=pdraft.ddays.filter(x=>x.title&&x.date);
     await updateDoc(doc(db,'pages',st.handle),{side:draft, ddays:dd, bgm:pdraft.bgm});
     st.page.side=JSON.parse(JSON.stringify(draft));
@@ -1174,7 +1276,7 @@ $('#w-go').onclick=async()=>{
       secret, pinned:pin, cmtOff,
       excerpt: secret?'':(asHtml?raw.replace(/<[^>]+>/g,' '):raw).replace(/\s+/g,' ').trim().slice(0,70) };
     if(secret) data.enc=await encTxt(pw,html); else data.body=html;
-    if(JSON.stringify(data).length>900000){ msg('본문 이미지가 너무 많아요 — 사진 수를 줄여주세요.'); return; }
+    if(JSON.stringify({...st.page, ...data}).length>980000){ msg('본문 이미지가 너무 많아요 — 사진 수를 줄여주세요.'); return; }
     if(pin) await Promise.all(st.posts.filter(p=>p.pinned).map(p=>
       updateDoc(doc(db,'pages',st.handle,'posts',p.id),{pinned:false})));
     await addDoc(collection(db,'pages',st.handle,'posts'),data);
@@ -1304,7 +1406,7 @@ function fillSettings(){
   $('#s-homestyle').value=homeStyle();
   $('#s-theme').value=p.theme||'default';
   renderStkList();
-  $('#s-dim').value=p.bgDim??78; $('#s-dots').checked=p.dots!==false; $('#s-protect').checked=p.protectImg!==false; $('#s-stkm').checked=!!p.stkHideM;
+  $('#s-dim').value=p.bgDim??78; $('#s-dots').checked=p.dots!==false; $('#s-protect').checked=p.protectImg!==false; $('#s-stkm').checked=!!p.stkHideM; $('#s-sparkle').checked=!!p.sparkle;
   heroDraft=JSON.parse(JSON.stringify(heroObjs())); renderHeroList();
   $('#s-enter').value=p.enterText||'';
   egateNew=null; renderEgate();
@@ -1340,6 +1442,7 @@ async function saveSettings(){
       dots: $('#s-dots').checked,
       protectImg: $('#s-protect').checked,
       stkHideM: $('#s-stkm').checked,
+      sparkle: $('#s-sparkle').checked,
       font: $('#s-font').value,
       customCss: $('#s-css').value,
       fav: favNew ?? st.page.fav ?? '',
@@ -1348,7 +1451,7 @@ async function saveSettings(){
     };
     if(gateIn) data.gate=await sha256(gateIn);
     else if(gateIn==='' && $('#s-gate').dataset.clear==='1') data.gate='';
-    if(JSON.stringify(data).length>900000){
+    if(JSON.stringify({...st.page, ...data}).length>980000){
       const heroKB=(data.heroImgs||[]).reduce((t,o)=>t+kb(o.img||o),0);
       msg('이미지 용량 초과 — 자세한 내용은 안내창을 확인하세요.');
       alert('저장 용량 초과!\n\n홈 전체 꾸미기 합산 한도: 약 900KB\n(서버 문서 1MB 제한 때문이에요)\n\n현재 이 설정의 용량:\n· 헤더 사진 '+(data.heroImgs||[]).length+'장 — 약 '+heroKB+'KB\n· 입장 화면 이미지 — 약 '+kb(data.enterImg)+'KB\n· 배경 이미지 — 약 '+kb(data.bgImg)+'KB\n\n가장 큰 항목을 지우고 다시 올려보세요 — 새로 올리면 자동 압축이 더 강하게 걸려요.');
