@@ -486,12 +486,18 @@ function bindDrag(d){
     d.classList.remove('dragging');
     document.querySelectorAll('.side.dropzone').forEach(x=>x.classList.remove('dropzone'));
   });
-  d.addEventListener('dragover',e=>{ e.preventDefault(); d.classList.add('dropzone'); });
-  d.addEventListener('dragleave',()=>d.classList.remove('dropzone'));
+  const half=e=>{ const r=d.getBoundingClientRect(); return e.clientY > r.top+r.height/2 ? 'after':'before'; };
+  d.addEventListener('dragover',e=>{ e.preventDefault();
+    const p=half(e);
+    d.classList.add('dropzone');
+    d.classList.toggle('dz-a', p==='after');
+    d.classList.toggle('dz-b', p==='before'); });
+  d.addEventListener('dragleave',()=>d.classList.remove('dropzone','dz-a','dz-b'));
   d.addEventListener('drop',e=>{
     e.preventDefault(); e.stopPropagation();
-    d.classList.remove('dropzone');
-    dropWidget(+e.dataTransfer.getData('text/plain'), +d.dataset.wi, d.parentElement.id);
+    const p=half(e);
+    d.classList.remove('dropzone','dz-a','dz-b');
+    dropWidget(+e.dataTransfer.getData('text/plain'), +d.dataset.wi, d.parentElement.id, p);
   });
 }
 ['aside','aside-l','hcol-l','hcol-c','hcol-r'].forEach(id=>{
@@ -506,10 +512,11 @@ function bindDrag(d){
     dropWidget(+e.dataTransfer.getData('text/plain'), -1, id);
   });
 });
-async function dropWidget(from, to, contId){
+async function dropWidget(from, to, contId, pos){
   if(isNaN(from)) return;
   const arr=JSON.parse(JSON.stringify(sideCfg()));
   if(from<0||from>=arr.length) return;
+  if(to===from) return;
   const [w]=arr.splice(from,1);
   w.col = contId==='hcol-l' ? 'l'
         : contId==='hcol-c' ? 'c'
@@ -518,6 +525,7 @@ async function dropWidget(from, to, contId){
   if(to<0){ arr.push(w); }
   else{
     let ins=to; if(from<to) ins=to-1;
+    if(pos==='after') ins+=1;
     if(ins<0) ins=0; if(ins>arr.length) ins=arr.length;
     arr.splice(ins,0,w);
   }
@@ -783,7 +791,20 @@ function renderSide(){
       return;
     }
   });
-  if(home && isM && st.mine){
+  if(home && st.mine){
+    const pcMove=async(wi,dir)=>{
+      const arr=JSON.parse(JSON.stringify(sideCfg()));
+      const w0=arr[wi]; if(!w0) return;
+      const colOf=x=>x.col||DEFCOL[x.t]||'r';
+      const same=arr.map((x,i)=>({x,i})).filter(o=>colOf(o.x)===colOf(w0));
+      const p=same.findIndex(o=>o.i===wi), t=p+dir;
+      if(t<0||t>=same.length) return;
+      const a1=same[p].i, b1=same[t].i;
+      [arr[a1],arr[b1]]=[arr[b1],arr[a1]];
+      st.page.side=arr; renderSide();
+      try{ await updateDoc(doc(db,'pages',st.handle),{side:arr}); }
+      catch(e){ msg('순서 저장 실패: '+e.message); }
+    };
     const bump=async(wi,dir)=>{
       const arr=JSON.parse(JSON.stringify(sideCfg()));
       const sq=arr.map((w,i)=>({w,i})).sort((A,B)=>mOrd(A.w,A.i)-mOrd(B.w,B.i));
@@ -794,13 +815,17 @@ function renderSide(){
       st.page.side=arr; renderSide();
       try{ await updateDoc(doc(db,'pages',st.handle),{side:arr}); }catch(e){}
     };
-    hC.querySelectorAll(':scope > [data-wi]').forEach(el=>{
+    const cols = isM ? [hC] : [hL,hC,hR];
+    cols.forEach(colEl=> colEl && colEl.querySelectorAll(':scope > [data-wi]').forEach(el=>{
       const m=document.createElement('div'); m.className='mmv';
       m.innerHTML='<button data-mv="-1">↑</button><button data-mv="1">↓</button>';
       m.querySelectorAll('button').forEach(b=>b.onclick=e=>{
-        e.stopPropagation(); bump(+el.dataset.wi, +b.dataset.mv); });
+        e.stopPropagation();
+        if(isM) bump(+el.dataset.wi, +b.dataset.mv);
+        else pcMove(+el.dataset.wi, +b.dataset.mv);
+      });
       el.appendChild(m);
-    });
+    }));
   }
   const gh=$('#home-grid');
   const pos = p.sidePos==='left'?'l' : p.sidePos==='both'?'b' : 'r';
