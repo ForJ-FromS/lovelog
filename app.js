@@ -55,20 +55,26 @@ function autoHeadHeight(o){
   st.autoHero=o;                                            // resize·슬라이드 재계산용
   if(st.page?.headFit!=='auto'){ head.style.removeProperty('min-height'); return; }
   const im=new Image();
-  im.onload=()=>{
-    const w=head.clientWidth||600;
-    const px=Math.max(160,Math.min(2400,Math.round(w*(im.naturalHeight/im.naturalWidth))));
-    if(head.classList.contains('v')){
-      head.style.removeProperty('min-height');            // 가로 모드가 남긴 인라인 높이 제거(사진 아래 여백 방지)
-      document.documentElement.style.setProperty('--headH', px+'px');
-    }
-    else head.style.minHeight=px+'px';
-  };
+  im.onload=()=>{ st.autoRatio=im.naturalHeight/im.naturalWidth; applyAutoHead(); };
   im.src=o.img;
+}
+function applyAutoHead(tries){
+  const head=document.querySelector('.head');
+  if(!head||st.page?.headFit!=='auto'||!st.autoRatio) return;
+  const w=head.clientWidth;
+  if(!w){ if((tries||0)<120) requestAnimationFrame(()=>applyAutoHead((tries||0)+1)); return; }  // 숨김 상태 — 절대 폭을 가정하지 말고 보일 때까지 대기
+  const px=Math.max(160,Math.min(2400,Math.round(w*st.autoRatio)));
+  if(head.classList.contains('v')){
+    head.style.removeProperty('min-height');            // 가로 모드가 남긴 인라인 높이 제거(사진 아래 여백 방지)
+    document.documentElement.style.setProperty('--headH', px+'px');
+  }
+  else head.style.minHeight=px+'px';
 }
 let hhRszT=null;
 window.addEventListener('resize',()=>{ clearTimeout(hhRszT);        // 창 크기 변경 시 auto 높이 재계산
-  hhRszT=setTimeout(()=>{ if(st.page?.headFit==='auto'&&st.autoHero) autoHeadHeight(st.autoHero); },180); });
+  hhRszT=setTimeout(()=>{ if(st.page?.headFit!=='auto') return;
+    if(st.autoRatio) applyAutoHead();
+    else if(st.autoHero) autoHeadHeight(st.autoHero); },180); });
 const setHeroBg=(el,o)=>{ el.style.backgroundImage=`url(${o.img})`;
   el.style.backgroundPosition=`${o.x}% ${o.y}%`;
   const fit = st.page?.headFit==='contain' ? 'contain' : 'cover';   // auto도 cover로 채움(높이를 사진에 맞추므로 잘림 없음)
@@ -357,6 +363,7 @@ async function enterPage(){
   $('#pg-sub').textContent=p.sub||'';
   $('#pg-over').textContent='@'+h.toUpperCase();
   const hs=heroObjs();
+  st.autoRatio=0;                                    // 홈 전환 — 이전 홈 사진 비율 리셋
   clearInterval(st.heroTimer);
   const hA=$('#pg-hero'), hB=$('#pg-hero2');
   if(hs[0]){ setHeroBg(hA,hs[0]); autoHeadHeight(hs[0]); } else hA.style.backgroundImage='';
@@ -512,6 +519,7 @@ function applyView(){
   $('#board').classList.toggle('hidden', home);
   const isHomeView = home || (homeStyle()==='blog' && st.cat==='recent');
   document.body.classList.toggle('in-board', !isHomeView);
+  applyAutoHead();                                   // 표시 상태가 정해진 뒤 실제 폭으로 재계산
 }
 
 /* ── 위젯 드래그 앤 드롭 (주인장 전용) ── */
@@ -923,6 +931,7 @@ function renderSide(){
   gh.classList.toggle('pos-b', pos==='b');
   gh.classList.toggle('no-l', pos==='b' && !hL.children.length && !st.mine);
   gh.classList.toggle('no-r', pos==='b' && !hR.children.length && !st.mine);
+  applyAutoHead();                                   // 헤더 재배치 후 실제 폭으로 재계산
 }
 function renderCats(){ renderSide(); }
 async function addCat(){
