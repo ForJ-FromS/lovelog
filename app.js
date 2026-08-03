@@ -52,7 +52,9 @@ async function resolveImgs(p){
 }
 const setHeroBg=(el,o)=>{ el.style.backgroundImage=`url(${o.img})`;
   el.style.backgroundPosition=`${o.x}% ${o.y}%`;
-  el.style.backgroundSize = o.z>100 ? o.z+'% auto' : 'cover'; };
+  const fit = st.page?.headFit==='contain' ? 'contain' : 'cover';
+  el.style.backgroundSize = o.z>100 ? o.z+'% auto' : fit;
+  el.style.backgroundRepeat='no-repeat'; };
 
 /* ---------- 유틸 ---------- */
 const b64=b=>btoa(String.fromCharCode(...new Uint8Array(b)));
@@ -371,6 +373,8 @@ async function enterPage(){
   $('#bgphoto').style.backgroundImage = p.bgImg?`url(${p.bgImg})`:'';
   document.body.classList.toggle('has-bg', !!p.bgImg);
   const headEl=document.querySelector('.head');
+  document.documentElement.style.setProperty('--headH', (p.headH||0) ? p.headH+'px' : '');
+  document.body.classList.toggle('head-contain', p.headFit==='contain');
   if(p.headMode==='side'){ headEl.classList.add('v'); $('#aside').prepend(headEl); }
   else { headEl.classList.remove('v');
     const anchor=$('#catbar'); anchor.parentNode.insertBefore(headEl, anchor); }
@@ -1147,6 +1151,14 @@ function openPanel(mode){
   $('#panel').classList.toggle('big', mode==='deco');
   msg(''); $('#panel').classList.add('show');
 }
+$('#s-headh').addEventListener('input',e=>{
+  $('#s-headh-v').textContent=e.target.value+'px';
+  document.documentElement.style.setProperty('--headH', e.target.value+'px'); });
+$('#s-headfit').addEventListener('change',e=>{
+  document.body.classList.toggle('head-contain', e.target.value==='contain');
+  const el=$('#pg-hero'), el2=$('#pg-hero2');
+  [el,el2].forEach(x=>{ if(x&&x.style.backgroundImage && !/%/.test(x.style.backgroundSize))
+    x.style.backgroundSize = e.target.value==='contain'?'contain':'cover'; }); });
 $('#s-dim').addEventListener('input',e=>{
   document.documentElement.style.setProperty('--dim', e.target.value/100);
 });
@@ -1853,7 +1865,7 @@ function fillSettings(){
   const p=st.page;
   $('#s-name').value=p.name||''; $('#s-sub').value=p.sub||'';
   $('#s-gate').value=''; gateClear=false; renderGateState(); priVal=null; $('#s-pri').value=p.priColor||'#9db4ff'; $('#s-color').value=hslToHex(p.hue??222, p.sat??60, p.lum??62);
-  $('#s-headmode').value=p.headMode||'wide';
+  $('#s-headmode').value=p.headMode||'wide'; $('#s-headh').value=p.headH||380; $('#s-headfit').value=p.headFit||'cover'; $('#s-headh-v').textContent=(p.headH||380)+'px';
   $('#s-sidepos').value=p.sidePos||'right';
   $('#s-light').checked=!!p.light;
   $('#s-glass').checked=!!p.glass;
@@ -1920,6 +1932,8 @@ async function saveSettings(){
       sat: hexToHsl($('#s-color').value)[1],
       lum: hexToHsl($('#s-color').value)[2],
       headMode: $('#s-headmode').value,
+      headH: parseInt($('#s-headh').value)||380,
+      headFit: $('#s-headfit').value,
       sidePos: $('#s-sidepos').value,
       light: $('#s-light').checked,
       glass: $('#s-glass').checked,
@@ -1972,7 +1986,7 @@ const RESET={
     sparkle:false,labelIcon:'◈',postPage:false,priColor:''},
   widget:{side:[],ddays:[],bgm:{url:'',title:''}},
   sticker:{stickers:[],stkOff:false,stkHideM:false},
-  layout:{homeStyle:'grid',headMode:'wide',sidePos:'right',catStyle:'bar',
+  layout:{homeStyle:'grid',headMode:'wide',headH:380,headFit:'cover',sidePos:'right',catStyle:'bar',
     galOn:true,stripOn:true},
   media:{heroImgs:[],heroImg:'',enterImg:'',enterRef:'',enterText:'',
     cardImg:'',bannerImg:'',catImgs:{},gate:'',gateBtn:'',gateColor:''}
@@ -2023,6 +2037,17 @@ async function signup(){
   err.textContent='';
   if(!/^[a-z0-9-]{2,20}$/.test(handle)){ err.textContent='주소 형식을 확인해 주세요.'; return; }
   if(RESERVED.has(handle)){ err.textContent='이 주소는 사용할 수 없어요. 다른 주소를 골라주세요.'; return; }
+  // 가입 개방 상태 확인 (콘솔 config/signup 문서로 제어)
+  let mode='open', notice='';
+  try{
+    const sc=await getDoc(doc(db,'config','signup'));
+    if(sc.exists()){ mode=sc.data().mode||'open'; notice=sc.data().notice||''; }
+  }catch(e){}
+  if(mode==='closed'){
+    err.textContent = notice || '지금은 새 홈 만들기가 닫혀 있어요.'; return; }
+  if(mode==='code' && !code){
+    $('#invite-wrap').classList.remove('hidden');
+    err.textContent = notice || '지금은 초대코드가 있어야 가입할 수 있어요.'; return; }
   try{
     const rs=await getDoc(doc(db,'config','reserved'));
     if(rs.exists() && (rs.data().list||[]).includes(handle)){
@@ -2068,6 +2093,13 @@ onAuthStateChanged(auth,async user=>{
   renderSeal();
   if(viewing) loadPage(viewing);
   else if(!st.me) show('view-login');
-  else if(!st.myHandle) show('view-signup');
+  else if(!st.myHandle){ show('view-signup');
+    getDoc(doc(db,'config','signup')).then(sc=>{
+      if(!sc.exists()) return; const m=sc.data().mode||'open';
+      if(m==='code'){ $('#invite-wrap').classList.remove('hidden');
+        $('#signup-err').textContent=sc.data().notice||'초대코드가 있어야 가입할 수 있어요.'; }
+      if(m==='closed'){ $('#signup-err').textContent=sc.data().notice||'지금은 새 홈 만들기가 닫혀 있어요.'; }
+    }).catch(()=>{});
+  }
   else { history.replaceState(null,'',urlFor(st.myHandle)); loadPage(st.myHandle); }
 });
