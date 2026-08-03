@@ -194,10 +194,14 @@ function renderSeal(){
 /* ---------- 페이지 로드 ---------- */
 async function loadPage(handle){
   st.handle=handle;
+  // 딥링크 글ID를 주소 정리 '전에' 확보 (정리하면서 쿼리가 지워지므로)
+  let pm0=new URLSearchParams(location.search).get('p');
+  if(!pm0){ const seg=location.pathname.split('/').filter(Boolean);
+    if(seg[0]===handle && seg[1]) pm0=seg[1]; }
+  st.deepPost=pm0||null;
   // 첫 진입 시 주소를 깔끔 경로로 정리 (luvlog.me/?u=jeste → luvlog.me/jeste)
   if(CLEAN){
-    const pm=new URLSearchParams(location.search).get('p');
-    history.replaceState(null,'', urlFor(handle, pm||undefined));
+    history.replaceState(null,'', urlFor(handle, pm0||undefined));
   }
   const snap=await getDoc(doc(db,'pages',handle));
   if(!snap.exists()){ show('view-page');
@@ -294,8 +298,8 @@ async function enterPage(){
   else { st.cat='home'; applyView(); }
   document.querySelector('.strip-sec').classList.toggle('hidden', !(galOn()&&stripOn()));
   renderWidgets(); renderCatbar(); renderList(); renderGal(); renderStickers();
-  // 딥링크 ?p=
-  const pm=new URLSearchParams(location.search).get('p');
+  // 딥링크 — loadPage에서 보관해둔 글ID를 1회 소비
+  const pm=st.deepPost; st.deepPost=null;
   if(pm){ st.cat='recent'; applyView(); renderList(); openPost(pm); }
 }
 async function loadContent(){
