@@ -1649,24 +1649,44 @@ $('#s-gate').addEventListener('input',e=>{
 });
 
 /* ---------- 가입 ---------- */
+// 시스템 경로·혼동 주소 예약 (콘솔 config/reserved 문서의 list 배열로 추가 가능)
+const RESERVED = new Set(['guide','index','404','app','api','admin','root','system',
+  'static','assets','css','js','img','imgs','image','images','file','files','upload',
+  'login','logout','signup','signin','join','auth','user','users','account','me','my',
+  'home','main','www','mail','blog','help','about','support','contact','terms','privacy',
+  'lovelog','luvlog','test','demo','null','undefined','new','edit','delete','search',
+  'gallery','guestbook','archive','all','post','posts','tag','tags']);
 async function signup(){
   const code=$('#in-invite').value.trim(), handle=$('#in-handle').value.trim().toLowerCase(),
         name=$('#in-name').value.trim(), err=$('#signup-err');
   err.textContent='';
   if(!code){ err.textContent='초대코드를 입력해 주세요.'; return; }
   if(!/^[a-z0-9-]{2,20}$/.test(handle)){ err.textContent='주소 형식을 확인해 주세요.'; return; }
+  if(RESERVED.has(handle)){ err.textContent='이 주소는 사용할 수 없어요. 다른 주소를 골라주세요.'; return; }
+  try{
+    const rs=await getDoc(doc(db,'config','reserved'));
+    if(rs.exists() && (rs.data().list||[]).includes(handle)){
+      err.textContent='이 주소는 사용할 수 없어요. 다른 주소를 골라주세요.'; return; }
+  }catch(e){}
   if(!name){ err.textContent='홈 이름을 입력해 주세요.'; return; }
   try{
     await runTransaction(db,async tx=>{
       const iv=doc(db,'invites',code), pg=doc(db,'pages',handle), us=doc(db,'users',st.me.uid);
       const [a,b,c]=await Promise.all([tx.get(iv),tx.get(pg),tx.get(us)]);
       if(!a.exists()) throw new Error('초대코드가 올바르지 않아요.');
-      if(a.data().used) throw new Error('이미 사용된 초대코드예요.');
+      const id=a.data();
+      const multi = id.multi===true || typeof id.max==='number';
+      if(!multi && id.used) throw new Error('이미 사용된 초대코드예요.');
+      if(id.closed===true) throw new Error('지금은 가입이 닫혀 있어요.');
+      if(typeof id.max==='number' && (id.count||0)>=id.max)
+        throw new Error('초대 인원이 가득 찼어요.');
       if(b.exists()) throw new Error('이미 쓰는 주소예요.');
       if(c.exists()) throw new Error('이 계정의 페이지가 이미 있어요.');
       tx.set(pg,{owner:st.me.uid,name,sub:'',cats:['archive','ooc'],hue:222,createdAt:serverTimestamp()});
       tx.set(us,{handle,createdAt:serverTimestamp()});
-      tx.update(iv,{used:true,usedBy:st.me.uid,usedAt:serverTimestamp()});
+      tx.update(iv, multi
+        ? {count:(id.count||0)+1, lastBy:st.me.uid, lastAt:serverTimestamp()}
+        : {used:true, usedBy:st.me.uid, usedAt:serverTimestamp()});
     });
     st.myHandle=handle; renderSeal();
     history.replaceState(null,'',urlFor(handle)); loadPage(handle);
