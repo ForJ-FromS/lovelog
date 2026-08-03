@@ -133,6 +133,10 @@ function hexToHsl(hex){
   return [hh, Math.round(s*100), Math.round(l*100)];
 }
 function hueFromHex(hex){ return hexToHsl(hex)[0]; }
+function applyPri(c){
+  if(c) document.body.style.setProperty('--pri', c);
+  else document.body.style.removeProperty('--pri');
+}
 function applyColor(hh,s,l){
   const r=document.documentElement.style;
   r.setProperty('--h', hh);
@@ -316,6 +320,7 @@ async function loadPage(handle){
 async function enterPage(){
   const p=st.page, h=st.handle;
   applyColor(p.hue ?? 222, p.sat, p.lum);
+  applyPri(p.priColor||'');
   document.title=(p.name||h)+' — LOVELOG';
   $('#pg-name').textContent=p.name||h;
   $('#pg-name').style.color = p.titleColor||'';
@@ -1143,6 +1148,10 @@ function openPanel(mode){
 $('#s-dim').addEventListener('input',e=>{
   document.documentElement.style.setProperty('--dim', e.target.value/100);
 });
+let priVal=null;
+$('#s-pri').addEventListener('input',e=>{ priVal=e.target.value; applyPri(priVal); spkSync(); });
+$('#s-pri-auto').onclick=()=>{ priVal=''; applyPri(''); spkSync();
+  msg('포인트 색 자동 — [설정 저장]으로 확정돼요.'); };
 $('#s-color').addEventListener('input',e=>{
   const [hh,s,l]=hexToHsl(e.target.value); applyColor(hh,s,l);
 });
@@ -1835,7 +1844,7 @@ $('#s-bg-clear').onclick=()=>{
 function fillSettings(){
   const p=st.page;
   $('#s-name').value=p.name||''; $('#s-sub').value=p.sub||'';
-  $('#s-gate').value=''; gateClear=false; renderGateState(); $('#s-color').value=hslToHex(p.hue??222, p.sat??60, p.lum??62);
+  $('#s-gate').value=''; gateClear=false; renderGateState(); priVal=null; $('#s-pri').value=p.priColor||'#9db4ff'; $('#s-color').value=hslToHex(p.hue??222, p.sat??60, p.lum??62);
   $('#s-headmode').value=p.headMode||'wide';
   $('#s-sidepos').value=p.sidePos||'right';
   $('#s-light').checked=!!p.light;
@@ -1898,6 +1907,7 @@ async function saveSettings(){
       enterImg: enterUrl, enterRef,
       titleColor: titleVal ?? st.page.titleColor ?? '',
       bgImg: bgUrl, bgRef,
+      priColor: priVal ?? st.page.priColor ?? '',
       hue: hexToHsl($('#s-color').value)[0],
       sat: hexToHsl($('#s-color').value)[1],
       lum: hexToHsl($('#s-color').value)[2],
@@ -1947,6 +1957,36 @@ async function saveSettings(){
   }catch(e){ msg('오류: '+e.message); }
 }
 document.querySelectorAll('.s-go').forEach(b=>b.onclick=saveSettings);
+// ── 꾸미기 초기화 ──
+const RESET={
+  theme:{hue:222,sat:60,lum:62,light:false,glass:false,theme:'default',dots:true,
+    bgImg:'',bgRef:'',bgDim:78,titleColor:'',font:'sans',customCss:'',curImg:'',
+    sparkle:false,labelIcon:'◈',postPage:false,priColor:''},
+  widget:{side:[],ddays:[],bgm:{url:'',title:''}},
+  sticker:{stickers:[],stkOff:false,stkHideM:false},
+  layout:{homeStyle:'grid',headMode:'wide',sidePos:'right',catStyle:'bar',
+    galOn:true,stripOn:true},
+  media:{heroImgs:[],heroImg:'',enterImg:'',enterRef:'',enterText:'',
+    cardImg:'',bannerImg:'',catImgs:{},gate:'',gateBtn:'',gateColor:''}
+};
+$('#s-reset').onclick=async()=>{
+  const kind=$('#s-reset-kind').value;
+  const names={all:'꾸미기 전체',theme:'테마·색',widget:'위젯 구성',sticker:'스티커',media:'사진(헤더·대문·대표·배너)'};
+  if(!confirm(`${names[kind]}를 초기화할까요?\n\n글·갤러리·방명록은 그대로 남고, 꾸민 설정만 처음 상태로 돌아가요.`)) return;
+  if(kind==='all' && !confirm('정말 전부 되돌릴까요? 되돌린 설정은 복구할 수 없어요.')) return;
+  const data = kind==='all'
+    ? {...RESET.theme,...RESET.widget,...RESET.sticker,...RESET.layout,...RESET.media}
+    : {...RESET[kind]};
+  msg('초기화 중...');
+  try{
+    await updateDoc(doc(db,'pages',st.handle),data);
+    st.page={...st.page,...data};
+    sessionStorage.removeItem('gate_'+st.handle);
+    fillSettings(); renderWidList?.();
+    enterPage(); renderCatbar();
+    msg('초기화 완료!');
+  }catch(e){ msg('초기화 실패: '+e.message); }
+};
 let gateClear=false;
 function renderGateState(){
   const on = !!st.page?.gate && !gateClear;
