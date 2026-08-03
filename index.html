@@ -570,6 +570,36 @@
   .chl-f{font-size:10.5px;padding:4px 8px}
   .chl-r{display:flex;gap:3px;margin-left:auto}
   .chl-tx{width:100%;min-height:52px;margin:0!important;resize:vertical}
+  #homes{position:fixed;inset:0;z-index:40;display:none;align-items:center;justify-content:center;
+    background:hsl(var(--h) 30% 4% / .72);padding:20px}
+  #homes.show{display:flex}
+  .homes-box{position:relative;background:var(--card);border:1px solid var(--line);
+    border-radius:16px;padding:22px;width:min(560px,96vw);max-height:82vh;overflow:auto}
+  .hm{display:flex;gap:11px;align-items:center;padding:9px;border-radius:11px;
+    text-decoration:none;border:1px solid transparent}
+  .hm:hover{border-color:var(--line);background:var(--card2)}
+  .hm-th{width:46px;height:46px;border-radius:9px;flex:none;background-size:cover;
+    background-position:center;background-color:var(--card2);border:1px solid var(--line)}
+  .hm-t{display:flex;flex-direction:column;min-width:0}
+  .hm-t b{font-size:13.5px;color:var(--ink)}
+  .hm-t i{font-style:normal;font-family:'IBM Plex Mono',monospace;font-size:9px;
+    letter-spacing:.14em;color:var(--muted)}
+  .hm-t em{font-style:normal;font-size:11.5px;color:var(--muted);margin-top:2px;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .who-h{color:inherit;text-decoration:none;border-bottom:1px dotted var(--muted)}
+  .who-h:hover{color:var(--pri);border-color:var(--pri)}
+  .nb.mutual .nb-t b::after{content:' ♥';color:var(--pri);font-size:10px}
+  .nb-list{display:flex;flex-direction:column;gap:7px}
+  .nb{display:flex;align-items:center;gap:9px;padding:6px;border-radius:9px;
+    border:1px solid transparent;transition:.15s;text-decoration:none}
+  .nb:hover{border-color:var(--line);background:hsl(var(--h) 20% 50% / .06)}
+  .nb-th{width:34px;height:34px;border-radius:8px;flex:none;background-size:cover;
+    background-position:center;background-color:var(--card2);border:1px solid var(--line)}
+  .nb-t{display:flex;flex-direction:column;min-width:0}
+  .nb-t b{font-size:12.5px;color:var(--ink);font-weight:600;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .nb-t i{font-style:normal;font-family:'IBM Plex Mono',monospace;
+    font-size:9px;letter-spacing:.12em;color:var(--muted)}
   .w-notice{border-left:3px solid var(--pri)}
   .w-notice .nt-t{margin:2px 0 6px;font-size:14px;font-weight:700;color:var(--ink)}
   .w-notice .nt-x{margin:0;font-size:12.5px;line-height:1.75}
@@ -632,7 +662,12 @@
 
 <div id="bgphoto"></div>
 <div id="bgm-dock" class="hidden"><div id="bgm-dock-fr"></div><button id="bgm-dock-x" title="재생 종료">✕</button></div>
-<div class="seal"><span id="seal-txt">LOVELOG</span><a href="/guide.html" style="text-decoration:none;color:inherit">GUIDE</a><a id="seal-auth"></a></div>
+<div class="seal"><span id="seal-txt">LOVELOG</span><a id="seal-homes" style="cursor:pointer">HOMES</a><a href="/guide.html" style="text-decoration:none;color:inherit">GUIDE</a><a id="seal-auth"></a></div>
+<div id="homes"><div class="homes-box">
+  <p class="p-h" style="margin:0 0 12px">◈ HOMES — 공개된 러브로그</p>
+  <button id="homes-x" class="rmv" style="position:absolute;top:14px;right:16px">✕</button>
+  <div id="homes-list"></div>
+</div></div>
 
 <div class="wrap">
 <div id="stk-layer"></div>
@@ -832,6 +867,7 @@
         <option value="notice">공지 (제목+내용 고정 카드)</option>
         <option value="chat">채팅로그 (좌우 대사 말풍선)</option>
         <option value="img">이미지 (제목 직접 입력)</option>
+        <option value="nb">이웃 홈 (다른 러브로그 링크)</option>
       </select>
       <button class="btn" id="wid-add" style="font-size:12px">＋ 추가</button>
     </div>
@@ -864,6 +900,13 @@
     <p class="note" style="margin-top:-4px">사진은 <b>별도 저장소</b>에 올라가요 — 용량 제한 없이 원본 화질에 가깝게 저장돼요</p>
     <div class="p-row"><label class="filelab">사진 추가 <input type="file" id="s-hero" accept="image/*"></label></div>
     <div class="p-row" id="s-hero-list"></div>
+    <p class="p-h">대표 이미지 — 이웃 위젯·홈 목록에 표시</p>
+    <div class="p-row">
+      <label class="filelab">대표 이미지 <input type="file" id="s-card" accept="image/*"></label>
+      <button class="rmv" id="s-card-clear" style="font-size:11px">헤더 사진 쓰기</button>
+    </div>
+    <div class="p-row" id="s-card-list"></div>
+    <label class="chk"><input type="checkbox" id="s-listed"> 홈 목록(HOMES)에 내 홈 공개하기</label>
     <p class="p-h">입장 화면</p>
     <input id="s-enter" placeholder="입장 대문에 뜰 한 줄 (예: 파도는 늘 낮은 곳에서 시작된다)">
     <div class="p-row">
@@ -993,6 +1036,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=51"></script>
+<script type="module" src="./app.js?v=54"></script>
 </body>
 </html>
