@@ -563,6 +563,9 @@ let gatePreview=false;
 const nbCache={};
 const nbH=x=> (typeof x==='string'?x:(x&&x.h)||'').trim().toLowerCase();
 const nbImg=x=> (typeof x==='object'&&x&&x.img)||'';
+const nbUrl=x=> (typeof x==='object'&&x&&x.url)||'';
+const nbName=x=> (typeof x==='object'&&x&&x.name)||'';
+const nbHost=u=>{ try{ return new URL(u).hostname.replace(/^www\./,''); }catch(e){ return u; } };
 async function nbInfo(h){
   if(nbCache[h]!==undefined) return nbCache[h];
   try{ const s=await getDoc(doc(db,'pages',h));
@@ -683,15 +686,19 @@ function renderSide(){
       box.appendChild(d); return;
     }
     if(w.t==='nb'){
-      const hs=(w.items||[]).filter(x=>nbH(x));
+      const hs=(w.items||[]).filter(x=>nbH(x)||nbUrl(x));
       if(!hs.length){ if(st.mine){ d.innerHTML=`<p class="label">${esc(w.label||'NEIGHBORS')}</p><p class="pl-empty">✎ 편집에서 이웃 주소를 추가하세요.</p>`; box.appendChild(d); } return; }
       d.innerHTML=`<p class="label">${esc(w.label||'NEIGHBORS')}</p><div class="nb-list">`+
-        hs.map(x=>{ const hh=nbH(x), im=nbImg(x);
+        hs.map(x=>{ const hh=nbH(x), ur=nbUrl(x), im=nbImg(x);
+          if(ur) return `<a class="nb ext" href="${esc(ur)}" target="_blank" rel="noopener">
+            <span class="nb-th"${im?` style="background-image:url(${im})"`:''}></span>
+            <span class="nb-t"><b>${esc(nbName(x)||nbHost(ur))}</b><i>${esc(nbHost(ur))}</i></span></a>`;
           return `<a class="nb" href="${urlFor(hh)}" data-nb="${esc(hh)}">
           <span class="nb-th"${im?` style="background-image:url(${im})"`:''}></span>
           <span class="nb-t"><b>@${esc(hh)}</b><i></i></span></a>`; }).join('')+`</div>`;
       box.appendChild(d);
       hs.forEach(async x=>{
+        if(nbUrl(x)) return;
         const hh=nbH(x), own=nbImg(x);
         const inf=await nbInfo(hh); const el=d.querySelector(`[data-nb="${hh}"]`); if(!el) return;
         if(!inf){ el.querySelector('i').textContent='(없는 주소)'; return; }
@@ -760,9 +767,20 @@ function renderSide(){
     }
     if(w.t==='banner'){
       d.className+=' w-banner';
-      d.innerHTML=`<p class="label">BANNER</p><div class="bn-list">`+(w.items||[]).map(b=>
-        `<a ${b.url?`href="${esc(b.url)}" target="_blank" rel="noopener"`:''}><img src="${b.img}" alt="" draggable="false"></a>`).join('')+`</div>`;
-      box.appendChild(d); return;
+      d.innerHTML=`<p class="label">${esc(w.label||'BANNER')}</p><div class="bn-list">`+(w.items||[]).map((b,bi)=>{
+        const hh=(b.h||'').trim().toLowerCase();
+        if(hh) return `<a href="${urlFor(hh)}" data-bnh="${bi}" title="@${esc(hh)}">
+          <img src="${b.img||''}" alt="@${esc(hh)}" draggable="false"></a>`;
+        return `<a ${b.url?`href="${esc(b.url)}" target="_blank" rel="noopener"`:''}><img src="${b.img}" alt="" draggable="false"></a>`;
+      }).join('')+`</div>`;
+      box.appendChild(d);
+      (w.items||[]).forEach(async (b,bi)=>{
+        const hh=(b.h||'').trim().toLowerCase(); if(!hh||b.img) return;
+        const inf=await nbInfo(hh); const el=d.querySelector(`[data-bnh="${bi}"] img`); if(!el) return;
+        if(inf&&inf.img) el.src=inf.img; else el.replaceWith(Object.assign(document.createElement('span'),
+          {className:'bn-txt', textContent:(inf?inf.name:'@'+hh)}));
+      });
+      return;
     }
   });
   if(home && isM && st.mine){
@@ -1223,8 +1241,10 @@ function renderWidEdit(){
   if(w.t==='nb') html+=`
     <input id="we-nblab" placeholder="제목 (기본: NEIGHBORS)" value="${esc(w.label??'')}">
     `+(w.items||[]).map((x,i)=>`
-    <div class="p-row"><span style="font-size:12px;color:var(--muted)">luvlog.me/</span>
-      <input data-nbh="${i}" placeholder="주소(핸들)" value="${esc(nbH(x))}" style="flex:1">
+    <div class="p-row">
+      <input data-nbh="${i}" placeholder="핸들 또는 https:// 외부 홈 주소"
+        value="${esc(nbUrl(x)||nbH(x))}" style="flex:1.4">
+      ${nbUrl(x)?`<input data-nbnm="${i}" placeholder="표시할 이름" value="${esc(nbName(x))}" style="flex:.9">`:''}
       ${nbImg(x)?`<img class="chl-pv" src="${nbImg(x)}" alt="">`:''}
       <label class="filelab" style="font-size:10.5px">${nbImg(x)?'교체':'사진'}<input type="file" data-nbimg="${i}" accept="image/*"></label>
       ${nbImg(x)?`<button class="rmv" data-nbimx="${i}" style="font-size:10px">기본</button>`:''}
@@ -1232,7 +1252,7 @@ function renderWidEdit(){
       <button class="rmv" data-nbdn="${i}">↓</button>
       <button class="rmv" data-nbx="${i}">✕</button></div>`).join('')
     +`<button class="btn" id="we-nbadd" style="font-size:12px">+ 이웃 추가</button>
-      <p class="note">이름은 상대 홈에서 자동으로 가져와요. 사진도 자동이지만, [사진]으로 내가 원하는 이미지를 따로 넣을 수 있어요.</p>`;
+      <p class="note">러브로그 홈은 <b>핸들</b>만 적으면 이름·사진이 자동으로 떠요. 러브로그 밖의 갠홈·블로그·트위터는 <b>https:// 주소</b>를 그대로 붙여넣고 이름을 적어주세요. [사진]으로 이미지를 지정할 수 있어요.</p>`;
   if(w.t==='img') html+=`
     <div class="p-row"><label class="filelab">사진 ${w.img?'(있음)':''} <input type="file" id="we-iimg" accept="image/*"></label>
       ${w.img?`<button class="rmv" id="we-iimgx" style="font-size:11px">사진 제거</button>`:''}</div>
@@ -1263,11 +1283,21 @@ function renderWidEdit(){
     `<p class="note" style="margin:0 0 8px">이미지를 추가하면 배너마다 이동할 링크 주소 · ↑↓ 순서 · ✕ 삭제가 생겨요.</p>`)
     +(w.items||[]).map((b,i)=>`
     <div class="p-row"><span style="font-size:11px;color:var(--muted)">배너 ${i+1}</span>
-    <input data-bu="${i}" placeholder="눌렀을 때 이동할 주소 (선택)" value="${b.url||''}">
+    ${b.h!==undefined
+      ? `<span style="font-size:11px;color:var(--muted)">luvlog.me/</span>
+         <input data-bh="${i}" placeholder="핸들" value="${esc(b.h||'')}" style="flex:.9">
+         <label class="filelab" style="font-size:10.5px">${b.img?'이미지 교체':'이미지(선택)'}<input type="file" data-bimg="${i}" accept="image/*"></label>
+         ${b.img?`<button class="rmv" data-bimx="${i}" style="font-size:10px">자동</button>`:''}`
+      : `<input data-bu="${i}" placeholder="눌렀을 때 이동할 주소 (선택)" value="${b.url||''}">`}
     <button class="rmv" data-bup="${i}" title="위로">↑</button>
     <button class="rmv" data-bdn="${i}" title="아래로">↓</button>
     <button class="rmv" data-br="${i}">✕</button></div>`).join('')+
-    `<div class="p-row"><label class="filelab">배너 이미지 추가 <input type="file" id="we-bimg" accept="image/*"></label></div>`;
+    `<div class="p-row">
+      <label class="filelab">배너 이미지 추가 <input type="file" id="we-bimg" accept="image/*"></label>
+      <button class="btn" id="we-bnhome" style="font-size:12px">＋ 러브로그 홈 걸기</button>
+    </div>
+    <input id="we-blab" placeholder="제목 (기본: BANNER)" value="${esc(w.label??'')}">
+    <p class="note">'러브로그 홈 걸기'는 핸들만 적으면 그 홈의 대표 이미지가 배너로 걸려요 — 이미지를 직접 올리면 그게 우선이에요.</p>`;
   if(w.t==='chat') html+=`
     <div class="p-row" style="align-items:center">
       <select id="we-chst" style="flex:1">
@@ -1322,16 +1352,30 @@ function renderWidEdit(){
   const ntt=$('#we-ntt'); if(ntt) ntt.addEventListener('input',()=>{ w.title=ntt.value; });
   const nblab=$('#we-nblab'); if(nblab) nblab.addEventListener('input',()=>{ w.label=nblab.value; });
   const nbadd=$('#we-nbadd'); if(nbadd) nbadd.onclick=()=>{ w.items=w.items||[]; w.items.push(''); renderWidEdit(); };
-  $('#wid-edit').querySelectorAll('[data-nbh]').forEach(i2=>i2.addEventListener('input',()=>{
-    const k=i2.dataset.nbh, v=i2.value.trim().toLowerCase().replace(/^.*\//,'');
-    w.items[k] = nbImg(w.items[k]) ? {h:v, img:nbImg(w.items[k])} : v; }));
+  $('#wid-edit').querySelectorAll('[data-nbh]').forEach(i2=>i2.addEventListener('change',()=>{
+    const k=i2.dataset.nbh, raw=i2.value.trim(), cur=w.items[k];
+    const im=nbImg(cur), nm=nbName(cur);
+    if(/^https?:\/\//i.test(raw)){
+      w.items[k]={url:raw, name:nm||'', ...(im?{img:im}:{})};
+    }else{
+      const v=raw.toLowerCase().replace(/^.*\//,'');
+      w.items[k]= im ? {h:v, img:im} : v;
+    }
+    renderWidEdit(); }));
+  $('#wid-edit').querySelectorAll('[data-nbnm]').forEach(i2=>i2.addEventListener('input',()=>{
+    const k=i2.dataset.nbnm; w.items[k]={...w.items[k], name:i2.value}; }));
   $('#wid-edit').querySelectorAll('[data-nbimg]').forEach(inp=>inp.addEventListener('change',async e=>{
     const f=e.target.files[0]; if(!f) return; const k=inp.dataset.nbimg;
     const im=await upFile(f,600,.9,60);
-    w.items[k]={h:nbH(w.items[k]), img:im}; renderWidEdit();
+    const cur=w.items[k];
+    w.items[k]= nbUrl(cur) ? {...cur, img:im} : {h:nbH(cur), img:im};
+    renderWidEdit();
     msg('사진 반영됨 — [위젯 구성 저장]까지!'); }));
   $('#wid-edit').querySelectorAll('[data-nbimx]').forEach(b=>b.onclick=()=>{
-    w.items[b.dataset.nbimx]=nbH(w.items[b.dataset.nbimx]); renderWidEdit(); });
+    const k=b.dataset.nbimx, cur=w.items[k];
+    if(nbUrl(cur)){ const c2={...cur}; delete c2.img; w.items[k]=c2; }
+    else w.items[k]=nbH(cur);
+    renderWidEdit(); });
   const nbmv=(i,dd)=>{ const L=w.items, j=i+dd; if(j<0||j>=L.length) return; [L[i],L[j]]=[L[j],L[i]]; renderWidEdit(); };
   $('#wid-edit').querySelectorAll('[data-nbup]').forEach(b=>b.onclick=()=>nbmv(+b.dataset.nbup,-1));
   $('#wid-edit').querySelectorAll('[data-nbdn]').forEach(b=>b.onclick=()=>nbmv(+b.dataset.nbdn,1));
@@ -1376,6 +1420,16 @@ function renderWidEdit(){
     const f=e.target.files[0]; if(!f) return; msg('사진 압축 중...');
     w.img=await upFile(f,1100,.9,120); msg('사진 반영됨 — [위젯 구성 저장]을 눌러주세요.');
   });
+  const blab=$('#we-blab'); if(blab) blab.addEventListener('input',()=>{ w.label=blab.value; });
+  const bnh=$('#we-bnhome'); if(bnh) bnh.onclick=()=>{ w.items=w.items||[]; w.items.push({h:'',url:''}); renderWidEdit(); };
+  $('#wid-edit').querySelectorAll('[data-bh]').forEach(i2=>i2.addEventListener('input',()=>{
+    w.items[i2.dataset.bh].h=i2.value.trim().toLowerCase().replace(/^.*\//,''); }));
+  $('#wid-edit').querySelectorAll('[data-bimg]').forEach(inp=>inp.addEventListener('change',async e=>{
+    const f=e.target.files[0]; if(!f) return;
+    w.items[inp.dataset.bimg].img=await upFile(f,1200,.9,110); renderWidEdit();
+    msg('이미지 반영됨 — [위젯 구성 저장]까지!'); }));
+  $('#wid-edit').querySelectorAll('[data-bimx]').forEach(b2=>b2.onclick=()=>{
+    delete w.items[b2.dataset.bimx].img; renderWidEdit(); });
   const badd=$('#we-bimg'); if(badd) badd.addEventListener('change',async e=>{
     const f=e.target.files[0]; if(!f) return; msg('배너 압축 중...');
     w.items=w.items||[]; w.items.push({img:await upFile(f,1200,.9,110),url:''});
