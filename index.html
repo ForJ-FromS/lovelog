@@ -628,6 +628,10 @@
     background:hsl(var(--h) 30% 8% / .72);color:hsl(0 0% 100% / .55);border-radius:50%;
     width:22px;height:22px;display:flex;align-items:center;justify-content:center;cursor:pointer}
   .gpin.on{color:var(--pri)}
+  .gedit{position:absolute;left:6px;top:34px;font-style:normal;font-size:12px;
+    background:hsl(var(--h) 30% 8% / .72);color:hsl(0 0% 100% / .55);border-radius:50%;
+    width:22px;height:22px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .gedit:hover{color:var(--pri)}
   .gpin:hover{color:var(--pri)}
   .nb{display:flex;align-items:center;gap:9px;padding:6px;border-radius:9px;
     border:1px solid transparent;transition:.15s;text-decoration:none}
@@ -827,6 +831,7 @@
             <div id="pv-body"></div>
             <div class="pv-actions">
               <button id="pv-copy">🔗 링크 복사</button>
+              <button id="pv-edit" class="hidden">✎ 수정</button>
               <button id="pv-del" class="hidden">🗑 삭제</button>
             </div>
           </article>
@@ -898,7 +903,9 @@
       <label class="filelab">🖼 본문에 이미지 넣기 <input type="file" id="w-img" accept="image/*"></label>
       <span class="note" id="w-img-note">커서 위치에 [사진N] 표시가 들어가고, 발행하면 그 자리에 사진이 나와요.</span>
     </div>
-    <button class="go" id="w-go">발행</button>
+    <p class="note hidden" id="w-edit-note" style="color:var(--pri)"></p>
+    <div class="p-row"><button class="go" id="w-go" style="flex:1">발행</button>
+      <button class="rmv" id="w-cancel" style="font-size:12px">수정 취소</button></div>
   </div>
 
   <div class="pane hidden" data-pane="galup">
@@ -907,7 +914,9 @@
     <div class="p-row"><select id="g-cat"></select></div>
     <input id="g-title" placeholder="이미지 제목 (선택)">
     <label class="filelab">이미지 선택 <input type="file" id="g-file" accept="image/*"></label>
-    <button class="go" id="g-go" style="margin-top:10px">업로드</button>
+    <p class="note hidden" id="g-edit-note" style="color:var(--pri)"></p>
+    <div class="p-row" style="margin-top:10px"><button class="go" id="g-go" style="flex:1">업로드</button>
+      <button class="rmv" id="g-cancel" style="font-size:12px">수정 취소</button></div>
   </div>
 
   <div class="pane hidden" data-pane="wid">
@@ -1135,6 +1144,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=72"></script>
+<script type="module" src="./app.js?v=75"></script>
 </body>
 </html>

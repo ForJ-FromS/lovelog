@@ -56,9 +56,11 @@ function autoHeadHeight(o){
   const im=new Image();
   im.onload=()=>{
     const w=head.clientWidth||600;
-    const px=Math.max(160,Math.min(900,Math.round(w*(im.naturalHeight/im.naturalWidth))));
-    if(head.classList.contains('v'))
+    const px=Math.max(160,Math.min(2400,Math.round(w*(im.naturalHeight/im.naturalWidth))));
+    if(head.classList.contains('v')){
+      head.style.removeProperty('min-height');            // 가로 모드가 남긴 인라인 높이 제거(사진 아래 여백 방지)
       document.documentElement.style.setProperty('--headH', px+'px');
+    }
     else head.style.minHeight=px+'px';
   };
   im.src=o.img;
@@ -172,6 +174,15 @@ function dday(dstr){ const d=new Date(dstr+'T00:00:00'), n=new Date(); n.setHour
 const today=()=>{ const d=new Date();
   return d.getFullYear()+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+String(d.getDate()).padStart(2,'0'); };
 const bodyHTML=t=>t.split(/\n{2,}/).map(p=>'<p>'+esc(p).replace(/\n/g,'<br>')+'</p>').join('');
+const htmlToText=h=>String(h||'')
+  .replace(/<br\s*\/?>/gi,'\n')
+  .replace(/<\/p>\s*<p[^>]*>/gi,'\n\n')
+  .replace(/<\/?p[^>]*>/gi,'')
+  .replace(/<img[^>]*>/gi,'')
+  .replace(/<[^>]+>/g,'')
+  .replace(/&nbsp;/g,' ').replace(/&lt;/g,'<').replace(/&gt;/g,'>')
+  .replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&amp;/g,'&')
+  .trim();
 const cleanHTML=h=>h
   .replace(/<script[\s\S]*?<\/script\s*>/gi,'')
   .replace(/\son\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi,'')
@@ -386,9 +397,10 @@ async function enterPage(){
   $('#bgphoto').style.backgroundImage = p.bgImg?`url(${p.bgImg})`:'';
   document.body.classList.toggle('has-bg', !!p.bgImg);
   const headEl=document.querySelector('.head');
-  document.documentElement.style.setProperty('--headH', (p.headH||0) ? p.headH+'px' : '');
+  if(p.headFit!=='auto')
+    document.documentElement.style.setProperty('--headH', (p.headH||0) ? p.headH+'px' : '');
   document.body.classList.toggle('head-contain', p.headFit==='contain');
-  if(p.headMode==='side'){ headEl.classList.add('v'); $('#aside').prepend(headEl); }
+  if(p.headMode==='side'){ headEl.classList.add('v'); headEl.style.removeProperty('min-height'); $('#aside').prepend(headEl); }
   else { headEl.classList.remove('v');
     const anchor=$('#catbar'); anchor.parentNode.insertBefore(headEl, anchor); }
   $('#btn-write').classList.toggle('hidden',!st.mine);
@@ -940,6 +952,7 @@ function updateBoardWrite(){
   b.classList.toggle('hidden', !ok);
   if(!ok) return;
   b.onclick=()=>{
+    clearWriteForm();
     refreshWriteCats(); refreshGalCats(); openPanel('write');
     if(c==='__gal' || isG(c)){ switchTab('galup'); if(isG(c)) $('#g-cat').value=c; }
     else if(c!=='recent'){ $('#w-cat').value=c; }
@@ -959,13 +972,14 @@ function renderList(){
     $('#rows').innerHTML = items.length
       ? `<div class="gal-grid">`+items.map(g=>
           `<a data-gg="${g.id}"><img src="${g.img}" alt="" draggable="false">${st.mine?
-            `<i class="gdel" data-gx="${g.id}">✕</i><i class="gpin${galPins().includes(g.id)?' on':''}" data-gp="${g.id}" title="대문 갤러리에 고정">★</i>`:''}</a>`).join('')+`</div>`
+            `<i class="gdel" data-gx="${g.id}">✕</i><i class="gedit" data-ge="${g.id}" title="제목·카테고리·사진 수정">✎</i><i class="gpin${galPins().includes(g.id)?' on':''}" data-gp="${g.id}" title="대문 갤러리에 고정">★</i>`:''}</a>`).join('')+`</div>`
         +(st.mine?`<p class="note" style="margin-top:10px">★를 누르면 대문(홈) 갤러리에 걸려요 — 카테고리 탭에서 '대문: ★로 고른 사진'을 선택해야 적용돼요.</p>`:'')
       : '<p class="pl-empty">아직 이미지가 없습니다.</p>';
     $('#more-btn').style.display='none';
     document.querySelectorAll('[data-gg]').forEach(el=>el.onclick=e=>{
       if(e.target.dataset.gx){ e.stopPropagation(); delGal(e.target.dataset.gx); return; }
       if(e.target.dataset.gp){ e.stopPropagation(); togglePin(e.target.dataset.gp); return; }
+      if(e.target.dataset.ge){ e.stopPropagation(); startEditGal(e.target.dataset.ge); return; }
       const g=st.gallery.find(x=>x.id===el.dataset.gg);
       if(g){ $('#lb-img').src=g.img; $('#lb').classList.add('show'); }
     });
@@ -1075,6 +1089,7 @@ async function openPost(id){
   $('#pv-title').textContent=p.title;
   $('#pv-body').innerHTML=body;
   $('#pv-del').classList.toggle('hidden',!st.mine);
+  $('#pv-edit').classList.toggle('hidden',!st.mine);
   $('#list-view').classList.add('hidden');
   $('#post-view').classList.remove('hidden');
   document.body.classList.toggle('reading', !!st.page.postPage);
@@ -1708,6 +1723,41 @@ $('#w-img').addEventListener('change',async e=>{
 });
 const msg=t=>$('#p-msg').textContent=t;
 
+let editPost=null, editGal=null;
+function clearWriteForm(){
+  editPost=null;
+  ['w-title','w-pw','w-body'].forEach(i=>$('#'+i).value='');
+  $('#w-secret').checked=false; $('#w-pin').checked=false; $('#w-pw').style.display='none';
+  $('#w-cmt').checked=true; $('#w-html').checked=false; wImgs=[];
+  $('#w-go').textContent='발행'; $('#w-edit-note').classList.add('hidden');
+}
+function startEditPost(){
+  const p=st.cur; if(!p) return;
+  refreshWriteCats(); refreshGalCats();
+  editPost=p.id;
+  $('#w-title').value=p.title||'';
+  $('#w-cat').value=p.cat||'';
+  if(!p.secret && typeof p.raw==='string' && p.raw!==''){
+    $('#w-body').value=p.raw; $('#w-html').checked=!!p.html;
+  }else{
+    const src = p.secret ? (st.curBody||'') : (p.body||'');
+    $('#w-body').value = htmlToText(src); $('#w-html').checked=false;
+  }
+  wImgs = Array.isArray(p.imgs) ? p.imgs.slice() : [];
+  $('#w-pin').checked=!!p.pinned;
+  $('#w-cmt').checked=!p.cmtOff;
+  $('#w-secret').checked=!!p.secret;
+  $('#w-pw').style.display=p.secret?'':'none';
+  $('#w-pw').value='';
+  $('#w-go').textContent='수정 완료';
+  $('#w-edit-note').classList.remove('hidden');
+  $('#w-edit-note').textContent='✎ 「'+(p.title||'')+'」 수정 중'
+    + (wImgs.length?` · 본문 사진 ${wImgs.length}장 유지([사진N] 자리)`:'')
+    + (p.secret?' · 비밀글은 비밀번호를 다시 입력해야 저장돼요.':'');
+  openPanel('write'); switchTab('write');
+}
+$('#pv-edit').onclick=startEditPost;
+$('#w-cancel').onclick=()=>{ clearWriteForm(); msg('수정을 취소했어요.'); };
 $('#w-go').onclick=async()=>{
   const title=$('#w-title').value.trim(), cat=$('#w-cat').value,
         secret=$('#w-secret').checked, pw=$('#w-pw').value, pin=$('#w-pin').checked,
@@ -1723,11 +1773,28 @@ $('#w-go').onclick=async()=>{
     });
     const data={ title, cat, date:today(), ts:serverTimestamp(),
       secret, pinned:pin, cmtOff,
-      excerpt: secret?'':(asHtml?raw.replace(/<[^>]+>/g,' '):raw).replace(/\s+/g,' ').trim().slice(0,70) };
+      excerpt: secret?'':(asHtml?raw.replace(/<[^>]+>/g,' '):raw).replace(/\s+/g,' ').trim().slice(0,70),
+      html: asHtml, imgs: wImgs.slice() };
+    if(!secret) data.raw = raw;          // 원문 보관(수정 시 그대로 열기)
+    else data.raw = '';                  // 비밀글은 원문을 남기지 않음
     if(secret) data.enc=await encTxt(pw,html); else data.body=html;
     if(JSON.stringify(data).length>980000){ msg('이 글의 본문 이미지가 너무 많아요 — 사진 수를 줄여주세요. (꾸미기 용량과는 별개예요)'); return; }
     if(pin) await Promise.all(st.posts.filter(p=>p.pinned).map(p=>
       updateDoc(doc(db,'pages',st.handle,'posts',p.id),{pinned:false})));
+    if(editPost){
+      const old=st.posts.find(p=>p.id===editPost)||{};
+      const upd={...data, date: old.date||data.date, ts: old.ts||data.ts,
+        editedAt: serverTimestamp()};
+      if(!secret) upd.enc='';
+      await setDoc(doc(db,'pages',st.handle,'posts',editPost), upd);
+      const pid=editPost;
+      clearWriteForm();
+      await loadContent(); renderWidgets(); renderList();
+      $('#panel').classList.add('hidden');
+      openPost(pid);
+      msg('수정 완료!');
+      return;
+    }
     const d0=new Date(), pad=n=>String(n).padStart(2,'0');
     const base=String(d0.getFullYear()).slice(2)+pad(d0.getMonth()+1)+pad(d0.getDate());
     const used=new Set(st.posts.map(p=>p.id));
@@ -1735,15 +1802,39 @@ $('#w-go').onclick=async()=>{
     do{ nid=base+'-'+n.toString(36); n++; }while(used.has(nid)&&n<400);
     await setDoc(doc(db,'pages',st.handle,'posts',nid),data);
     await loadContent(); renderWidgets(); renderList();
-    ['w-title','w-pw','w-body'].forEach(i=>$('#'+i).value='');
-    $('#w-secret').checked=false; $('#w-pin').checked=false; $('#w-pw').style.display='none';
-    $('#w-cmt').checked=true; $('#w-html').checked=false;
-    wImgs=[];
+    clearWriteForm();
     msg('발행 완료!');
   }catch(e){ msg('오류: '+e.message); }
 };
 
+function startEditGal(id){
+  const g=st.gallery.find(x=>x.id===id); if(!g) return;
+  editGal=id; refreshGalCats();
+  $('#g-title').value=g.title||''; $('#g-cat').value=g.cat||'';
+  $('#g-file').value='';
+  $('#g-go').textContent='수정 완료';
+  $('#g-edit-note').classList.remove('hidden');
+  $('#g-edit-note').textContent='✎ 사진 정보 수정 중 — 이미지를 새로 고르면 사진도 교체돼요.';
+  openPanel('write'); switchTab('galup');
+}
+function clearGalForm(){
+  editGal=null; $('#g-title').value=''; $('#g-file').value='';
+  $('#g-go').textContent='업로드'; $('#g-edit-note').classList.add('hidden');
+}
+$('#g-cancel').onclick=()=>{ clearGalForm(); msg('수정을 취소했어요.'); };
 $('#g-go').onclick=async()=>{
+  if(editGal){
+    try{
+      const f=$('#g-file').files[0];
+      const upd={title:$('#g-title').value.trim(), cat:$('#g-cat').value||''};
+      if(f){ msg('이미지 교체 중...'); upd.img=await upFile(f,1900,.9,220); }
+      await updateDoc(doc(db,'pages',st.handle,'gallery',editGal),upd);
+      clearGalForm(); await loadContent(); renderGal();
+      if(st.cat==='__gal'||isG(st.cat)) renderList();
+      msg('수정 완료!');
+    }catch(e){ msg('오류: '+e.message); }
+    return;
+  }
   const f=$('#g-file').files[0]; if(!f){ msg('이미지를 선택하세요.'); return; }
   msg('압축·업로드 중...');
   try{
