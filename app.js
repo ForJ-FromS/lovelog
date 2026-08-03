@@ -703,7 +703,7 @@ function refreshGalCats(){
     g.map(c=>`<option>${esc(c)}</option>`).join('');
 }
 function openPanel(mode){
-  const groups={write:['write','galup'], deco:['wid','cats','set','theme','bg']};
+  const groups={write:['write','galup'], deco:['wid','cats','set','theme','bg','stk']};
   document.querySelectorAll('.tabs button').forEach(b=>{
     b.style.display=groups[mode].includes(b.dataset.tab)?'':'none';
   });
