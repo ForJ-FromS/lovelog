@@ -514,6 +514,13 @@
     .pane input,.pane select,.pane textarea{font-size:16px!important}
     .fab{width:50px;height:50px;font-size:18px}
   }
+  /* ═══ 클래식 블로그형 (유월이 준 phase4 디자인 재현) ═══ */
+  body.style-blog .wrap{max-width:1100px}
+  body.style-blog #catbar{display:none!important}
+  body.style-blog .head{min-height:330px}
+  body.style-blog .cols{grid-template-columns:1fr 252px;gap:18px}
+  body.style-blog.side-left .cols{grid-template-columns:252px 1fr}
+  body.style-blog.side-both .cols{grid-template-columns:252px 1fr 252px}
   footer{margin-top:36px;text-align:center;
     font-family:'IBM Plex Mono',monospace;font-size:8.5px;
     letter-spacing:.3em;color:var(--muted)}
@@ -832,6 +839,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=13"></script>
+<script type="module" src="./app.js?v=14"></script>
 </body>
 </html>

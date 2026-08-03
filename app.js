@@ -210,6 +210,7 @@ async function enterPage(){
   $('#pg-dday-main').innerHTML = dd0?`<p class="n">${esc(dday(dd0.date))}</p><p class="t">${esc(dd0.title)}</p>`:'';
   // 레이아웃 · 테마
   document.body.classList.toggle('light', !!p.light);
+  document.body.classList.toggle('style-blog', homeStyle()==='blog');
   document.body.classList.remove('theme-win98','theme-vhs');
   if(p.theme && p.theme!=='default') document.body.classList.add('theme-'+p.theme);
   document.body.classList.toggle('side-left', p.sidePos==='left');
@@ -299,7 +300,7 @@ function catStyle(){
 }
 function renderCatbar(){
   const bar=$('#catbar');
-  if(catStyle()!=='bar'){ bar.classList.add('hidden'); return; }
+  if(homeStyle()==='blog' || catStyle()!=='bar'){ bar.classList.add('hidden'); return; }
   bar.classList.remove('hidden');
   const homeOn = homeStyle()==='blog' ? st.cat==='recent' : st.cat==='home';
   const ci=st.page.catImgs||{};
@@ -401,7 +402,7 @@ function renderSide(){
       return;
     }
     if(w.t==='category'){
-      if(catStyle()==='bar') return;   // 알약 바 모드에선 사이드 카테고리 숨김
+      if(catStyle()==='bar' && homeStyle()!=='blog') return;   // 알약 바 모드에선 사이드 카테고리 숨김(블로그형 제외)
       const cnt=c=> isG(c) ? st.gallery.filter(x=>x.cat===c).length
                            : st.posts.filter(x=>x.cat===c).length;
       d.innerHTML=`<p class="label">CATEGORY</p><ul id="cats">`+
@@ -409,6 +410,7 @@ function renderSide(){
           <span>${esc(c)}${st.mine?` <span class="x" data-x="${esc(c)}">✕</span>`:''}</span>
           <span class="n">${cnt(c)}</span></a></li>`).join('')+
         (galOn()?`<li><a data-c="__gal" class="${st.cat==='__gal'?'on':''}"><span>GALLERY</span><span class="n">${st.gallery.length}</span></a></li>`:'')+
+        `<li><a data-c="__gb" class="${st.cat==='__gb'?'on':''}"><span>GUESTBOOK</span><span class="n">${st.guest.length}</span></a></li>`+
         `<li><a data-c="recent" class="${st.cat==='recent'?'on':''}"><span>전체</span><span class="n">${st.posts.length}</span></a></li></ul>`+
         (st.mine?'<p class="cat-add" id="cat-add">＋ 카테고리 추가</p>':'');
       box.appendChild(d);
