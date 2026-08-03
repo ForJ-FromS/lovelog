@@ -404,6 +404,8 @@ async function enterPage(){
   const headEl=document.querySelector('.head');
   if(p.headFit!=='auto')
     document.documentElement.style.setProperty('--headH', (p.headH||0) ? p.headH+'px' : '');
+  else if(!hs[0])
+    document.documentElement.style.removeProperty('--headH');   // auto+사진 없음 — 잔존값 제거
   document.body.classList.toggle('head-contain', p.headFit==='contain');
   if(p.headMode==='side'){ headEl.classList.add('v'); headEl.style.removeProperty('min-height'); $('#aside').prepend(headEl); }
   else { headEl.classList.remove('v');
