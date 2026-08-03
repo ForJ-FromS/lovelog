@@ -196,7 +196,8 @@ function renderStickers(){
       const up=async()=>{
         d.removeEventListener('pointermove',move);
         d.removeEventListener('pointerup',up);
-        try{ await updateDoc(doc(db,'pages',st.handle),{stickers:arr}); }catch(e){}
+        try{ await updateDoc(doc(db,'pages',st.handle),{stickers:arr}); }
+        catch(e){ msg('스티커 위치 저장 실패 — '+e.message); }
       };
       d.addEventListener('pointermove',move);
       d.addEventListener('pointerup',up);
@@ -323,6 +324,8 @@ async function enterPage(){
   if(bgmPlaying() && bgmHandle!==st.handle) bgmStop();
   document.body.classList.toggle('no-dots', p.dots===false);
   document.body.classList.toggle('stk-hide-m', !!p.stkHideM);
+  document.documentElement.style.setProperty('--lbIcon',
+    p.labelIcon===undefined ? '"◈ "' : (p.labelIcon ? JSON.stringify(p.labelIcon+' ') : '""'));
   document.body.classList.toggle('font-serif', p.font==='serif');
   document.title = p.name ? p.name : 'LOVELOG';
   let fl=document.getElementById('favlink');
@@ -1470,9 +1473,14 @@ $('#stk-file').addEventListener('change',async e=>{
   const img=await upFile(f,700,.92,60);
   st.page.stickers=st.page.stickers||[];
   st.page.stickers.push({img,x:8,y:20,size:120,rot:0});
-  try{ await updateDoc(doc(db,'pages',st.handle),{stickers:st.page.stickers}); }catch(e2){}
-  renderStkList(); renderStickers();
-  msg('스티커 추가! 홈에서 드래그로 옮겨보세요.'); e.target.value='';
+  try{ await updateDoc(doc(db,'pages',st.handle),{stickers:st.page.stickers});
+    msg('스티커 추가! 홈에서 드래그로 옮겨보세요.');
+  }catch(e2){
+    st.page.stickers.pop();
+    msg('스티커 저장 실패 — 안내창을 확인하세요.');
+    alert('스티커를 저장하지 못했어요.\n\n'+e2.message+'\n\n옛날에 올린 사진(헤더·배경·위젯)이 홈 설정에 남아 용량을 차지하고 있을 수 있어요.\n그 사진들을 지우고 다시 올린 뒤 [설정 저장]을 하면 해결돼요.');
+  }
+  renderStkList(); renderStickers(); e.target.value='';
 });
 let favNew=null, curNew=null, gateColVal=null;
 $('#s-gatecolor').addEventListener('input',e=>{ gateColVal=e.target.value;
@@ -1539,7 +1547,7 @@ function fillSettings(){
   $('#s-theme').value=p.theme||'default';
   renderStkList();
   $('#s-dim').value=p.bgDim??78; $('#s-dots').checked=p.dots!==false; $('#s-protect').checked=p.protectImg!==false; $('#s-stkm').checked=!!p.stkHideM; $('#s-sparkle').checked=!!p.sparkle; $('#s-postpage').checked=!!p.postPage;
-  $('#s-gatebtn').value=p.gateBtn||''; gateColVal=null;
+  $('#s-gatebtn').value=p.gateBtn||''; $('#s-lbicon').value=p.labelIcon??'◈'; gateColVal=null;
   $('#s-gatecolor').value=p.gateColor||'#ffffff';
   heroDraft=JSON.parse(JSON.stringify(heroObjs())); renderHeroList();
   $('#s-enter').value=p.enterText||'';
@@ -1609,6 +1617,7 @@ async function saveSettings(){
       sparkle: $('#s-sparkle').checked,
       postPage: $('#s-postpage').checked,
       gateBtn: $('#s-gatebtn').value.trim(),
+      labelIcon: $('#s-lbicon').value.trim(),
       gateColor: gateColVal ?? st.page.gateColor ?? '',
       font: $('#s-font').value,
       customCss: $('#s-css').value,

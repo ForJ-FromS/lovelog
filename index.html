@@ -297,7 +297,7 @@
     border-radius:0 0 3px 3px;background:var(--pri);opacity:.85}
   .label{font-family:'IBM Plex Mono',monospace;font-size:8.5px;
     letter-spacing:.3em;color:var(--muted);margin-bottom:9px}
-  .label::before{content:'◈ ';color:var(--pri)}
+  .label::before{content:var(--lbIcon,'◈ ');color:var(--pri)}
   .s-search{display:flex;align-items:center;gap:8px;border:1px solid var(--line);
     border-radius:9px;background:var(--card2);padding:8px 12px}
   .s-search input{border:none;background:none;outline:none;width:100%;
@@ -923,6 +923,11 @@
       <label class="chk"><input type="checkbox" id="s-postpage"> 글을 전용 페이지로 보기 (읽을 때 위젯 접기)</label>
     </div>
     <div class="p-row" style="align-items:center">
+      <span style="font-size:12px;color:var(--muted)">위젯 제목 기호</span>
+      <input id="s-lbicon" maxlength="3" placeholder="◈" style="width:70px;text-align:center">
+      <span class="note">SEARCH·CHAT 같은 제목 앞 기호 — 비우면 없어져요 (예: ◆ ✦ ❖ ▸ ·)</span>
+    </div>
+    <div class="p-row" style="align-items:center">
       <span style="font-size:12px;color:var(--body)">타이틀(홈 이름) 글씨색</span>
       <input type="color" id="s-title" value="#eeeeee"
         style="width:58px;height:36px;padding:2px;border:1px solid var(--line);
@@ -983,6 +988,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=46"></script>
+<script type="module" src="./app.js?v=47"></script>
 </body>
 </html>
