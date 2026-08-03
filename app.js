@@ -9,6 +9,8 @@ import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signO
 import { getFirestore, doc, getDoc, setDoc, updateDoc, runTransaction, serverTimestamp,
   collection, query, orderBy, getDocs, addDoc, deleteDoc }
   from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { getStorage, ref as sref, uploadBytes, getDownloadURL }
+  from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
 import { firebaseConfig } from './firebase-config.js';
 
 const $ = s => document.querySelector(s);
@@ -20,7 +22,7 @@ const show = id => VIEWS.forEach(v=>$('#'+v).classList.toggle('hidden',v!==id));
 const enc=new TextEncoder(), dec=new TextDecoder();
 
 if(!firebaseConfig.apiKey || firebaseConfig.apiKey.includes('여기에')){ show('view-setup'); throw new Error('cfg'); }
-const app=initializeApp(firebaseConfig), auth=getAuth(app), db=getFirestore(app);
+const app=initializeApp(firebaseConfig), auth=getAuth(app), db=getFirestore(app), stg=getStorage(app);
 
 const st = { me:null, myHandle:null, handle:null, page:null, posts:[], gallery:[],
              guest:[], cat:'recent', q:'', cur:null, curBody:null, mine:false };
@@ -43,7 +45,7 @@ async function resolveImgs(p){
       try{ const s=await getDoc(doc(db,'pages',st.handle,'imgs',id));
         if(s.exists()) m[id]=s.data().d||''; }catch(e){}
     }));
-    (p.heroImgs||[]).forEach(o=>{ if(o&&o.ref) o.img=m[o.ref]||o.img||''; });
+    (p.heroImgs||[]).forEach(o=>{ if(o&&o.ref&&!o.img) o.img=m[o.ref]||''; });
     if(p.enterRef) p.enterImg=m[p.enterRef]||p.enterImg||'';
     if(p.bgRef) p.bgImg=m[p.bgRef]||p.bgImg||'';
   }catch(e){}
@@ -80,6 +82,35 @@ function compress(file,maxW,q){ return new Promise((res,rej)=>{
     }
     res(alpha ? c.toDataURL('image/png') : c.toDataURL('image/jpeg',q)); };
   img.onerror=rej; img.src=URL.createObjectURL(file); });}
+function shrinkBlob(file,maxW,q){ return new Promise((res,rej)=>{
+  const img=new Image(); img.onload=()=>{ const sc=Math.min(1,maxW/img.width),
+    c=document.createElement('canvas'); c.width=Math.round(img.width*sc);
+    c.height=Math.round(img.height*sc);
+    const x=c.getContext('2d'); x.drawImage(img,0,0,c.width,c.height);
+    let alpha=false;
+    if(file.type!=='image/jpeg'){
+      try{ const d=x.getImageData(0,0,c.width,c.height).data;
+        const step=Math.max(4,(Math.floor(d.length/4/6000)||1)*4);
+        for(let i=3;i<d.length;i+=step){ if(d[i]<250){ alpha=true; break; } }
+      }catch(_){}
+    }
+    c.toBlob(b=>b?res({blob:b,ext:alpha?'png':'jpg'}):rej(new Error('blob')),
+      alpha?'image/png':'image/jpeg', q);
+  }; img.onerror=rej; img.src=URL.createObjectURL(file); });}
+async function upFile(file,maxW=1800,q=.88,fallbackKB=200){
+  try{
+    if(!st.me) throw new Error('no-auth');
+    const {blob,ext}=await shrinkBlob(file,maxW,q);
+    const name=Date.now().toString(36)+Math.random().toString(36).slice(2,7)+'.'+ext;
+    const r=sref(stg,'u/'+st.me.uid+'/'+name);
+    await uploadBytes(r,blob,{contentType: ext==='png'?'image/png':'image/jpeg',
+      cacheControl:'public,max-age=31536000'});
+    return await getDownloadURL(r);
+  }catch(e){
+    console.warn('storage upload failed, fallback to inline', e);
+    return await compressTo(file,Math.min(maxW,1200),fallbackKB);
+  }
+}
 async function compressTo(file,maxW,targetKB){
   let w=maxW, out='';
   for(let pass=0; pass<3; pass++){
@@ -1032,7 +1063,7 @@ async function setCatImg(key,val){
 function bindCatImg(box){
   box.querySelectorAll('[data-cimg]').forEach(inp=>inp.addEventListener('change',async e=>{
     const f=e.target.files[0]; if(!f) return; msg('버튼 이미지 압축 중...');
-    await setCatImg(inp.dataset.cimg, await compress(f,360,.85));
+    await setCatImg(inp.dataset.cimg, await upFile(f,600,.9,40));
     msg('버튼 이미지 적용!');
   }));
   box.querySelectorAll('[data-cimgx]').forEach(b=>b.onclick=()=>setCatImg(b.dataset.cimgx,null));
@@ -1216,7 +1247,7 @@ function renderWidEdit(){
   const iurl=$('#we-iurl'); if(iurl) iurl.addEventListener('input',()=>{ w.url=iurl.value.trim(); });
   const iimg=$('#we-iimg'); if(iimg) iimg.addEventListener('change',async e=>{
     const f=e.target.files[0]; if(!f) return;
-    w.img=await compressTo(f,620,130); renderWidEdit();
+    w.img=await upFile(f,1400,.9,130); renderWidEdit();
     msg('사진 반영됨 — [위젯 구성 저장]까지!'); });
   const iimgx=$('#we-iimgx'); if(iimgx) iimgx.onclick=()=>{ delete w.img; renderWidEdit(); };
   const chst=$('#we-chst'); if(chst) chst.addEventListener('change',()=>{ w.style=chst.value; });
@@ -1241,7 +1272,7 @@ function renderWidEdit(){
   $('#wid-edit').querySelectorAll('[data-cht]').forEach(i2=>i2.addEventListener('input',()=>{ w.lines[i2.dataset.cht].text=i2.value; }));
   $('#wid-edit').querySelectorAll('[data-chp]').forEach(inp=>inp.addEventListener('change',async e=>{
     const f=e.target.files[0]; if(!f) return;
-    w.lines[inp.dataset.chp].img=await compressTo(f,128,25);
+    w.lines[inp.dataset.chp].img=await upFile(f,256,.9,25);
     renderWidEdit(); msg('프사 반영됨 — [위젯 구성 저장]까지!'); }));
   $('#wid-edit').querySelectorAll('[data-chpx]').forEach(b=>b.onclick=()=>{
     delete w.lines[b.dataset.chpx].img; renderWidEdit(); });
@@ -1250,11 +1281,11 @@ function renderWidEdit(){
   const hg=$('#we-h'); if(hg) hg.addEventListener('input',()=>{ w.h=+hg.value; });
   const img=$('#we-img'); if(img) img.addEventListener('change',async e=>{
     const f=e.target.files[0]; if(!f) return; msg('사진 압축 중...');
-    w.img=await compressTo(f,500,120); msg('사진 반영됨 — [위젯 구성 저장]을 눌러주세요.');
+    w.img=await upFile(f,1100,.9,120); msg('사진 반영됨 — [위젯 구성 저장]을 눌러주세요.');
   });
   const badd=$('#we-bimg'); if(badd) badd.addEventListener('change',async e=>{
     const f=e.target.files[0]; if(!f) return; msg('배너 압축 중...');
-    w.items=w.items||[]; w.items.push({img:await compressTo(f,700,110),url:''});
+    w.items=w.items||[]; w.items.push({img:await upFile(f,1200,.9,110),url:''});
     renderWidEdit(); renderWidList(); msg('배너 추가됨 — [위젯 구성 저장]을 눌러주세요.');
   });
   const ladd=$('#we-add'); if(ladd) ladd.onclick=()=>{ w.items=w.items||[]; w.items.push({label:'',url:''}); renderWidEdit(); };
@@ -1264,7 +1295,7 @@ function renderWidEdit(){
   $('#wid-edit').querySelectorAll('[data-dr]').forEach(b=>b.onclick=()=>{ pdraft.ddays.splice(+b.dataset.dr,1); renderWidEdit(); });
   $('#wid-edit').querySelectorAll('[data-dimg]').forEach(inp=>inp.addEventListener('change',async e=>{
     const f=e.target.files[0]; if(!f) return; msg('사진 압축 중...');
-    pdraft.ddays[inp.dataset.dimg].img=await compressTo(f,600,100);
+    pdraft.ddays[inp.dataset.dimg].img=await upFile(f,1000,.9,100);
     renderWidEdit(); msg('사진 반영됨 — [위젯 구성 저장]까지!');
   }));
   $('#wid-edit').querySelectorAll('[data-dximg]').forEach(b=>b.onclick=()=>{
@@ -1301,7 +1332,7 @@ $('#wid-save').onclick=async()=>{
     if(tot>980000){
       const wKB=Math.round((JSON.stringify(draft).length+JSON.stringify(pdraft.ddays).length)/1370);
       msg('용량 초과 — 안내창을 확인하세요.');
-      alert('홈 전체 용량 초과!\n\n서버는 홈 하나당 약 1MB까지 받아요.\n지금 합산: 약 '+Math.round(tot/1370)+'KB\n· 위젯 사진(프로필·배너·디데이): 약 '+wKB+'KB\n· 꾸미기 사진(헤더·대문·배경): 약 '+Math.round((tot-JSON.stringify(draft).length-JSON.stringify(pdraft.ddays).length)/1370)+'KB\n\n배너·헤더 등 큰 사진을 지우거나 다시 올리면(자동 압축 강화) 들어가요.'); return; }
+      alert('홈 설정 용량 초과!\n\n사진은 별도 저장소에 올라가지만, 옛날에 올린 사진이 남아 있으면 커질 수 있어요.\n해당 위젯 사진을 지우고 다시 올리면 해결돼요.\n지금 합산: 약 '+Math.round(tot/1370)+'KB\n· 위젯 사진(프로필·배너·디데이): 약 '+wKB+'KB\n· 꾸미기 사진(헤더·대문·배경): 약 '+Math.round((tot-JSON.stringify(draft).length-JSON.stringify(pdraft.ddays).length)/1370)+'KB\n\n배너·헤더 등 큰 사진을 지우거나 다시 올리면(자동 압축 강화) 들어가요.'); return; }
     const dd=pdraft.ddays.filter(x=>x.title&&x.date);
     await updateDoc(doc(db,'pages',st.handle),{side:draft, ddays:dd, bgm:pdraft.bgm});
     st.page.side=JSON.parse(JSON.stringify(draft));
@@ -1322,7 +1353,7 @@ let wImgs=[];
 $('#w-img').addEventListener('change',async e=>{
   const f=e.target.files[0]; if(!f) return;
   msg('이미지 압축 중...');
-  wImgs.push(await compress(f,850,.72));
+  wImgs.push(await upFile(f,1600,.88,180));
   const ta=$('#w-body'), tk=`\n[사진${wImgs.length}]\n`,
         s=ta.selectionStart??ta.value.length;
   ta.value = ta.value.slice(0,s)+tk+ta.value.slice(ta.selectionEnd??s);
@@ -1348,7 +1379,7 @@ $('#w-go').onclick=async()=>{
       secret, pinned:pin, cmtOff,
       excerpt: secret?'':(asHtml?raw.replace(/<[^>]+>/g,' '):raw).replace(/\s+/g,' ').trim().slice(0,70) };
     if(secret) data.enc=await encTxt(pw,html); else data.body=html;
-    if(JSON.stringify({...st.page, ...data}).length>980000){ msg('본문 이미지가 너무 많아요 — 사진 수를 줄여주세요.'); return; }
+    if(JSON.stringify(data).length>980000){ msg('이 글의 본문 이미지가 너무 많아요 — 사진 수를 줄여주세요. (꾸미기 용량과는 별개예요)'); return; }
     if(pin) await Promise.all(st.posts.filter(p=>p.pinned).map(p=>
       updateDoc(doc(db,'pages',st.handle,'posts',p.id),{pinned:false})));
     const d0=new Date(), pad=n=>String(n).padStart(2,'0');
@@ -1370,7 +1401,7 @@ $('#g-go').onclick=async()=>{
   const f=$('#g-file').files[0]; if(!f){ msg('이미지를 선택하세요.'); return; }
   msg('압축·업로드 중...');
   try{
-    const img=await compress(f,1100,.8);
+    const img=await upFile(f,1900,.9,220);
     if(img.length>900000){ msg('이미지가 너무 커요 — 더 작은 사진으로 시도해 주세요.'); return; }
     await addDoc(collection(db,'pages',st.handle,'gallery'),
       {img,title:$('#g-title').value.trim(),cat:$('#g-cat').value||'',ts:serverTimestamp()});
@@ -1421,14 +1452,14 @@ function renderHeroList(){
 $('#s-hero').addEventListener('change',async e=>{
   const f=e.target.files[0]; if(!f) return;
   msg('헤더 사진 압축 중...');
-  heroDraft.push({img:await compressTo(f,1500,230),x:50,y:50,z:100});
+  heroDraft.push({img:await upFile(f,2200,.9,230),x:50,y:50,z:100});
   renderHeroList(); msg('추가됨 — [설정 저장]을 눌러야 확정돼요.');
   e.target.value='';
 });
 $('#s-egate').addEventListener('change',async e=>{
   const f=e.target.files[0]; if(!f) return;
   msg('입장 이미지 압축 중...');
-  egateNew=await compressTo(f,1500,240); renderEgate();
+  egateNew=await upFile(f,2200,.9,240); renderEgate();
   msg('추가됨 — [설정 저장]을 눌러야 확정돼요.'); e.target.value='';
 });
 $('#s-egate-clear').onclick=()=>{ egateNew=''; renderEgate();
@@ -1436,7 +1467,7 @@ $('#s-egate-clear').onclick=()=>{ egateNew=''; renderEgate();
 $('#stk-file').addEventListener('change',async e=>{
   const f=e.target.files[0]; if(!f) return;
   msg('스티커 압축 중...');
-  const img=await compress(f,320,.85);
+  const img=await upFile(f,700,.92,60);
   st.page.stickers=st.page.stickers||[];
   st.page.stickers.push({img,x:8,y:20,size:120,rot:0});
   try{ await updateDoc(doc(db,'pages',st.handle),{stickers:st.page.stickers}); }catch(e2){}
@@ -1471,22 +1502,21 @@ $('#s-gate-pv').onclick=()=>{
 };
 $('#s-fav').addEventListener('change',async e=>{
   const f=e.target.files[0]; if(!f) return;
-  favNew=await compress(f,64,.9); e.target.value='';
+  favNew=await upFile(f,128,.95,10); e.target.value='';
   msg('파비콘 준비 완료 — [설정 저장]을 누르면 적용돼요.');
 });
 $('#s-fav-clear').onclick=()=>{ favNew=''; msg('파비콘 제거 — [설정 저장]으로 확정돼요.'); };
-$('#s-cur').addEventListener('change',e=>{
+$('#s-cur').addEventListener('change',async e=>{
   const f=e.target.files[0]; if(!f) return;
-  if(f.size>60000){ msg('커서 이미지는 60KB 이하로 올려주세요 (32px 내외 권장).'); e.target.value=''; return; }
-  const r=new FileReader();
-  r.onload=()=>{ curNew=r.result; msg('커서 준비 완료 — [설정 저장]을 누르면 적용돼요.'); };
-  r.readAsDataURL(f); e.target.value='';
+  msg('커서 이미지 준비 중...');
+  curNew=await upFile(f,96,.95,8); e.target.value='';
+  msg('커서 준비 완료 — [설정 저장]을 누르면 적용돼요.');
 });
 $('#s-cur-clear').onclick=()=>{ curNew=''; msg('기본 커서로 — [설정 저장]으로 확정돼요.'); };
 $('#s-css-clear').onclick=()=>{ $('#s-css').value=''; msg('CSS 비움 — [설정 저장]으로 확정돼요.'); };
 $('#s-bg').addEventListener('change',async e=>{
   const f=e.target.files[0]; if(!f) return;
-  msg('배경 이미지 압축 중...'); bgNew=await compressTo(f,1600,260);
+  msg('배경 이미지 업로드 중...'); bgNew=await upFile(f,2400,.9,260);
   document.documentElement && ($('#bgphoto').style.backgroundImage=`url(${bgNew})`);
   document.body.classList.add('has-bg');
   msg('배경 미리보기 적용 — [설정 저장]을 눌러야 저장돼요.');
@@ -1528,26 +1558,40 @@ async function saveSettings(){
       ...(st.page.heroImgs||[]).map(o=>o&&o.ref).filter(Boolean),
       st.page.enterRef, st.page.bgRef].filter(Boolean));
     const putImg=async d=>(await addDoc(collection(db,'pages',st.handle,'imgs'),{d})).id;
+    const isUrl=s=>typeof s==='string' && s.startsWith('http');
     const heroOut=[];
     for(const o of heroDraft){
-      heroOut.push({ref: o.ref || await putImg(o.img),
-        x:o.x??50, y:o.y??50, z:o.z??100});
+      heroOut.push(isUrl(o.img)
+        ? {img:o.img, x:o.x??50, y:o.y??50, z:o.z??100}
+        : {ref: o.ref || await putImg(o.img), x:o.x??50, y:o.y??50, z:o.z??100});
     }
-    let enterRef = st.page.enterRef||'';
-    if(egateNew!==null) enterRef = egateNew ? await putImg(egateNew) : '';
-    else if(!enterRef && st.page.enterImg) enterRef=await putImg(st.page.enterImg);
-    let bgRef = st.page.bgRef||'';
-    if(bgNew!==null) bgRef = bgNew ? await putImg(bgNew) : '';
-    else if(!bgRef && st.page.bgImg) bgRef=await putImg(st.page.bgImg);
+    let enterRef = st.page.enterRef||'', enterUrl='';
+    if(egateNew!==null){
+      if(!egateNew){ enterRef=''; }
+      else if(isUrl(egateNew)){ enterUrl=egateNew; enterRef=''; }
+      else enterRef=await putImg(egateNew);
+    } else if(!enterRef && st.page.enterImg){
+      if(isUrl(st.page.enterImg)) enterUrl=st.page.enterImg;
+      else enterRef=await putImg(st.page.enterImg);
+    }
+    let bgRef = st.page.bgRef||'', bgUrl='';
+    if(bgNew!==null){
+      if(!bgNew){ bgRef=''; }
+      else if(isUrl(bgNew)){ bgUrl=bgNew; bgRef=''; }
+      else bgRef=await putImg(bgNew);
+    } else if(!bgRef && st.page.bgImg){
+      if(isUrl(st.page.bgImg)) bgUrl=st.page.bgImg;
+      else bgRef=await putImg(st.page.bgImg);
+    }
     const data={
       name:$('#s-name').value.trim()||st.handle,
       sub:$('#s-sub').value.trim(),
       heroImgs: heroOut,
       heroImg: '',
       enterText: $('#s-enter').value.trim(),
-      enterImg: '', enterRef,
+      enterImg: enterUrl, enterRef,
       titleColor: titleVal ?? st.page.titleColor ?? '',
-      bgImg: '', bgRef,
+      bgImg: bgUrl, bgRef,
       hue: hexToHsl($('#s-color').value)[0],
       sat: hexToHsl($('#s-color').value)[1],
       lum: hexToHsl($('#s-color').value)[2],
