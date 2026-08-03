@@ -315,7 +315,7 @@ function gcats(){ return st.page.gcats||[]; }
 const isG=c=>gcats().includes(c);
 function sideCfg(){
   let s;
-  if(st.page.side && st.page.side.length) s=st.page.side.filter(w=>w.t!=='notice');
+  if(st.page.side && st.page.side.length) s=st.page.side;
   else{
     s=[{t:'search'},{t:'category'}];
     if(st.page.ddays&&st.page.ddays.length) s.push({t:'dday'});
@@ -349,9 +349,9 @@ function latestBlock(box){
   d.querySelector('#latest-more').onclick=()=>goBoard('recent');
   return d;
 }
-const WNAME={latest:'최신글',profile:'프로필',search:'검색',category:'카테고리',
+const WNAME={latest:'최신글',notice:'공지',profile:'프로필',search:'검색',category:'카테고리',
   dday:'디데이',bgm:'BGM',quote:'인용구',links:'링크',banner:'배너칸'};
-const DEFCOL={search:'l',category:'l',profile:'l',latest:'c',quote:'c',
+const DEFCOL={search:'l',category:'l',profile:'l',latest:'c',quote:'c',notice:'c',
   dday:'r',bgm:'r',links:'r',banner:'r'};
 const homeStyle=()=>st.page?.homeStyle||'grid';
 const galOn=()=>st.page?.galOn!==false;
@@ -557,6 +557,15 @@ function renderSide(){
       d.className+=' w-profile';
       d.innerHTML=(w.img?`<img src="${w.img}" alt="" draggable="false" style="max-height:${+(w.h)||210}px">`:'')+
         (w.text?`<p class="cap">${esc(w.text)}</p>`:'');
+      box.appendChild(d); return;
+    }
+    if(w.t==='notice'){
+      if(!w.title && !w.text && !st.mine) return;
+      d.className+=' w-notice';
+      d.innerHTML=`<p class="label">NOTICE</p>
+        ${w.title?`<p class="nt-t">${esc(w.title)}</p>`:''}
+        ${w.text?`<p class="nt-x">${esc(w.text).replace(/\n/g,'<br>')}</p>`
+          :(!w.title&&st.mine?'<p class="pl-empty">✎ 편집에서 내용을 채워주세요.</p>':'')}`;
       box.appendChild(d); return;
     }
     if(w.t==='quote'){
@@ -995,7 +1004,7 @@ $('#w-catadd').onclick=async()=>{
 /* ---------- 위젯 편집 탭 ---------- */
 let draft=[]; let editIdx=-1; let pdraft={ddays:[],bgm:{}};
 function fillWidgets(){
-  draft=JSON.parse(JSON.stringify(sideCfg())).filter(w=>w.t!=='notice');
+  draft=JSON.parse(JSON.stringify(sideCfg()));
   pdraft={ ddays:JSON.parse(JSON.stringify(st.page.ddays||[])),
            bgm:{url:st.page.bgm?.url||'', title:st.page.bgm?.title||''} };
   editIdx=-1; renderWidList(); $('#wid-edit').innerHTML='';
@@ -1004,7 +1013,7 @@ function renderWidList(){
   $('#wid-list').innerHTML = draft.map((w,i)=>`
     <div class="wl">
       <span class="nm">${WNAME[w.t]||w.t}${w.t==='links'?` (${(w.items||[]).length})`:''}${w.t==='banner'?` (${(w.items||[]).length})`:''}</span>
-      ${['profile','quote','links','banner','dday','bgm'].includes(w.t)?`<button data-e="${i}">✎</button>`:''}
+      ${['profile','quote','links','banner','dday','bgm','notice'].includes(w.t)?`<button data-e="${i}">✎</button>`:''}
       <button data-u="${i}">↑</button><button data-d="${i}">↓</button><button data-x="${i}">✕</button>
     </div>`).join('') || '<p class="pl-empty">위젯이 없어요 — 아래에서 추가하세요.</p>';
   $('#wid-list').querySelectorAll('button').forEach(b=>b.onclick=()=>{
@@ -1028,6 +1037,9 @@ function renderWidEdit(){
     <textarea id="we-text" placeholder="아래 캡션 (선택 — 비우면 사진만 꽉 차게)" style="min-height:60px">${w.text||''}</textarea>`;
   if(w.t==='quote') html+=`
     <textarea id="we-text" placeholder="걸어둘 문장" style="min-height:90px">${w.text||''}</textarea>`;
+  if(w.t==='notice') html+=`
+    <input id="we-ntt" placeholder="공지 제목 (선택)" value="${esc(w.title||'')}">
+    <textarea id="we-text" placeholder="공지 내용 — 줄바꿈 그대로 표시돼요" style="min-height:100px">${w.text||''}</textarea>`;
   if(w.t==='dday') html+=pdraft.ddays.map((d,i)=>`
     <div class="p-row"><input data-dt="${i}" placeholder="제목" value="${esc(d.title)}">
     <input type="date" data-dd="${i}" value="${esc(d.date)}" style="flex:.8">
@@ -1058,6 +1070,7 @@ function renderWidEdit(){
   $('#wid-edit').innerHTML=html;
   // 라이브 바인딩: 쓰는 즉시 draft에 반영
   const t=$('#we-text'); if(t) t.addEventListener('input',()=>{ w.text=t.value; });
+  const ntt=$('#we-ntt'); if(ntt) ntt.addEventListener('input',()=>{ w.title=ntt.value; });
   const hg=$('#we-h'); if(hg) hg.addEventListener('input',()=>{ w.h=+hg.value; });
   const img=$('#we-img'); if(img) img.addEventListener('change',async e=>{
     const f=e.target.files[0]; if(!f) return; msg('사진 압축 중...');
@@ -1101,7 +1114,7 @@ $('#wid-add').onclick=()=>{
     msg('이미 있는 위젯이에요.'); return; }
   draft.push(t==='links'?{t,items:[]}:t==='banner'?{t,items:[]}:{t});
   editIdx=draft.length-1; renderWidList();
-  if(['profile','quote','links','banner','dday','bgm'].includes(t)) renderWidEdit();
+  if(['profile','quote','links','banner','dday','bgm','notice'].includes(t)) renderWidEdit();
 };
 $('#wid-save').onclick=async()=>{
   if(editIdx>=0 && draft[editIdx]) syncWid(draft[editIdx]);

@@ -516,6 +516,9 @@
   .cmt-item p{font-size:12.5px;color:var(--body);white-space:pre-wrap;margin-top:2px}
   #stk-layer{position:absolute;inset:0;pointer-events:none;z-index:5}
   @media(max-width:720px){body.stk-hide-m #stk-layer{display:none}}
+  .w-notice{border-left:3px solid var(--pri)}
+  .w-notice .nt-t{margin:2px 0 6px;font-size:14px;font-weight:700;color:var(--ink)}
+  .w-notice .nt-x{margin:0;font-size:12.5px;line-height:1.75}
   .mmv{display:none}
   @media(max-width:640px){
     .mmv{position:absolute;top:7px;right:8px;display:flex;gap:5px;z-index:2}
@@ -768,6 +771,7 @@
         <option value="search">검색</option>
         <option value="category">카테고리</option>
         <option value="latest">최신글 블록 (고정글+최신 5)</option>
+        <option value="notice">공지 (제목+내용 고정 카드)</option>
       </select>
       <button class="btn" id="wid-add" style="font-size:12px">＋ 추가</button>
     </div>
@@ -914,6 +918,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=31"></script>
+<script type="module" src="./app.js?v=32"></script>
 </body>
 </html>
