@@ -167,7 +167,9 @@ function renderStickers(){
   const arr=st.page?.stickers||[];
   document.body.classList.toggle('mine', !!st.mine);
   layer.innerHTML='';
+  if(st.page?.stkOff===true) return;
   arr.forEach((s,i)=>{
+    if(s.off) return;
     const d=document.createElement('div'); d.className='stk';
     const isM=window.innerWidth<=720;
     const sx=(isM&&s.mx!=null)?s.mx:s.x, sy=(isM&&s.my!=null)?s.my:s.y;
@@ -214,6 +216,7 @@ function renderStkList(){
       <input type="range" data-ss="${i}" min="50" max="260" value="${s.size||120}">
       <span style="font-size:10px;color:var(--muted)">회전</span>
       <input type="range" data-sr="${i}" min="-45" max="45" value="${s.rot||0}">
+      <button class="rmv" data-so="${i}" title="홈에서 숨기기/보이기">${s.off?'숨김':'표시'}</button>
       <button class="rmv" data-sx="${i}">✕</button>
     </div>`).join('')
     :'<p class="pl-empty">아직 스티커가 없어요.</p>';
@@ -224,6 +227,10 @@ function renderStkList(){
   box.querySelectorAll('[data-sr]').forEach(r=>r.addEventListener('input',()=>{
     st.page.stickers[+r.dataset.sr].rot=+r.value; renderStickers(); }));
   box.querySelectorAll('[data-sr]').forEach(r=>r.addEventListener('change',save));
+  box.querySelectorAll('[data-so]').forEach(b=>b.onclick=async()=>{
+    const s=st.page.stickers[+b.dataset.so]; s.off=!s.off;
+    await save(); renderStkList(); renderStickers();
+  });
   box.querySelectorAll('[data-sx]').forEach(b=>b.onclick=async()=>{
     st.page.stickers.splice(+b.dataset.sx,1);
     await save(); renderStkList(); renderStickers();
@@ -1546,7 +1553,7 @@ function fillSettings(){
   $('#s-homestyle').value=homeStyle();
   $('#s-theme').value=p.theme||'default';
   renderStkList();
-  $('#s-dim').value=p.bgDim??78; $('#s-dots').checked=p.dots!==false; $('#s-protect').checked=p.protectImg!==false; $('#s-stkm').checked=!!p.stkHideM; $('#s-sparkle').checked=!!p.sparkle; $('#s-postpage').checked=!!p.postPage;
+  $('#s-dim').value=p.bgDim??78; $('#s-dots').checked=p.dots!==false; $('#s-protect').checked=p.protectImg!==false; $('#s-stkm').checked=!!p.stkHideM; $('#s-stkoff').checked=p.stkOff!==true; $('#s-sparkle').checked=!!p.sparkle; $('#s-postpage').checked=!!p.postPage;
   $('#s-gatebtn').value=p.gateBtn||''; $('#s-lbicon').value=p.labelIcon??'◈'; gateColVal=null;
   $('#s-gatecolor').value=p.gateColor||'#ffffff';
   heroDraft=JSON.parse(JSON.stringify(heroObjs())); renderHeroList();
@@ -1614,6 +1621,7 @@ async function saveSettings(){
       dots: $('#s-dots').checked,
       protectImg: $('#s-protect').checked,
       stkHideM: $('#s-stkm').checked,
+      stkOff: !$('#s-stkoff').checked,
       sparkle: $('#s-sparkle').checked,
       postPage: $('#s-postpage').checked,
       gateBtn: $('#s-gatebtn').value.trim(),
@@ -1660,7 +1668,6 @@ async function signup(){
   const code=$('#in-invite').value.trim(), handle=$('#in-handle').value.trim().toLowerCase(),
         name=$('#in-name').value.trim(), err=$('#signup-err');
   err.textContent='';
-  if(!code){ err.textContent='초대코드를 입력해 주세요.'; return; }
   if(!/^[a-z0-9-]{2,20}$/.test(handle)){ err.textContent='주소 형식을 확인해 주세요.'; return; }
   if(RESERVED.has(handle)){ err.textContent='이 주소는 사용할 수 없어요. 다른 주소를 골라주세요.'; return; }
   try{
@@ -1671,20 +1678,23 @@ async function signup(){
   if(!name){ err.textContent='홈 이름을 입력해 주세요.'; return; }
   try{
     await runTransaction(db,async tx=>{
-      const iv=doc(db,'invites',code), pg=doc(db,'pages',handle), us=doc(db,'users',st.me.uid);
-      const [a,b,c]=await Promise.all([tx.get(iv),tx.get(pg),tx.get(us)]);
-      if(!a.exists()) throw new Error('초대코드가 올바르지 않아요.');
-      const id=a.data();
-      const multi = id.multi===true || typeof id.max==='number';
-      if(!multi && id.used) throw new Error('이미 사용된 초대코드예요.');
-      if(id.closed===true) throw new Error('지금은 가입이 닫혀 있어요.');
-      if(typeof id.max==='number' && (id.count||0)>=id.max)
-        throw new Error('초대 인원이 가득 찼어요.');
+      const iv=code?doc(db,'invites',code):null, pg=doc(db,'pages',handle), us=doc(db,'users',st.me.uid);
+      const [a,b,c]=await Promise.all([iv?tx.get(iv):Promise.resolve(null),tx.get(pg),tx.get(us)]);
+      let id=null, multi=false;
+      if(code){
+        if(!a.exists()) throw new Error('초대코드가 올바르지 않아요.');
+        id=a.data();
+        multi = id.multi===true || typeof id.max==='number';
+        if(!multi && id.used) throw new Error('이미 사용된 초대코드예요.');
+        if(id.closed===true) throw new Error('지금은 가입이 닫혀 있어요.');
+        if(typeof id.max==='number' && (id.count||0)>=id.max)
+          throw new Error('초대 인원이 가득 찼어요.');
+      }
       if(b.exists()) throw new Error('이미 쓰는 주소예요.');
       if(c.exists()) throw new Error('이 계정의 페이지가 이미 있어요.');
       tx.set(pg,{owner:st.me.uid,name,sub:'',cats:['archive','ooc'],hue:222,createdAt:serverTimestamp()});
       tx.set(us,{handle,createdAt:serverTimestamp()});
-      tx.update(iv, multi
+      if(iv) tx.update(iv, multi
         ? {count:(id.count||0)+1, lastBy:st.me.uid, lastAt:serverTimestamp()}
         : {used:true, usedBy:st.me.uid, usedAt:serverTimestamp()});
     });
