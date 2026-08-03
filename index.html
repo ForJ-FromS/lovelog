@@ -475,6 +475,8 @@
     background:linear-gradient(90deg,#000080,#1084d0);color:#fff;
     margin:-15px -17px 10px;padding:4px 8px;letter-spacing:.15em;font-size:9px}
   body.theme-win98 .label::before{content:'▣ ';color:#fff}
+  body.theme-win98 .w-chat .ch-b p{color:var(--chLt,#000)}
+  body.theme-win98 .w-chat .ch-line.r .ch-b p{color:var(--chRt,#fff)}
   body.theme-win98 #catbar a{border-radius:0;border:2px solid;
     border-color:#fff #404040 #404040 #fff;background:#c0c0c0;color:#000}
   body.theme-win98 #catbar a.on{border-color:#404040 #fff #fff #404040;background:#b0b0b0}
@@ -522,7 +524,7 @@
   .ch-p{width:30px;height:30px;border-radius:50%;object-fit:cover;flex:none;
     border:1px solid var(--line)}
   .ch-b{max-width:80%}
-  .ch-n{display:block;font-size:10px;color:var(--muted);margin:0 0 3px 2px}
+  .ch-n{display:block;font-size:10px;color:var(--chNm,var(--muted));opacity:.85;margin:0 0 3px 2px}
   .ch-line.r .ch-n{text-align:right;margin:0 2px 3px 0}
   .ch-b p{margin:0;font-size:var(--chFs,12.5px);font-family:var(--chFf,inherit);
     line-height:1.6;padding:8px 12px;border-radius:14px;
@@ -534,9 +536,10 @@
     background:var(--chR,var(--pri));border-color:var(--chR,var(--pri));
     color:var(--chRt,hsl(var(--h) calc(30% * var(--sf,1)) 12%))}
   .w-chat.ch-retro .ch-b p{border-radius:0;border:2px solid;
-    border-color:#fff #404040 #404040 #fff;background:#c0c0c0;color:#000}
-  .w-chat.ch-retro .ch-line.r .ch-b p{background:#000080;color:#fff;
-    border-color:#404040 #fff #fff #404040}
+    border-color:#fff #404040 #404040 #fff;
+    background:var(--chL,#c0c0c0);color:var(--chLt,#000)}
+  .w-chat.ch-retro .ch-line.r .ch-b p{background:var(--chR,#000080);
+    color:var(--chRt,#fff);border-color:#404040 #fff #fff #404040}
   .w-chat.ch-retro .ch-p{border-radius:0}
   .w-chat.ch-script .ch-b p{background:none;border:none;border-radius:0;
     padding:0 0 8px;border-bottom:1px dashed var(--line)}
@@ -980,6 +983,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=43"></script>
+<script type="module" src="./app.js?v=44"></script>
 </body>
 </html>

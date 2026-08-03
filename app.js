@@ -626,8 +626,13 @@ function renderSide(){
       const lum=hx=>{ try{ const n=parseInt(hx.slice(1),16);
         return (((n>>16)&255)*.299+((n>>8)&255)*.587+(n&255)*.114)/255; }catch(e){ return .5; } };
       const sv=[];
-      if(w.cL) sv.push(`--chL:${w.cL}`, `--chLt:${lum(w.cL)>.62?'#1a1a1a':'#fff'}`);
-      if(w.cR) sv.push(`--chR:${w.cR}`, `--chRt:${lum(w.cR)>.62?'#1a1a1a':'#fff'}`);
+      if(w.cL) sv.push(`--chL:${w.cL}`);
+      if(w.cR) sv.push(`--chR:${w.cR}`);
+      const tL=w.tL || (w.cL?(lum(w.cL)>.62?'#1a1a1a':'#fff'):'');
+      const tR=w.tR || (w.cR?(lum(w.cR)>.62?'#1a1a1a':'#fff'):'');
+      if(tL) sv.push(`--chLt:${tL}`);
+      if(tR) sv.push(`--chRt:${tR}`);
+      if(w.tL||w.tR) sv.push(`--chNm:${w.tL||w.tR}`);
       if(w.fs) sv.push(`--chFs:${w.fs}px`);
       if(w.font==='serif') sv.push(`--chFf:'Noto Serif KR',serif`);
       if(w.font==='mono') sv.push(`--chFf:'IBM Plex Mono',monospace`);
@@ -1170,6 +1175,11 @@ function renderWidEdit(){
       <button class="rmv" id="we-chcx" style="font-size:10px">테마색으로</button>
     </div>
     <div class="p-row" style="align-items:center;font-size:11px;color:var(--muted);gap:7px">
+      글씨색 왼쪽 <input type="color" id="we-chtl" value="${w.tL||'#ffffff'}" style="width:34px;padding:0">
+      오른쪽 <input type="color" id="we-chtr" value="${w.tR||'#ffffff'}" style="width:34px;padding:0">
+      <button class="rmv" id="we-chtx" style="font-size:10px">자동</button>
+    </div>
+    <div class="p-row" style="align-items:center;font-size:11px;color:var(--muted);gap:7px">
       <select id="we-chff" style="flex:1">
         <option value="" ${!w.font?'selected':''}>글꼴 — 홈 기본</option>
         <option value="serif" ${w.font==='serif'?'selected':''}>명조</option>
@@ -1212,6 +1222,9 @@ function renderWidEdit(){
   const chst=$('#we-chst'); if(chst) chst.addEventListener('change',()=>{ w.style=chst.value; });
   const chcl=$('#we-chcl'); if(chcl) chcl.addEventListener('input',()=>{ w.cL=chcl.value; });
   const chcr=$('#we-chcr'); if(chcr) chcr.addEventListener('input',()=>{ w.cR=chcr.value; });
+  const chtl=$('#we-chtl'); if(chtl) chtl.addEventListener('input',()=>{ w.tL=chtl.value; });
+  const chtr=$('#we-chtr'); if(chtr) chtr.addEventListener('input',()=>{ w.tR=chtr.value; });
+  const chtx=$('#we-chtx'); if(chtx) chtx.onclick=()=>{ delete w.tL; delete w.tR; renderWidEdit(); };
   const chcx=$('#we-chcx'); if(chcx) chcx.onclick=()=>{ delete w.cL; delete w.cR; renderWidEdit(); };
   const chff=$('#we-chff'); if(chff) chff.addEventListener('change',()=>{ w.font=chff.value; });
   const chfs=$('#we-chfs'); if(chfs) chfs.addEventListener('input',()=>{ w.fs=+chfs.value; });
