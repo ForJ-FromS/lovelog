@@ -221,6 +221,18 @@ async function enterPage(){
   document.body.classList.toggle('side-both', p.sidePos==='both');
   document.documentElement.style.setProperty('--dim', (p.bgDim??78)/100);
   document.body.classList.toggle('glass', !!p.glass);
+  document.body.classList.toggle('no-dots', p.dots===false);
+  document.body.classList.toggle('font-serif', p.font==='serif');
+  document.title = p.name ? p.name : 'LOVELOG';
+  let fl=document.getElementById('favlink');
+  if(p.fav){ if(!fl){ fl=document.createElement('link'); fl.rel='icon'; fl.id='favlink'; document.head.appendChild(fl); } fl.href=p.fav; }
+  else if(fl) fl.remove();
+  let ucss=document.getElementById('user-css');
+  if(!ucss){ ucss=document.createElement('style'); ucss.id='user-css'; document.head.appendChild(ucss); }
+  ucss.textContent = p.customCss||'';
+  let ccss=document.getElementById('cursor-css');
+  if(!ccss){ ccss=document.createElement('style'); ccss.id='cursor-css'; document.head.appendChild(ccss); }
+  ccss.textContent = p.curImg ? `body,body *{cursor:url(${p.curImg}) 4 4, auto !important}` : '';
   $('#bgphoto').style.backgroundImage = p.bgImg?`url(${p.bgImg})`:'';
   document.body.classList.toggle('has-bg', !!p.bgImg);
   const headEl=document.querySelector('.head');
@@ -527,6 +539,7 @@ function updateBoardWrite(){
     else if(c!=='recent'){ $('#w-cat').value=c; }
   };
 }
+const postThumb=p=>{ if(p.secret||!p.body) return ''; const m=p.body.match(/<img[^>]+src="([^"]+)"/); return m?m[1]:''; };
 function renderList(){
   updateBoardWrite();
   if(st.cat==='__gb'){ $('#guest-view').classList.remove('hidden');
@@ -562,12 +575,13 @@ function renderList(){
       ${pin.excerpt?`<p class="ex">${esc(pin.excerpt)}</p>`:''}
       <p class="meta">${esc(pin.cat)} · ${esc(pin.date)}</p></a>`:'';
   const shown=(st.cat==='recent'&&!st.q)?rest.slice(0,7):rest;
-  $('#rows').innerHTML = shown.length?shown.map(p=>`
-    <li class="row" data-id="${p.id}">
+  const rowHTML=p=>{ const t=postThumb(p); return `
+    <li class="row ${t?'has-th':''}" data-id="${p.id}">
       <span class="d">${esc((p.date||'').slice(5))}</span>
       <span class="t">${esc(p.title)} ${p.secret?'<span class="k">🔒</span>':''}</span>
       <span class="c">${esc(p.cat)}</span>
-      <span class="k"></span></li>`).join('')
+      <span class="k"></span>${t?`<img class="th" src="${t}" alt="" draggable="false">`:''}</li>`; };
+  $('#rows').innerHTML = shown.length?shown.map(rowHTML).join('')
     :'<p class="pl-empty">아직 글이 없습니다.</p>';
   $('#more-btn').style.display=(st.cat==='recent'&&!st.q&&rest.length>7)?'':'none';
   document.querySelectorAll('[data-id]').forEach(el=>el.onclick=()=>openPost(el.dataset.id));
@@ -630,6 +644,12 @@ async function openPost(id){
   $('#list-view').classList.add('hidden');
   $('#post-view').classList.remove('hidden');
   history.replaceState(null,'',urlFor(st.handle,id));
+  const li=st.posts.findIndex(x=>x.id===id),
+        older=st.posts[li+1], newer=st.posts[li-1];
+  $('#pv-nav').innerHTML =
+    (older?`<span class="back" data-nav="${older.id}">‹ 이전 — ${esc(older.title)}</span>`:'<span></span>')+
+    (newer?`<span class="back" data-nav="${newer.id}" style="text-align:right">다음 — ${esc(newer.title)} ›</span>`:'<span></span>');
+  document.querySelectorAll('#pv-nav [data-nav]').forEach(el=>el.onclick=()=>openPost(el.dataset.nav));
   window.scrollTo({top:0});
   loadComments(id);
 }
@@ -695,12 +715,12 @@ $('#pv-del').onclick=async()=>{
 $('#more-btn').onclick=()=>{ st.cat='recent'; st.q='__all__'; st.q=''; 
   $('#rows').innerHTML=''; const rest=st.posts.filter(p=>!p.pinned);
   $('#v-label').textContent='ALL';
-  $('#rows').innerHTML=rest.map(p=>`
-    <li class="row" data-id="${p.id}">
+  $('#rows').innerHTML=rest.map(p=>{ const t=postThumb(p); return `
+    <li class="row ${t?'has-th':''}" data-id="${p.id}">
       <span class="d">${esc((p.date||'').slice(5))}</span>
       <span class="t">${esc(p.title)} ${p.secret?'<span class="k">🔒</span>':''}</span>
       <span class="c">${esc(p.cat)}</span>
-      <span class="k"></span></li>`).join('');
+      <span class="k"></span>${t?`<img class="th" src="${t}" alt="" draggable="false">`:''}</li>`; }).join('');
   $('#more-btn').style.display='none';
   document.querySelectorAll('#rows [data-id]').forEach(el=>el.onclick=()=>openPost(el.dataset.id));
 };
@@ -1100,6 +1120,22 @@ $('#stk-file').addEventListener('change',async e=>{
   renderStkList(); renderStickers();
   msg('스티커 추가! 홈에서 드래그로 옮겨보세요.'); e.target.value='';
 });
+let favNew=null, curNew=null;
+$('#s-fav').addEventListener('change',async e=>{
+  const f=e.target.files[0]; if(!f) return;
+  favNew=await compress(f,64,.9); e.target.value='';
+  msg('파비콘 준비 완료 — [설정 저장]을 누르면 적용돼요.');
+});
+$('#s-fav-clear').onclick=()=>{ favNew=''; msg('파비콘 제거 — [설정 저장]으로 확정돼요.'); };
+$('#s-cur').addEventListener('change',e=>{
+  const f=e.target.files[0]; if(!f) return;
+  if(f.size>60000){ msg('커서 이미지는 60KB 이하로 올려주세요 (32px 내외 권장).'); e.target.value=''; return; }
+  const r=new FileReader();
+  r.onload=()=>{ curNew=r.result; msg('커서 준비 완료 — [설정 저장]을 누르면 적용돼요.'); };
+  r.readAsDataURL(f); e.target.value='';
+});
+$('#s-cur-clear').onclick=()=>{ curNew=''; msg('기본 커서로 — [설정 저장]으로 확정돼요.'); };
+$('#s-css-clear').onclick=()=>{ $('#s-css').value=''; msg('CSS 비움 — [설정 저장]으로 확정돼요.'); };
 $('#s-bg').addEventListener('change',async e=>{
   const f=e.target.files[0]; if(!f) return;
   msg('배경 이미지 압축 중...'); bgNew=await compress(f,1600,.7);
@@ -1124,11 +1160,13 @@ function fillSettings(){
   $('#s-homestyle').value=homeStyle();
   $('#s-theme').value=p.theme||'default';
   renderStkList();
-  $('#s-dim').value=p.bgDim??78;
+  $('#s-dim').value=p.bgDim??78; $('#s-dots').checked=p.dots!==false;
   heroDraft=[...heroList()]; renderHeroList();
   $('#s-enter').value=p.enterText||'';
   egateNew=null; renderEgate();
   titleVal=null; $('#s-title').value=p.titleColor||'#eeeeee';
+  $('#s-font').value=p.font||'sans'; $('#s-css').value=p.customCss||'';
+  favNew=null; curNew=null;
   bgNew=null;
 }
 async function saveSettings(){
@@ -1153,6 +1191,11 @@ async function saveSettings(){
       homeStyle: $('#s-homestyle').value,
       theme: $('#s-theme').value,
       bgDim: parseInt($('#s-dim').value)||78,
+      dots: $('#s-dots').checked,
+      font: $('#s-font').value,
+      customCss: $('#s-css').value,
+      fav: favNew ?? st.page.fav ?? '',
+      curImg: curNew ?? st.page.curImg ?? '',
       updatedAt:serverTimestamp()
     };
     if(gateIn) data.gate=await sha256(gateIn);
