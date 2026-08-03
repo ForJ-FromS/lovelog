@@ -30,6 +30,11 @@ const fmtTs=t=>{ try{ const d=t?.toDate?t.toDate():new Date();
 
 const heroList=()=> (st.page?.heroImgs&&st.page.heroImgs.length)
   ? st.page.heroImgs : (st.page?.heroImg?[st.page.heroImg]:[]);
+const heroObj=s=> typeof s==='string' ? {img:s,x:50,y:50,z:100} : {x:50,y:50,z:100,...s};
+const heroObjs=()=> heroList().map(heroObj);
+const setHeroBg=(el,o)=>{ el.style.backgroundImage=`url(${o.img})`;
+  el.style.backgroundPosition=`${o.x}% ${o.y}%`;
+  el.style.backgroundSize = o.z>100 ? o.z+'% auto' : 'cover'; };
 
 /* ---------- 유틸 ---------- */
 const b64=b=>btoa(String.fromCharCode(...new Uint8Array(b)));
@@ -51,19 +56,29 @@ function compress(file,maxW,q){ return new Promise((res,rej)=>{
     c.height=Math.round(img.height*sc);
     c.getContext('2d').drawImage(img,0,0,c.width,c.height);
     res(c.toDataURL('image/jpeg',q)); }; img.onerror=rej; img.src=URL.createObjectURL(file); });}
-function hueFromHex(hex){
+function hexToHsl(hex){
   const r=parseInt(hex.slice(1,3),16)/255,g=parseInt(hex.slice(3,5),16)/255,b=parseInt(hex.slice(5,7),16)/255;
-  const mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn;
-  if(!d) return 222;
-  let x; if(mx===r) x=((g-b)/d)%6; else if(mx===g) x=(b-r)/d+2; else x=(r-g)/d+4;
-  return Math.round((x*60+360)%360);
+  const mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn,l=(mx+mn)/2;
+  let hh=222,s=0;
+  if(d){ s=d/(1-Math.abs(2*l-1));
+    let x; if(mx===r) x=((g-b)/d)%6; else if(mx===g) x=(b-r)/d+2; else x=(r-g)/d+4;
+    hh=Math.round((x*60+360)%360); }
+  return [hh, Math.round(s*100), Math.round(l*100)];
 }
-function hexFromHue(hh){
-  const s=.6,l=.62,aa=s*Math.min(l,1-l),
+function hueFromHex(hex){ return hexToHsl(hex)[0]; }
+function applyColor(hh,s,l){
+  const r=document.documentElement.style;
+  r.setProperty('--h', hh);
+  r.setProperty('--sf', Math.max(.12, Math.min(1.3, (s??60)/60)).toFixed(3));
+  r.setProperty('--lo', Math.max(-4, Math.min(8, ((l??55)-55)*.18)).toFixed(2)+'%');
+}
+function hslToHex(hh,sp,lp){
+  const s=(sp??60)/100,l=(lp??62)/100,aa=s*Math.min(l,1-l),
   f=n=>{const k=(n+hh/30)%12;const c=l-aa*Math.max(-1,Math.min(k-3,9-k,1));
     return Math.round(c*255).toString(16).padStart(2,'0')};
   return '#'+f(0)+f(8)+f(4);
 }
+function hexFromHue(hh){ return hslToHex(hh,60,62); }
 const ytId=u=>{ const m=String(u||'').match(/(?:youtu\.be\/|v=|shorts\/|embed\/)([A-Za-z0-9_-]{11})/); return m?m[1]:null; };
 const ytList=u=>{ const m=String(u||'').match(/[?&]list=([A-Za-z0-9_-]+)/); return m?m[1]:null; };
 function dday(dstr){ const d=new Date(dstr+'T00:00:00'), n=new Date(); n.setHours(0,0,0,0);
@@ -160,14 +175,14 @@ async function loadPage(handle){
     $('#pg-name').textContent='없는 페이지예요'; $('#pg-sub').textContent='@'+handle; return; }
   st.page=snap.data();
   st.mine = st.me && st.page.owner===st.me.uid;
-  document.documentElement.style.setProperty('--h', st.page.hue ?? 222);
+  applyColor(st.page.hue ?? 222, st.page.sat, st.page.lum);
   // 입장 대문: 방문 시 1회(세션) + 비번 홈은 비번 입력
   const needPw = st.page.gate && !st.mine
     && sessionStorage.getItem('gate_'+handle)!==st.page.gate;
   const seen = sessionStorage.getItem('ent_'+handle);
   if(!st.mine && (needPw || !seen)){
-    document.documentElement.style.setProperty('--h', st.page.hue ?? 222);
-    const cover = st.page.enterImg || heroList()[0] || '';
+    applyColor(st.page.hue ?? 222, st.page.sat, st.page.lum);
+    const cover = st.page.enterImg || heroObjs()[0]?.img || '';
     $('#enter-cover').style.backgroundImage = cover?`url(${cover})`:'';
     $('#enter-over').textContent = '@'+handle.toUpperCase();
     $('#gate-name').textContent = st.page.name || handle;
@@ -191,22 +206,23 @@ async function loadPage(handle){
 }
 async function enterPage(){
   const p=st.page, h=st.handle;
-  document.documentElement.style.setProperty('--h', p.hue ?? 222);
+  applyColor(p.hue ?? 222, p.sat, p.lum);
   document.title=(p.name||h)+' — LOVELOG';
   $('#pg-name').textContent=p.name||h;
   $('#pg-name').style.color = p.titleColor||'';
   $('#pg-sub').textContent=p.sub||'';
   $('#pg-over').textContent='@'+h.toUpperCase();
-  const hs=heroList();
+  const hs=heroObjs();
   clearInterval(st.heroTimer);
   const hA=$('#pg-hero'), hB=$('#pg-hero2');
-  hA.style.backgroundImage = hs[0]?`url(${hs[0]})`:''; hA.style.opacity=1; hB.style.opacity=0;
+  if(hs[0]) setHeroBg(hA,hs[0]); else hA.style.backgroundImage='';
+  hA.style.opacity=1; hB.style.opacity=0;
   if(hs.length>1){
     let i=0, front=true;
     st.heroTimer=setInterval(()=>{
       i=(i+1)%hs.length;
       const showEl=front?hB:hA, hideEl=front?hA:hB;
-      showEl.style.backgroundImage=`url(${hs[i]})`;
+      setHeroBg(showEl,hs[i]);
       showEl.style.opacity=1; hideEl.style.opacity=0; front=!front;
     }, 5000);
   }
@@ -367,11 +383,11 @@ function bindDrag(d){
 ['aside','aside-l','hcol-l','hcol-c','hcol-r'].forEach(id=>{
   const c=document.getElementById(id); if(!c) return;
   c.addEventListener('dragover',e=>{ e.preventDefault();
-    if(e.target===c) c.classList.add('dropzone-end'); });
-  c.addEventListener('dragleave',e=>{ if(e.target===c) c.classList.remove('dropzone-end'); });
+    if(!e.target.closest || !e.target.closest('.side')) c.classList.add('dropzone-end'); });
+  c.addEventListener('dragleave',()=>c.classList.remove('dropzone-end'));
   c.addEventListener('drop',e=>{
     c.classList.remove('dropzone-end');
-    if(e.target!==c) return;
+    if(e.target.closest && e.target.closest('.side')) return;
     e.preventDefault();
     dropWidget(+e.dataTransfer.getData('text/plain'), -1, id);
   });
@@ -779,7 +795,7 @@ $('#s-dim').addEventListener('input',e=>{
   document.documentElement.style.setProperty('--dim', e.target.value/100);
 });
 $('#s-color').addEventListener('input',e=>{
-  document.documentElement.style.setProperty('--h', hueFromHex(e.target.value));
+  const [hh,s,l]=hexToHsl(e.target.value); applyColor(hh,s,l);
 });
 $('#btn-write').onclick=()=>{ refreshWriteCats(); refreshGalCats(); openPanel('write'); };
 $('#btn-deco').onclick=()=>{ fillSettings(); fillWidgets(); renderCatMgr(); openPanel('deco'); };
@@ -1109,17 +1125,36 @@ function renderEgate(){
     : '<span class="note">전용 이미지 없음 — 첫 헤더 사진이 대신 쓰여요.</span>';
 }
 function renderHeroList(){
-  $('#s-hero-list').innerHTML = heroDraft.map((im,i)=>
-    `<span class="thumb-x"><img class="thumb" src="${im}">
-     <button class="rm2" data-hx="${i}">✕</button></span>`).join('')
+  const box=$('#s-hero-list');
+  box.innerHTML = heroDraft.map((o,i)=>`
+    <div style="width:100%;border:1px solid var(--line);border-radius:11px;padding:10px;margin-bottom:10px">
+      <div class="p-row" style="align-items:center">
+        <img class="thumb" src="${o.img}">
+        <div data-hp="${i}" style="flex:1;height:74px;border-radius:9px;border:1px solid var(--line);
+          background-image:url(${o.img});background-position:${o.x}% ${o.y}%;
+          background-size:${o.z>100?o.z+'% auto':'cover'};background-repeat:no-repeat"></div>
+        <button class="rm2" data-hx="${i}">✕</button>
+      </div>
+      <div class="p-row" style="align-items:center;font-size:11px;color:var(--muted);gap:6px">
+        확대 <input type="range" data-hz="${i}" min="100" max="250" value="${o.z}" style="flex:1;min-width:70px;margin-bottom:0">
+        가로 <input type="range" data-hxp="${i}" min="0" max="100" value="${o.x}" style="flex:1;min-width:70px;margin-bottom:0">
+        세로 <input type="range" data-hyp="${i}" min="0" max="100" value="${o.y}" style="flex:1;min-width:70px;margin-bottom:0">
+      </div>
+    </div>`).join('')
     || '<span class="note">아직 사진이 없어요 — 위에서 추가하세요.</span>';
-  $('#s-hero-list').querySelectorAll('[data-hx]').forEach(b=>b.onclick=()=>{
+  box.querySelectorAll('[data-hx]').forEach(b=>b.onclick=()=>{
     heroDraft.splice(+b.dataset.hx,1); renderHeroList(); });
+  const upd=i=>{ const o=heroDraft[i], pv=box.querySelector(`[data-hp="${i}"]`);
+    pv.style.backgroundPosition=`${o.x}% ${o.y}%`;
+    pv.style.backgroundSize = o.z>100 ? o.z+'% auto' : 'cover'; };
+  box.querySelectorAll('[data-hz]').forEach(s=>s.addEventListener('input',()=>{ heroDraft[s.dataset.hz].z=+s.value; upd(+s.dataset.hz); }));
+  box.querySelectorAll('[data-hxp]').forEach(s=>s.addEventListener('input',()=>{ heroDraft[s.dataset.hxp].x=+s.value; upd(+s.dataset.hxp); }));
+  box.querySelectorAll('[data-hyp]').forEach(s=>s.addEventListener('input',()=>{ heroDraft[s.dataset.hyp].y=+s.value; upd(+s.dataset.hyp); }));
 }
 $('#s-hero').addEventListener('change',async e=>{
   const f=e.target.files[0]; if(!f) return;
   msg('헤더 사진 압축 중...');
-  heroDraft.push(await compress(f,1500,.75));
+  heroDraft.push({img:await compress(f,1500,.75),x:50,y:50,z:100});
   renderHeroList(); msg('추가됨 — [설정 저장]을 눌러야 확정돼요.');
   e.target.value='';
 });
@@ -1172,7 +1207,7 @@ $('#s-bg-clear').onclick=()=>{
 function fillSettings(){
   const p=st.page;
   $('#s-name').value=p.name||''; $('#s-sub').value=p.sub||'';
-  $('#s-gate').value=''; $('#s-color').value=hexFromHue(p.hue??222);
+  $('#s-gate').value=''; $('#s-color').value=hslToHex(p.hue??222, p.sat??60, p.lum??62);
   $('#s-headmode').value=p.headMode||'wide';
   $('#s-sidepos').value=p.sidePos||'right';
   $('#s-light').checked=!!p.light;
@@ -1182,7 +1217,7 @@ function fillSettings(){
   $('#s-theme').value=p.theme||'default';
   renderStkList();
   $('#s-dim').value=p.bgDim??78; $('#s-dots').checked=p.dots!==false;
-  heroDraft=[...heroList()]; renderHeroList();
+  heroDraft=JSON.parse(JSON.stringify(heroObjs())); renderHeroList();
   $('#s-enter').value=p.enterText||'';
   egateNew=null; renderEgate();
   titleVal=null; $('#s-title').value=p.titleColor||'#eeeeee';
@@ -1198,12 +1233,14 @@ async function saveSettings(){
       name:$('#s-name').value.trim()||st.handle,
       sub:$('#s-sub').value.trim(),
       heroImgs: heroDraft,
-      heroImg: heroDraft[0]||'',
+      heroImg: heroDraft[0]?.img||'',
       enterText: $('#s-enter').value.trim(),
       enterImg: egateNew ?? st.page.enterImg ?? '',
       titleColor: titleVal ?? st.page.titleColor ?? '',
       bgImg: bgNew ?? st.page.bgImg ?? '',
-      hue: hueFromHex($('#s-color').value),
+      hue: hexToHsl($('#s-color').value)[0],
+      sat: hexToHsl($('#s-color').value)[1],
+      lum: hexToHsl($('#s-color').value)[2],
       headMode: $('#s-headmode').value,
       sidePos: $('#s-sidepos').value,
       light: $('#s-light').checked,
