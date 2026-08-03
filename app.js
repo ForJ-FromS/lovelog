@@ -227,6 +227,7 @@ async function enterPage(){
   await loadContent();
   if(homeStyle()==='blog'){ st.cat='recent'; applyView(); }
   else { st.cat='home'; applyView(); }
+  document.querySelector('.strip-sec').classList.toggle('hidden', !galOn());
   renderWidgets(); renderCatbar(); renderList(); renderGal(); renderStickers();
   // 딥링크 ?p=
   const pm=new URLSearchParams(location.search).get('p');
@@ -287,6 +288,7 @@ const WNAME={latest:'최신글',profile:'프로필',search:'검색',category:'�
 const DEFCOL={search:'l',category:'l',profile:'l',latest:'c',quote:'c',
   dday:'r',bgm:'r',links:'r',banner:'r'};
 const homeStyle=()=>st.page?.homeStyle||'grid';
+const galOn=()=>st.page?.galOn!==false;
 function goHome(){
   if(homeStyle()==='blog'){ goBoard('recent'); return; }
   st.cat='home'; applyView(); renderWidgets(); renderCatbar();
@@ -300,15 +302,15 @@ function renderCatbar(){
   if(catStyle()!=='bar'){ bar.classList.add('hidden'); return; }
   bar.classList.remove('hidden');
   const homeOn = homeStyle()==='blog' ? st.cat==='recent' : st.cat==='home';
-  bar.innerHTML = `<a data-c="home" class="${homeOn?'on':''}">HOME</a>`+
-    cats().map(c=>`<a data-c="${esc(c)}" class="${st.cat===c?'on':''}">${esc(c.toUpperCase())}</a>`).join('')+
-    `<a data-c="__gal" class="${st.cat==='__gal'?'on':''}">GALLERY</a>`+
-    `<a data-c="__gb" class="${st.cat==='__gb'?'on':''}">GUESTBOOK</a>`+
-    (homeStyle()==='blog'?'':`<a data-c="recent" class="${st.cat==='recent'?'on':''}">ALL</a>`);
-  if(st.page.pillImg) bar.querySelectorAll('a').forEach(el=>{
-    el.classList.add('imgpill');
-    el.style.backgroundImage=`url(${st.page.pillImg})`;
-  });
+  const ci=st.page.catImgs||{};
+  const pill=(key,label,on)=> ci[key]
+    ? `<a data-c="${esc(key)}" class="pillimg ${on?'on':''}"><img src="${ci[key]}" alt="${esc(label)}" draggable="false"></a>`
+    : `<a data-c="${esc(key)}" class="${on?'on':''}">${esc(label)}</a>`;
+  bar.innerHTML = pill('home','HOME',homeOn)+
+    cats().map(c=>pill(c,c.toUpperCase(),st.cat===c)).join('')+
+    (galOn()?pill('__gal','GALLERY',st.cat==='__gal'):'')+
+    pill('__gb','GUESTBOOK',st.cat==='__gb')+
+    (homeStyle()==='blog'?'':pill('recent','ALL',st.cat==='recent'));
   bar.querySelectorAll('a').forEach(el=>el.onclick=()=>{
     el.dataset.c==='home' ? goHome() : goBoard(el.dataset.c);
   });
@@ -406,7 +408,7 @@ function renderSide(){
         cats().map(c=>`<li><a data-c="${esc(c)}" class="${st.cat===c?'on':''}">
           <span>${esc(c)}${st.mine?` <span class="x" data-x="${esc(c)}">✕</span>`:''}</span>
           <span class="n">${cnt(c)}</span></a></li>`).join('')+
-        `<li><a data-c="__gal" class="${st.cat==='__gal'?'on':''}"><span>GALLERY</span><span class="n">${st.gallery.length}</span></a></li>`+
+        (galOn()?`<li><a data-c="__gal" class="${st.cat==='__gal'?'on':''}"><span>GALLERY</span><span class="n">${st.gallery.length}</span></a></li>`:'')+
         `<li><a data-c="recent" class="${st.cat==='recent'?'on':''}"><span>전체</span><span class="n">${st.posts.length}</span></a></li></ul>`+
         (st.mine?'<p class="cat-add" id="cat-add">＋ 카테고리 추가</p>':'');
       box.appendChild(d);
@@ -609,6 +611,24 @@ async function openPost(id){
   loadComments(id);
 }
 async function loadComments(pid){
+  const post=st.posts.find(x=>x.id===pid);
+  const lbl=document.querySelector('#cmt .label');
+  if(post?.cmtOff){
+    $('#cmt-list').innerHTML=`<p class="cmt-closed">이 글의 댓글이 닫혀 있어요.</p>`;
+    $('#cmt-form').classList.add('hidden');
+    $('#cmt-login').classList.add('hidden');
+    lbl.innerHTML='◈ COMMENTS'+(st.mine?` <i class="cmt-toggle" id="cmt-open">댓글 열기</i>`:'');
+    const co=$('#cmt-open'); if(co) co.onclick=async()=>{
+      await updateDoc(doc(db,'pages',st.handle,'posts',pid),{cmtOff:false});
+      post.cmtOff=false; loadComments(pid);
+    };
+    return;
+  }
+  lbl.innerHTML='◈ COMMENTS'+(st.mine?` <i class="cmt-toggle" id="cmt-close">댓글 닫기</i>`:'');
+  const cc=$('#cmt-close'); if(cc) cc.onclick=async()=>{
+    await updateDoc(doc(db,'pages',st.handle,'posts',pid),{cmtOff:true});
+    const p2=st.posts.find(x=>x.id===pid); if(p2) p2.cmtOff=true; loadComments(pid);
+  };
   $('#cmt-list').innerHTML='<p class="pl-empty">불러오는 중...</p>';
   $('#cmt-form').classList.toggle('hidden', !st.me);
   $('#cmt-login').classList.toggle('hidden', !!st.me);
@@ -711,8 +731,11 @@ function renderCatMgr(){
         <option value="gallery" ${isG(c)?'selected':''}>사진</option>
       </select>
       <button class="btn" data-cs="${i}" style="font-size:12px">저장</button>
+      <label class="filelab" title="버튼 이미지">🖼<input type="file" data-cimg="${esc(c)}" accept="image/*" style="display:none"></label>
+      ${(st.page.catImgs||{})[c]?`<button class="rmv" data-cimgx="${esc(c)}" style="font-size:10px">이미지✕</button>`:''}
       <button class="rmv" data-cd="${i}">✕</button>
     </div>`).join('') || '<p class="pl-empty">카테고리가 없어요.</p>';
+  renderCatFix();
   box.querySelectorAll('[data-ct]').forEach(s=>s.onchange=async()=>{
     const name=cats()[+s.dataset.ct];
     let g=[...gcats()];
@@ -752,6 +775,47 @@ function renderCatMgr(){
   box.querySelectorAll('[data-cd]').forEach(b=>b.onclick=async()=>{
     await removeCat(cats()[+b.dataset.cd]); renderCatMgr();
   });
+  bindCatImg(box);
+}
+async function setCatImg(key,val){
+  const ci={...(st.page.catImgs||{})};
+  if(val) ci[key]=val; else delete ci[key];
+  await updateDoc(doc(db,'pages',st.handle),{catImgs:ci});
+  st.page.catImgs=ci; renderCatbar(); renderCatMgr();
+}
+function bindCatImg(box){
+  box.querySelectorAll('[data-cimg]').forEach(inp=>inp.addEventListener('change',async e=>{
+    const f=e.target.files[0]; if(!f) return; msg('버튼 이미지 압축 중...');
+    await setCatImg(inp.dataset.cimg, await compress(f,360,.85));
+    msg('버튼 이미지 적용!');
+  }));
+  box.querySelectorAll('[data-cimgx]').forEach(b=>b.onclick=()=>setCatImg(b.dataset.cimgx,null));
+}
+function renderCatFix(){
+  const box=$('#catfix-mgr'); if(!box) return;
+  const ci=st.page.catImgs||{};
+  const row=(key,label,extra='')=>`
+    <div class="p-row">
+      <span style="font-size:12.5px;color:var(--body);min-width:96px">${label}</span>
+      <label class="filelab">🖼<input type="file" data-cimg="${key}" accept="image/*" style="display:none"></label>
+      ${ci[key]?`<button class="rmv" data-cimgx="${key}" style="font-size:10px">이미지✕</button>`:''}
+      ${extra}
+    </div>`;
+  box.innerHTML =
+    row('home','HOME')+
+    row('__gal','GALLERY',
+      `<button class="btn" id="gal-toggle" style="font-size:11px">${galOn()?'숨기기 (알약·하단 갤러리 제거)':'표시하기'}</button>`)+
+    row('__gb','GUESTBOOK')+
+    (homeStyle()==='blog'?'':row('recent','ALL'));
+  bindCatImg(box);
+  const gt=$('#gal-toggle'); if(gt) gt.onclick=async()=>{
+    const next=!galOn();
+    await updateDoc(doc(db,'pages',st.handle),{galOn:next});
+    st.page.galOn=next;
+    document.querySelector('.strip-sec').classList.toggle('hidden', !next);
+    if(!next && (st.cat==='__gal')) goHome();
+    renderCatbar(); renderSide(); renderCatFix();
+  };
 }
 $('#cat-add2').onclick=async()=>{
   const name=$('#cat-new').value.trim(); if(!name) return;
@@ -920,6 +984,7 @@ const msg=t=>$('#p-msg').textContent=t;
 $('#w-go').onclick=async()=>{
   const title=$('#w-title').value.trim(), cat=$('#w-cat').value,
         secret=$('#w-secret').checked, pw=$('#w-pw').value, pin=$('#w-pin').checked,
+        cmtOff=!$('#w-cmt').checked,
         raw=$('#w-body').value;
   if(!title){ msg('제목을 입력하세요.'); return; }
   if(secret&&!pw){ msg('비밀글 비밀번호를 입력하세요.'); return; }
@@ -930,7 +995,7 @@ $('#w-go').onclick=async()=>{
       html=html.split(`[사진${i+1}]`).join(`<img src="${im}" alt="">`);
     });
     const data={ title, cat, date:today(), ts:serverTimestamp(),
-      secret, pinned:pin,
+      secret, pinned:pin, cmtOff,
       excerpt: secret?'':raw.replace(/\s+/g,' ').trim().slice(0,70) };
     if(secret) data.enc=await encTxt(pw,html); else data.body=html;
     if(JSON.stringify(data).length>900000){ msg('본문 이미지가 너무 많아요 — 사진 수를 줄여주세요.'); return; }
@@ -940,6 +1005,7 @@ $('#w-go').onclick=async()=>{
     await loadContent(); renderWidgets(); renderList();
     ['w-title','w-pw','w-body'].forEach(i=>$('#'+i).value='');
     $('#w-secret').checked=false; $('#w-pin').checked=false; $('#w-pw').style.display='none';
+    $('#w-cmt').checked=true;
     wImgs=[];
     msg('발행 완료!');
   }catch(e){ msg('오류: '+e.message); }
@@ -1003,14 +1069,6 @@ $('#stk-file').addEventListener('change',async e=>{
   renderStkList(); renderStickers();
   msg('스티커 추가! 홈에서 드래그로 옮겨보세요.'); e.target.value='';
 });
-let pillNew=null;
-$('#s-pill').addEventListener('change',async e=>{
-  const f=e.target.files[0]; if(!f) return;
-  msg('알약 이미지 압축 중...');
-  pillNew=await compress(f,500,.8);
-  msg('추가됨 — [설정 저장]으로 확정.'); e.target.value='';
-});
-$('#s-pill-clear').onclick=()=>{ pillNew=''; msg('알약 기본 디자인으로 — [설정 저장]으로 확정.'); };
 $('#s-bg').addEventListener('change',async e=>{
   const f=e.target.files[0]; if(!f) return;
   msg('배경 이미지 압축 중...'); bgNew=await compress(f,1600,.7);
@@ -1032,7 +1090,7 @@ function fillSettings(){
   $('#s-catstyle').value=catStyle();
   $('#s-homestyle').value=homeStyle();
   $('#s-theme').value=p.theme||'default';
-  pillNew=null; renderStkList();
+  renderStkList();
   $('#s-dim').value=p.bgDim??78;
   heroDraft=[...heroList()]; renderHeroList();
   $('#s-enter').value=p.enterText||'';
@@ -1060,7 +1118,6 @@ async function saveSettings(){
       glass: $('#s-glass').checked,
       catStyle: $('#s-catstyle').value,
       homeStyle: $('#s-homestyle').value,
-      pillImg: pillNew ?? st.page.pillImg ?? '',
       theme: $('#s-theme').value,
       bgDim: parseInt($('#s-dim').value)||78,
       updatedAt:serverTimestamp()

@@ -485,9 +485,16 @@
     -webkit-user-drag:none;pointer-events:none;
     filter:drop-shadow(0 4px 10px rgba(0,0,0,.3))}
   body.mine .stk{cursor:grab}
-  #catbar a.imgpill{background-size:cover;background-position:center;border:none;
-    color:#fff;text-shadow:0 1px 8px rgba(0,0,0,.75)}
-  #catbar a.imgpill.on{outline:2px solid var(--pri);outline-offset:1px}
+  #catbar a.pillimg{padding:0;border:none;background:none;border-radius:10px;overflow:hidden}
+  #catbar a.pillimg img{height:38px;display:block;border-radius:10px;
+    -webkit-user-drag:none}
+  #catbar a.pillimg.on{outline:2px solid var(--pri);outline-offset:2px}
+  #catbar a.pillimg:hover{background:none}
+  .strip-sec.hidden{display:none}
+  .cmt-closed{border:1px dashed var(--line);border-radius:10px;padding:14px;
+    text-align:center;font-size:12px;color:var(--muted)}
+  .cmt-toggle{cursor:pointer;font-size:10px;color:var(--muted);margin-left:10px}
+  .cmt-toggle:hover{color:var(--pri)}
   .stk-row{display:flex;gap:10px;align-items:center;padding:8px 0;
     border-bottom:1px dashed var(--line)}
   .stk-row img{width:44px;height:44px;object-fit:contain;flex:none}
@@ -675,6 +682,7 @@
       <label class="chk"><input type="checkbox" id="w-secret"> 비밀글</label>
       <input id="w-pw" placeholder="비밀번호" style="display:none">
       <label class="chk"><input type="checkbox" id="w-pin"> 고정</label>
+      <label class="chk"><input type="checkbox" id="w-cmt" checked> 댓글 허용</label>
     </div>
     <textarea id="w-body" placeholder="본문"></textarea>
     <div class="p-row">
@@ -720,7 +728,9 @@
       <input id="cat-new" placeholder="새 카테고리 이름">
       <button class="btn" id="cat-add2" style="font-size:12px">＋ 추가</button>
     </div>
-    <p class="note">이름을 고치고 [저장]을 누르면 그 카테고리에 있던 글들도 새 이름으로 함께 이사해요. ✕ 삭제해도 글은 사라지지 않고 '전체'에서 보여요.</p>
+    <p class="note">이름을 고치고 [저장]을 누르면 글들도 함께 이사해요. 🖼 로 이미지를 올리면 <b>그 이미지가 카테고리 버튼 자체</b>가 됩니다(글자 알약 대신).</p>
+    <p class="p-h">고정 버튼</p>
+    <div id="catfix-mgr"></div>
   </div>
 
   <div class="pane hidden" data-pane="set">
@@ -767,18 +777,13 @@
     </div>
     <div class="p-row">
       <select id="s-homestyle">
-        <option value="grid">홈 화면 — 위젯 그리드형</option>
-        <option value="blog">홈 화면 — 블로그형 (글 목록이 메인)</option>
+        <option value="grid">홈 — 위젯 그리드형 (지금 구조)</option>
+        <option value="blog">홈 — 클래식 블로그형 (프로스트 버드 구조: 글 목록이 메인)</option>
       </select>
       <select id="s-catstyle">
         <option value="bar">카테고리 — 상단 알약 바</option>
         <option value="widget">카테고리 — 사이드 위젯</option>
       </select>
-    </div>
-    <p class="p-h">카테고리 알약 꾸미기</p>
-    <div class="p-row">
-      <label class="filelab">알약 배경 이미지 <input type="file" id="s-pill" accept="image/*"></label>
-      <button class="rmv" id="s-pill-clear" style="font-size:11px">기본으로</button>
     </div>
     <p class="p-h">테마</p>
     <div class="p-row">
@@ -827,6 +832,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=12"></script>
+<script type="module" src="./app.js?v=13"></script>
 </body>
 </html>
