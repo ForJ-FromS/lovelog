@@ -32,6 +32,22 @@ const heroList=()=> (st.page?.heroImgs&&st.page.heroImgs.length)
   ? st.page.heroImgs : (st.page?.heroImg?[st.page.heroImg]:[]);
 const heroObj=s=> typeof s==='string' ? {img:s,x:50,y:50,z:100} : {x:50,y:50,z:100,...s};
 const heroObjs=()=> heroList().map(heroObj);
+async function resolveImgs(p){
+  try{
+    const ids=[...new Set([
+      ...(p.heroImgs||[]).map(o=>o&&o.ref).filter(Boolean),
+      p.enterRef||null, p.bgRef||null].filter(Boolean))];
+    if(!ids.length) return;
+    const m={};
+    await Promise.all(ids.map(async id=>{
+      try{ const s=await getDoc(doc(db,'pages',st.handle,'imgs',id));
+        if(s.exists()) m[id]=s.data().d||''; }catch(e){}
+    }));
+    (p.heroImgs||[]).forEach(o=>{ if(o&&o.ref) o.img=m[o.ref]||o.img||''; });
+    if(p.enterRef) p.enterImg=m[p.enterRef]||p.enterImg||'';
+    if(p.bgRef) p.bgImg=m[p.bgRef]||p.bgImg||'';
+  }catch(e){}
+}
 const setHeroBg=(el,o)=>{ el.style.backgroundImage=`url(${o.img})`;
   el.style.backgroundPosition=`${o.x}% ${o.y}%`;
   el.style.backgroundSize = o.z>100 ? o.z+'% auto' : 'cover'; };
@@ -207,6 +223,7 @@ async function loadPage(handle){
   if(!snap.exists()){ show('view-page');
     $('#pg-name').textContent='없는 페이지예요'; $('#pg-sub').textContent='@'+handle; return; }
   st.page=snap.data();
+  await resolveImgs(st.page);
   st.mine = st.me && st.page.owner===st.me.uid;
   applyColor(st.page.hue ?? 222, st.page.sat, st.page.lum);
   // 입장 대문: 방문 시 1회(세션) + 비번 홈은 비번 입력
@@ -1394,15 +1411,31 @@ async function saveSettings(){
   msg('저장 중...');
   try{
     const gateIn=$('#s-gate').value;
+    // 대형 이미지(헤더·대문·배경)는 pages/{h}/imgs 별도 문서로 저장 — 본 문서 1MB 예산에서 제외
+    const oldRefs=new Set([
+      ...(st.page.heroImgs||[]).map(o=>o&&o.ref).filter(Boolean),
+      st.page.enterRef, st.page.bgRef].filter(Boolean));
+    const putImg=async d=>(await addDoc(collection(db,'pages',st.handle,'imgs'),{d})).id;
+    const heroOut=[];
+    for(const o of heroDraft){
+      heroOut.push({ref: o.ref || await putImg(o.img),
+        x:o.x??50, y:o.y??50, z:o.z??100});
+    }
+    let enterRef = st.page.enterRef||'';
+    if(egateNew!==null) enterRef = egateNew ? await putImg(egateNew) : '';
+    else if(!enterRef && st.page.enterImg) enterRef=await putImg(st.page.enterImg);
+    let bgRef = st.page.bgRef||'';
+    if(bgNew!==null) bgRef = bgNew ? await putImg(bgNew) : '';
+    else if(!bgRef && st.page.bgImg) bgRef=await putImg(st.page.bgImg);
     const data={
       name:$('#s-name').value.trim()||st.handle,
       sub:$('#s-sub').value.trim(),
-      heroImgs: heroDraft,
-      heroImg: heroDraft[0]?.img||'',
+      heroImgs: heroOut,
+      heroImg: '',
       enterText: $('#s-enter').value.trim(),
-      enterImg: egateNew ?? st.page.enterImg ?? '',
+      enterImg: '', enterRef,
       titleColor: titleVal ?? st.page.titleColor ?? '',
-      bgImg: bgNew ?? st.page.bgImg ?? '',
+      bgImg: '', bgRef,
       hue: hexToHsl($('#s-color').value)[0],
       sat: hexToHsl($('#s-color').value)[1],
       lum: hexToHsl($('#s-color').value)[2],
@@ -1432,7 +1465,11 @@ async function saveSettings(){
       alert('저장 용량 초과!\n\n홈 전체 꾸미기 합산 한도: 약 900KB\n(서버 문서 1MB 제한 때문이에요)\n\n현재 이 설정의 용량:\n· 헤더 사진 '+(data.heroImgs||[]).length+'장 — 약 '+heroKB+'KB\n· 입장 화면 이미지 — 약 '+kb(data.enterImg)+'KB\n· 배경 이미지 — 약 '+kb(data.bgImg)+'KB\n\n가장 큰 항목을 지우고 다시 올려보세요 — 새로 올리면 자동 압축이 더 강하게 걸려요.');
       return; }
     await updateDoc(doc(db,'pages',st.handle),data);
+    const keep=new Set([...heroOut.map(o=>o.ref), enterRef, bgRef].filter(Boolean));
+    for(const r of oldRefs) if(!keep.has(r))
+      deleteDoc(doc(db,'pages',st.handle,'imgs',r)).catch(()=>{});
     st.page={...st.page,...data};
+    await resolveImgs(st.page);
     msg('저장 완료!');
     enterPage(); renderCatbar();
   }catch(e){ msg('오류: '+e.message); }
