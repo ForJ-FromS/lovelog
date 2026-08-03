@@ -624,6 +624,11 @@
   .nb-list::-webkit-scrollbar{width:4px}
   .nb-list::-webkit-scrollbar-thumb{background:var(--line);border-radius:2px}
   .nb-more{margin:2px 0 0;text-align:right;font-size:10.5px;color:var(--muted)}
+  .gpin{position:absolute;left:6px;top:6px;font-style:normal;font-size:12px;
+    background:hsl(var(--h) 30% 8% / .72);color:hsl(0 0% 100% / .55);border-radius:50%;
+    width:22px;height:22px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .gpin.on{color:var(--pri)}
+  .gpin:hover{color:var(--pri)}
   .nb{display:flex;align-items:center;gap:9px;padding:6px;border-radius:9px;
     border:1px solid transparent;transition:.15s;text-decoration:none}
   .nb:hover{border-color:var(--line);background:hsl(var(--h) 20% 50% / .06)}
@@ -1130,6 +1135,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=70"></script>
+<script type="module" src="./app.js?v=71"></script>
 </body>
 </html>

@@ -992,13 +992,37 @@ function renderList(){
   $('#more-btn').style.display=(st.cat==='recent'&&!st.q&&rest.length>7)?'':'none';
   document.querySelectorAll('[data-id]').forEach(el=>el.onclick=()=>openPost(el.dataset.id));
 }
+const galPins=()=> st.page?.stripPin||[];
+function stripList(){
+  const src=st.page?.stripSrc||'recent';
+  if(src==='pick'){
+    const ids=galPins();
+    return ids.map(id=>st.gallery.find(g=>g.id===id)).filter(Boolean);
+  }
+  if(src && src!=='recent') return st.gallery.filter(g=>g.cat===src);
+  return st.gallery;
+}
+async function togglePin(id){
+  const cur=[...galPins()];
+  const i=cur.indexOf(id);
+  if(i>=0) cur.splice(i,1); else cur.push(id);
+  st.page.stripPin=cur;
+  try{ await updateDoc(doc(db,'pages',st.handle),{stripPin:cur});
+    msg(i>=0?'대문 갤러리에서 뺐어요.':'대문 갤러리에 고정했어요.');
+  }catch(e){ msg('저장 실패: '+e.message); }
+  renderGal(st.cat==='__gal'||isG(st.cat));
+}
 function renderGal(all){
-  const arr=all?st.gallery:st.gallery.slice(0,4);
+  const base = all ? st.gallery : stripList();
+  const arr = all ? base : base.slice(0,4);
+  const pins=galPins();
   $('#gal').innerHTML = arr.length?arr.map(g=>
-    `<a data-g="${g.id}"><img src="${g.img}" alt="" draggable="false">${st.mine?`<i class="gdel" data-gx="${g.id}">✕</i>`:''}</a>`).join('')
+    `<a data-g="${g.id}"><img src="${g.img}" alt="" draggable="false">${st.mine?
+      `<i class="gdel" data-gx="${g.id}">✕</i><i class="gpin${pins.includes(g.id)?' on':''}" data-gp="${g.id}" title="대문 갤러리에 고정">★</i>`:''}</a>`).join('')
     :'<p class="pl-empty">아직 이미지가 없습니다.</p>';
   document.querySelectorAll('#gal a').forEach(a=>a.onclick=e=>{
     if(e.target.dataset.gx){ e.stopPropagation(); delGal(e.target.dataset.gx); return; }
+    if(e.target.dataset.gp){ e.stopPropagation(); togglePin(e.target.dataset.gp); return; }
     const g=st.gallery.find(x=>x.id===a.dataset.g);
     if(g){ $('#lb-img').src=g.img; $('#lb').classList.add('show'); }
   });
@@ -1276,7 +1300,12 @@ function renderCatFix(){
     row('home','HOME')+
     row('__gal','GALLERY',
       `<button class="btn" id="gal-toggle" style="font-size:11px">${galOn()?'숨기기 (알약·하단 갤러리 제거)':'표시하기'}</button>`+
-      (galOn()?`<button class="btn" id="strip-toggle" style="font-size:11px">${stripOn()?'하단 스트립 끄기':'하단 스트립 켜기'}</button>`:''))+
+      (galOn()?`<button class="btn" id="strip-toggle" style="font-size:11px">${stripOn()?'하단 스트립 끄기':'하단 스트립 켜기'}</button>
+        <select id="strip-src" style="font-size:11px;width:auto;margin:0 0 0 6px">
+          <option value="recent" ${(st.page.stripSrc||'recent')==='recent'?'selected':''}>대문: 최신 사진</option>
+          <option value="pick" ${st.page.stripSrc==='pick'?'selected':''}>대문: ★로 고른 사진</option>
+          ${gcats().map(c=>`<option value="${esc(c)}" ${st.page.stripSrc===c?'selected':''}>대문: ${esc(c)} 카테고리</option>`).join('')}
+        </select>`:''))+
     row('__gb','GUESTBOOK')+
     (homeStyle()==='blog'?'':row('recent','ALL'));
   bindCatImg(box);
@@ -1287,6 +1316,13 @@ function renderCatFix(){
     document.querySelector('.strip-sec').classList.toggle('hidden', !(next&&stripOn()));
     if(!next && (st.cat==='__gal')) goHome();
     renderCatbar(); renderSide(); renderCatFix();
+  };
+  const ss=$('#strip-src'); if(ss) ss.onchange=async()=>{
+    st.page.stripSrc=ss.value;
+    try{ await updateDoc(doc(db,'pages',st.handle),{stripSrc:ss.value});
+      msg(ss.value==='pick'?'★ 표시한 사진이 대문에 떠요 — 갤러리에서 ★를 눌러 골라주세요.':'대문 갤러리 기준을 바꿨어요.');
+    }catch(e){ msg('저장 실패: '+e.message); }
+    renderGal();
   };
   const sp=$('#strip-toggle'); if(sp) sp.onclick=async()=>{
     const next=!stripOn();
