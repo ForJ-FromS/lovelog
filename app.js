@@ -958,11 +958,14 @@ function renderList(){
     const items = st.cat==='__gal' ? st.gallery : st.gallery.filter(g=>g.cat===st.cat);
     $('#rows').innerHTML = items.length
       ? `<div class="gal-grid">`+items.map(g=>
-          `<a data-gg="${g.id}"><img src="${g.img}" alt="" draggable="false">${st.mine?`<i class="gdel" data-gx="${g.id}">✕</i>`:''}</a>`).join('')+`</div>`
+          `<a data-gg="${g.id}"><img src="${g.img}" alt="" draggable="false">${st.mine?
+            `<i class="gdel" data-gx="${g.id}">✕</i><i class="gpin${galPins().includes(g.id)?' on':''}" data-gp="${g.id}" title="대문 갤러리에 고정">★</i>`:''}</a>`).join('')+`</div>`
+        +(st.mine?`<p class="note" style="margin-top:10px">★를 누르면 대문(홈) 갤러리에 걸려요 — 카테고리 탭에서 '대문: ★로 고른 사진'을 선택해야 적용돼요.</p>`:'')
       : '<p class="pl-empty">아직 이미지가 없습니다.</p>';
     $('#more-btn').style.display='none';
     document.querySelectorAll('[data-gg]').forEach(el=>el.onclick=e=>{
       if(e.target.dataset.gx){ e.stopPropagation(); delGal(e.target.dataset.gx); return; }
+      if(e.target.dataset.gp){ e.stopPropagation(); togglePin(e.target.dataset.gp); return; }
       const g=st.gallery.find(x=>x.id===el.dataset.gg);
       if(g){ $('#lb-img').src=g.img; $('#lb').classList.add('show'); }
     });
@@ -1010,15 +1013,14 @@ async function togglePin(id){
   try{ await updateDoc(doc(db,'pages',st.handle),{stripPin:cur});
     msg(i>=0?'대문 갤러리에서 뺐어요.':'대문 갤러리에 고정했어요.');
   }catch(e){ msg('저장 실패: '+e.message); }
-  renderGal(st.cat==='__gal'||isG(st.cat));
+  renderGal(); if(st.cat==='__gal'||isG(st.cat)) renderList();
 }
 function renderGal(all){
   const base = all ? st.gallery : stripList();
   const arr = all ? base : base.slice(0,4);
   const pins=galPins();
   $('#gal').innerHTML = arr.length?arr.map(g=>
-    `<a data-g="${g.id}"><img src="${g.img}" alt="" draggable="false">${st.mine?
-      `<i class="gdel" data-gx="${g.id}">✕</i><i class="gpin${pins.includes(g.id)?' on':''}" data-gp="${g.id}" title="대문 갤러리에 고정">★</i>`:''}</a>`).join('')
+    `<a data-g="${g.id}"><img src="${g.img}" alt="" draggable="false">${st.mine?`<i class="gdel" data-gx="${g.id}">✕</i>`:''}</a>`).join('')
     :'<p class="pl-empty">아직 이미지가 없습니다.</p>';
   document.querySelectorAll('#gal a').forEach(a=>a.onclick=e=>{
     if(e.target.dataset.gx){ e.stopPropagation(); delGal(e.target.dataset.gx); return; }
