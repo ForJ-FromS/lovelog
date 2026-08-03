@@ -30,7 +30,7 @@
   input,textarea,select,button{font-family:inherit;font-size:14px}
   .mono{font-family:'IBM Plex Mono',monospace}
   .hidden{display:none!important}
-  .wrap{max-width:1320px;margin:0 auto}
+  .wrap{max-width:1320px;margin:0 auto;position:relative}
 
   /* ── 센터 뷰(로그인/가입/게이트) ── */
   .center{min-height:60vh;display:flex;flex-direction:column;
@@ -464,6 +464,49 @@
     -1.5px 0 hsl(calc(var(--h) - 32) 90% 60% / .6)}
   body.theme-vhs .label::before{content:'▮▶ '}
   body.theme-vhs footer::before{content:'─── ▶ PLAY ───'}
+  .gb-item{border:1px solid var(--line);border-radius:11px;background:var(--card);
+    padding:13px 16px;margin-bottom:10px}
+  .gb-item .who{display:flex;justify-content:space-between;align-items:baseline;
+    font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--pri);margin-bottom:4px}
+  .gb-item .who .dt{color:var(--muted);font-size:8.5px}
+  .gb-item p{font-size:13px;color:var(--body);white-space:pre-wrap}
+  .gb-item .del{color:var(--muted);cursor:pointer;font-size:10px;margin-left:8px}
+  .gb-item .del:hover{color:hsl(6 60% 64%)}
+  .cmt-item{border-bottom:1px dashed var(--line);padding:10px 4px}
+  .cmt-item:last-child{border-bottom:none}
+  .cmt-item .who{display:flex;gap:8px;align-items:baseline;
+    font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--pri)}
+  .cmt-item .who .dt{color:var(--muted);font-size:8.5px}
+  .cmt-item p{font-size:12.5px;color:var(--body);white-space:pre-wrap;margin-top:2px}
+  #stk-layer{position:absolute;inset:0;pointer-events:none;z-index:5}
+  .stk{position:absolute;pointer-events:auto;user-select:none;
+    -webkit-user-drag:none;transform-origin:center}
+  .stk img{width:100%;height:100%;object-fit:contain;display:block;
+    -webkit-user-drag:none;pointer-events:none;
+    filter:drop-shadow(0 4px 10px rgba(0,0,0,.3))}
+  body.mine .stk{cursor:grab}
+  #catbar a.imgpill{background-size:cover;background-position:center;border:none;
+    color:#fff;text-shadow:0 1px 8px rgba(0,0,0,.75)}
+  #catbar a.imgpill.on{outline:2px solid var(--pri);outline-offset:1px}
+  .stk-row{display:flex;gap:10px;align-items:center;padding:8px 0;
+    border-bottom:1px dashed var(--line)}
+  .stk-row img{width:44px;height:44px;object-fit:contain;flex:none}
+  .stk-row input[type=range]{flex:1;margin-bottom:0!important}
+  @media(max-width:640px){
+    body{padding:30px 10px 60px}
+    .head{min-height:210px}
+    .head h1{font-size:19px}
+    #panel{padding:0}
+    #panel.big .p-card{width:100%;height:100vh;max-height:100vh;border-radius:0;
+      flex-direction:column;gap:12px;padding:18px 14px}
+    #panel.big .tabs{flex-direction:row;width:100%;overflow-x:auto;
+      border-right:none;border-bottom:1px solid var(--line);padding:0 0 10px}
+    #panel.big .tabs button{white-space:nowrap;padding:9px 12px}
+    #panel.big .pane[data-pane="wid"]{display:block}
+    #panel.big .pane[data-pane="wid"] > #wid-edit{border-left:none;padding-left:0;margin-top:14px}
+    .pane input,.pane select,.pane textarea{font-size:16px!important}
+    .fab{width:50px;height:50px;font-size:18px}
+  }
   footer{margin-top:36px;text-align:center;
     font-family:'IBM Plex Mono',monospace;font-size:8.5px;
     letter-spacing:.3em;color:var(--muted)}
@@ -477,6 +520,7 @@
 <div class="seal"><span id="seal-txt">LOVELOG</span><a id="seal-auth"></a></div>
 
 <div class="wrap">
+<div id="stk-layer"></div>
 
   <div id="view-setup" class="center hidden"><h1>SETUP</h1>
     <p>firebase-config.js에 설정을 붙여넣어 주세요.</p></div>
@@ -510,6 +554,7 @@
       </div>
       <p class="err" id="gate-err"></p>
       <button class="btn pri" id="gate-go" style="padding:12px 40px;letter-spacing:.2em">입 장</button>
+      <a id="gate-login" class="hidden" style="cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.2em;color:hsl(var(--h) 25% 88% / .8);text-decoration:underline">MEMBER LOGIN</a>
     </div>
   </div>
 
@@ -545,6 +590,21 @@
           <a class="more" id="more-btn">MORE →</a>
         </div>
 
+        <div id="guest-view" class="hidden">
+          <div class="sec-head"><h2>GUESTBOOK</h2><span class="en" id="gb-home" style="cursor:pointer">‹ HOME</span></div>
+          <div id="gb-form" class="side" style="margin-bottom:14px">
+            <textarea id="gb-text" placeholder="다녀간 흔적을 남겨주세요" style="width:100%;min-height:70px;border:1px solid var(--line);border-radius:9px;background:var(--card2);color:var(--ink);padding:10px 12px;resize:vertical"></textarea>
+            <div class="p-row" style="margin-top:8px;justify-content:flex-end">
+              <button class="btn pri" id="gb-go" style="font-size:12px">남기기</button>
+            </div>
+          </div>
+          <div id="gb-login" class="side hidden" style="margin-bottom:14px;text-align:center">
+            <p style="font-size:12.5px;margin-bottom:10px">방명록은 러브로그 멤버만 남길 수 있어요.</p>
+            <button class="btn pri" id="gb-login-btn" style="font-size:12px">Google로 로그인</button>
+          </div>
+          <ul id="gb-list" style="list-style:none"></ul>
+        </div>
+
         <div id="post-view" class="hidden">
           <span class="back" id="pv-back">‹ BACK</span>
           <article>
@@ -556,6 +616,19 @@
               <button id="pv-del" class="hidden">🗑 삭제</button>
             </div>
           </article>
+          <div id="cmt" style="margin-top:16px">
+            <p class="label" style="margin:0 0 10px">◈ COMMENTS</p>
+            <ul id="cmt-list" style="list-style:none"></ul>
+            <div id="cmt-form" class="side" style="margin-top:10px">
+              <textarea id="cmt-text" placeholder="댓글 남기기" style="width:100%;min-height:56px;border:1px solid var(--line);border-radius:9px;background:var(--card2);color:var(--ink);padding:9px 12px;resize:vertical"></textarea>
+              <div class="p-row" style="margin-top:8px;justify-content:flex-end">
+                <button class="btn pri" id="cmt-go" style="font-size:12px">등록</button>
+              </div>
+            </div>
+            <div id="cmt-login" class="side hidden" style="margin-top:10px;text-align:center">
+              <button class="btn" id="cmt-login-btn" style="font-size:12px">로그인하고 댓글 쓰기</button>
+            </div>
+          </div>
         </div>
       </main>
 
@@ -588,6 +661,7 @@
     <button data-tab="set">기본 정보</button>
     <button data-tab="theme">테마 · 레이아웃</button>
     <button data-tab="bg">배경</button>
+    <button data-tab="stk">스티커</button>
   </div>
 
   <div class="p-panes">
@@ -692,10 +766,19 @@
       </select>
     </div>
     <div class="p-row">
+      <select id="s-homestyle">
+        <option value="grid">홈 화면 — 위젯 그리드형</option>
+        <option value="blog">홈 화면 — 블로그형 (글 목록이 메인)</option>
+      </select>
       <select id="s-catstyle">
         <option value="bar">카테고리 — 상단 알약 바</option>
         <option value="widget">카테고리 — 사이드 위젯</option>
       </select>
+    </div>
+    <p class="p-h">카테고리 알약 꾸미기</p>
+    <div class="p-row">
+      <label class="filelab">알약 배경 이미지 <input type="file" id="s-pill" accept="image/*"></label>
+      <button class="rmv" id="s-pill-clear" style="font-size:11px">기본으로</button>
     </div>
     <p class="p-h">테마</p>
     <div class="p-row">
@@ -732,11 +815,18 @@
     <button class="go s-go" style="margin-top:14px">설정 저장</button>
   </div>
 
+  <div class="pane hidden" data-pane="stk">
+    <p class="p-h">스티커 — 홈 위에 자유롭게 붙이는 그림</p>
+    <div class="p-row"><label class="filelab">스티커 추가 (배경 투명 PNG 추천) <input type="file" id="stk-file" accept="image/*"></label></div>
+    <div id="stk-list"></div>
+    <p class="note">추가하면 홈 상단에 나타나요 — <b>홈에서 스티커를 드래그해서</b> 원하는 자리에 놓으면 자동 저장됩니다.</p>
+  </div>
+
   </div>
   <p id="p-msg"></p>
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=11"></script>
+<script type="module" src="./app.js?v=12"></script>
 </body>
 </html>

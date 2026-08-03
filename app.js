@@ -23,7 +23,10 @@ if(!firebaseConfig.apiKey || firebaseConfig.apiKey.includes('여기에')){ show(
 const app=initializeApp(firebaseConfig), auth=getAuth(app), db=getFirestore(app);
 
 const st = { me:null, myHandle:null, handle:null, page:null, posts:[], gallery:[],
-             cat:'recent', q:'', cur:null, curBody:null, mine:false };
+             guest:[], cat:'recent', q:'', cur:null, curBody:null, mine:false };
+const fmtTs=t=>{ try{ const d=t?.toDate?t.toDate():new Date();
+  return `${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
+}catch(e){ return ''; } };
 
 const heroList=()=> (st.page?.heroImgs&&st.page.heroImgs.length)
   ? st.page.heroImgs : (st.page?.heroImg?[st.page.heroImg]:[]);
@@ -72,6 +75,65 @@ const htmlText=h=>{ const d2=document.createElement('div');
   d2.innerHTML=String(h).replace(/<br\s*\/?>/gi,'\n').replace(/<\/p>/gi,'\n\n');
   return d2.textContent.replace(/\n{3,}/g,'\n\n').trim(); };
 
+/* ---------- 스티커 ---------- */
+function renderStickers(){
+  const layer=$('#stk-layer'); if(!layer) return;
+  const arr=st.page?.stickers||[];
+  document.body.classList.toggle('mine', !!st.mine);
+  layer.innerHTML='';
+  arr.forEach((s,i)=>{
+    const d=document.createElement('div'); d.className='stk';
+    d.style.left=s.x+'%'; d.style.top=s.y+'px';
+    d.style.width=(s.size||120)+'px'; d.style.height=(s.size||120)+'px';
+    d.style.transform=`rotate(${s.rot||0}deg)`;
+    d.innerHTML=`<img src="${s.img}" alt="">`;
+    layer.appendChild(d);
+    if(!st.mine) return;
+    d.addEventListener('pointerdown',ev=>{
+      ev.preventDefault(); d.setPointerCapture(ev.pointerId);
+      const rect=layer.getBoundingClientRect();
+      const move=e2=>{
+        const x=((e2.clientX-rect.left)/rect.width)*100;
+        const y=e2.clientY-rect.top;
+        s.x=Math.max(0,Math.min(96,x)); s.y=Math.max(0,y);
+        d.style.left=s.x+'%'; d.style.top=s.y+'px';
+      };
+      const up=async()=>{
+        d.removeEventListener('pointermove',move);
+        d.removeEventListener('pointerup',up);
+        try{ await updateDoc(doc(db,'pages',st.handle),{stickers:arr}); }catch(e){}
+      };
+      d.addEventListener('pointermove',move);
+      d.addEventListener('pointerup',up);
+    });
+  });
+}
+function renderStkList(){
+  const box=$('#stk-list'); if(!box) return;
+  const arr=st.page.stickers||[];
+  box.innerHTML = arr.length? arr.map((s,i)=>`
+    <div class="stk-row">
+      <img src="${s.img}">
+      <span style="font-size:10px;color:var(--muted)">크기</span>
+      <input type="range" data-ss="${i}" min="50" max="260" value="${s.size||120}">
+      <span style="font-size:10px;color:var(--muted)">회전</span>
+      <input type="range" data-sr="${i}" min="-45" max="45" value="${s.rot||0}">
+      <button class="rmv" data-sx="${i}">✕</button>
+    </div>`).join('')
+    :'<p class="pl-empty">아직 스티커가 없어요.</p>';
+  const save=async()=>{ try{ await updateDoc(doc(db,'pages',st.handle),{stickers:st.page.stickers}); }catch(e){} };
+  box.querySelectorAll('[data-ss]').forEach(r=>r.addEventListener('input',()=>{
+    st.page.stickers[+r.dataset.ss].size=+r.value; renderStickers(); }));
+  box.querySelectorAll('[data-ss]').forEach(r=>r.addEventListener('change',save));
+  box.querySelectorAll('[data-sr]').forEach(r=>r.addEventListener('input',()=>{
+    st.page.stickers[+r.dataset.sr].rot=+r.value; renderStickers(); }));
+  box.querySelectorAll('[data-sr]').forEach(r=>r.addEventListener('change',save));
+  box.querySelectorAll('[data-sx]').forEach(b=>b.onclick=async()=>{
+    st.page.stickers.splice(+b.dataset.sx,1);
+    await save(); renderStkList(); renderStickers();
+  });
+}
+
 /* ---------- 인장/상단 ---------- */
 function renderSeal(){
   $('#seal-txt').textContent = st.myHandle ? 'LOVELOG · @'+st.myHandle.toUpperCase() : 'LOVELOG';
@@ -107,6 +169,8 @@ async function loadPage(handle){
     $('#gate-name').textContent = st.page.name || handle;
     $('#enter-text').textContent = st.page.enterText || '';
     $('#gate-pw-wrap').classList.toggle('hidden', !needPw);
+    $('#gate-login').classList.toggle('hidden', !!st.me);
+    $('#gate-login').onclick=()=>signInWithPopup(auth,new GoogleAuthProvider()).catch(()=>{});
     show('view-gate');
     $('#gate-go').onclick = async ()=>{
       if(needPw){
@@ -161,19 +225,22 @@ async function enterPage(){
   $('#btn-deco').classList.toggle('hidden',!st.mine);
   show('view-page');
   await loadContent();
-  st.cat='home'; applyView();
-  renderWidgets(); renderCatbar(); renderList(); renderGal();
+  if(homeStyle()==='blog'){ st.cat='recent'; applyView(); }
+  else { st.cat='home'; applyView(); }
+  renderWidgets(); renderCatbar(); renderList(); renderGal(); renderStickers();
   // 딥링크 ?p=
   const pm=new URLSearchParams(location.search).get('p');
   if(pm){ st.cat='recent'; applyView(); renderList(); openPost(pm); }
 }
 async function loadContent(){
-  const [ps,gs]=await Promise.all([
+  const [ps,gs,gb]=await Promise.all([
     getDocs(query(collection(db,'pages',st.handle,'posts'),orderBy('ts','desc'))),
-    getDocs(query(collection(db,'pages',st.handle,'gallery'),orderBy('ts','desc')))
+    getDocs(query(collection(db,'pages',st.handle,'gallery'),orderBy('ts','desc'))),
+    getDocs(query(collection(db,'pages',st.handle,'guest'),orderBy('ts','desc')))
   ]);
   st.posts=ps.docs.map(d=>({id:d.id,...d.data()}));
   st.gallery=gs.docs.map(d=>({id:d.id,...d.data()}));
+  st.guest=gb.docs.map(d=>({id:d.id,...d.data()}));
 }
 
 /* ---------- 사이드 위젯 렌더 ---------- */
@@ -219,7 +286,11 @@ const WNAME={latest:'최신글',profile:'프로필',search:'검색',category:'�
   dday:'디데이',bgm:'BGM',quote:'인용구',links:'링크',banner:'배너칸'};
 const DEFCOL={search:'l',category:'l',profile:'l',latest:'c',quote:'c',
   dday:'r',bgm:'r',links:'r',banner:'r'};
-function goHome(){ st.cat='home'; applyView(); renderWidgets(); renderCatbar(); }
+const homeStyle=()=>st.page?.homeStyle||'grid';
+function goHome(){
+  if(homeStyle()==='blog'){ goBoard('recent'); return; }
+  st.cat='home'; applyView(); renderWidgets(); renderCatbar();
+}
 function goBoard(cat){ st.cat=cat||'recent'; applyView(); renderWidgets(); renderList(); backToList(); renderCatbar(); }
 function catStyle(){
   return st.page.catStyle || (st.page.catBar===false ? 'widget' : 'bar');
@@ -228,10 +299,16 @@ function renderCatbar(){
   const bar=$('#catbar');
   if(catStyle()!=='bar'){ bar.classList.add('hidden'); return; }
   bar.classList.remove('hidden');
-  bar.innerHTML = `<a data-c="home" class="${st.cat==='home'?'on':''}">HOME</a>`+
+  const homeOn = homeStyle()==='blog' ? st.cat==='recent' : st.cat==='home';
+  bar.innerHTML = `<a data-c="home" class="${homeOn?'on':''}">HOME</a>`+
     cats().map(c=>`<a data-c="${esc(c)}" class="${st.cat===c?'on':''}">${esc(c.toUpperCase())}</a>`).join('')+
     `<a data-c="__gal" class="${st.cat==='__gal'?'on':''}">GALLERY</a>`+
-    `<a data-c="recent" class="${st.cat==='recent'?'on':''}">ALL</a>`;
+    `<a data-c="__gb" class="${st.cat==='__gb'?'on':''}">GUESTBOOK</a>`+
+    (homeStyle()==='blog'?'':`<a data-c="recent" class="${st.cat==='recent'?'on':''}">ALL</a>`);
+  if(st.page.pillImg) bar.querySelectorAll('a').forEach(el=>{
+    el.classList.add('imgpill');
+    el.style.backgroundImage=`url(${st.page.pillImg})`;
+  });
   bar.querySelectorAll('a').forEach(el=>el.onclick=()=>{
     el.dataset.c==='home' ? goHome() : goBoard(el.dataset.c);
   });
@@ -410,7 +487,27 @@ async function addCat(){
   await updateDoc(doc(db,'pages',st.handle),{cats:next});
   st.page.cats=next; renderSide(); refreshWriteCats();
 }
+function renderGuest(){
+  $('#list-view').classList.add('hidden');
+  $('#gb-form').classList.toggle('hidden', !st.me);
+  $('#gb-login').classList.toggle('hidden', !!st.me);
+  $('#gb-list').innerHTML = st.guest.length? st.guest.map(g=>`
+    <li class="gb-item">
+      <p class="who"><span>@${esc(g.name||'guest')}${(st.mine||g.uid===st.me?.uid)?`<i class="del" data-gbd="${g.id}">삭제</i>`:''}</span>
+      <span class="dt">${fmtTs(g.ts)}</span></p>
+      <p>${esc(g.text)}</p></li>`).join('')
+    :'<p class="pl-empty">아직 방명록이 비어 있어요 — 첫 흔적을 남겨주세요.</p>';
+  $('#gb-list').querySelectorAll('[data-gbd]').forEach(b=>b.onclick=async()=>{
+    if(!confirm('이 방명록 글을 삭제할까요?')) return;
+    await deleteDoc(doc(db,'pages',st.handle,'guest',b.dataset.gbd));
+    st.guest=st.guest.filter(x=>x.id!==b.dataset.gbd); renderGuest();
+  });
+}
 function renderList(){
+  if(st.cat==='__gb'){ $('#guest-view').classList.remove('hidden');
+    $('#list-view').classList.add('hidden'); renderGuest(); return; }
+  $('#guest-view').classList.add('hidden');
+  $('#list-view').classList.remove('hidden');
   if(st.cat==='__gal' || (st.cat!=='recent' && st.cat!=='home' && isG(st.cat))){
     $('#v-label').textContent = st.cat==='__gal' ? 'GALLERY' : st.cat.toUpperCase();
     $('#pin-slot').innerHTML='';
@@ -461,6 +558,16 @@ function renderGal(all){
     if(g){ $('#lb-img').src=g.img; $('#lb').classList.add('show'); }
   });
 }
+$('#gb-home').onclick=goHome;
+$('#gb-go').onclick=async()=>{
+  const t=$('#gb-text').value.trim(); if(!t||!st.me) return;
+  await addDoc(collection(db,'pages',st.handle,'guest'),
+    {uid:st.me.uid, name:st.myHandle||st.me.displayName||'guest', text:t, ts:serverTimestamp()});
+  $('#gb-text').value='';
+  const gb=await getDocs(query(collection(db,'pages',st.handle,'guest'),orderBy('ts','desc')));
+  st.guest=gb.docs.map(d=>({id:d.id,...d.data()})); renderGuest();
+};
+$('#gb-login-btn').onclick=()=>signInWithPopup(auth,new GoogleAuthProvider()).catch(()=>{});
 async function delGal(id){
   const g=st.gallery.find(x=>x.id===id); if(!g) return;
   if(!confirm('이 이미지를 삭제할까요?'+(g.title?`\n(${g.title})`:''))) return;
@@ -476,7 +583,10 @@ document.addEventListener('contextmenu',e=>{
 
 /* ---------- 글 읽기 ---------- */
 function backToList(){ $('#post-view').classList.add('hidden');
-  $('#list-view').classList.remove('hidden'); st.cur=null;
+  $('#guest-view').classList.add('hidden');
+  if(st.cat==='__gb'){ renderGuest(); $('#guest-view').classList.remove('hidden'); }
+  else $('#list-view').classList.remove('hidden');
+  st.cur=null;
   history.replaceState(null,'',urlFor(st.handle)); }
 $('#pv-back').onclick=backToList;
 $('#go-home').onclick=goHome;
@@ -496,7 +606,35 @@ async function openPost(id){
   $('#post-view').classList.remove('hidden');
   history.replaceState(null,'',urlFor(st.handle,id));
   window.scrollTo({top:0});
+  loadComments(id);
 }
+async function loadComments(pid){
+  $('#cmt-list').innerHTML='<p class="pl-empty">불러오는 중...</p>';
+  $('#cmt-form').classList.toggle('hidden', !st.me);
+  $('#cmt-login').classList.toggle('hidden', !!st.me);
+  try{
+    const cs=await getDocs(query(collection(db,'pages',st.handle,'posts',pid,'comments'),orderBy('ts','asc')));
+    const arr=cs.docs.map(d=>({id:d.id,...d.data()}));
+    $('#cmt-list').innerHTML = arr.length? arr.map(c=>`
+      <li class="cmt-item">
+        <p class="who"><span>@${esc(c.name||'guest')}</span><span class="dt">${fmtTs(c.ts)}</span>
+        ${(st.mine||c.uid===st.me?.uid)?`<i class="del" data-cd="${c.id}" style="cursor:pointer;color:var(--muted);font-size:10px">삭제</i>`:''}</p>
+        <p>${esc(c.text)}</p></li>`).join('')
+      :'<p class="pl-empty">첫 댓글을 남겨보세요.</p>';
+    $('#cmt-list').querySelectorAll('[data-cd]').forEach(b=>b.onclick=async()=>{
+      if(!confirm('댓글을 삭제할까요?')) return;
+      await deleteDoc(doc(db,'pages',st.handle,'posts',pid,'comments',b.dataset.cd));
+      loadComments(pid);
+    });
+  }catch(e){ $('#cmt-list').innerHTML='<p class="pl-empty">댓글을 불러올 수 없어요.</p>'; }
+}
+$('#cmt-go').onclick=async()=>{
+  const t=$('#cmt-text').value.trim(); if(!t||!st.me||!st.cur) return;
+  await addDoc(collection(db,'pages',st.handle,'posts',st.cur.id,'comments'),
+    {uid:st.me.uid, name:st.myHandle||st.me.displayName||'guest', text:t, ts:serverTimestamp()});
+  $('#cmt-text').value=''; loadComments(st.cur.id);
+};
+$('#cmt-login-btn').onclick=()=>signInWithPopup(auth,new GoogleAuthProvider()).catch(()=>{});
 $('#pv-copy').onclick=()=>{
   const url=location.origin+urlFor(st.handle, st.cur?.id||'');
   (navigator.clipboard?navigator.clipboard.writeText(url).then(()=>alert('링크를 복사했어요!\n'+url))
@@ -855,6 +993,24 @@ $('#s-egate').addEventListener('change',async e=>{
 });
 $('#s-egate-clear').onclick=()=>{ egateNew=''; renderEgate();
   msg('입장 이미지 제거 — [설정 저장]으로 확정.'); };
+$('#stk-file').addEventListener('change',async e=>{
+  const f=e.target.files[0]; if(!f) return;
+  msg('스티커 압축 중...');
+  const img=await compress(f,320,.85);
+  st.page.stickers=st.page.stickers||[];
+  st.page.stickers.push({img,x:8,y:20,size:120,rot:0});
+  try{ await updateDoc(doc(db,'pages',st.handle),{stickers:st.page.stickers}); }catch(e2){}
+  renderStkList(); renderStickers();
+  msg('스티커 추가! 홈에서 드래그로 옮겨보세요.'); e.target.value='';
+});
+let pillNew=null;
+$('#s-pill').addEventListener('change',async e=>{
+  const f=e.target.files[0]; if(!f) return;
+  msg('알약 이미지 압축 중...');
+  pillNew=await compress(f,500,.8);
+  msg('추가됨 — [설정 저장]으로 확정.'); e.target.value='';
+});
+$('#s-pill-clear').onclick=()=>{ pillNew=''; msg('알약 기본 디자인으로 — [설정 저장]으로 확정.'); };
 $('#s-bg').addEventListener('change',async e=>{
   const f=e.target.files[0]; if(!f) return;
   msg('배경 이미지 압축 중...'); bgNew=await compress(f,1600,.7);
@@ -874,7 +1030,9 @@ function fillSettings(){
   $('#s-light').checked=!!p.light;
   $('#s-glass').checked=!!p.glass;
   $('#s-catstyle').value=catStyle();
+  $('#s-homestyle').value=homeStyle();
   $('#s-theme').value=p.theme||'default';
+  pillNew=null; renderStkList();
   $('#s-dim').value=p.bgDim??78;
   heroDraft=[...heroList()]; renderHeroList();
   $('#s-enter').value=p.enterText||'';
@@ -901,6 +1059,8 @@ async function saveSettings(){
       light: $('#s-light').checked,
       glass: $('#s-glass').checked,
       catStyle: $('#s-catstyle').value,
+      homeStyle: $('#s-homestyle').value,
+      pillImg: pillNew ?? st.page.pillImg ?? '',
       theme: $('#s-theme').value,
       bgDim: parseInt($('#s-dim').value)||78,
       updatedAt:serverTimestamp()
