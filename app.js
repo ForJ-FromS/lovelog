@@ -288,7 +288,7 @@ function latestBlock(box){
     pd.onclick=()=>{ goBoard('recent'); openPost(pin.id); };
     box.appendChild(pd);
   }
-  const d=document.createElement('div'); d.className='side sw-'+w.t;
+  const d=document.createElement('div'); d.className='side sw-latest';
   const arr=st.posts.filter(p=>!p.pinned).slice(0,5);
   d.innerHTML=`<p class="label">LATEST</p><div class="mini-rows">`+
     (arr.length?arr.map(p2=>`<a data-lid="${p2.id}">
