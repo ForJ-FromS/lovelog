@@ -1266,16 +1266,24 @@ function renderWidEdit(){
   if(w.t==='nb') html+=`
     <input id="we-nblab" placeholder="제목 (기본: NEIGHBORS)" value="${esc(w.label??'')}">
     `+(w.items||[]).map((x,i)=>`
-    <div class="p-row">
-      <input data-nbh="${i}" placeholder="핸들 또는 https:// 외부 홈 주소"
-        value="${esc(nbUrl(x)||nbH(x))}" style="flex:1.4">
-      ${nbUrl(x)?`<input data-nbnm="${i}" placeholder="표시할 이름" value="${esc(nbName(x))}" style="flex:.9">`:''}
-      ${nbImg(x)?`<img class="chl-pv" src="${nbImg(x)}" alt="">`:''}
-      <label class="filelab" style="font-size:10.5px">${nbImg(x)?'교체':'사진'}<input type="file" data-nbimg="${i}" accept="image/*"></label>
-      ${nbImg(x)?`<button class="rmv" data-nbimx="${i}" style="font-size:10px">기본</button>`:''}
-      <button class="rmv" data-nbup="${i}">↑</button>
-      <button class="rmv" data-nbdn="${i}">↓</button>
-      <button class="rmv" data-nbx="${i}">✕</button></div>`).join('')
+    <div class="chl">
+      <div class="chl-h" style="margin-bottom:6px">
+        <span style="font-size:11px;color:var(--muted);flex:none">${i+1}</span>
+        ${nbImg(x)?`<img class="chl-pv" src="${nbImg(x)}" alt="">`:''}
+        <span class="chl-r">
+          <button class="rmv" data-nbup="${i}">↑</button>
+          <button class="rmv" data-nbdn="${i}">↓</button>
+          <button class="rmv" data-nbx="${i}">✕</button>
+        </span>
+      </div>
+      <input data-nbh="${i}" placeholder="핸들 (예: jeste) 또는 https:// 외부 주소"
+        value="${esc(nbUrl(x)||nbH(x))}" style="width:100%">
+      ${nbUrl(x)?`<input data-nbnm="${i}" placeholder="표시할 이름" value="${esc(nbName(x))}" style="width:100%;margin-top:7px">`:''}
+      <div class="p-row" style="margin:7px 0 0">
+        <label class="filelab">${nbImg(x)?'사진 교체':'＋ 사진 직접 넣기(선택)'}<input type="file" data-nbimg="${i}" accept="image/*"></label>
+        ${nbImg(x)?`<button class="rmv" data-nbimx="${i}" style="font-size:11px">자동으로</button>`:''}
+      </div>
+    </div>`).join('')
     +`<button class="btn" id="we-nbadd" style="font-size:12px">+ 이웃 추가</button>
       <p class="note">러브로그 홈은 <b>핸들</b>만 적으면 이름·사진이 자동으로 떠요. 러브로그 밖의 갠홈·블로그·트위터는 <b>https:// 주소</b>를 그대로 붙여넣고 이름을 적어주세요. [사진]으로 이미지를 지정할 수 있어요.</p>`;
   if(w.t==='img') html+=`
@@ -1307,16 +1315,24 @@ function renderWidEdit(){
   if(w.t==='banner') html+=((w.items||[]).length?'' :
     `<p class="note" style="margin:0 0 8px">이미지를 추가하면 배너마다 이동할 링크 주소 · ↑↓ 순서 · ✕ 삭제가 생겨요.</p>`)
     +(w.items||[]).map((b,i)=>`
-    <div class="p-row"><span style="font-size:11px;color:var(--muted)">배너 ${i+1}</span>
-    ${b.h!==undefined
-      ? `<span style="font-size:11px;color:var(--muted)">luvlog.me/</span>
-         <input data-bh="${i}" placeholder="핸들" value="${esc(b.h||'')}" style="flex:.9">
-         <label class="filelab" style="font-size:10.5px">${b.img?'이미지 교체':'이미지(선택)'}<input type="file" data-bimg="${i}" accept="image/*"></label>
-         ${b.img?`<button class="rmv" data-bimx="${i}" style="font-size:10px">자동</button>`:''}`
-      : `<input data-bu="${i}" placeholder="눌렀을 때 이동할 주소 (선택)" value="${b.url||''}">`}
-    <button class="rmv" data-bup="${i}" title="위로">↑</button>
-    <button class="rmv" data-bdn="${i}" title="아래로">↓</button>
-    <button class="rmv" data-br="${i}">✕</button></div>`).join('')+
+    <div class="chl">
+      <div class="chl-h" style="margin-bottom:6px">
+        <span style="font-size:11px;color:var(--muted);flex:none">배너 ${i+1}</span>
+        ${b.img?`<img class="chl-pv" src="${b.img}" alt="">`:''}
+        <span class="chl-r">
+          <button class="rmv" data-bup="${i}" title="위로">↑</button>
+          <button class="rmv" data-bdn="${i}" title="아래로">↓</button>
+          <button class="rmv" data-br="${i}">✕</button>
+        </span>
+      </div>
+      ${b.h!==undefined
+        ? `<div class="fld"><span class="fld-pre">luvlog.me/</span>
+             <input data-bh="${i}" placeholder="핸들 (예: jeste)" value="${esc(b.h||'')}"></div>
+           <div class="p-row" style="margin:7px 0 0">
+             <label class="filelab">${b.img?'이미지 교체':'＋ 이미지 직접 넣기(선택)'}<input type="file" data-bimg="${i}" accept="image/*"></label>
+             ${b.img?`<button class="rmv" data-bimx="${i}" style="font-size:11px">자동으로</button>`:''}</div>`
+        : `<input data-bu="${i}" placeholder="눌렀을 때 이동할 주소 (선택)" value="${b.url||''}" style="width:100%">`}
+    </div>`).join('')+
     `<div class="p-row">
       <label class="filelab">배너 이미지 추가 <input type="file" id="we-bimg" accept="image/*"></label>
       <button class="btn" id="we-bnhome" style="font-size:12px">＋ 러브로그 홈 걸기</button>
