@@ -237,6 +237,8 @@ async function loadPage(handle){
     $('#enter-over').textContent = '@'+handle.toUpperCase();
     $('#gate-name').textContent = st.page.name || handle;
     $('#enter-text').textContent = st.page.enterText || '';
+    $('#gate-go').textContent = st.page.gateBtn || '입 장';
+    document.documentElement.style.setProperty('--gtC', st.page.gateColor || '');
     $('#gate-pw-wrap').classList.toggle('hidden', !needPw);
     $('#gate-login').classList.toggle('hidden', !!st.me);
     $('#gate-login').onclick=()=>signInWithPopup(auth,new GoogleAuthProvider()).catch(()=>{});
@@ -498,6 +500,7 @@ document.addEventListener('dragstart',e=>{
   if(!st.page || st.page.protectImg===false) return;
   if(e.target.tagName==='IMG' && !e.target.closest('[draggable="true"]')) e.preventDefault();
 });
+let gatePreview=false;
 let bgmCur='', bgmHandle='';
 const bgmPlaying=()=>!!document.querySelector('#bgm-dock-fr iframe');
 function bgmStart(src){ bgmCur=src; bgmHandle=st.handle;
@@ -1427,7 +1430,32 @@ $('#stk-file').addEventListener('change',async e=>{
   renderStkList(); renderStickers();
   msg('스티커 추가! 홈에서 드래그로 옮겨보세요.'); e.target.value='';
 });
-let favNew=null, curNew=null;
+let favNew=null, curNew=null, gateColVal=null;
+$('#s-gatecolor').addEventListener('input',e=>{ gateColVal=e.target.value;
+  document.documentElement.style.setProperty('--gtC', gateColVal); });
+$('#s-gatecolor-x').onclick=()=>{ gateColVal='';
+  document.documentElement.style.setProperty('--gtC','');
+  msg('기본 글씨색 — [설정 저장]으로 확정돼요.'); };
+$('#gate-go').addEventListener('click',e=>{
+  if(!gatePreview) return;
+  e.stopImmediatePropagation();
+  gatePreview=false; show('view-page');
+  $('#panel').classList.remove('hidden');
+  msg('미리보기 종료 — 바꾼 내용은 [설정 저장]을 눌러야 확정돼요.');
+}, true);
+$('#s-gate-pv').onclick=()=>{
+  const cover = (egateNew ?? st.page.enterImg) || heroObjs()[0]?.img || '';
+  $('#enter-cover').style.backgroundImage = cover?`url(${cover})`:'';
+  $('#enter-over').textContent='@'+st.handle.toUpperCase();
+  $('#gate-name').textContent=$('#s-name').value.trim()||st.page.name||st.handle;
+  $('#enter-text').textContent=$('#s-enter').value.trim();
+  $('#gate-go').textContent=$('#s-gatebtn').value.trim()||'입 장';
+  document.documentElement.style.setProperty('--gtC', gateColVal ?? st.page.gateColor ?? '');
+  $('#gate-pw-wrap').classList.add('hidden'); $('#gate-err').textContent='';
+  $('#gate-login').classList.add('hidden');
+  $('#panel').classList.add('hidden');
+  gatePreview=true; show('view-gate');
+};
 $('#s-fav').addEventListener('change',async e=>{
   const f=e.target.files[0]; if(!f) return;
   favNew=await compress(f,64,.9); e.target.value='';
@@ -1468,6 +1496,8 @@ function fillSettings(){
   $('#s-theme').value=p.theme||'default';
   renderStkList();
   $('#s-dim').value=p.bgDim??78; $('#s-dots').checked=p.dots!==false; $('#s-protect').checked=p.protectImg!==false; $('#s-stkm').checked=!!p.stkHideM; $('#s-sparkle').checked=!!p.sparkle; $('#s-postpage').checked=!!p.postPage;
+  $('#s-gatebtn').value=p.gateBtn||''; gateColVal=null;
+  $('#s-gatecolor').value=p.gateColor||'#ffffff';
   heroDraft=JSON.parse(JSON.stringify(heroObjs())); renderHeroList();
   $('#s-enter').value=p.enterText||'';
   egateNew=null; renderEgate();
@@ -1521,6 +1551,8 @@ async function saveSettings(){
       stkHideM: $('#s-stkm').checked,
       sparkle: $('#s-sparkle').checked,
       postPage: $('#s-postpage').checked,
+      gateBtn: $('#s-gatebtn').value.trim(),
+      gateColor: gateColVal ?? st.page.gateColor ?? '',
       font: $('#s-font').value,
       customCss: $('#s-css').value,
       fav: favNew ?? st.page.fav ?? '',
