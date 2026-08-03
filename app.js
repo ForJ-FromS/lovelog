@@ -221,6 +221,7 @@ async function enterPage(){
   document.body.classList.toggle('side-both', p.sidePos==='both');
   document.documentElement.style.setProperty('--dim', (p.bgDim??78)/100);
   document.body.classList.toggle('glass', !!p.glass);
+  if(bgmPlaying() && bgmHandle!==st.handle) bgmStop();
   document.body.classList.toggle('no-dots', p.dots===false);
   document.body.classList.toggle('font-serif', p.font==='serif');
   document.title = p.name ? p.name : 'LOVELOG';
@@ -395,6 +396,14 @@ async function dropWidget(from, to, contId){
   try{ await updateDoc(doc(db,'pages',st.handle),{side:arr}); }
   catch(e){ alert('순서 저장 실패: '+e.message); }
 }
+let bgmCur='', bgmHandle='';
+const bgmPlaying=()=>!!document.querySelector('#bgm-dock-fr iframe');
+function bgmStart(src){ bgmCur=src; bgmHandle=st.handle;
+  $('#bgm-dock-fr').innerHTML=`<iframe style="width:200px;height:112px;border:0;border-radius:9px;display:block" src="${src}" allow="autoplay; encrypted-media"></iframe>`;
+  $('#bgm-dock').classList.remove('hidden'); }
+function bgmStop(){ bgmCur=''; bgmHandle='';
+  $('#bgm-dock-fr').innerHTML=''; $('#bgm-dock').classList.add('hidden'); }
+$('#bgm-dock-x').onclick=()=>{ bgmStop(); renderSide(); };
 function renderWidgets(){ renderSide(); }
 function renderSide(){
   const p=st.page;
@@ -408,8 +417,11 @@ function renderSide(){
   if(headEl) (both?boxL:boxR).appendChild(headEl);
   if(home) latestBlock(hC);
   sideCfg().forEach((w,wi)=>{
+    const pos = p.sidePos==='left'?'l' : p.sidePos==='both'?'b' : 'r';
     const box = home
-      ? (w.col==='l'?hL : w.col==='c'?hC : hR)
+      ? (pos==='b' ? (w.col==='l'?hL : w.col==='c'?hC : hR)
+        : pos==='l' ? (w.col==='c'?hC : hL)
+        : (w.col==='c'?hC : hR))
       : ((both && w.col==='l') ? boxL : boxR);
     const d=document.createElement('div'); d.className='side sw-'+w.t;
     d.dataset.wi=wi; bindDrag(d);
@@ -467,11 +479,12 @@ function renderSide(){
       const src = list
         ? `https://www.youtube.com/embed/videoseries?list=${list}&autoplay=1`
         : `https://www.youtube.com/embed/${vid}?autoplay=1&loop=1&playlist=${vid}`;
-      let on=false; const btn=d.querySelector('.bgm-btn2'), fr=d.querySelector('.bgm-fr');
-      btn.onclick=()=>{ on=!on;
-        fr.innerHTML=on?`<iframe style="width:100%;height:112px;border:0;border-radius:9px;margin-top:10px" src="${src}" allow="autoplay; encrypted-media"></iframe>`:'';
-        btn.textContent=on?'❚❚':'▶';
-        d.classList.toggle('playing',on); };
+      const btn=d.querySelector('.bgm-btn2');
+      const on=bgmPlaying()&&bgmCur===src;
+      btn.textContent=on?'❚❚':'▶'; d.classList.toggle('playing',on);
+      btn.onclick=()=>{
+        if(bgmPlaying()&&bgmCur===src) bgmStop(); else bgmStart(src);
+        renderSide(); };
       return;
     }
     if(w.t==='profile'){
@@ -498,6 +511,14 @@ function renderSide(){
       box.appendChild(d); return;
     }
   });
+  const gh=$('#home-grid');
+  const pos = p.sidePos==='left'?'l' : p.sidePos==='both'?'b' : 'r';
+  gh.classList.remove('slim-l','slim-r');
+  gh.classList.toggle('pos-r', pos==='r');
+  gh.classList.toggle('pos-l', pos==='l');
+  gh.classList.toggle('pos-b', pos==='b');
+  gh.classList.toggle('no-l', pos==='b' && !hL.children.length && !st.mine);
+  gh.classList.toggle('no-r', pos==='b' && !hR.children.length && !st.mine);
 }
 function renderCats(){ renderSide(); }
 async function addCat(){
