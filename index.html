@@ -524,11 +524,15 @@
   .ch-b{max-width:80%}
   .ch-n{display:block;font-size:10px;color:var(--muted);margin:0 0 3px 2px}
   .ch-line.r .ch-n{text-align:right;margin:0 2px 3px 0}
-  .ch-b p{margin:0;font-size:12.5px;line-height:1.6;padding:8px 12px;border-radius:14px;
-    background:var(--card2);border:1px solid var(--line);color:var(--body)}
+  .ch-b p{margin:0;font-size:var(--chFs,12.5px);font-family:var(--chFf,inherit);
+    line-height:1.6;padding:8px 12px;border-radius:14px;
+    background:var(--chL,var(--card2));border:1px solid var(--chL,var(--line));
+    color:var(--chLt,var(--body))}
+  .ch-n{font-family:var(--chFf,inherit)}
   .ch-line.l .ch-b p{border-bottom-left-radius:4px}
-  .ch-line.r .ch-b p{border-bottom-right-radius:4px;background:var(--pri);
-    border-color:var(--pri);color:hsl(var(--h) calc(30% * var(--sf,1)) 12%)}
+  .ch-line.r .ch-b p{border-bottom-right-radius:4px;
+    background:var(--chR,var(--pri));border-color:var(--chR,var(--pri));
+    color:var(--chRt,hsl(var(--h) calc(30% * var(--sf,1)) 12%))}
   .w-chat.ch-retro .ch-b p{border-radius:0;border:2px solid;
     border-color:#fff #404040 #404040 #fff;background:#c0c0c0;color:#000}
   .w-chat.ch-retro .ch-line.r .ch-b p{background:#000080;color:#fff;
@@ -537,6 +541,32 @@
   .w-chat.ch-script .ch-b p{background:none;border:none;border-radius:0;
     padding:0 0 8px;border-bottom:1px dashed var(--line)}
   .w-chat.ch-script .ch-line.r .ch-b p{color:var(--pri)}
+  /* 글 전용 페이지 보기 */
+  body.reading #aside,body.reading #aside-l,body.reading #catbar,
+  body.reading .strip-sec{display:none}
+  body.reading .cols{grid-template-columns:1fr!important}
+  body.reading #post-view article{max-width:820px;margin:0 auto;
+    padding:clamp(26px,3.4vw,46px) clamp(22px,3.2vw,50px)}
+  body.reading #post-view #pv-body{font-size:14.5px;line-height:2}
+  body.reading #pv-nav{max-width:820px;margin:14px auto 0}
+  body.reading .wrap{padding-bottom:60px}
+  .w-img .iw{display:block;border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+  .w-img .iw img{width:100%;display:block}
+  .w-img .iw-cap{margin:8px 2px 0;font-size:11.5px;color:var(--muted);line-height:1.65}
+  /* 채팅로그 편집 줄 */
+  .chl{border:1px solid var(--line);border-radius:11px;padding:10px 11px;margin-bottom:9px;
+    background:var(--card2)}
+  .chl-h{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:7px}
+  .chl-sd{display:flex;gap:3px;flex:none}
+  .chl-sd button{border:1px solid var(--line);background:none;color:var(--muted);
+    border-radius:7px;padding:4px 9px;font-size:11px;cursor:pointer;white-space:nowrap}
+  .chl-sd button.on{background:var(--pri);border-color:var(--pri);
+    color:hsl(var(--h) calc(30% * var(--sf,1)) 12%)}
+  .chl-nm{flex:1;min-width:90px;margin:0!important;padding:6px 10px!important;font-size:12.5px!important}
+  .chl-pv{width:26px;height:26px;border-radius:50%;object-fit:cover;border:1px solid var(--line)}
+  .chl-f{font-size:10.5px;padding:4px 8px}
+  .chl-r{display:flex;gap:3px;margin-left:auto}
+  .chl-tx{width:100%;min-height:52px;margin:0!important;resize:vertical}
   .w-notice{border-left:3px solid var(--pri)}
   .w-notice .nt-t{margin:2px 0 6px;font-size:14px;font-weight:700;color:var(--ink)}
   .w-notice .nt-x{margin:0;font-size:12.5px;line-height:1.75}
@@ -794,6 +824,7 @@
         <option value="latest">최신글 블록 (고정글+최신 5)</option>
         <option value="notice">공지 (제목+내용 고정 카드)</option>
         <option value="chat">채팅로그 (좌우 대사 말풍선)</option>
+        <option value="img">이미지 (제목 직접 입력)</option>
       </select>
       <button class="btn" id="wid-add" style="font-size:12px">＋ 추가</button>
     </div>
@@ -879,6 +910,7 @@
       <label class="chk"><input type="checkbox" id="s-protect" checked> 이미지 저장 방지 (우클릭·드래그 차단)</label>
       <label class="chk"><input type="checkbox" id="s-stkm"> 모바일에서 스티커 숨기기</label>
       <label class="chk"><input type="checkbox" id="s-sparkle"> 커서 반짝이 ✨ (마우스를 따라 스파클)</label>
+      <label class="chk"><input type="checkbox" id="s-postpage"> 글을 전용 페이지로 보기 (읽을 때 위젯 접기)</label>
     </div>
     <div class="p-row" style="align-items:center">
       <span style="font-size:12px;color:var(--body)">타이틀(홈 이름) 글씨색</span>
@@ -941,6 +973,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=38"></script>
+<script type="module" src="./app.js?v=42"></script>
 </body>
 </html>

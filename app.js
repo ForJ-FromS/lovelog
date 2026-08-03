@@ -318,7 +318,7 @@ async function enterPage(){
   renderWidgets(); renderCatbar(); renderList(); renderGal(); renderStickers();
   // 딥링크 — loadPage에서 보관해둔 글ID를 1회 소비
   const pm=st.deepPost; st.deepPost=null;
-  if(pm){ st.cat='recent'; applyView(); renderList(); openPost(pm); }
+  if(pm){ st.cat='recent'; applyView(); renderWidgets(); renderList(); openPost(pm); }
 }
 async function loadContent(){
   const [ps,gs,gb]=await Promise.all([
@@ -371,9 +371,9 @@ function latestBlock(box){
   d.querySelector('#latest-more').onclick=()=>goBoard('recent');
   return d;
 }
-const WNAME={latest:'최신글',notice:'공지',chat:'채팅로그',profile:'프로필',search:'검색',category:'카테고리',
+const WNAME={latest:'최신글',notice:'공지',chat:'채팅로그',img:'이미지',profile:'프로필',search:'검색',category:'카테고리',
   dday:'디데이',bgm:'BGM',quote:'인용구',links:'링크',banner:'배너칸'};
-const DEFCOL={search:'l',category:'l',profile:'l',latest:'c',quote:'c',notice:'c',chat:'c',
+const DEFCOL={search:'l',category:'l',profile:'l',latest:'c',quote:'c',notice:'c',chat:'c',img:'l',
   dday:'r',bgm:'r',links:'r',banner:'r'};
 const homeStyle=()=>st.page?.homeStyle||'grid';
 const galOn=()=>st.page?.galOn!==false;
@@ -606,11 +606,29 @@ function renderSide(){
         (w.text?`<p class="cap">${esc(w.text)}</p>`:'');
       box.appendChild(d); return;
     }
+    if(w.t==='img'){
+      if(!w.img){ if(st.mine){ d.innerHTML=`<p class="label">${esc(w.label||'IMAGE')}</p><p class="pl-empty">✎ 편집에서 사진을 올려주세요.</p>`; box.appendChild(d); } return; }
+      d.className+=' w-img';
+      const pic=`<img src="${w.img}" alt="" draggable="false">`;
+      d.innerHTML=(w.label===''?'':`<p class="label">${esc(w.label||'IMAGE')}</p>`)
+        +(w.url?`<a href="${esc(w.url)}" target="_blank" rel="noopener" class="iw">${pic}</a>`:`<span class="iw">${pic}</span>`)
+        +(w.text?`<p class="iw-cap">${esc(w.text).replace(/\n/g,'<br>')}</p>`:'');
+      box.appendChild(d); return;
+    }
     if(w.t==='chat'){
-      const ls=(w.lines||[]).filter(l=>l.text);
+      const ls=(w.lines||[]).filter(l=>l.text||l.name);
       if(!ls.length && !st.mine) return;
       d.className+=' w-chat ch-'+(w.style||'msg');
       const imgs=w.imgs!==false;
+      const lum=hx=>{ try{ const n=parseInt(hx.slice(1),16);
+        return (((n>>16)&255)*.299+((n>>8)&255)*.587+(n&255)*.114)/255; }catch(e){ return .5; } };
+      const sv=[];
+      if(w.cL) sv.push(`--chL:${w.cL}`, `--chLt:${lum(w.cL)>.62?'#1a1a1a':'#fff'}`);
+      if(w.cR) sv.push(`--chR:${w.cR}`, `--chRt:${lum(w.cR)>.62?'#1a1a1a':'#fff'}`);
+      if(w.fs) sv.push(`--chFs:${w.fs}px`);
+      if(w.font==='serif') sv.push(`--chFf:'Noto Serif KR',serif`);
+      if(w.font==='mono') sv.push(`--chFf:'IBM Plex Mono',monospace`);
+      if(sv.length) d.setAttribute('style', sv.join(';'));
       d.innerHTML=`<p class="label">CHAT</p>`+(ls.length?`<div class="ch-box">`+ls.map(l=>`
         <div class="ch-line ${l.side==='r'?'r':'l'}">
           ${imgs&&l.img?`<img class="ch-p" src="${l.img}" alt="" draggable="false">`:''}
@@ -796,7 +814,8 @@ document.addEventListener('contextmenu',e=>{
 });
 
 /* ---------- 글 읽기 ---------- */
-function backToList(){ $('#post-view').classList.add('hidden');
+function backToList(){ document.body.classList.remove('reading');
+  $('#post-view').classList.add('hidden');
   $('#guest-view').classList.add('hidden');
   if(st.cat==='__gb'){ renderGuest(); $('#guest-view').classList.remove('hidden'); }
   else $('#list-view').classList.remove('hidden');
@@ -818,6 +837,7 @@ async function openPost(id){
   $('#pv-del').classList.toggle('hidden',!st.mine);
   $('#list-view').classList.add('hidden');
   $('#post-view').classList.remove('hidden');
+  document.body.classList.toggle('reading', !!st.page.postPage);
   history.replaceState(null,'',urlFor(st.handle,id));
   const li=st.posts.findIndex(x=>x.id===id),
         older=st.posts[li+1], newer=st.posts[li-1];
@@ -1073,7 +1093,7 @@ function renderWidList(){
   $('#wid-list').innerHTML = draft.map((w,i)=>`
     <div class="wl">
       <span class="nm">${WNAME[w.t]||w.t}${w.t==='links'?` (${(w.items||[]).length})`:''}${w.t==='banner'?` (${(w.items||[]).length})`:''}</span>
-      ${['profile','quote','links','banner','dday','bgm','notice','chat'].includes(w.t)?`<button data-e="${i}">✎</button>`:''}
+      ${['profile','quote','links','banner','dday','bgm','notice','chat','img'].includes(w.t)?`<button data-e="${i}">✎</button>`:''}
       <button data-u="${i}">↑</button><button data-d="${i}">↓</button><button data-x="${i}">✕</button>
     </div>`).join('') || '<p class="pl-empty">위젯이 없어요 — 아래에서 추가하세요.</p>';
   $('#wid-list').querySelectorAll('button').forEach(b=>b.onclick=()=>{
@@ -1097,6 +1117,12 @@ function renderWidEdit(){
     <textarea id="we-text" placeholder="아래 캡션 (선택 — 비우면 사진만 꽉 차게)" style="min-height:60px">${w.text||''}</textarea>`;
   if(w.t==='quote') html+=`
     <textarea id="we-text" placeholder="걸어둘 문장" style="min-height:90px">${w.text||''}</textarea>`;
+  if(w.t==='img') html+=`
+    <div class="p-row"><label class="filelab">사진 ${w.img?'(있음)':''} <input type="file" id="we-iimg" accept="image/*"></label>
+      ${w.img?`<button class="rmv" id="we-iimgx" style="font-size:11px">사진 제거</button>`:''}</div>
+    <input id="we-ilab" placeholder="제목 (예: LOVE · 비우면 제목 없이)" value="${esc(w.label ?? 'IMAGE')}">
+    <textarea id="we-text" placeholder="사진 아래 설명 (선택)" style="min-height:52px">${w.text||''}</textarea>
+    <input id="we-iurl" placeholder="눌렀을 때 이동할 주소 (선택)" value="${esc(w.url||'')}">`;
   if(w.t==='notice') html+=`
     <input id="we-ntt" placeholder="공지 제목 (선택)" value="${esc(w.title||'')}">
     <textarea id="we-text" placeholder="공지 내용 — 줄바꿈 그대로 표시돼요" style="min-height:100px">${w.text||''}</textarea>`;
@@ -1134,17 +1160,38 @@ function renderWidEdit(){
         <option value="script" ${w.style==='script'?'selected':''}>대본형 (미니멀)</option>
       </select>
       <label class="chk"><input type="checkbox" id="we-chimg" ${w.imgs!==false?'checked':''}> 프사 표시</label>
+    </div>
+    <div class="p-row" style="align-items:center;font-size:11px;color:var(--muted);gap:7px">
+      왼쪽 <input type="color" id="we-chcl" value="${w.cL||'#2a2f3a'}" style="width:34px;padding:0">
+      오른쪽 <input type="color" id="we-chcr" value="${w.cR||'#7c9cff'}" style="width:34px;padding:0">
+      <button class="rmv" id="we-chcx" style="font-size:10px">테마색으로</button>
+    </div>
+    <div class="p-row" style="align-items:center;font-size:11px;color:var(--muted);gap:7px">
+      <select id="we-chff" style="flex:1">
+        <option value="" ${!w.font?'selected':''}>글꼴 — 홈 기본</option>
+        <option value="serif" ${w.font==='serif'?'selected':''}>명조</option>
+        <option value="mono" ${w.font==='mono'?'selected':''}>모노(타자기)</option>
+      </select>
+      크기 <input type="range" id="we-chfs" min="11" max="16" value="${w.fs||12.5}" step=".5" style="flex:1;margin-bottom:0">
     </div>`
     +(w.lines||[]).map((l,i)=>`
-    <div class="p-row" style="align-items:center">
-      <select data-chs="${i}" style="flex:.45;min-width:58px">
-        <option value="l" ${l.side!=='r'?'selected':''}>◀</option>
-        <option value="r" ${l.side==='r'?'selected':''}>▶</option></select>
-      <input data-chn="${i}" placeholder="이름" value="${esc(l.name||'')}" style="flex:.6;min-width:64px">
-      <input data-cht="${i}" placeholder="대사" value="${esc(l.text||'')}" style="flex:1.6">
-      <label class="filelab" style="font-size:10px">${l.img?'📷✓':'프사'}<input type="file" data-chp="${i}" accept="image/*"></label>
-      ${l.img?`<button class="rmv" data-chpx="${i}" style="font-size:10px">프사✕</button>`:''}
-      <button class="rmv" data-chx="${i}">✕</button>
+    <div class="chl">
+      <div class="chl-h">
+        <span class="chl-sd">
+          <button data-chsl="${i}" class="${l.side!=='r'?'on':''}">◀ 왼쪽</button>
+          <button data-chsr="${i}" class="${l.side==='r'?'on':''}">오른쪽 ▶</button>
+        </span>
+        <input data-chn="${i}" placeholder="이름" value="${esc(l.name||'')}" class="chl-nm">
+        ${l.img?`<img class="chl-pv" src="${l.img}" alt="">`:''}
+        <label class="filelab chl-f">${l.img?'교체':'＋프사'}<input type="file" data-chp="${i}" accept="image/*"></label>
+        ${l.img?`<button class="rmv" data-chpx="${i}">프사✕</button>`:''}
+        <span class="chl-r">
+          <button class="rmv" data-chup="${i}">↑</button>
+          <button class="rmv" data-chdn="${i}">↓</button>
+          <button class="rmv" data-chx="${i}">✕</button>
+        </span>
+      </div>
+      <textarea data-cht="${i}" placeholder="대사를 입력하세요" class="chl-tx">${esc(l.text||'')}</textarea>
     </div>`).join('')
     +`<button class="btn" id="we-chadd" style="font-size:12px">+ 대사 추가</button>`;
   html+=`<p class="note">입력은 즉시 반영돼요 — 마지막에 [위젯 구성 저장]만 누르면 저장 완료.</p>`;
@@ -1152,11 +1199,28 @@ function renderWidEdit(){
   // 라이브 바인딩: 쓰는 즉시 draft에 반영
   const t=$('#we-text'); if(t) t.addEventListener('input',()=>{ w.text=t.value; });
   const ntt=$('#we-ntt'); if(ntt) ntt.addEventListener('input',()=>{ w.title=ntt.value; });
+  const ilab=$('#we-ilab'); if(ilab) ilab.addEventListener('input',()=>{ w.label=ilab.value; });
+  const iurl=$('#we-iurl'); if(iurl) iurl.addEventListener('input',()=>{ w.url=iurl.value.trim(); });
+  const iimg=$('#we-iimg'); if(iimg) iimg.addEventListener('change',async e=>{
+    const f=e.target.files[0]; if(!f) return;
+    w.img=await compressTo(f,620,130); renderWidEdit();
+    msg('사진 반영됨 — [위젯 구성 저장]까지!'); });
+  const iimgx=$('#we-iimgx'); if(iimgx) iimgx.onclick=()=>{ delete w.img; renderWidEdit(); };
   const chst=$('#we-chst'); if(chst) chst.addEventListener('change',()=>{ w.style=chst.value; });
+  const chcl=$('#we-chcl'); if(chcl) chcl.addEventListener('input',()=>{ w.cL=chcl.value; });
+  const chcr=$('#we-chcr'); if(chcr) chcr.addEventListener('input',()=>{ w.cR=chcr.value; });
+  const chcx=$('#we-chcx'); if(chcx) chcx.onclick=()=>{ delete w.cL; delete w.cR; renderWidEdit(); };
+  const chff=$('#we-chff'); if(chff) chff.addEventListener('change',()=>{ w.font=chff.value; });
+  const chfs=$('#we-chfs'); if(chfs) chfs.addEventListener('input',()=>{ w.fs=+chfs.value; });
   const chimg=$('#we-chimg'); if(chimg) chimg.addEventListener('change',()=>{ w.imgs=chimg.checked; });
   const chadd=$('#we-chadd'); if(chadd) chadd.onclick=()=>{
     w.lines=w.lines||[]; w.lines.push({side:w.lines.length%2?'r':'l',text:''}); renderWidEdit(); };
-  $('#wid-edit').querySelectorAll('[data-chs]').forEach(s=>s.addEventListener('change',()=>{ w.lines[s.dataset.chs].side=s.value; }));
+  $('#wid-edit').querySelectorAll('[data-chsl]').forEach(b=>b.onclick=()=>{ w.lines[b.dataset.chsl].side='l'; renderWidEdit(); });
+  $('#wid-edit').querySelectorAll('[data-chsr]').forEach(b=>b.onclick=()=>{ w.lines[b.dataset.chsr].side='r'; renderWidEdit(); });
+  const chmv=(i,d)=>{ const L=w.lines, j=i+d; if(j<0||j>=L.length) return;
+    [L[i],L[j]]=[L[j],L[i]]; renderWidEdit(); };
+  $('#wid-edit').querySelectorAll('[data-chup]').forEach(b=>b.onclick=()=>chmv(+b.dataset.chup,-1));
+  $('#wid-edit').querySelectorAll('[data-chdn]').forEach(b=>b.onclick=()=>chmv(+b.dataset.chdn,1));
   $('#wid-edit').querySelectorAll('[data-chn]').forEach(i2=>i2.addEventListener('input',()=>{ w.lines[i2.dataset.chn].name=i2.value; }));
   $('#wid-edit').querySelectorAll('[data-cht]').forEach(i2=>i2.addEventListener('input',()=>{ w.lines[i2.dataset.cht].text=i2.value; }));
   $('#wid-edit').querySelectorAll('[data-chp]').forEach(inp=>inp.addEventListener('change',async e=>{
@@ -1210,7 +1274,7 @@ $('#wid-add').onclick=()=>{
     msg('이미 있는 위젯이에요.'); return; }
   draft.push(t==='links'?{t,items:[]}:t==='banner'?{t,items:[]}:{t});
   editIdx=draft.length-1; renderWidList();
-  if(['profile','quote','links','banner','dday','bgm','notice','chat'].includes(t)) renderWidEdit();
+  if(['profile','quote','links','banner','dday','bgm','notice','chat','img'].includes(t)) renderWidEdit();
 };
 $('#wid-save').onclick=async()=>{
   if(editIdx>=0 && draft[editIdx]) syncWid(draft[editIdx]);
@@ -1271,7 +1335,12 @@ $('#w-go').onclick=async()=>{
     if(JSON.stringify({...st.page, ...data}).length>980000){ msg('본문 이미지가 너무 많아요 — 사진 수를 줄여주세요.'); return; }
     if(pin) await Promise.all(st.posts.filter(p=>p.pinned).map(p=>
       updateDoc(doc(db,'pages',st.handle,'posts',p.id),{pinned:false})));
-    await addDoc(collection(db,'pages',st.handle,'posts'),data);
+    const d0=new Date(), pad=n=>String(n).padStart(2,'0');
+    const base=String(d0.getFullYear()).slice(2)+pad(d0.getMonth()+1)+pad(d0.getDate());
+    const used=new Set(st.posts.map(p=>p.id));
+    let nid='', n=1;
+    do{ nid=base+'-'+n.toString(36); n++; }while(used.has(nid)&&n<400);
+    await setDoc(doc(db,'pages',st.handle,'posts',nid),data);
     await loadContent(); renderWidgets(); renderList();
     ['w-title','w-pw','w-body'].forEach(i=>$('#'+i).value='');
     $('#w-secret').checked=false; $('#w-pin').checked=false; $('#w-pw').style.display='none';
@@ -1398,7 +1467,7 @@ function fillSettings(){
   $('#s-homestyle').value=homeStyle();
   $('#s-theme').value=p.theme||'default';
   renderStkList();
-  $('#s-dim').value=p.bgDim??78; $('#s-dots').checked=p.dots!==false; $('#s-protect').checked=p.protectImg!==false; $('#s-stkm').checked=!!p.stkHideM; $('#s-sparkle').checked=!!p.sparkle;
+  $('#s-dim').value=p.bgDim??78; $('#s-dots').checked=p.dots!==false; $('#s-protect').checked=p.protectImg!==false; $('#s-stkm').checked=!!p.stkHideM; $('#s-sparkle').checked=!!p.sparkle; $('#s-postpage').checked=!!p.postPage;
   heroDraft=JSON.parse(JSON.stringify(heroObjs())); renderHeroList();
   $('#s-enter').value=p.enterText||'';
   egateNew=null; renderEgate();
@@ -1451,6 +1520,7 @@ async function saveSettings(){
       protectImg: $('#s-protect').checked,
       stkHideM: $('#s-stkm').checked,
       sparkle: $('#s-sparkle').checked,
+      postPage: $('#s-postpage').checked,
       font: $('#s-font').value,
       customCss: $('#s-css').value,
       fav: favNew ?? st.page.fav ?? '',
