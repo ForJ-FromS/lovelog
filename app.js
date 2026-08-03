@@ -437,6 +437,14 @@ async function dropWidget(from, to, contId){
   try{ await updateDoc(doc(db,'pages',st.handle),{side:arr}); }
   catch(e){ alert('순서 저장 실패: '+e.message); }
 }
+document.addEventListener('contextmenu',e=>{
+  if(!st.page || st.page.protectImg===false) return;
+  if(e.target.closest('img,#pg-hero,#pg-hero2,.g-item,.stk,.pin')) e.preventDefault();
+});
+document.addEventListener('dragstart',e=>{
+  if(!st.page || st.page.protectImg===false) return;
+  if(e.target.tagName==='IMG' && !e.target.closest('[draggable="true"]')) e.preventDefault();
+});
 let bgmCur='', bgmHandle='';
 const bgmPlaying=()=>!!document.querySelector('#bgm-dock-fr iframe');
 function bgmStart(src){ bgmCur=src; bgmHandle=st.handle;
@@ -1249,7 +1257,7 @@ function fillSettings(){
   $('#s-homestyle').value=homeStyle();
   $('#s-theme').value=p.theme||'default';
   renderStkList();
-  $('#s-dim').value=p.bgDim??78; $('#s-dots').checked=p.dots!==false;
+  $('#s-dim').value=p.bgDim??78; $('#s-dots').checked=p.dots!==false; $('#s-protect').checked=p.protectImg!==false;
   heroDraft=JSON.parse(JSON.stringify(heroObjs())); renderHeroList();
   $('#s-enter').value=p.enterText||'';
   egateNew=null; renderEgate();
@@ -1283,6 +1291,7 @@ async function saveSettings(){
       theme: $('#s-theme').value,
       bgDim: parseInt($('#s-dim').value)||78,
       dots: $('#s-dots').checked,
+      protectImg: $('#s-protect').checked,
       font: $('#s-font').value,
       customCss: $('#s-css').value,
       fav: favNew ?? st.page.fav ?? '',
