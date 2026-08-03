@@ -130,11 +130,15 @@ function renderStickers(){
     if(!st.mine) return;
     d.addEventListener('pointerdown',ev=>{
       ev.preventDefault(); d.setPointerCapture(ev.pointerId);
-      const rect=layer.getBoundingClientRect();
+      const rect=layer.getBoundingClientRect(), sz=s.size||120;
+      const dx=ev.clientX-(rect.left+(s.x/100)*rect.width),
+            dy=ev.clientY-(rect.top+s.y);
       const move=e2=>{
-        const x=((e2.clientX-rect.left)/rect.width)*100;
-        const y=e2.clientY-rect.top;
-        s.x=Math.max(0,Math.min(96,x)); s.y=Math.max(0,y);
+        let xp=e2.clientX-rect.left-dx,
+            yp=e2.clientY-rect.top-dy;
+        xp=Math.max(-sz/2, Math.min(rect.width-sz/2, xp));
+        yp=Math.max(-sz/2, Math.min(rect.height-sz/2, yp));
+        s.x=(xp/rect.width)*100; s.y=yp;
         d.style.left=s.x+'%'; d.style.top=s.y+'px';
       };
       const up=async()=>{
