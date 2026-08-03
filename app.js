@@ -723,7 +723,9 @@ function renderSide(){
       box.appendChild(d); return;
     }
     if(w.t==='nb'){
-      const hs=(w.items||[]).filter(x=>nbH(x)||nbUrl(x));
+      let hs=(w.items||[]).filter(x=>nbH(x)||nbUrl(x));
+      const lim=+w.max||0; const total=hs.length;
+      if(lim>0) hs=hs.slice(0,lim);
       if(!hs.length){ if(st.mine){ d.innerHTML=`<p class="label">${esc(w.label||'NEIGHBORS')}</p><p class="pl-empty">✎ 편집에서 이웃 주소를 추가하세요.</p>`; box.appendChild(d); } return; }
       d.innerHTML=`<p class="label">${esc(w.label||'NEIGHBORS')}</p><div class="nb-list">`+
         hs.map(x=>{ const hh=nbH(x), ur=nbUrl(x), im=nbImg(x);
@@ -732,7 +734,8 @@ function renderSide(){
             <span class="nb-t"><b>${esc(nbName(x)||nbHost(ur))}</b><i>${esc(nbHost(ur))}</i></span></a>`;
           return `<a class="nb" href="${urlFor(hh)}" data-nb="${esc(hh)}">
           <span class="nb-th"${im?` style="background-image:url(${im})"`:''}></span>
-          <span class="nb-t"><b>@${esc(hh)}</b><i></i></span></a>`; }).join('')+`</div>`;
+          <span class="nb-t"><b>@${esc(hh)}</b><i></i></span></a>`; }).join('')
+        +(lim>0&&total>lim?`<p class="nb-more">외 ${total-lim}곳</p>`:'')+`</div>`;
       box.appendChild(d);
       hs.forEach(async x=>{
         if(nbUrl(x)) return;
@@ -804,6 +807,7 @@ function renderSide(){
     }
     if(w.t==='banner'){
       d.className+=' w-banner';
+      if(w.maxh) d.style.setProperty('--bnH', w.maxh==='all' ? 'none' : w.maxh+'px');
       d.innerHTML=`<p class="label">${esc(w.label||'BANNER')}</p><div class="bn-list">`+(w.items||[]).map((b,bi)=>{
         const hh=(b.h||'').trim().toLowerCase();
         if(hh) return `<a class="bn-h" href="${urlFor(hh)}" data-bnh="${bi}" title="@${esc(hh)}">
@@ -1306,6 +1310,13 @@ function renderWidEdit(){
     <textarea id="we-text" placeholder="걸어둘 문장" style="min-height:90px">${w.text||''}</textarea>`;
   if(w.t==='nb') html+=`
     <input id="we-nblab" placeholder="제목 (기본: NEIGHBORS)" value="${esc(w.label??'')}">
+    <div class="p-row" style="align-items:center">
+      <span style="font-size:11.5px;color:var(--muted)">보여줄 개수</span>
+      <select id="we-nbmax" style="flex:1">
+        ${[['0','전체 보여주기'],['1','1곳만'],['2','2곳'],['3','3곳'],['5','5곳'],['8','8곳'],['10','10곳'],['15','15곳']]
+          .map(([v,t])=>`<option value="${v}" ${String(w.max||0)===v?'selected':''}>${t}</option>`).join('')}
+      </select>
+    </div>
     `+(w.items||[]).map((x,i)=>`
     <div class="chl">
       <div class="chl-h" style="margin-bottom:6px">
@@ -1384,6 +1395,13 @@ function renderWidEdit(){
       <button class="btn" id="we-bnhome" style="font-size:12px">＋ 러브로그 홈 걸기</button>
     </div>
     <input id="we-blab" placeholder="제목 (기본: BANNER)" value="${esc(w.label??'')}">
+    <div class="p-row" style="align-items:center">
+      <span style="font-size:11.5px;color:var(--muted)">보이는 높이</span>
+      <select id="we-bmaxh" style="flex:1">
+        ${[['','기본 (약 2~3개, 스크롤)'],['64','아주 짧게 (1개만)'],['110','짧게 (1~2개)'],['300','길게 (4~5개)'],['all','전체 펼치기']]
+          .map(([v,t])=>`<option value="${v}" ${String(w.maxh||'')===v?'selected':''}>${t}</option>`).join('')}
+      </select>
+    </div>
     <p class="note">'러브로그 홈 걸기'는 핸들만 적으면 그 홈의 대표 이미지가 배너로 걸려요 — 이미지를 직접 올리면 그게 우선이에요.</p>`;
   if(w.t==='chat') html+=`
     <div class="p-row" style="align-items:center">
@@ -1438,6 +1456,7 @@ function renderWidEdit(){
   const t=$('#we-text'); if(t) t.addEventListener('input',()=>{ w.text=t.value; });
   const ntt=$('#we-ntt'); if(ntt) ntt.addEventListener('input',()=>{ w.title=ntt.value; });
   const nblab=$('#we-nblab'); if(nblab) nblab.addEventListener('input',()=>{ w.label=nblab.value; });
+  const nbmax=$('#we-nbmax'); if(nbmax) nbmax.addEventListener('change',()=>{ w.max=+nbmax.value; });
   const nbadd=$('#we-nbadd'); if(nbadd) nbadd.onclick=()=>{ w.items=w.items||[]; w.items.push(''); renderWidEdit(); };
   $('#wid-edit').querySelectorAll('[data-nbh]').forEach(i2=>i2.addEventListener('change',()=>{
     const k=i2.dataset.nbh, raw=i2.value.trim(), cur=w.items[k];
@@ -1510,6 +1529,8 @@ function renderWidEdit(){
     w.img=await upFile(f,1100,.9,120); msg('사진 반영됨 — [위젯 구성 저장]을 눌러주세요.');
   });
   const blab=$('#we-blab'); if(blab) blab.addEventListener('input',()=>{ w.label=blab.value; });
+  const bmh=$('#we-bmaxh'); if(bmh) bmh.addEventListener('change',()=>{
+    if(bmh.value) w.maxh=bmh.value; else delete w.maxh; });
   const bnh=$('#we-bnhome'); if(bnh) bnh.onclick=()=>{ w.items=w.items||[]; w.items.push({h:'',url:''}); renderWidEdit(); };
   $('#wid-edit').querySelectorAll('[data-bh]').forEach(i2=>i2.addEventListener('input',()=>{
     const raw=i2.value.trim();
@@ -1814,7 +1835,7 @@ $('#s-bg-clear').onclick=()=>{
 function fillSettings(){
   const p=st.page;
   $('#s-name').value=p.name||''; $('#s-sub').value=p.sub||'';
-  $('#s-gate').value=''; $('#s-color').value=hslToHex(p.hue??222, p.sat??60, p.lum??62);
+  $('#s-gate').value=''; gateClear=false; renderGateState(); $('#s-color').value=hslToHex(p.hue??222, p.sat??60, p.lum??62);
   $('#s-headmode').value=p.headMode||'wide';
   $('#s-sidepos').value=p.sidePos||'right';
   $('#s-light').checked=!!p.light;
@@ -1907,7 +1928,7 @@ async function saveSettings(){
       updatedAt:serverTimestamp()
     };
     if(gateIn) data.gate=await sha256(gateIn);
-    else if(gateIn==='' && $('#s-gate').dataset.clear==='1') data.gate='';
+    else if(gateClear) data.gate='';
     if(JSON.stringify({...st.page, ...data}).length>980000){
       const heroKB=(data.heroImgs||[]).reduce((t,o)=>t+kb(o.img||o),0);
       msg('이미지 용량 초과 — 자세한 내용은 안내창을 확인하세요.');
@@ -1919,15 +1940,26 @@ async function saveSettings(){
       deleteDoc(doc(db,'pages',st.handle,'imgs',r)).catch(()=>{});
     st.page={...st.page,...data};
     await resolveImgs(st.page);
+    gateClear=false; renderGateState();
+    if(data.gate==='') sessionStorage.removeItem('gate_'+st.handle);
     msg('저장 완료!');
     enterPage(); renderCatbar();
   }catch(e){ msg('오류: '+e.message); }
 }
 document.querySelectorAll('.s-go').forEach(b=>b.onclick=saveSettings);
-// 게이트 해제: 비번칸 비운 채 저장하면 유지, '없애기'는 명령어
-$('#s-gate').addEventListener('input',e=>{
-  e.target.dataset.clear = e.target.value==='' ? '1':'0';
-});
+let gateClear=false;
+function renderGateState(){
+  const on = !!st.page?.gate && !gateClear;
+  $('#s-gate-state').innerHTML = on
+    ? `<b style="color:var(--pri)">🔒 지금 비밀번호가 걸려 있어요</b>`
+    : `<b>🔓 지금은 누구나 들어올 수 있어요</b>`;
+  $('#s-gate-off').classList.toggle('hidden', !on);
+}
+$('#s-gate-off').onclick=()=>{
+  gateClear=true; $('#s-gate').value=''; renderGateState();
+  msg('잠금 해제 예약 — [설정 저장]을 눌러야 확정돼요.');
+};
+$('#s-gate').addEventListener('input',()=>{ if($('#s-gate').value) gateClear=false; renderGateState(); });
 
 /* ---------- 가입 ---------- */
 // 시스템 경로·혼동 주소 예약 (콘솔 config/reserved 문서의 list 배열로 추가 가능)

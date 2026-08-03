@@ -445,7 +445,7 @@
     font-size:12px;color:var(--body);border-bottom:1px dashed var(--line)}
   .w-links a:last-child{border-bottom:none}
   .w-links a:hover{color:var(--pri)}
-  .w-banner .bn-list{max-height:170px;overflow-y:auto;padding-right:4px}
+  .w-banner .bn-list{max-height:var(--bnH,170px);overflow-y:auto;padding-right:4px}
   .w-banner .bn-list::-webkit-scrollbar{width:4px}
   .w-banner .bn-list::-webkit-scrollbar-thumb{background:var(--line);border-radius:2px}
   .w-banner a{display:block;border-radius:8px;overflow:hidden;margin-bottom:8px;
@@ -620,6 +620,7 @@
   .bn-txt{display:block;padding:12px;text-align:center;font-size:12px;color:var(--muted);
     border:1px dashed var(--line);border-radius:9px}
   .nb-list{display:flex;flex-direction:column;gap:7px}
+  .nb-more{margin:2px 0 0;text-align:right;font-size:10.5px;color:var(--muted)}
   .nb{display:flex;align-items:center;gap:9px;padding:6px;border-radius:9px;
     border:1px solid transparent;transition:.15s;text-decoration:none}
   .nb:hover{border-color:var(--line);background:hsl(var(--h) 20% 50% / .06)}
@@ -979,7 +980,11 @@
       <button class="btn" id="s-gate-pv" style="font-size:12px">대문 미리보기</button>
     </div>
     <p class="p-h">대문 비밀번호</p>
-    <input id="s-gate" type="password" placeholder="비우면 공개 홈 · 입력하면 비번 걸린 홈">
+    <div class="p-row" style="align-items:center">
+      <span id="s-gate-state" style="font-size:12px;color:var(--body)"></span>
+      <button class="rmv hidden" id="s-gate-off" style="font-size:11px">잠금 해제하기</button>
+    </div>
+    <input id="s-gate" type="password" placeholder="새 비밀번호 입력 (비워두면 지금 설정 그대로)">
     <p class="note">가벼운 잠금이에요 — 진짜 비밀 내용은 글을 '비밀글'로 발행하세요(그건 암호화됩니다).</p>
     <button class="go s-go" style="margin-top:14px">설정 저장</button>
   </div>
@@ -1093,6 +1098,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=61"></script>
+<script type="module" src="./app.js?v=64"></script>
 </body>
 </html>
