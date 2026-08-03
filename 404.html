@@ -3,5 +3,7 @@
 // luvlog.me/jeste  또는  luvlog.me/jeste/글ID  →  내부 주소로 변환
 const p = location.pathname.split('/').filter(Boolean);
 if (p[0] === 'lovelog') p.shift();   // 옛 github.io/lovelog 경로 호환
+if (p[0] === 'guide'){ location.replace('/guide.html'); }
+else
 location.replace('/' + (p.length ? ('?u=' + p[0] + (p[1] ? '&p=' + p[1] : '')) : ''));
 </script></body></html>

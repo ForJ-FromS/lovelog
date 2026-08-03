@@ -1,0 +1,132 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GUIDE — LOVELOG</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--h:222;--bg:hsl(var(--h) 32% 9%);--card:hsl(var(--h) 28% 13%);--line:hsl(var(--h) 28% 23%);
+  --ink:hsl(var(--h) 25% 92%);--body:hsl(var(--h) 15% 76%);--muted:hsl(var(--h) 10% 52%);--pri:hsl(var(--h) 75% 74%)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--body);font-family:'Noto Sans KR',sans-serif;
+  font-size:14px;line-height:1.75;-webkit-font-smoothing:antialiased}
+.wrap{max-width:760px;margin:0 auto;padding:60px 22px 90px}
+.en{font-family:'IBM Plex Mono',monospace;letter-spacing:.28em;font-size:9px;color:var(--muted)}
+h1{font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:500;color:var(--ink);
+  letter-spacing:.12em;margin:8px 0 6px}
+.sub{color:var(--muted);font-size:13px}
+h2{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;letter-spacing:.22em;
+  color:var(--ink);margin:52px 0 4px;padding-bottom:9px;border-bottom:1px solid var(--line);position:relative}
+h2::after{content:'';position:absolute;left:0;bottom:-1px;width:34px;height:2px;background:var(--pri)}
+h2 .no{color:var(--pri);margin-right:8px}
+h3{font-size:13.5px;font-weight:700;color:var(--ink);margin:26px 0 4px}
+p{margin:10px 0}
+b{color:var(--ink);font-weight:600}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:14px 0}
+.card p{margin:6px 0}
+kbd{display:inline-block;background:hsl(var(--h) 30% 18%);border:1px solid var(--line);
+  border-radius:6px;padding:1px 8px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--ink)}
+.pill{display:inline-block;border:1px solid var(--line);border-radius:99px;padding:2px 12px;
+  font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;color:var(--ink);margin:0 2px}
+.dim{color:var(--muted);font-size:12.5px}
+.q{border-left:3px solid var(--pri);padding:2px 0 2px 14px;margin:16px 0}
+.q .qq{color:var(--ink);font-weight:600}
+a{color:var(--pri);text-decoration:none}
+.top{position:fixed;top:14px;right:18px;font-family:'IBM Plex Mono',monospace;font-size:8.5px;
+  letter-spacing:.25em;color:var(--muted)}
+.top a{color:inherit}
+footer{margin-top:70px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:8.5px;
+  letter-spacing:.3em;color:var(--muted)}
+</style></head><body>
+<div class="top"><a href="/">← LOVELOG</a></div>
+<div class="wrap">
+
+<p class="en">◆ USER GUIDE</p>
+<h1>LOVELOG 사용 안내</h1>
+<p class="sub">지인들을 위한 갠홈 서비스 — 처음 오신 분은 위에서부터 순서대로 읽으면 돼요.</p>
+
+<h2><span class="no">01</span>시작하기</h2>
+<p><b>초대코드가 있어야 가입할 수 있어요.</b> 첫 화면에서 구글 계정으로 로그인한 뒤 초대코드를 입력하고,
+<b>핸들</b>(주소에 쓰일 영문 아이디)과 <b>홈 이름</b>을 정하면 내 홈이 만들어져요.</p>
+<div class="card">
+<p>내 홈 주소는 <kbd>luvlog.me/핸들</kbd> — 예를 들어 핸들이 jeste면 <kbd>luvlog.me/jeste</kbd>예요.</p>
+<p class="dim">글 하나하나에도 고유 주소가 생겨서 트위터 등에 바로 공유할 수 있어요.</p>
+</div>
+<p>친구 홈은 주소로 바로 방문하면 되고, 오른쪽 위 <span class="pill">IN</span>으로 로그인하면 방명록·댓글을 남길 수 있어요.</p>
+
+<h2><span class="no">02</span>화면 구성</h2>
+<p>내 홈은 두 가지 형태 중에서 고를 수 있어요 (꾸미기 → 테마·레이아웃 → 홈).</p>
+<div class="card">
+<p><b>위젯 그리드형</b> — 헤더 아래 위젯들이 카드로 배열되고, 중앙에 고정글과 최신글이 떠요. 대문 느낌.</p>
+<p><b>클래식 블로그형</b> — 헤더 아래 바로 글 목록이 펼쳐지는 블로그 구조. 로그 위주라면 이쪽.</p>
+</div>
+<p>카테고리는 상단 <b>알약 바</b>와 <b>사이드 위젯</b> 중 원하는 방식으로 표시할 수 있고,
+사이드바는 왼쪽/오른쪽/양쪽에서 고를 수 있어요. 홈 화면의 기둥도 이 설정을 따라가요.</p>
+
+<h2><span class="no">03</span>글쓰기</h2>
+<p>오른쪽 아래 <span class="pill">✎</span> 버튼, 또는 각 게시판 상단의 <span class="pill">✎ WRITE</span>로 글을 써요.
+게시판에서 누르면 그 카테고리가 자동 선택돼요.</p>
+<div class="card">
+<p><b>비밀글</b> — 비밀번호를 걸면 내용이 암호화 저장돼요. 비밀번호는 잊으면 복구가 안 돼요!</p>
+<p><b>고정글</b> — 홈 상단에 고정 카드로 떠요.</p>
+<p><b>본문 사진</b> — 사진을 첨부하고 본문에 <kbd>[사진1]</kbd> <kbd>[사진2]</kbd>를 쓰면 그 자리에 들어가요.</p>
+<p><b>HTML 모드</b> — 체크하면 본문을 HTML 코드 그대로 저장해요. 채팅 로그 같은 걸 스타일 살려서 올릴 때.</p>
+</div>
+<p>글에 이미지가 있으면 목록에 썸네일이 자동으로 붙고, 글 하단의 <b>‹ 이전 / 다음 ›</b>으로 연달아 읽을 수 있어요.
+<span class="dim">글 수정은 아직 지원하지 않아요 — 삭제 후 다시 써야 해요.</span></p>
+
+<h2><span class="no">04</span>꾸미기</h2>
+<p>오른쪽 아래 <span class="pill">✦</span> 버튼이 꾸미기 대시보드예요. 왼쪽 메뉴 순서대로:</p>
+<h3>위젯 구성</h3>
+<p>프로필 · 검색 · 카테고리 · 디데이 · BGM · 인용구 · 링크 · 배너칸을 추가할 수 있어요.
+PC에선 위젯을 <b>드래그</b>해서 기둥 사이·순서를 옮기고, 모바일에선 ↑↓ 버튼으로 옮겨요.
+내용이 빈 위젯은 방문자에게 안 보여요. 편집 후 <b>[위젯 구성 저장]</b>을 꼭 누르세요.</p>
+<h3>카테고리</h3>
+<p>글/사진 타입으로 추가하고, 이름을 바꾸면 기존 글도 같이 이사해요.
+GALLERY 게시판과 하단 갤러리 스트립은 각각 따로 켜고 끌 수 있어요.</p>
+<h3>기본 정보</h3>
+<p>홈 이름·부제·<b>헤더 사진</b>(여러 장이면 자동 슬라이드), <b>파비콘</b>(탭 아이콘 — 정사각 PNG 권장),
+<b>입장 화면</b>(첫 방문자에게 보이는 대문 — 문구와 비밀번호를 걸 수 있어요)을 설정해요.</p>
+<div class="card">
+<p><b>헤더 사진은 크롭해서 올릴 필요 없어요</b> — 사진마다 확대(100~250%)·가로·세로 슬라이더로
+보여줄 부분을 정할 수 있어요. 모바일과 PC는 헤더 비율이 달라 잘리는 범위가 다른데,
+가로·세로 초점을 잡아두면 두 화면 모두 그 지점 중심으로 나와요.</p>
+</div>
+<h3>테마 · 레이아웃</h3>
+<p><b>컬러 피커</b>로 홈 전체 색을 정해요 — 아래 바로 색상을, 위 네모에서 채도(왼쪽=차분/오른쪽=쨍)와
+밝기까지 골라져요. 그 외: 밝은 테마, 카드 투명화, 배경 도트 패턴, 프리셋(Win98·VHS),
+글꼴(고딕/명조), 마우스 커서, 커스텀 CSS(아는 사람만!).</p>
+<h3>배경 · 스티커</h3>
+<p>배경 이미지를 깔고 농도를 조절하거나, 스티커를 올려 드래그로 배치·크기·회전할 수 있어요.
+투명 배경 PNG는 투명 그대로 올라가요.</p>
+
+<h2><span class="no">05</span>BGM</h2>
+<p>BGM 위젯에 유튜브 링크(영상 또는 재생목록)를 넣고 ▶를 누르면
+<b>화면 왼쪽 아래 미니 플레이어</b>에서 재생돼요. 게시판을 옮겨 다녀도 음악이 안 끊기고,
+플레이어의 ✕로 끄면 돼요. 다른 사람 홈으로 가면 자동으로 꺼져요.</p>
+
+<h2><span class="no">06</span>사진 용량</h2>
+<div class="card">
+<p>홈 하나의 꾸미기 사진(헤더·대문·배경 등)은 <b>합쳐서 약 900KB</b>,
+위젯 사진(프로필·배너·디데이)은 <b>약 750KB</b>까지예요. 서버가 홈 하나당 1MB까지만 받아서 그래요.</p>
+<p class="dim">올리는 순간 자동으로 압축되니까 보통은 신경 쓸 필요 없어요 — 헤더 2~3장 + 대문 1장이면 충분히 들어가요.
+초과하면 어떤 항목이 몇 KB인지 알려주는 안내가 떠요.</p>
+</div>
+
+<h2><span class="no">07</span>자주 묻는 것</h2>
+<div class="q"><p class="qq">Q. 꾸민 게 바로 반영이 안 돼요.</p>
+<p>서버 캐시 때문에 최대 10분 정도 걸릴 수 있어요. 새로고침(Ctrl+Shift+R)을 해보세요.</p></div>
+<div class="q"><p class="qq">Q. 투명 PNG를 올렸는데 배경이 까맣게 나와요.</p>
+<p>예전에 올린 이미지라면 그때 굳은 거예요 — 같은 파일을 다시 올리면 투명하게 들어가요.</p></div>
+<div class="q"><p class="qq">Q. 비밀글 비밀번호를 잊었어요.</p>
+<p>복구할 방법이 없어요. 내용이 암호화돼 있어서 운영자도 못 열어요.</p></div>
+<div class="q"><p class="qq">Q. 헤더가 모바일에서 다르게 잘려요.</p>
+<p>화면 비율이 달라서 그래요 — 기본 정보의 가로·세로 슬라이더로 초점을 잡아주세요.</p></div>
+<div class="q"><p class="qq">Q. 홈을 아예 지우고 싶어요 / 핸들을 바꾸고 싶어요.</p>
+<p>운영자(유월)에게 말해주세요.</p></div>
+
+<h2><span class="no">08</span>지켜줄 것</h2>
+<p>지인들끼리 쓰는 공간이에요. 서로의 방명록과 댓글에서 예의를 지켜주시고,
+초대코드는 운영자 허락 없이 외부에 공유하지 말아주세요.
+버그나 바라는 기능은 언제든 운영자에게 — 실제로 여러분 피드백으로 계속 고쳐지고 있어요.</p>
+
+<footer>LOVELOG · PRIVATE SERVICE</footer>
+</div></body></html>
