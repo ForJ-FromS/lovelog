@@ -619,7 +619,10 @@
   .nb.ext .nb-t b::after{content:' ↗';color:var(--muted);font-size:10px}
   .bn-txt{display:block;padding:12px;text-align:center;font-size:12px;color:var(--muted);
     border:1px dashed var(--line);border-radius:9px}
-  .nb-list{display:flex;flex-direction:column;gap:7px}
+  .nb-list{display:flex;flex-direction:column;gap:7px;
+    max-height:var(--nbH,none);overflow-y:auto;padding-right:3px}
+  .nb-list::-webkit-scrollbar{width:4px}
+  .nb-list::-webkit-scrollbar-thumb{background:var(--line);border-radius:2px}
   .nb-more{margin:2px 0 0;text-align:right;font-size:10.5px;color:var(--muted)}
   .nb{display:flex;align-items:center;gap:9px;padding:6px;border-radius:9px;
     border:1px solid transparent;transition:.15s;text-decoration:none}
@@ -1116,6 +1119,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=66"></script>
+<script type="module" src="./app.js?v=67"></script>
 </body>
 </html>

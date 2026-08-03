@@ -730,7 +730,9 @@ function renderSide(){
     if(w.t==='nb'){
       let hs=(w.items||[]).filter(x=>nbH(x)||nbUrl(x));
       const lim=+w.max||0; const total=hs.length;
-      if(lim>0) hs=hs.slice(0,lim);
+      const cut = w.cut===true;                    // true=잘라내기, 기본=스크롤
+      if(lim>0 && cut) hs=hs.slice(0,lim);
+      if(lim>0 && !cut) d.style.setProperty('--nbH', (lim*55-7)+'px');
       if(!hs.length){ if(st.mine){ d.innerHTML=`<p class="label">${esc(w.label||'NEIGHBORS')}</p><p class="pl-empty">✎ 편집에서 이웃 주소를 추가하세요.</p>`; box.appendChild(d); } return; }
       d.innerHTML=`<p class="label">${esc(w.label||'NEIGHBORS')}</p><div class="nb-list">`+
         hs.map(x=>{ const hh=nbH(x), ur=nbUrl(x), im=nbImg(x);
@@ -740,7 +742,7 @@ function renderSide(){
           return `<a class="nb" href="${urlFor(hh)}" data-nb="${esc(hh)}">
           <span class="nb-th"${im?` style="background-image:url(${im})"`:''}></span>
           <span class="nb-t"><b>@${esc(hh)}</b><i></i></span></a>`; }).join('')
-        +(lim>0&&total>lim?`<p class="nb-more">외 ${total-lim}곳</p>`:'')+`</div>`;
+        +(cut&&lim>0&&total>lim?`<p class="nb-more">외 ${total-lim}곳</p>`:'')+`</div>`;
       box.appendChild(d);
       hs.forEach(async x=>{
         if(nbUrl(x)) return;
@@ -1321,9 +1323,13 @@ function renderWidEdit(){
     <input id="we-nblab" placeholder="제목 (기본: NEIGHBORS)" value="${esc(w.label??'')}">
     <div class="p-row" style="align-items:center">
       <span style="font-size:11.5px;color:var(--muted)">보여줄 개수</span>
-      <select id="we-nbmax" style="flex:1">
+      <select id="we-nbmax" style="flex:.9">
         ${[['0','전체 보여주기'],['1','1곳만'],['2','2곳'],['3','3곳'],['5','5곳'],['8','8곳'],['10','10곳'],['15','15곳']]
           .map(([v,t])=>`<option value="${v}" ${String(w.max||0)===v?'selected':''}>${t}</option>`).join('')}
+      </select>
+      <select id="we-nbcut" style="flex:1">
+        <option value="scroll" ${w.cut!==true?'selected':''}>넘치면 스크롤로 보기</option>
+        <option value="cut" ${w.cut===true?'selected':''}>넘치면 '외 N곳'으로 감추기</option>
       </select>
     </div>
     `+(w.items||[]).map((x,i)=>`
@@ -1465,6 +1471,8 @@ function renderWidEdit(){
   const t=$('#we-text'); if(t) t.addEventListener('input',()=>{ w.text=t.value; });
   const ntt=$('#we-ntt'); if(ntt) ntt.addEventListener('input',()=>{ w.title=ntt.value; });
   const nblab=$('#we-nblab'); if(nblab) nblab.addEventListener('input',()=>{ w.label=nblab.value; });
+  const nbcut=$('#we-nbcut'); if(nbcut) nbcut.addEventListener('change',()=>{
+    if(nbcut.value==='cut') w.cut=true; else delete w.cut; });
   const nbmax=$('#we-nbmax'); if(nbmax) nbmax.addEventListener('change',()=>{ w.max=+nbmax.value; });
   const nbadd=$('#we-nbadd'); if(nbadd) nbadd.onclick=()=>{ w.items=w.items||[]; w.items.push(''); renderWidEdit(); };
   $('#wid-edit').querySelectorAll('[data-nbh]').forEach(i2=>i2.addEventListener('change',()=>{
