@@ -506,7 +506,7 @@ function latestBlock(box){
       <p class="t">${esc(pin.title)}${pin.secret?' 🔒':''}</p>
       ${pin.excerpt?`<p class="ex">${esc(pin.excerpt)}</p>`:''}
       <p class="meta">${esc(pin.cat)} · ${esc(pin.date)}</p>`;
-    pd.onclick=()=>{ goBoard('recent'); openPost(pin.id); };
+    pd.onclick=()=>{ goBoard('recent'); openPost(pin.id,true); };
     box.appendChild(pd);
   }
   const d=document.createElement('div'); d.className='side sw-latest';
@@ -519,7 +519,7 @@ function latestBlock(box){
     `</div><p class="cat-add" style="display:block" id="latest-more">전체 보기 →</p>`;
   box.appendChild(d);
   d.querySelectorAll('[data-lid]').forEach(el=>el.onclick=()=>{
-    goBoard('recent'); openPost(el.dataset.lid); });
+    goBoard('recent'); openPost(el.dataset.lid,true); });
   d.querySelector('#latest-more').onclick=()=>goBoard('recent');
   return d;
 }
@@ -573,6 +573,11 @@ const galOn=()=>st.page?.galOn!==false;
 const stripOn=()=>st.page?.stripOn!==false;
 function goHome(){
   if(homeStyle()==='blog'){ goBoard('recent'); return; }
+  st.backHome=false;
+  document.body.classList.remove('reading','in-post');   // 글 읽기 상태 해제 — 위젯·스티커 원위치
+  $('#post-view').classList.add('hidden');
+  $('#list-view').classList.remove('hidden');
+  st.cur=null;
   st.cat='home'; applyView(); renderWidgets(); renderCatbar();
 }
 function goBoard(cat){ st.cat=cat||'recent'; applyView(); renderWidgets(); renderList(); backToList(); renderCatbar(); }
@@ -1222,7 +1227,9 @@ document.addEventListener('contextmenu',e=>{
 });
 
 /* ---------- 글 읽기 ---------- */
-function backToList(){ document.body.classList.remove('reading','in-post');
+function backToList(){
+  if(st.backHome){ st.backHome=false; goHome(); return; }   // 홈에서 연 글 → 홈으로 복귀
+  document.body.classList.remove('reading','in-post');
   $('#post-view').classList.add('hidden');
   $('#guest-view').classList.add('hidden');
   if(st.cat==='__gb'){ renderGuest(); $('#guest-view').classList.remove('hidden'); }
@@ -1231,8 +1238,9 @@ function backToList(){ document.body.classList.remove('reading','in-post');
   history.replaceState(null,'',urlFor(st.handle)); }
 $('#pv-back').onclick=backToList;
 $('#go-home').onclick=goHome;
-async function openPost(id){
+async function openPost(id, fromHome=false){
   const p=st.posts.find(x=>x.id===id); if(!p) return;
+  st.backHome=fromHome;                     // 홈에서 연 글은 BACK이 홈으로
   let body;
   if(p.secret){
     const pw=prompt('비밀번호를 입력하세요'); if(pw===null) return;
@@ -1254,7 +1262,7 @@ async function openPost(id){
   $('#pv-nav').innerHTML =
     (older?`<span class="back" data-nav="${older.id}">‹ 이전 — ${esc(older.title)}</span>`:'<span></span>')+
     (newer?`<span class="back" data-nav="${newer.id}" style="text-align:right">다음 — ${esc(newer.title)} ›</span>`:'<span></span>');
-  document.querySelectorAll('#pv-nav [data-nav]').forEach(el=>el.onclick=()=>openPost(el.dataset.nav));
+  document.querySelectorAll('#pv-nav [data-nav]').forEach(el=>el.onclick=()=>openPost(el.dataset.nav, st.backHome));
   window.scrollTo({top:0});
   loadComments(id);
 }
