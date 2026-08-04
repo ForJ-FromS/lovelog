@@ -551,13 +551,18 @@ async function bumpCounter(){
   const ref=doc(db,'pages',st.handle,'stats','counter');
   const t=today(), key='lvcnt-'+st.handle+'-'+t;
   let c={};
-  try{ c=(await getDoc(ref)).data()||{}; }catch(e){}
   if(!sessionStorage.getItem(key)){
     try{
-      const upd={ total:(c.total||0)+1, day:t, today: c.day===t ? (c.today||0)+1 : 1 };
-      await setDoc(ref,upd);
-      sessionStorage.setItem(key,'1'); c=upd;
-    }catch(e){}                     // 규칙 미허용 등 — 읽은 값만 표시
+      // 트랜잭션 — 동시 방문에도 한 명도 안 빠지게 원자적으로 +1
+      c=await runTransaction(db,async tx=>{
+        const cur=(await tx.get(ref)).data()||{};
+        const upd={ total:(cur.total||0)+1, day:t, today: cur.day===t ? (cur.today||0)+1 : 1 };
+        tx.set(ref,upd); return upd;
+      });
+      sessionStorage.setItem(key,'1');
+    }catch(e){ try{ c=(await getDoc(ref)).data()||{}; }catch(e2){} }  // 실패 시 읽기만
+  }else{
+    try{ c=(await getDoc(ref)).data()||{}; }catch(e){}
   }
   st.cnt=c; fillCounter();
 }
