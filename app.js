@@ -560,7 +560,10 @@ async function bumpCounter(){
         tx.set(ref,upd); return upd;
       });
       sessionStorage.setItem(key,'1');
-    }catch(e){ try{ c=(await getDoc(ref)).data()||{}; }catch(e2){} }  // 실패 시 읽기만
+    }catch(e){
+      try{ c=(await getDoc(ref)).data()||{}; }catch(e2){}
+      if(st.mine) msg('⚠ 방문자수 기록 실패 — '+(e.code||e.message)+' (규칙의 stats 부분을 확인해주세요)');
+    }
   }else{
     try{ c=(await getDoc(ref)).data()||{}; }catch(e){}
   }
@@ -2501,6 +2504,9 @@ async function signup(){
   if(mode==='code' && !code){
     $('#invite-wrap').classList.remove('hidden'); $('#ref-wrap').classList.remove('hidden');
     err.textContent = notice || '지금은 초대코드가 있어야 가입할 수 있어요.'; return; }
+  if(mode==='code' && !ref){
+    $('#ref-wrap').classList.remove('hidden');
+    err.textContent='초대해 준 분의 닉네임(또는 러브로그 주소)을 적어주세요.'; return; }
   try{
     const rs=await getDoc(doc(db,'config','reserved'));
     if(rs.exists() && (rs.data().list||[]).includes(handle)){
