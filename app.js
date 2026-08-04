@@ -2175,13 +2175,23 @@ $('#s-fxc-x').onclick=()=>{ fxCVal=''; spkPri=getComputedStyle(document.body).ge
 $('#s-gatecolor-x').onclick=()=>{ gateColVal='';
   document.documentElement.style.setProperty('--gtC','');
   msg('기본 글씨색 — [설정 저장]으로 확정돼요.'); };
-$('#gate-go').addEventListener('click',e=>{
+function endGatePreview(){
   if(!gatePreview) return;
-  e.stopImmediatePropagation();
-  gatePreview=false; show('view-page');
+  gatePreview=false;
+  document.body.classList.remove('gate-pv');
+  show('view-page');
   $('#panel').classList.remove('hidden');
   msg('미리보기 종료 — 바꾼 내용은 [설정 저장]을 눌러야 확정돼요.');
+}
+$('#gate-go').addEventListener('click',e=>{
+  if(!gatePreview) return;
+  e.stopImmediatePropagation(); endGatePreview();
 }, true);
+$('#gate-pv-x').onclick=endGatePreview;                      // 상단 바 — 무엇에도 안 가림
+$('#view-gate').addEventListener('click',()=>{               // 아무 데나 눌러도 종료
+  if(gatePreview) endGatePreview(); });
+document.addEventListener('keydown',e=>{                     // ESC
+  if(e.key==='Escape' && gatePreview) endGatePreview(); });
 $('#s-gate-pv').onclick=()=>{
   const cover = (egateNew ?? st.page.enterImg) || heroObjs()[0]?.img || '';
   setGateCover(cover);
@@ -2195,7 +2205,7 @@ $('#s-gate-pv').onclick=()=>{
   $('#gate-pw-wrap').classList.add('hidden'); $('#gate-err').textContent='';
   $('#gate-login').classList.add('hidden');
   $('#panel').classList.add('hidden');
-  gatePreview=true; show('view-gate');
+  gatePreview=true; document.body.classList.add('gate-pv'); show('view-gate');
 };
 $('#s-fav').addEventListener('change',async e=>{
   const f=e.target.files[0]; if(!f) return;

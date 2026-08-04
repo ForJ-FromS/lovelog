@@ -57,6 +57,13 @@
   #view-gate{position:fixed;inset:0;z-index:30;display:flex;
     align-items:flex-end;justify-content:center;padding-bottom:11vh}
   #view-gate.hidden{display:none}
+  #gate-pvbar{position:fixed;left:0;right:0;top:0;z-index:2147483647;display:none;
+    gap:10px;align-items:center;justify-content:center;
+    background:#22232b;color:#ffe9a8;font-size:12.5px;padding:9px 12px;
+    font-family:'Noto Sans KR',sans-serif}
+  body.gate-pv #gate-pvbar{display:flex}
+  #gate-pvbar button{border:1px solid #6b6a63;background:#33343d;color:#ffe9a8;
+    border-radius:7px;padding:4px 12px;font-size:12px;cursor:pointer}
   .enter-cover{position:absolute;inset:0;background-size:cover;background-position:center;
     background-color:var(--card2)}
   #view-gate.nograd .enter-cover::after{display:none}
@@ -788,6 +795,8 @@
   </div>
 
   <!-- 입장 대문 -->
+  <div id="gate-pvbar"><span>대문 미리보기 중이에요</span>
+    <button id="gate-pv-x">✕ 미리보기 끝내기</button></div>
   <div id="view-gate" class="hidden">
     <div class="enter-cover" id="enter-cover"></div>
     <div class="enter-box">
@@ -1223,6 +1232,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=94"></script>
+<script type="module" src="./app.js?v=96"></script>
 </body>
 </html>
