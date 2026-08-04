@@ -250,19 +250,27 @@ function renderStickers(){
       const up=async()=>{
         d.removeEventListener('pointermove',move);
         d.removeEventListener('pointerup',up);
+        d.removeEventListener('pointercancel',up);
         try{ await updateDoc(doc(db,'pages',st.handle),{stickers:arr}); }
         catch(e){ msg('스티커 위치 저장 실패 — '+e.message); }
       };
       d.addEventListener('pointermove',move);
       d.addEventListener('pointerup',up);
+      d.addEventListener('pointercancel',up);
     });
   });
 }
 function renderStkList(){
   const box=$('#stk-list'); if(!box) return;
   const arr=st.page.stickers||[];
-  box.innerHTML = arr.length? arr.map((s,i)=>`
-    <div class="stk-row">
+  const warn =
+    st.page.stkOff===true
+      ? '<p class="note" style="color:hsl(42 70% 65%)">⚠ 지금 <b>스티커 표시</b>가 꺼져 있어 홈에 하나도 안 보여요 — 테마·레이아웃 탭에서 켜세요.</p>'
+    : st.page.stkHideM
+      ? '<p class="note" style="color:hsl(42 70% 65%)">⚠ <b>모바일에서 스티커 숨기기</b>가 켜져 있어요 — 폰에서는 안 보여요.</p>'
+    : '';
+  box.innerHTML = warn + (arr.length? arr.map((s,i)=>`
+    <div class="stk-row"${s.off?' style="opacity:.45"':''}>
       <img src="${s.img}">
       <span style="font-size:10px;color:var(--muted)">크기</span>
       <input type="range" data-ss="${i}" min="50" max="260" value="${s.size||120}">
@@ -270,11 +278,12 @@ function renderStkList(){
       <input type="range" data-sms="${i}" min="40" max="260" value="${s.msz??s.size??120}" title="모바일에서의 크기 — 안 만지면 PC 크기를 따라가요">
       <span style="font-size:10px;color:var(--muted)">회전</span>
       <input type="range" data-sr="${i}" min="-45" max="45" value="${s.rot||0}">
-      <button class="rmv" data-so="${i}" title="홈에서 숨기기/보이기">${s.off?'숨김':'표시'}</button>
+      <button class="rmv" data-so="${i}" title="누르면 홈에서 ${s.off?'다시 보여요':'숨겨져요'}">${s.off?'▷ 보이기':'숨기기'}</button>
       <button class="rmv" data-sx="${i}">✕</button>
     </div>`).join('')
-    :'<p class="pl-empty">아직 스티커가 없어요.</p>';
-  const save=async()=>{ try{ await updateDoc(doc(db,'pages',st.handle),{stickers:st.page.stickers}); }catch(e){} };
+    :'<p class="pl-empty">아직 스티커가 없어요.</p>');
+  const save=async()=>{ try{ await updateDoc(doc(db,'pages',st.handle),{stickers:st.page.stickers}); }
+    catch(e){ msg('⚠ 스티커 저장 실패 — 새로고침하면 되돌아가요. ('+e.message+')'); } };
   box.querySelectorAll('[data-ss]').forEach(r=>r.addEventListener('input',()=>{
     st.page.stickers[+r.dataset.ss].size=+r.value; renderStickers(); }));
   box.querySelectorAll('[data-ss]').forEach(r=>r.addEventListener('change',save));
@@ -2178,6 +2187,7 @@ $('#s-gatecolor-x').onclick=()=>{ gateColVal='';
 function endGatePreview(){
   if(!gatePreview) return;
   gatePreview=false;
+  document.getElementById('gate-vid')?.pause?.();
   document.body.classList.remove('gate-pv');
   show('view-page');
   $('#panel').classList.remove('hidden');
