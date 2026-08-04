@@ -2203,6 +2203,7 @@ function fillSettings(){
   $('#s-dim').value=p.bgDim??78; $('#s-dots').checked=p.dots!==false; $('#s-protect').checked=p.protectImg!==false; $('#s-stkm').checked=!!p.stkHideM; $('#s-stkoff').checked=p.stkOff!==true; $('#s-fx').value=p.fx ?? (p.sparkle?'sparkle':''); $('#s-fxc').value=p.fxC||'#ffb3c8'; fxCVal=null; $('#s-postpage').checked=!!p.postPage;
   $('#s-gatebtn').value=p.gateBtn||''; $('#s-listed').checked=!!p.listed; cardNew=null; bnrNew=null; renderCard(); renderBnr(); $('#s-lbicon').value=p.labelIcon??'◈'; gateColVal=null;
   $('#s-gatecolor').value=p.gateColor||'#ffffff';
+  $('#del-h').textContent=st.handle||'—'; $('#s-del-confirm').value=''; delMsg('');
   $('#s-gatebtnc').value=p.gateBtnC||'#e691a9'; gateBtnCVal=null;
   $('#s-gategrad').checked=p.gateGrad!==false;
   heroDraft=JSON.parse(JSON.stringify(heroObjs())); renderHeroList();
@@ -2417,6 +2418,39 @@ $('#btn-login').onclick=()=>signInWithPopup(auth,new GoogleAuthProvider()).catch
 $('#btn-signup').onclick=signup;
 
 /* ---------- 시작 ---------- */
+/* ---------- 홈 삭제 (탈퇴) ---------- */
+const delMsg=t=>{ const e=$('#del-msg'); if(e) e.textContent=t; };
+async function wipeCol(path){                       // 하위 컬렉션 문서 일괄 삭제
+  try{
+    const qs=await getDocs(collection(db,...path));
+    for(const d of qs.docs) await deleteDoc(d.ref);
+    return qs.size;
+  }catch(e){ return 0; }
+}
+$('#s-del').onclick=async()=>{
+  if(!st.mine||!st.handle) return;
+  const typed=$('#s-del-confirm').value.trim().toLowerCase();
+  if(typed!==st.handle){ delMsg('주소가 일치하지 않아요 — 내 주소를 정확히 입력해 주세요.'); return; }
+  if(!confirm(`정말 「${st.handle}」 홈을 삭제할까요?\n\n글·사진·방명록이 전부 지워지고 되돌릴 수 없어요.`)) return;
+  if(!confirm('마지막 확인이에요. 삭제하면 복구할 방법이 없어요. 진행할까요?')) return;
+  delMsg('삭제 중... 창을 닫지 마세요.');
+  try{
+    const h=st.handle;
+    for(const p of (st.posts||[]))                  // 글의 댓글 먼저
+      await wipeCol(['pages',h,'posts',p.id,'comments']);
+    await wipeCol(['pages',h,'posts']);
+    await wipeCol(['pages',h,'gallery']);
+    await wipeCol(['pages',h,'guest']);
+    await wipeCol(['pages',h,'imgs']);
+    await wipeCol(['pages',h,'stats']);
+    await deleteDoc(doc(db,'pages',h));             // 홈 문서 — 주소 해제
+    await deleteDoc(doc(db,'users',st.me.uid));     // 계정↔핸들 연결 해제
+    alert('홈이 삭제됐어요. 그동안 함께해 주셔서 고마웠어요.');
+    st.myHandle=null;
+    await signOut(auth);
+    location.href=location.origin+'/';
+  }catch(e){ delMsg('삭제 실패 — '+e.message+' (운영자에게 알려주세요)'); }
+};
 onAuthStateChanged(auth,async user=>{
   st.me=user;
   const viewing=new URLSearchParams(location.search).get('u');
