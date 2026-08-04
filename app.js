@@ -443,6 +443,9 @@ async function enterPage(){
   else if(!hs[0])
     document.documentElement.style.removeProperty('--headH');   // auto+사진 없음 — 잔존값 제거
   document.body.classList.toggle('head-contain', p.headFit==='contain');
+  document.body.classList.toggle('head-notext', p.headText===false);
+  document.body.classList.toggle('head-nograd', p.headGrad==='none');
+  document.body.classList.toggle('head-lightgrad', p.headGrad==='light');
   if(p.headMode==='side'){ headEl.classList.add('v'); headEl.style.removeProperty('min-height'); $('#aside').prepend(headEl); }
   else { headEl.classList.remove('v');
     const anchor=$('#catbar'); anchor.parentNode.insertBefore(headEl, anchor); }
@@ -1354,6 +1357,11 @@ $('#s-headh').addEventListener('input',e=>{
   if($('#s-headfit').value==='auto') return;
   $('#s-headh-v').textContent=e.target.value+'px';
   document.documentElement.style.setProperty('--headH', e.target.value+'px'); });
+$('#s-headgrad').addEventListener('change',e=>{
+  document.body.classList.toggle('head-nograd', e.target.value==='none');
+  document.body.classList.toggle('head-lightgrad', e.target.value==='light'); });
+$('#s-headtext').addEventListener('change',e=>{
+  document.body.classList.toggle('head-notext', !e.target.checked); });
 $('#s-headfit').addEventListener('change',e=>{
   hhSliderSync();
   document.body.classList.toggle('head-contain', e.target.value==='contain');
@@ -1390,11 +1398,25 @@ function renderCatMgr(){
         <option value="gallery" ${isG(c)?'selected':''}>사진</option>
       </select>
       <button class="btn" data-cs="${i}" style="font-size:12px">저장</button>
+      <button class="rmv" data-cup="${i}" title="위로" ${i===0?'disabled':''}>↑</button>
+      <button class="rmv" data-cdn="${i}" title="아래로" ${i===cats().length-1?'disabled':''}>↓</button>
       <label class="filelab" style="font-size:11px">🖼 이미지 추가<input type="file" data-cimg="${esc(c)}" accept="image/*" style="display:none"></label>
       ${(st.page.catImgs||{})[c]?`<button class="rmv" data-cimgx="${esc(c)}" style="font-size:10px">이미지 제거</button>`:''}
       <button class="rmv" data-cd="${i}">✕</button>
     </div>`).join('') || '<p class="pl-empty">카테고리가 없어요.</p>';
   renderCatFix();
+  const moveCat=async(i,d)=>{                     // 카테고리 순서 바꾸기
+    const next=[...cats()], j=i+d;
+    if(j<0||j>=next.length) return;
+    [next[i],next[j]]=[next[j],next[i]];
+    try{ await updateDoc(doc(db,'pages',st.handle),{cats:next}); }
+    catch(e){ msg('순서 저장 실패 — '+e.message); return; }
+    st.page.cats=next;
+    renderCatMgr(); renderCatbar(); renderSide(); refreshWriteCats(); refreshGalCats();
+    msg('순서 변경!');
+  };
+  box.querySelectorAll('[data-cup]').forEach(b=>b.onclick=()=>moveCat(+b.dataset.cup,-1));
+  box.querySelectorAll('[data-cdn]').forEach(b=>b.onclick=()=>moveCat(+b.dataset.cdn, 1));
   box.querySelectorAll('[data-ct]').forEach(s=>s.onchange=async()=>{
     const name=cats()[+s.dataset.ct];
     let g=[...gcats()];
@@ -2246,7 +2268,8 @@ function fillSettings(){
   const p=st.page;
   $('#s-name').value=p.name||''; $('#s-sub').value=p.sub||'';
   $('#s-gate').value=''; gateClear=false; renderGateState(); priVal=null; $('#s-pri').value=p.priColor||'#9db4ff'; $('#s-color').value=hslToHex(p.hue??222, p.sat??60, p.lum??62);
-  $('#s-headmode').value=p.headMode||'wide'; $('#s-headh').value=p.headH||380; $('#s-headfit').value=p.headFit||'cover'; $('#s-headh-v').textContent=(p.headH||380)+'px';
+  $('#s-headmode').value=p.headMode||'wide'; $('#s-headh').value=p.headH||380; $('#s-headfit').value=p.headFit||'cover';
+  $('#s-headgrad').value=p.headGrad||'dark'; $('#s-headtext').checked=p.headText!==false; $('#s-headh-v').textContent=(p.headH||380)+'px';
   $('#s-sidepos').value=p.sidePos||'right';
   hhSliderSync();
   $('#s-light').checked=!!p.light;
@@ -2319,6 +2342,8 @@ async function saveSettings(){
       headMode: $('#s-headmode').value,
       headH: parseInt($('#s-headh').value)||380,
       headFit: $('#s-headfit').value,
+      headGrad: $('#s-headgrad').value,
+      headText: $('#s-headtext').checked,
       sidePos: $('#s-sidepos').value,
       light: $('#s-light').checked,
       glass: $('#s-glass').checked,
@@ -2375,7 +2400,7 @@ const RESET={
     sparkle:false,fx:'',fxC:'',labelIcon:'◈',postPage:false,priColor:''},
   widget:{side:[],ddays:[],bgm:{url:'',title:''}},
   sticker:{stickers:[],stkOff:false,stkHideM:false},
-  layout:{homeStyle:'grid',headMode:'wide',headH:380,headFit:'cover',sidePos:'right',catStyle:'bar',
+  layout:{homeStyle:'grid',headMode:'wide',headH:380,headFit:'cover',headGrad:'dark',headText:true,sidePos:'right',catStyle:'bar',
     galOn:true,stripOn:true},
   media:{heroImgs:[],heroImg:'',enterImg:'',enterRef:'',enterText:'',
     cardImg:'',bannerImg:'',catImgs:{},gate:'',gateBtn:'',gateColor:'',gateBtnC:'',galName:'',gbName:''}
