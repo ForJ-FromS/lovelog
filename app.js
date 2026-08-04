@@ -346,7 +346,7 @@ async function loadPage(handle){
   if(!st.mine && (needPw || !seen)){
     applyColor(st.page.hue ?? 222, st.page.sat, st.page.lum);
     const cover = st.page.enterImg || heroObjs()[0]?.img || '';
-    $('#enter-cover').style.backgroundImage = cover?`url(${cover})`:'';
+    setGateCover(cover);
     $('#enter-over').textContent = '@'+handle.toUpperCase();
     $('#gate-name').textContent = st.page.name || handle;
     $('#enter-text').textContent = st.page.enterText || '';
@@ -509,6 +509,24 @@ function latestBlock(box){
     goBoard('recent'); openPost(el.dataset.lid); });
   d.querySelector('#latest-more').onclick=()=>goBoard('recent');
   return d;
+}
+const isVid=u=>/\.(mp4|webm|mov)(\?|$)/i.test(u||'')||/video%2F|video\//i.test(u||'');
+function setGateCover(url){                          // 대문 배경 — 사진이면 background, 영상이면 <video>
+  const box=$('#enter-cover'); if(!box) return;
+  let v=document.getElementById('gate-vid');
+  if(url && isVid(url)){
+    box.style.backgroundImage='';
+    if(!v){
+      v=document.createElement('video'); v.id='gate-vid';
+      v.autoplay=true; v.loop=true; v.muted=true; v.playsInline=true;
+      v.setAttribute('muted',''); v.setAttribute('playsinline','');  // iOS 자동재생 조건
+      box.prepend(v);
+    }
+    if(v.src!==url){ v.src=url; v.play?.().catch(()=>{}); }
+  }else{
+    if(v) v.remove();
+    box.style.backgroundImage = url?`url(${url})`:'';
+  }
 }
 const galNm=()=>st.page?.galName||'GALLERY';
 const gbNm=()=>st.page?.gbName||'GUESTBOOK';
@@ -1520,7 +1538,7 @@ function renderWidList(){
   $('#wid-list').innerHTML = draft.map((w,i)=>`
     <div class="wl">
       <span class="nm">${WNAME[w.t]||w.t}${w.t==='links'?` (${(w.items||[]).length})`:''}${w.t==='banner'?` (${(w.items||[]).length})`:''}</span>
-      ${['profile','quote','links','banner','dday','bgm','notice','chat','img','nb'].includes(w.t)?`<button data-e="${i}">✎</button>`:''}
+      ${['profile','quote','links','banner','dday','bgm','notice','chat','img','nb','text'].includes(w.t)?`<button data-e="${i}">✎</button>`:''}
       <button data-u="${i}">↑</button><button data-d="${i}">↓</button><button data-x="${i}">✕</button>
     </div>`).join('') || '<p class="pl-empty">위젯이 없어요 — 아래에서 추가하세요.</p>';
   $('#wid-list').querySelectorAll('button').forEach(b=>b.onclick=()=>{
@@ -2000,7 +2018,9 @@ $('#s-title-reset').onclick=()=>{ titleVal='';
 function renderEgate(){
   const im = egateNew!==null ? egateNew : (st.page.enterImg||'');
   $('#s-egate-list').innerHTML = im
-    ? `<img class="thumb" src="${im}">`
+    ? (isVid(im)
+        ? `<video class="thumb" src="${im}" muted loop autoplay playsinline></video>`
+        : `<img class="thumb" src="${im}">`)
     : '<span class="note">전용 이미지 없음 — 첫 헤더 사진이 대신 쓰여요.</span>';
 }
 function renderHeroList(){
@@ -2051,8 +2071,24 @@ $('#s-hero').addEventListener('change',async e=>{
   renderHeroList(); msg('추가됨 — [설정 저장]을 눌러야 확정돼요.');
   e.target.value='';
 });
+const GATE_VID_MAX = 15*1024*1024;                   // 대문 영상 상한 15MB
 $('#s-egate').addEventListener('change',async e=>{
   const f=e.target.files[0]; if(!f) return;
+  if(f.type.startsWith('video/')){
+    if(f.size>GATE_VID_MAX){
+      msg('영상이 15MB를 넘어요 — 길이를 줄이거나 화질을 낮춰서 올려주세요.'); e.target.value=''; return; }
+    if(!st.me){ msg('로그인이 필요해요.'); e.target.value=''; return; }
+    msg('영상 올리는 중...');
+    try{
+      const ext=(f.name.split('.').pop()||'mp4').toLowerCase();
+      const nm=Date.now().toString(36)+Math.random().toString(36).slice(2,7)+'.'+ext;
+      const r=sref(stg,'u/'+st.me.uid+'/'+nm);
+      await uploadBytes(r,f,{contentType:f.type,cacheControl:'public,max-age=31536000'});
+      egateNew=await getDownloadURL(r); renderEgate();
+      msg('영상 추가됨 — [설정 저장]을 눌러야 확정돼요.');
+    }catch(err){ msg('영상 업로드 실패 — '+err.message); }
+    e.target.value=''; return;
+  }
   msg('입장 이미지 압축 중...');
   egateNew=await upFile(f,2200,.9,240); renderEgate();
   msg('추가됨 — [설정 저장]을 눌러야 확정돼요.'); e.target.value='';
@@ -2126,7 +2162,7 @@ $('#gate-go').addEventListener('click',e=>{
 }, true);
 $('#s-gate-pv').onclick=()=>{
   const cover = (egateNew ?? st.page.enterImg) || heroObjs()[0]?.img || '';
-  $('#enter-cover').style.backgroundImage = cover?`url(${cover})`:'';
+  setGateCover(cover);
   $('#enter-over').textContent='@'+st.handle.toUpperCase();
   $('#gate-name').textContent=$('#s-name').value.trim()||st.page.name||st.handle;
   $('#enter-text').textContent=$('#s-enter').value.trim();
