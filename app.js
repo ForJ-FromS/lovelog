@@ -124,9 +124,19 @@ function shrinkBlob(file,maxW,q){ return new Promise((res,rej)=>{
     c.toBlob(b=>b?res({blob:b,ext:alpha?'png':'jpg'}):rej(new Error('blob')),
       alpha?'image/png':'image/jpeg', q);
   }; img.onerror=rej; img.src=URL.createObjectURL(file); });}
+const GIF_MAX = 8*1024*1024;                     // 움짤 원본 통과 상한 8MB
 async function upFile(file,maxW=1800,q=.88,fallbackKB=200){
   try{
     if(!st.me) throw new Error('no-auth');
+    // 움직이는 이미지(GIF)는 캔버스를 태우면 첫 장면만 남으므로 원본 그대로 올림
+    if(file.type==='image/gif' && file.size<=GIF_MAX){
+      const gname=Date.now().toString(36)+Math.random().toString(36).slice(2,7)+'.gif';
+      const gr=sref(stg,'u/'+st.me.uid+'/'+gname);
+      await uploadBytes(gr,file,{contentType:'image/gif',
+        cacheControl:'public,max-age=31536000'});
+      return await getDownloadURL(gr);
+    }
+    if(file.type==='image/gif') msg('움짤이 8MB를 넘어서 첫 장면만 저장했어요 — 용량을 줄이면 움직여요.');
     const {blob,ext}=await shrinkBlob(file,maxW,q);
     const name=Date.now().toString(36)+Math.random().toString(36).slice(2,7)+'.'+ext;
     const r=sref(stg,'u/'+st.me.uid+'/'+name);
@@ -302,7 +312,6 @@ async function openHomes(){
 }
 $('#homes-x').onclick=()=>$('#homes').classList.remove('show');
 $('#homes').onclick=e=>{ if(e.target.id==='homes') $('#homes').classList.remove('show'); };
-$('#seal-homes').onclick=openHomes;
 function renderSeal(){
   $('#seal-txt').textContent = st.myHandle ? 'LOVELOG · @'+st.myHandle.toUpperCase() : 'LOVELOG';
   const a=$('#seal-auth');
