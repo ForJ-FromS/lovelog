@@ -400,7 +400,8 @@
   .p-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:9px}
   .p-row select{width:auto;margin-bottom:0}
   .p-row input{margin-bottom:0!important;flex:1;min-width:0}
-  .chk{font-size:12px;display:inline-flex;gap:5px;align-items:center;white-space:nowrap;color:var(--body)}
+  .chk{font-size:13px;display:inline-flex;gap:7px;align-items:center;white-space:nowrap;color:var(--body)}
+  .p-row.chks{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:9px 14px;align-items:center}
   .go{border:none;border-radius:9px;padding:11px 0;width:100%;cursor:pointer;
     background:var(--pri);color:hsl(var(--h) calc(30% * var(--sf,1)) 12%);font-size:13px;font-weight:500}
   #p-msg{margin-top:10px;font-size:12px;color:var(--body);min-height:18px}
@@ -1083,15 +1084,26 @@
       </select>
     </div>
     <p class="p-h">테마</p>
-    <div class="p-row">
+    <div class="p-row chks">
       <label class="chk"><input type="checkbox" id="s-light"> 밝은 테마</label>
-      <label class="chk"><input type="checkbox" id="s-glass"> 카드 투명화 (배경이 비쳐 보임)</label>
+      <label class="chk"><input type="checkbox" id="s-glass"> 카드 투명화</label>
       <label class="chk"><input type="checkbox" id="s-dots" checked> 배경 도트 패턴</label>
-      <label class="chk"><input type="checkbox" id="s-protect" checked> 이미지 저장 방지 (우클릭·드래그 차단)</label>
-      <label class="chk"><input type="checkbox" id="s-stkoff" checked> 스티커 표시 (끄면 전부 숨김)</label>
+      <label class="chk"><input type="checkbox" id="s-postpage"> 글 전용 페이지 보기</label>
+      <label class="chk"><input type="checkbox" id="s-protect" checked> 이미지 저장 방지</label>
+    </div>
+    <p class="p-h">꾸밈 효과</p>
+    <div class="p-row" style="align-items:center">
+      <span style="font-size:12px;color:var(--muted)">커서 효과</span>
+      <select id="s-fx" style="flex:1">
+        <option value="">없음</option>
+        <option value="sparkle">✨ 반짝이 — 테마색 스파클</option>
+        <option value="heart">💗 하트 뿅뿅 — 통통 떠오르는 하트</option>
+        <option value="bubble">🫧 거품 — 몽글몽글 올라가는 방울</option>
+      </select>
+    </div>
+    <div class="p-row chks">
+      <label class="chk"><input type="checkbox" id="s-stkoff" checked> 스티커 표시</label>
       <label class="chk"><input type="checkbox" id="s-stkm"> 모바일에서 스티커 숨기기</label>
-      <label class="chk"><input type="checkbox" id="s-sparkle"> 커서 반짝이 ✨ (마우스를 따라 스파클)</label>
-      <label class="chk"><input type="checkbox" id="s-postpage"> 글을 전용 페이지로 보기 (읽을 때 위젯 접기)</label>
     </div>
     <div class="p-row" style="align-items:center">
       <span style="font-size:12px;color:var(--muted)">위젯 제목 기호</span>
@@ -1175,6 +1187,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=81"></script>
+<script type="module" src="./app.js?v=82"></script>
 </body>
 </html>

@@ -213,16 +213,18 @@ function renderStickers(){
     const d=document.createElement('div'); d.className='stk';
     const isM=window.innerWidth<=720;
     const sx=(isM&&s.mx!=null)?s.mx:s.x, sy=(isM&&s.my!=null)?s.my:s.y;
+    const dsz=(isM&&s.msz!=null)?s.msz:(s.size||120);      // 모바일 전용 크기(없으면 PC 크기)
     d.style.left=sx+'%'; d.style.top=sy+'px';
-    d.style.width=(s.size||120)+'px'; d.style.height=(s.size||120)+'px';
+    d.style.width=dsz+'px'; d.style.height=dsz+'px';
     d.style.transform=`rotate(${s.rot||0}deg)`;
     d.innerHTML=`<img src="${s.img}" alt="">`;
     layer.appendChild(d);
     if(!st.mine) return;
     d.addEventListener('pointerdown',ev=>{
       ev.preventDefault(); d.setPointerCapture(ev.pointerId);
-      const rect=layer.getBoundingClientRect(), sz=s.size||120;
       const mM=window.innerWidth<=720;
+      const rect=layer.getBoundingClientRect(),
+            sz=(mM&&s.msz!=null)?s.msz:(s.size||120);
       const cx=(mM&&s.mx!=null)?s.mx:s.x, cy=(mM&&s.my!=null)?s.my:s.y;
       const dx=ev.clientX-(rect.left+(cx/100)*rect.width),
             dy=ev.clientY-(rect.top+cy);
@@ -254,6 +256,8 @@ function renderStkList(){
       <img src="${s.img}">
       <span style="font-size:10px;color:var(--muted)">크기</span>
       <input type="range" data-ss="${i}" min="50" max="260" value="${s.size||120}">
+      <span style="font-size:10px;color:var(--muted)">📱</span>
+      <input type="range" data-sms="${i}" min="40" max="260" value="${s.msz??s.size??120}" title="모바일에서의 크기 — 안 만지면 PC 크기를 따라가요">
       <span style="font-size:10px;color:var(--muted)">회전</span>
       <input type="range" data-sr="${i}" min="-45" max="45" value="${s.rot||0}">
       <button class="rmv" data-so="${i}" title="홈에서 숨기기/보이기">${s.off?'숨김':'표시'}</button>
@@ -264,6 +268,9 @@ function renderStkList(){
   box.querySelectorAll('[data-ss]').forEach(r=>r.addEventListener('input',()=>{
     st.page.stickers[+r.dataset.ss].size=+r.value; renderStickers(); }));
   box.querySelectorAll('[data-ss]').forEach(r=>r.addEventListener('change',save));
+  box.querySelectorAll('[data-sms]').forEach(r=>r.addEventListener('input',()=>{
+    st.page.stickers[+r.dataset.sms].msz=+r.value; renderStickers(); }));
+  box.querySelectorAll('[data-sms]').forEach(r=>r.addEventListener('change',save));
   box.querySelectorAll('[data-sr]').forEach(r=>r.addEventListener('input',()=>{
     st.page.stickers[+r.dataset.sr].rot=+r.value; renderStickers(); }));
   box.querySelectorAll('[data-sr]').forEach(r=>r.addEventListener('change',save));
@@ -617,29 +624,66 @@ async function dropWidget(from, to, contId, pos){
   try{ await updateDoc(doc(db,'pages',st.handle),{side:arr}); }
   catch(e){ alert('순서 저장 실패: '+e.message); }
 }
-let spkOn=false, spkPri='#9db4ff', spkLast=0;
+let spkFx='', spkPri='#9db4ff', spkLast=0;
 function spkSync(){
-  spkOn=!!st.page?.sparkle;
+  spkFx=st.page?.fx ?? (st.page?.sparkle?'sparkle':'');   // 옛 sparkle:true 하위호환
   spkPri=getComputedStyle(document.body).getPropertyValue('--pri').trim()||'#9db4ff';
 }
 document.addEventListener('mousemove',e=>{
-  if(!spkOn) return;
-  const now=performance.now(); if(now-spkLast<22) return; spkLast=now;
-  const cols=[spkPri,spkPri,'#ffffff','#fff3d8'];
-  for(let i=0;i<2;i++){
+  if(!spkFx) return;
+  const now=performance.now();
+  const gap = spkFx==='sparkle'?22:48;                    // 하트·거품은 듬성하게
+  if(now-spkLast<gap) return; spkLast=now;
+  if(spkFx==='sparkle'){
+    const cols=[spkPri,spkPri,'#ffffff','#fff3d8'];
+    for(let i=0;i<2;i++){
+      const s=document.createElement('div');
+      const size=3+Math.random()*4;
+      s.style.cssText='position:fixed;pointer-events:none;z-index:9999;border-radius:50%;'
+        +'left:'+(e.clientX+(Math.random()*16-8))+'px;top:'+(e.clientY+(Math.random()*16-8))+'px;'
+        +'width:'+size+'px;height:'+size+'px;'
+        +'background:'+cols[Math.floor(Math.random()*cols.length)]+';'
+        +'box-shadow:0 0 5px '+spkPri+';'
+        +'transition:transform .7s ease-out, opacity .7s ease-out';
+      document.body.appendChild(s);
+      requestAnimationFrame(()=>{ 
+        s.style.transform='translate('+(Math.random()*30-15)+'px,'+(20+Math.random()*20)+'px) scale(.2)';
+        s.style.opacity='0'; });
+      setTimeout(()=>s.remove(),760);
+    }
+    return;
+  }
+  if(spkFx==='heart'){
     const s=document.createElement('div');
-    const size=3+Math.random()*4;
-    s.style.cssText='position:fixed;pointer-events:none;z-index:9999;border-radius:50%;'
-      +'left:'+(e.clientX+(Math.random()*16-8))+'px;top:'+(e.clientY+(Math.random()*16-8))+'px;'
-      +'width:'+size+'px;height:'+size+'px;'
-      +'background:'+cols[Math.floor(Math.random()*cols.length)]+';'
-      +'box-shadow:0 0 5px '+spkPri+';'
-      +'transition:transform .7s ease-out, opacity .7s ease-out';
+    const size=9+Math.random()*7, sway=Math.random()*26-13;
+    s.textContent='♥';
+    s.style.cssText='position:fixed;pointer-events:none;z-index:9999;'
+      +'left:'+(e.clientX+(Math.random()*14-7))+'px;top:'+(e.clientY-4)+'px;'
+      +'font-size:'+size+'px;color:'+spkPri+';opacity:.95;'
+      +'text-shadow:0 0 6px '+spkPri+'55;'
+      +'transition:transform .9s ease-out, opacity .9s ease-out';
     document.body.appendChild(s);
     requestAnimationFrame(()=>{ 
-      s.style.transform='translate('+(Math.random()*30-15)+'px,'+(20+Math.random()*20)+'px) scale(.2)';
+      s.style.transform='translate('+sway+'px,-'+(34+Math.random()*26)+'px) rotate('+(sway*1.6)+'deg) scale(1.25)';
       s.style.opacity='0'; });
-    setTimeout(()=>s.remove(),760);
+    setTimeout(()=>s.remove(),940);
+    return;
+  }
+  if(spkFx==='bubble'){
+    const s=document.createElement('div');
+    const size=6+Math.random()*10, sway=Math.random()*20-10;
+    s.style.cssText='position:fixed;pointer-events:none;z-index:9999;border-radius:50%;'
+      +'left:'+(e.clientX+(Math.random()*14-7))+'px;top:'+(e.clientY-2)+'px;'
+      +'width:'+size+'px;height:'+size+'px;'
+      +'border:1px solid '+spkPri+'aa;'
+      +'background:radial-gradient(circle at 32% 30%, #ffffff88, '+spkPri+'22);'
+      +'transition:transform 1.1s ease-out, opacity 1.1s ease-out';
+    document.body.appendChild(s);
+    requestAnimationFrame(()=>{ 
+      s.style.transform='translate('+sway+'px,-'+(44+Math.random()*34)+'px) scale('+(1.15+Math.random()*.5)+')';
+      s.style.opacity='0'; });
+    setTimeout(()=>s.remove(),1140);
+    return;
   }
 });
 document.addEventListener('contextmenu',e=>{
@@ -2136,7 +2180,7 @@ function fillSettings(){
   $('#s-homestyle').value=homeStyle();
   $('#s-theme').value=p.theme||'default';
   renderStkList();
-  $('#s-dim').value=p.bgDim??78; $('#s-dots').checked=p.dots!==false; $('#s-protect').checked=p.protectImg!==false; $('#s-stkm').checked=!!p.stkHideM; $('#s-stkoff').checked=p.stkOff!==true; $('#s-sparkle').checked=!!p.sparkle; $('#s-postpage').checked=!!p.postPage;
+  $('#s-dim').value=p.bgDim??78; $('#s-dots').checked=p.dots!==false; $('#s-protect').checked=p.protectImg!==false; $('#s-stkm').checked=!!p.stkHideM; $('#s-stkoff').checked=p.stkOff!==true; $('#s-fx').value=p.fx ?? (p.sparkle?'sparkle':''); $('#s-postpage').checked=!!p.postPage;
   $('#s-gatebtn').value=p.gateBtn||''; $('#s-listed').checked=!!p.listed; cardNew=null; bnrNew=null; renderCard(); renderBnr(); $('#s-lbicon').value=p.labelIcon??'◈'; gateColVal=null;
   $('#s-gatecolor').value=p.gateColor||'#ffffff';
   $('#s-gatebtnc').value=p.gateBtnC||'#e691a9'; gateBtnCVal=null;
@@ -2210,7 +2254,8 @@ async function saveSettings(){
       protectImg: $('#s-protect').checked,
       stkHideM: $('#s-stkm').checked,
       stkOff: !$('#s-stkoff').checked,
-      sparkle: $('#s-sparkle').checked,
+      fx: $('#s-fx').value,
+      sparkle: $('#s-fx').value==='sparkle',
       postPage: $('#s-postpage').checked,
       gateBtn: $('#s-gatebtn').value.trim(),
       listed: $('#s-listed').checked,
@@ -2250,7 +2295,7 @@ document.querySelectorAll('.s-go').forEach(b=>b.onclick=saveSettings);
 const RESET={
   theme:{hue:222,sat:60,lum:62,light:false,glass:false,theme:'default',dots:true,
     bgImg:'',bgRef:'',bgDim:78,titleColor:'',font:'sans',customCss:'',curImg:'',
-    sparkle:false,labelIcon:'◈',postPage:false,priColor:''},
+    sparkle:false,fx:'',labelIcon:'◈',postPage:false,priColor:''},
   widget:{side:[],ddays:[],bgm:{url:'',title:''}},
   sticker:{stickers:[],stkOff:false,stkHideM:false},
   layout:{homeStyle:'grid',headMode:'wide',headH:380,headFit:'cover',sidePos:'right',catStyle:'bar',
