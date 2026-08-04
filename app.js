@@ -420,7 +420,17 @@ async function enterPage(){
   else if(fl) fl.remove();
   let ucss=document.getElementById('user-css');
   if(!ucss){ ucss=document.createElement('style'); ucss.id='user-css'; document.head.appendChild(ucss); }
-  ucss.textContent = p.customCss||'';
+  const noCss = /[?&]nocss=1/.test(location.search);      // 안전 모드 — 커스텀 CSS 끄고 열기
+  ucss.textContent = noCss ? '' : (p.customCss||'');
+  let nb=document.getElementById('nocss-bar');
+  if(noCss && !nb){
+    nb=document.createElement('div'); nb.id='nocss-bar';
+    nb.style.cssText='position:fixed;left:0;right:0;top:0;z-index:2147483647;'
+      +'background:#2b2b33;color:#ffe9a8;font-size:12px;line-height:1.5;'
+      +'padding:8px 12px;text-align:center;font-family:sans-serif';
+    nb.textContent='안전 모드 — 커스텀 CSS를 끄고 열었어요. 꾸미기 ✦ → 테마·레이아웃에서 CSS를 고치거나 [비우기] 후 저장하세요.';
+    document.body.appendChild(nb);
+  } else if(!noCss && nb) nb.remove();
   let ccss=document.getElementById('cursor-css');
   if(!ccss){ ccss=document.createElement('style'); ccss.id='cursor-css'; document.head.appendChild(ccss); }
   ccss.textContent = p.curImg ? `body,body *{cursor:url(${p.curImg}) 4 4, auto !important}` : '';
