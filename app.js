@@ -2312,6 +2312,7 @@ function fillSettings(){
   $('#s-gatebtn').value=p.gateBtn||''; $('#s-listed').checked=!!p.listed; cardNew=null; bnrNew=null; renderCard(); renderBnr(); $('#s-lbicon').value=p.labelIcon??'◈'; gateColVal=null;
   $('#s-gatecolor').value=p.gateColor||'#ffffff';
   $('#del-h').textContent=st.handle||'—'; $('#s-del-confirm').value=''; delMsg('');
+  $('#adm-invites').classList.toggle('hidden', st.myHandle!=='jeste');
   $('#s-gatebtnc').value=p.gateBtnC||'#e691a9'; gateBtnCVal=null;
   $('#s-gategrad').checked=p.gateGrad!==false;
   heroDraft=JSON.parse(JSON.stringify(heroObjs())); renderHeroList();
@@ -2528,6 +2529,37 @@ $('#btn-login').onclick=()=>signInWithPopup(auth,new GoogleAuthProvider()).catch
 $('#btn-signup').onclick=signup;
 
 /* ---------- 시작 ---------- */
+/* ---------- 초대코드 생성 (운영자) ---------- */
+const admMsg=t=>{ const e=$('#adm-msg'); if(e) e.textContent=t; };
+const rnd4=()=>Math.random().toString(36).slice(2,6);
+$('#adm-make').onclick=async()=>{
+  if(st.myHandle!=='jeste') return;
+  const pre=($('#adm-pre').value.trim().toLowerCase()||'code').replace(/[^a-z0-9-]/g,'');
+  const n=Math.min(30,Math.max(1,+$('#adm-n').value||10));
+  const kind=$('#adm-kind').value;
+  admMsg('만드는 중...');
+  try{
+    const made=[];
+    if(kind==='multi'){
+      const c=pre+'-'+rnd4();
+      await setDoc(doc(db,'invites',c),{max:n,created:serverTimestamp()});
+      made.push(c+'   (최대 '+n+'명)');
+    }else{
+      for(let i=0;i<n;i++){
+        const c=pre+'-'+rnd4();
+        await setDoc(doc(db,'invites',c),{created:serverTimestamp()});
+        made.push(c);
+      }
+    }
+    $('#adm-out').value=made.join('\n');
+    admMsg(made.length+'개 완료!');
+  }catch(e){ admMsg('실패 — '+e.message+' (invites 규칙에 create 권한이 필요해요)'); }
+};
+$('#adm-copy').onclick=()=>{
+  const t=$('#adm-out').value; if(!t) return;
+  navigator.clipboard?.writeText(t).then(()=>admMsg('복사됨!')).catch(()=>{});
+};
+
 /* ---------- 백업 (내보내기) ---------- */
 function dlFile(name, text, type){
   const b=new Blob([text],{type});

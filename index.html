@@ -1102,6 +1102,25 @@
       <button class="rmv" id="s-del" style="font-size:12px;color:hsl(6 60% 62%);border-color:hsl(6 45% 42%)">홈 삭제</button>
     </div>
     <p class="note" id="del-msg" style="margin-top:2px"></p>
+
+    <div id="adm-invites" class="hidden">
+      <p class="p-h" style="margin-top:30px">초대코드 만들기 <span style="font-size:10px;color:var(--muted)">(운영자)</span></p>
+      <div class="p-row" style="align-items:center">
+        <input id="adm-pre" placeholder="접두어 (예: wave)" style="flex:1;margin-bottom:0">
+        <input id="adm-n" type="number" min="1" max="30" value="10" style="width:64px;margin-bottom:0" title="개수">
+        <select id="adm-kind" style="flex:1;margin-bottom:0">
+          <option value="single">1회용 코드 여러 개</option>
+          <option value="multi">인원제한 코드 1개 (max=개수)</option>
+        </select>
+        <button class="btn" id="adm-make" style="font-size:12px">만들기</button>
+      </div>
+      <textarea id="adm-out" readonly placeholder="만든 코드가 여기 떠요 — 복사해서 나눠주세요"
+        style="min-height:90px;font-family:monospace;font-size:12px"></textarea>
+      <div class="p-row">
+        <button class="rmv" id="adm-copy" style="font-size:11px">전체 복사</button>
+        <span class="note" id="adm-msg"></span>
+      </div>
+    </div>
   </div>
 
   <div class="pane hidden" data-pane="theme">
@@ -1243,6 +1262,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=102"></script>
+<script type="module" src="./app.js?v=103"></script>
 </body>
 </html>
