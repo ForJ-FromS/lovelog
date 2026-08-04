@@ -2528,6 +2528,65 @@ $('#btn-login').onclick=()=>signInWithPopup(auth,new GoogleAuthProvider()).catch
 $('#btn-signup').onclick=signup;
 
 /* ---------- 시작 ---------- */
+/* ---------- 백업 (내보내기) ---------- */
+function dlFile(name, text, type){
+  const b=new Blob([text],{type});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(b); a.download=name;
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },800);
+}
+const expStamp=()=>{ const d=new Date();
+  return d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0'); };
+$('#s-exp-json').onclick=()=>{
+  if(!st.mine) return;
+  const data={
+    exported:new Date().toISOString(), service:'lovelog', handle:st.handle,
+    home:{ name:st.page.name||'', sub:st.page.sub||'' },
+    posts:st.posts, gallery:st.gallery, guest:st.guest
+  };
+  dlFile(`lovelog-${st.handle}-backup-${expStamp()}.json`,
+    JSON.stringify(data,null,2), 'application/json');
+  msg('JSON 백업 저장! 글 '+st.posts.length+'편이 담겼어요.');
+};
+$('#s-exp-html').onclick=()=>{
+  if(!st.mine) return;
+  const nm=esc(st.page.name||st.handle);
+  const posts=[...st.posts].sort((a,b)=>(a.ts||0)-(b.ts||0));
+  const body=posts.map(p=>{
+    const inner = p.secret
+      ? '<p class="secret">🔒 비밀글 — 내용은 암호화되어 있어요. 원문은 JSON 백업에 담겨 있고, 홈에서 비밀번호로 열 수 있어요.</p>'
+      : (p.body||'');
+    return `<article>
+<h2>${esc(p.title||'(제목 없음)')}</h2>
+<p class="meta">${esc(p.cat||'')} · ${esc(p.date||'')}${p.secret?' · SECRET':''}</p>
+<div class="body">${inner}</div>
+</article>`;
+  }).join('\n');
+  const html=`<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${nm} — 백업 (${expStamp()})</title>
+<style>
+body{max-width:760px;margin:0 auto;padding:50px 20px 80px;font-family:'Noto Sans KR','Apple SD Gothic Neo',sans-serif;
+  line-height:1.9;color:#2b2c33;background:#fafaf8}
+header{border-bottom:2px solid #2b2c33;padding-bottom:14px;margin-bottom:40px}
+h1{font-size:24px;margin:0}
+header p{color:#8a8a85;font-size:13px;margin:6px 0 0}
+article{border-bottom:1px solid #ddd;padding:34px 0}
+h2{font-size:19px;margin:0 0 4px}
+.meta{color:#8a8a85;font-size:12.5px;margin:0 0 18px}
+.body img{max-width:100%;height:auto;border-radius:8px}
+.secret{color:#a06030;background:#fdf6ee;padding:12px 16px;border-radius:8px;font-size:13.5px}
+footer{margin-top:50px;color:#b0afaa;font-size:11px;text-align:center;letter-spacing:.2em}
+</style></head><body>
+<header><h1>${nm}</h1><p>luvlog.me/${esc(st.handle)} · ${posts.length}편 · ${new Date().toLocaleDateString('ko-KR')} 백업</p></header>
+${body}
+<footer>LOVELOG BACKUP</footer>
+</body></html>`;
+  dlFile(`lovelog-${st.handle}-backup-${expStamp()}.html`, html, 'text/html');
+  msg('HTML 백업 저장! 글 '+posts.length+'편이 담겼어요.');
+};
+
 /* ---------- 홈 삭제 (탈퇴) ---------- */
 const delMsg=t=>{ const e=$('#del-msg'); if(e) e.textContent=t; };
 async function wipeCol(path){                       // 하위 컬렉션 문서 일괄 삭제
