@@ -1096,10 +1096,13 @@
       <span style="font-size:12px;color:var(--muted)">커서 효과</span>
       <select id="s-fx" style="flex:1">
         <option value="">없음</option>
-        <option value="sparkle">✨ 반짝이 — 테마색 스파클</option>
+        <option value="sparkle">✨ 반짝이 — 스파클</option>
         <option value="heart">💗 하트 뿅뿅 — 통통 떠오르는 하트</option>
         <option value="bubble">🫧 거품 — 몽글몽글 올라가는 방울</option>
       </select>
+      <span style="font-size:12px;color:var(--muted)">색</span>
+      <input type="color" id="s-fxc" value="#ffb3c8" style="width:38px;padding:0" title="커서 효과 색 — 자유롭게 골라요">
+      <button class="rmv" id="s-fxc-x" style="font-size:11px">테마색</button>
     </div>
     <div class="p-row chks">
       <label class="chk"><input type="checkbox" id="s-stkoff" checked> 스티커 표시</label>
@@ -1187,6 +1190,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=82"></script>
+<script type="module" src="./app.js?v=84"></script>
 </body>
 </html>

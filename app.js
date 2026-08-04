@@ -627,8 +627,11 @@ async function dropWidget(from, to, contId, pos){
 let spkFx='', spkPri='#9db4ff', spkLast=0;
 function spkSync(){
   spkFx=st.page?.fx ?? (st.page?.sparkle?'sparkle':'');   // 옛 sparkle:true 하위호환
-  spkPri=getComputedStyle(document.body).getPropertyValue('--pri').trim()||'#9db4ff';
+  spkPri=st.page?.fxC
+    || getComputedStyle(document.body).getPropertyValue('--pri').trim()
+    || '#9db4ff';                                          // 효과 색: 직접 고른 색 > 테마색
 }
+const spkA=(c,p)=>`color-mix(in srgb, ${c} ${p}%, transparent)`; // 어떤 색 형식이든 안전한 투명도
 document.addEventListener('mousemove',e=>{
   if(!spkFx) return;
   const now=performance.now();
@@ -660,7 +663,7 @@ document.addEventListener('mousemove',e=>{
     s.style.cssText='position:fixed;pointer-events:none;z-index:9999;'
       +'left:'+(e.clientX+(Math.random()*14-7))+'px;top:'+(e.clientY-4)+'px;'
       +'font-size:'+size+'px;color:'+spkPri+';opacity:.95;'
-      +'text-shadow:0 0 6px '+spkPri+'55;'
+      +'text-shadow:0 0 6px '+spkA(spkPri,33)+';'
       +'transition:transform .9s ease-out, opacity .9s ease-out';
     document.body.appendChild(s);
     requestAnimationFrame(()=>{ 
@@ -675,8 +678,8 @@ document.addEventListener('mousemove',e=>{
     s.style.cssText='position:fixed;pointer-events:none;z-index:9999;border-radius:50%;'
       +'left:'+(e.clientX+(Math.random()*14-7))+'px;top:'+(e.clientY-2)+'px;'
       +'width:'+size+'px;height:'+size+'px;'
-      +'border:1px solid '+spkPri+'aa;'
-      +'background:radial-gradient(circle at 32% 30%, #ffffff88, '+spkPri+'22);'
+      +'border:1px solid '+spkA(spkPri,65)+';'
+      +'background:radial-gradient(circle at 32% 30%, rgba(255,255,255,.55), '+spkA(spkPri,14)+');'
       +'transition:transform 1.1s ease-out, opacity 1.1s ease-out';
     document.body.appendChild(s);
     requestAnimationFrame(()=>{ 
@@ -2037,7 +2040,7 @@ $('#stk-file').addEventListener('change',async e=>{
   }
   renderStkList(); renderStickers(); e.target.value='';
 });
-let favNew=null, curNew=null, gateColVal=null, gateBtnCVal=null, cardNew=null;
+let favNew=null, curNew=null, gateColVal=null, gateBtnCVal=null, fxCVal=null, cardNew=null;
 const lumHex=hx=>{ try{ const n=parseInt(hx.slice(1),16);
   return (((n>>16)&255)*.299+((n>>8)&255)*.587+(n&255)*.114)/255; }catch(e){ return .5; } };
 function applyGateBtnC(c){
@@ -2075,6 +2078,8 @@ $('#s-gatecolor').addEventListener('input',e=>{ gateColVal=e.target.value;
   document.documentElement.style.setProperty('--gtC', gateColVal); });
 $('#s-gatebtnc').addEventListener('input',e=>{ gateBtnCVal=e.target.value; applyGateBtnC(gateBtnCVal); });
 $('#s-gatebtnc-x').onclick=()=>{ gateBtnCVal=''; applyGateBtnC(''); };
+$('#s-fxc').addEventListener('input',e=>{ fxCVal=e.target.value; spkPri=fxCVal; });   // 즉시 미리보기
+$('#s-fxc-x').onclick=()=>{ fxCVal=''; spkPri=getComputedStyle(document.body).getPropertyValue('--pri').trim()||'#9db4ff'; msg('커서 효과 색 — 테마색을 따라가요.'); };
 $('#s-gatecolor-x').onclick=()=>{ gateColVal='';
   document.documentElement.style.setProperty('--gtC','');
   msg('기본 글씨색 — [설정 저장]으로 확정돼요.'); };
@@ -2180,7 +2185,7 @@ function fillSettings(){
   $('#s-homestyle').value=homeStyle();
   $('#s-theme').value=p.theme||'default';
   renderStkList();
-  $('#s-dim').value=p.bgDim??78; $('#s-dots').checked=p.dots!==false; $('#s-protect').checked=p.protectImg!==false; $('#s-stkm').checked=!!p.stkHideM; $('#s-stkoff').checked=p.stkOff!==true; $('#s-fx').value=p.fx ?? (p.sparkle?'sparkle':''); $('#s-postpage').checked=!!p.postPage;
+  $('#s-dim').value=p.bgDim??78; $('#s-dots').checked=p.dots!==false; $('#s-protect').checked=p.protectImg!==false; $('#s-stkm').checked=!!p.stkHideM; $('#s-stkoff').checked=p.stkOff!==true; $('#s-fx').value=p.fx ?? (p.sparkle?'sparkle':''); $('#s-fxc').value=p.fxC||'#ffb3c8'; fxCVal=null; $('#s-postpage').checked=!!p.postPage;
   $('#s-gatebtn').value=p.gateBtn||''; $('#s-listed').checked=!!p.listed; cardNew=null; bnrNew=null; renderCard(); renderBnr(); $('#s-lbicon').value=p.labelIcon??'◈'; gateColVal=null;
   $('#s-gatecolor').value=p.gateColor||'#ffffff';
   $('#s-gatebtnc').value=p.gateBtnC||'#e691a9'; gateBtnCVal=null;
@@ -2255,6 +2260,7 @@ async function saveSettings(){
       stkHideM: $('#s-stkm').checked,
       stkOff: !$('#s-stkoff').checked,
       fx: $('#s-fx').value,
+      fxC: fxCVal ?? st.page.fxC ?? '',
       sparkle: $('#s-fx').value==='sparkle',
       postPage: $('#s-postpage').checked,
       gateBtn: $('#s-gatebtn').value.trim(),
@@ -2295,7 +2301,7 @@ document.querySelectorAll('.s-go').forEach(b=>b.onclick=saveSettings);
 const RESET={
   theme:{hue:222,sat:60,lum:62,light:false,glass:false,theme:'default',dots:true,
     bgImg:'',bgRef:'',bgDim:78,titleColor:'',font:'sans',customCss:'',curImg:'',
-    sparkle:false,fx:'',labelIcon:'◈',postPage:false,priColor:''},
+    sparkle:false,fx:'',fxC:'',labelIcon:'◈',postPage:false,priColor:''},
   widget:{side:[],ddays:[],bgm:{url:'',title:''}},
   sticker:{stickers:[],stkOff:false,stkHideM:false},
   layout:{homeStyle:'grid',headMode:'wide',headH:380,headFit:'cover',sidePos:'right',catStyle:'bar',
