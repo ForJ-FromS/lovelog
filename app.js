@@ -371,6 +371,7 @@ async function enterPage(){
   $('#pg-name').style.color = p.titleColor||'';
   $('#pg-sub').textContent=p.sub||'';
   $('#pg-over').textContent='@'+h.toUpperCase();
+  $('#gb-title').textContent=gbNm(); $('#strip-title').textContent=galNm();
   const hs=heroObjs();
   st.autoRatio=0;                                    // 홈 전환 — 이전 홈 사진 비율 리셋
   clearInterval(st.heroTimer);
@@ -490,6 +491,8 @@ function latestBlock(box){
   d.querySelector('#latest-more').onclick=()=>goBoard('recent');
   return d;
 }
+const galNm=()=>st.page?.galName||'GALLERY';
+const gbNm=()=>st.page?.gbName||'GUESTBOOK';
 const WNAME={latest:'최신글',notice:'공지',chat:'채팅로그',img:'이미지',nb:'이웃 홈',profile:'프로필',search:'검색',category:'카테고리',
   dday:'디데이',bgm:'BGM',quote:'인용구',links:'링크',banner:'배너칸',text:'글',cnt:'방문자수'};
 async function bumpCounter(){
@@ -537,8 +540,8 @@ function renderCatbar(){
     : `<a data-c="${esc(key)}" class="${on?'on':''}">${esc(label)}</a>`;
   bar.innerHTML = pill('home','HOME',homeOn)+
     cats().map(c=>pill(c,c.toUpperCase(),st.cat===c)).join('')+
-    (galOn()?pill('__gal','GALLERY',st.cat==='__gal'):'')+
-    pill('__gb','GUESTBOOK',st.cat==='__gb')+
+    (galOn()?pill('__gal',galNm(),st.cat==='__gal'):'')+
+    pill('__gb',gbNm(),st.cat==='__gb')+
     (homeStyle()==='blog'?'':pill('recent','ALL',st.cat==='recent'));
   bar.querySelectorAll('a').forEach(el=>el.onclick=()=>{
     el.dataset.c==='home' ? goHome() : goBoard(el.dataset.c);
@@ -790,8 +793,8 @@ function renderSide(){
         cats().map(c=>`<li><a data-c="${esc(c)}" class="${st.cat===c?'on':''}">
           <span>${esc(c)}</span>
           <span class="n">${cnt(c)}</span></a></li>`).join('')+
-        (galOn()?`<li><a data-c="__gal" class="${st.cat==='__gal'?'on':''}"><span>GALLERY</span><span class="n">${st.gallery.length}</span></a></li>`:'')+
-        `<li><a data-c="__gb" class="${st.cat==='__gb'?'on':''}"><span>GUESTBOOK</span><span class="n">${st.guest.length}</span></a></li>`+
+        (galOn()?`<li><a data-c="__gal" class="${st.cat==='__gal'?'on':''}"><span>${esc(galNm())}</span><span class="n">${st.gallery.length}</span></a></li>`:'')+
+        `<li><a data-c="__gb" class="${st.cat==='__gb'?'on':''}"><span>${esc(gbNm())}</span><span class="n">${st.guest.length}</span></a></li>`+
         `<li><a data-c="recent" class="${st.cat==='recent'?'on':''}"><span>전체</span><span class="n">${st.posts.length}</span></a></li></ul>`;
       box.appendChild(d);
       d.querySelectorAll('#cats a').forEach(el=>el.onclick=()=>goBoard(el.dataset.c));
@@ -1067,7 +1070,7 @@ function renderList(){
   $('#guest-view').classList.add('hidden');
   $('#list-view').classList.remove('hidden');
   if(st.cat==='__gal' || (st.cat!=='recent' && st.cat!=='home' && isG(st.cat))){
-    $('#v-label').textContent = st.cat==='__gal' ? 'GALLERY' : st.cat.toUpperCase();
+    $('#v-label').textContent = st.cat==='__gal' ? galNm() : st.cat.toUpperCase();
     $('#pin-slot').innerHTML='';
     const items = st.cat==='__gal' ? st.gallery : st.gallery.filter(g=>g.cat===st.cat);
     $('#rows').innerHTML = items.length
@@ -1350,8 +1353,8 @@ function renderCatMgr(){
         <option value="gallery" ${isG(c)?'selected':''}>사진</option>
       </select>
       <button class="btn" data-cs="${i}" style="font-size:12px">저장</button>
-      <label class="filelab" title="버튼 이미지">🖼<input type="file" data-cimg="${esc(c)}" accept="image/*" style="display:none"></label>
-      ${(st.page.catImgs||{})[c]?`<button class="rmv" data-cimgx="${esc(c)}" style="font-size:10px">이미지✕</button>`:''}
+      <label class="filelab" style="font-size:11px">🖼 이미지 추가<input type="file" data-cimg="${esc(c)}" accept="image/*" style="display:none"></label>
+      ${(st.page.catImgs||{})[c]?`<button class="rmv" data-cimgx="${esc(c)}" style="font-size:10px">이미지 제거</button>`:''}
       <button class="rmv" data-cd="${i}">✕</button>
     </div>`).join('') || '<p class="pl-empty">카테고리가 없어요.</p>';
   renderCatFix();
@@ -1416,13 +1419,14 @@ function renderCatFix(){
   const row=(key,label,extra='')=>`
     <div class="p-row">
       <span style="font-size:12.5px;color:var(--body);min-width:96px">${label}</span>
-      <label class="filelab">🖼<input type="file" data-cimg="${key}" accept="image/*" style="display:none"></label>
-      ${ci[key]?`<button class="rmv" data-cimgx="${key}" style="font-size:10px">이미지✕</button>`:''}
+      <label class="filelab" style="font-size:11px">🖼 이미지 추가<input type="file" data-cimg="${key}" accept="image/*" style="display:none"></label>
+      ${ci[key]?`<button class="rmv" data-cimgx="${key}" style="font-size:10px">이미지 제거</button>`:''}
       ${extra}
     </div>`;
   box.innerHTML =
     row('home','HOME')+
-    row('__gal','GALLERY',
+    row('__gal',esc(galNm()),
+      `<input data-cn="__gal" value="${esc(st.page.galName||'')}" placeholder="GALLERY" title="게시판 이름 바꾸기 — 비우면 GALLERY" style="width:104px;margin-bottom:0;font-size:11.5px">`+
       `<button class="btn" id="gal-toggle" style="font-size:11px">${galOn()?'숨기기 (알약·하단 갤러리 제거)':'표시하기'}</button>`+
       (galOn()?`<button class="btn" id="strip-toggle" style="font-size:11px">${stripOn()?'하단 스트립 끄기':'하단 스트립 켜기'}</button>
         <select id="strip-src" style="font-size:11px;width:auto;margin:0 0 0 6px">
@@ -1430,9 +1434,20 @@ function renderCatFix(){
           <option value="pick" ${st.page.stripSrc==='pick'?'selected':''}>대문: ★로 고른 사진</option>
           ${gcats().map(c=>`<option value="${esc(c)}" ${st.page.stripSrc===c?'selected':''}>대문: ${esc(c)} 카테고리</option>`).join('')}
         </select>`:''))+
-    row('__gb','GUESTBOOK')+
+    row('__gb',esc(gbNm()),
+      `<input data-cn="__gb" value="${esc(st.page.gbName||'')}" placeholder="GUESTBOOK" title="게시판 이름 바꾸기 — 비우면 GUESTBOOK" style="width:104px;margin-bottom:0;font-size:11.5px">`)+
     (homeStyle()==='blog'?'':row('recent','ALL'));
   bindCatImg(box);
+  box.querySelectorAll('[data-cn]').forEach(inp=>inp.addEventListener('change',async()=>{
+    const v=inp.value.trim().slice(0,20);
+    const field = inp.dataset.cn==='__gal' ? 'galName' : 'gbName';
+    try{ await updateDoc(doc(db,'pages',st.handle),{[field]:v}); }catch(e){ msg('저장 실패 — '+e.message); return; }
+    st.page[field]=v;
+    renderCatbar(); renderSide(); renderCatFix();
+    $('#gb-title').textContent=gbNm(); $('#strip-title').textContent=galNm();
+    if(st.cat==='__gal') $('#v-label').textContent=galNm();
+    msg('게시판 이름 저장!');
+  }));
   const gt=$('#gal-toggle'); if(gt) gt.onclick=async()=>{
     const next=!galOn();
     await updateDoc(doc(db,'pages',st.handle),{galOn:next});
@@ -2307,7 +2322,7 @@ const RESET={
   layout:{homeStyle:'grid',headMode:'wide',headH:380,headFit:'cover',sidePos:'right',catStyle:'bar',
     galOn:true,stripOn:true},
   media:{heroImgs:[],heroImg:'',enterImg:'',enterRef:'',enterText:'',
-    cardImg:'',bannerImg:'',catImgs:{},gate:'',gateBtn:'',gateColor:'',gateBtnC:''}
+    cardImg:'',bannerImg:'',catImgs:{},gate:'',gateBtn:'',gateColor:'',gateBtnC:'',galName:'',gbName:''}
 };
 $('#s-reset').onclick=async()=>{
   const kind=$('#s-reset-kind').value;
