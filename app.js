@@ -332,6 +332,7 @@ function renderSeal(){
 /* ---------- 페이지 로드 ---------- */
 async function loadPage(handle){
   st.handle=handle;
+  renderSeal();                       // 주소 확정 후 다시 — 로그아웃 방문자에게 IN 표시
   // 딥링크 글ID를 주소 정리 '전에' 확보 (정리하면서 쿼리가 지워지므로)
   let pm0=new URLSearchParams(location.search).get('p');
   if(!pm0){ const seg=location.pathname.split('/').filter(Boolean);
