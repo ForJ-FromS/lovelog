@@ -1222,7 +1222,7 @@ document.addEventListener('contextmenu',e=>{
 });
 
 /* ---------- 글 읽기 ---------- */
-function backToList(){ document.body.classList.remove('reading');
+function backToList(){ document.body.classList.remove('reading','in-post');
   $('#post-view').classList.add('hidden');
   $('#guest-view').classList.add('hidden');
   if(st.cat==='__gb'){ renderGuest(); $('#guest-view').classList.remove('hidden'); }
@@ -1247,6 +1247,7 @@ async function openPost(id){
   $('#list-view').classList.add('hidden');
   $('#post-view').classList.remove('hidden');
   document.body.classList.toggle('reading', !!st.page.postPage);
+  document.body.classList.add('in-post');           // 글 읽는 동안 스티커를 걷어요
   history.replaceState(null,'',urlFor(st.handle,id));
   const li=st.posts.findIndex(x=>x.id===id),
         older=st.posts[li+1], newer=st.posts[li-1];
