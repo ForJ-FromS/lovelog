@@ -407,6 +407,16 @@
   .p-card{background:var(--card);border:1px solid var(--line);border-radius:16px;
     width:min(700px,100%);padding:26px 24px;position:relative;
     max-height:90vh;overflow:auto}
+  .inq-card{background:hsl(var(--h) 26% 11%);border:1px solid var(--line);border-radius:10px;
+    padding:11px 14px;margin:8px 0;font-size:12.5px}
+  .inq-card .im{color:var(--muted);font-size:10.5px;margin-bottom:4px;
+    font-family:'IBM Plex Mono',monospace;letter-spacing:.08em}
+  .inq-card .ib{white-space:pre-wrap}
+  .inq-card .ir{margin-top:9px;padding:9px 12px;border-left:2px solid var(--pri);
+    background:hsl(var(--h) 30% 15%);border-radius:0 8px 8px 0;white-space:pre-wrap}
+  .inq-card textarea{min-height:52px;margin-top:8px}
+  #btn-deco.noti::after{content:'';position:absolute;top:7px;right:7px;width:9px;height:9px;
+    border-radius:50%;background:hsl(6 75% 62%);box-shadow:0 0 6px hsl(6 75% 62%)}
   .p-x{position:absolute;top:14px;right:16px;border:none;background:none;
     color:var(--muted);cursor:pointer;font-size:14px}
   .p-x:hover{color:var(--ink)}
@@ -790,7 +800,9 @@
     <div class="field"><label>페이지 주소 (영문 소문자·숫자·하이픈 2~20자)</label>
       <input id="in-handle" placeholder="luvlog.me/여기"></div>
     <div class="field"><label>홈 이름</label><input id="in-name" placeholder="예: 내 홈 이름"></div>
-    <div class="field hidden" id="invite-wrap"><label>초대코드 (선택)</label><input id="in-invite"></div>
+    <div class="field hidden" id="invite-wrap"><label>초대코드</label><input id="in-invite" placeholder="받은 코드를 그대로 입력"></div>
+    <div class="field hidden" id="ref-wrap"><label>초대해 준 분 (닉네임 또는 러브로그 주소)</label>
+      <input id="in-ref" placeholder="예: 유월 / jeste"></div>
     <p class="err" id="signup-err"></p>
     <button class="btn pri" id="btn-signup">페이지 만들기</button>
     <p class="note" style="margin-top:12px">주소는 나중에 바꿀 수 없어요 — 신중하게 골라주세요.</p>
@@ -920,6 +932,7 @@
     <button data-tab="theme">테마 · 레이아웃</button>
     <button data-tab="bg">배경</button>
     <button data-tab="stk">스티커</button>
+    <button data-tab="adm" id="tab-adm">운영</button>
   </div>
 
   <div class="p-panes">
@@ -1084,6 +1097,16 @@
       <button class="rmv" id="s-reset" style="font-size:12px;color:hsl(6 55% 68%);border-color:hsl(6 40% 40%)">초기화</button>
     </div>
 
+    <p class="p-h" style="margin-top:30px">문의 · 제보</p>
+    <p class="note" style="margin-top:-4px">버그, 오류, 바라는 기능을 운영자(유월)에게 바로 보내요.
+      답변이 달리면 여기서 확인할 수 있어요.</p>
+    <textarea id="inq-body" placeholder="예: 폰에서 헤더가 이상하게 잘려요 — 홈 주소와 함께 적어주시면 빨라요!" style="min-height:70px"></textarea>
+    <div class="p-row" style="align-items:center">
+      <button class="btn" id="inq-send" style="font-size:12px">보내기</button>
+      <span class="note" id="inq-msg"></span>
+    </div>
+    <div id="inq-list"></div>
+
     <p class="p-h" style="margin-top:30px">백업</p>
     <p class="note" style="margin-top:-4px">홈의 글 전체를 내 컴퓨터에 파일로 저장해요.
       <b>읽기용 HTML</b>은 브라우저로 열어 그대로 읽을 수 있고, <b>원본 JSON</b>은 모든 데이터(비밀글의 암호화 원문 포함)를 담아요.
@@ -1103,7 +1126,10 @@
     </div>
     <p class="note" id="del-msg" style="margin-top:2px"></p>
 
-    <div id="adm-invites" class="hidden">
+  </div>
+
+  <div class="pane hidden" data-pane="adm">
+    <div id="adm-invites">
       <p class="p-h" style="margin-top:30px">초대코드 만들기 <span style="font-size:10px;color:var(--muted)">(운영자)</span></p>
       <div class="p-row" style="align-items:center">
         <input id="adm-pre" placeholder="접두어 (예: wave)" style="flex:1;margin-bottom:0">
@@ -1120,6 +1146,9 @@
         <button class="rmv" id="adm-copy" style="font-size:11px">전체 복사</button>
         <span class="note" id="adm-msg"></span>
       </div>
+
+      <p class="p-h" style="margin-top:30px">문의함 <span id="adm-inq-n" style="font-size:10px;color:hsl(42 70% 65%)"></span></p>
+      <div id="adm-inq"></div>
     </div>
   </div>
 
@@ -1262,6 +1291,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=103"></script>
+<script type="module" src="./app.js?v=106"></script>
 </body>
 </html>

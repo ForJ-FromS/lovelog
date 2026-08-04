@@ -391,6 +391,7 @@ async function enterPage(){
   $('#pg-sub').textContent=p.sub||'';
   $('#pg-over').textContent='@'+h.toUpperCase();
   $('#gb-title').textContent=gbNm(); $('#strip-title').textContent=galNm();
+  if(st.mine) admInqBadge();
   const hs=heroObjs();
   st.autoRatio=0;                                    // 홈 전환 — 이전 홈 사진 비율 리셋
   clearInterval(st.heroTimer);
@@ -1358,10 +1359,11 @@ function refreshGalCats(){
     g.map(c=>`<option>${esc(c)}</option>`).join('');
 }
 function openPanel(mode){
-  const groups={write:['write','galup'], deco:['wid','cats','set','theme','bg','stk']};
+  const groups={write:['write','galup'], deco:['wid','cats','set','theme','bg','stk','adm']};
   document.querySelectorAll('.tabs button').forEach(b=>{
     b.style.display=groups[mode].includes(b.dataset.tab)?'':'none';
   });
+  if(st.myHandle!=='jeste') $('#tab-adm').style.display='none';   // 운영 탭은 운영자만
   const first = mode==='write'?'write':'wid';
   document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===first));
   document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('hidden',p.dataset.pane!==first));
@@ -2312,7 +2314,7 @@ function fillSettings(){
   $('#s-gatebtn').value=p.gateBtn||''; $('#s-listed').checked=!!p.listed; cardNew=null; bnrNew=null; renderCard(); renderBnr(); $('#s-lbicon').value=p.labelIcon??'◈'; gateColVal=null;
   $('#s-gatecolor').value=p.gateColor||'#ffffff';
   $('#del-h').textContent=st.handle||'—'; $('#s-del-confirm').value=''; delMsg('');
-  $('#adm-invites').classList.toggle('hidden', st.myHandle!=='jeste');
+  renderMyInq(); renderAdmInq();
   $('#s-gatebtnc').value=p.gateBtnC||'#e691a9'; gateBtnCVal=null;
   $('#s-gategrad').checked=p.gateGrad!==false;
   heroDraft=JSON.parse(JSON.stringify(heroObjs())); renderHeroList();
@@ -2477,7 +2479,8 @@ const RESERVED = new Set(['guide','index','404','app','api','admin','root','syst
   'lovelog','luvlog','test','demo','null','undefined','new','edit','delete','search',
   'gallery','guestbook','archive','all','post','posts','tag','tags']);
 async function signup(){
-  const code=$('#in-invite').value.trim(), handle=$('#in-handle').value.trim().toLowerCase(),
+  const code=$('#in-invite').value.trim(), ref=$('#in-ref').value.trim().slice(0,30),
+        handle=$('#in-handle').value.trim().toLowerCase(),
         name=$('#in-name').value.trim(), err=$('#signup-err');
   err.textContent='';
   if(!/^[a-z0-9-]{2,20}$/.test(handle)){ err.textContent='주소 형식을 확인해 주세요.'; return; }
@@ -2491,7 +2494,7 @@ async function signup(){
   if(mode==='closed'){
     err.textContent = notice || '지금은 새 홈 만들기가 닫혀 있어요.'; return; }
   if(mode==='code' && !code){
-    $('#invite-wrap').classList.remove('hidden');
+    $('#invite-wrap').classList.remove('hidden'); $('#ref-wrap').classList.remove('hidden');
     err.textContent = notice || '지금은 초대코드가 있어야 가입할 수 있어요.'; return; }
   try{
     const rs=await getDoc(doc(db,'config','reserved'));
@@ -2515,7 +2518,7 @@ async function signup(){
       }
       if(b.exists()) throw new Error('이미 쓰는 주소예요.');
       if(c.exists()) throw new Error('이 계정의 페이지가 이미 있어요.');
-      tx.set(pg,{owner:st.me.uid,name,sub:'',cats:['archive','ooc'],hue:222,createdAt:serverTimestamp()});
+      tx.set(pg,{owner:st.me.uid,name,sub:'',cats:['archive','ooc'],hue:222,createdAt:serverTimestamp(),ref:ref||''});
       tx.set(us,{handle,createdAt:serverTimestamp()});
       if(iv) tx.update(iv, multi
         ? {count:(id.count||0)+1, lastBy:st.me.uid, lastAt:serverTimestamp()}
@@ -2529,6 +2532,75 @@ $('#btn-login').onclick=()=>signInWithPopup(auth,new GoogleAuthProvider()).catch
 $('#btn-signup').onclick=signup;
 
 /* ---------- 시작 ---------- */
+/* ---------- 문의 · 제보 ---------- */
+const inqMsg=t=>{ const e=$('#inq-msg'); if(e) e.textContent=t; };
+const inqDate=ts=>{ try{ return ts?.toDate?.().toLocaleDateString('ko-KR',{month:'numeric',day:'numeric'})||''; }catch(e){ return ''; } };
+$('#inq-send').onclick=async()=>{
+  if(!st.me||!st.myHandle){ inqMsg('로그인 후 이용할 수 있어요.'); return; }
+  const body=$('#inq-body').value.trim();
+  if(!body){ inqMsg('내용을 적어주세요.'); return; }
+  if(body.length>1000){ inqMsg('1000자 안으로 줄여주세요.'); return; }
+  inqMsg('보내는 중...');
+  try{
+    await addDoc(collection(db,'inquiries'),{
+      by:st.me.uid, byHandle:st.myHandle, body,
+      at:serverTimestamp(), status:'open', reply:'' });
+    $('#inq-body').value='';
+    inqMsg('보냈어요! 답변이 달리면 이 자리에 떠요.');
+    renderMyInq();
+  }catch(e){ inqMsg('전송 실패 — '+e.message); }
+};
+async function renderMyInq(){
+  const box=$('#inq-list'); if(!box||!st.me) return;
+  try{
+    const qs=await getDocs(query(collection(db,'inquiries'),where('by','==',st.me.uid)));
+    const rows=qs.docs.map(d=>({id:d.id,...d.data()}))
+      .sort((a,b)=>(b.at?.seconds||0)-(a.at?.seconds||0)).slice(0,10);
+    box.innerHTML = rows.map(r=>`
+      <div class="inq-card">
+        <div class="im">${inqDate(r.at)} · ${r.status==='done'?'✓ 답변 완료':'접수됨'}</div>
+        <div class="ib">${esc(r.body)}</div>
+        ${r.reply?`<div class="ir">${esc(r.reply)}</div>`:''}
+      </div>`).join('');
+  }catch(e){ box.innerHTML=''; }
+}
+/* ── 운영자 문의함 ── */
+async function renderAdmInq(){
+  const box=$('#adm-inq'); if(!box||st.myHandle!=='jeste') return;
+  try{
+    const qs=await getDocs(collection(db,'inquiries'));
+    const rows=qs.docs.map(d=>({id:d.id,...d.data()}))
+      .sort((a,b)=>{ const o=(a.status==='open'?0:1)-(b.status==='open'?0:1);
+        return o!==0?o:(b.at?.seconds||0)-(a.at?.seconds||0); }).slice(0,30);
+    const open=rows.filter(r=>r.status==='open').length;
+    $('#adm-inq-n').textContent = open?('미답변 '+open):'';
+    box.innerHTML = rows.length? rows.map(r=>`
+      <div class="inq-card">
+        <div class="im">${inqDate(r.at)} · @${esc(r.byHandle||'?')} · ${r.status==='done'?'✓ 완료':'⏳ 미답변'}</div>
+        <div class="ib">${esc(r.body)}</div>
+        ${r.reply?`<div class="ir">${esc(r.reply)}</div>`:''}
+        <textarea data-ir="${r.id}" placeholder="답변 쓰기...">${esc(r.reply||'')}</textarea>
+        <div class="p-row"><button class="btn" data-irs="${r.id}" style="font-size:11px">답변 저장</button></div>
+      </div>`).join('') : '<p class="pl-empty">문의가 없어요.</p>';
+    box.querySelectorAll('[data-irs]').forEach(b=>b.onclick=async()=>{
+      const id=b.dataset.irs, t=box.querySelector(`[data-ir="${id}"]`).value.trim();
+      try{
+        await updateDoc(doc(db,'inquiries',id),{reply:t,status:t?'done':'open',repliedAt:serverTimestamp()});
+        renderAdmInq(); admInqBadge();
+      }catch(e){ alert('저장 실패 — '+e.message); }
+    });
+  }catch(e){ box.innerHTML='<p class="pl-empty">불러오기 실패 — 규칙을 확인해주세요.</p>'; }
+}
+/* ── 접속 시 미답변 배지 ── */
+async function admInqBadge(){
+  if(st.myHandle!=='jeste') return;
+  try{
+    const qs=await getDocs(query(collection(db,'inquiries'),where('status','==','open')));
+    $('#btn-deco').classList.toggle('noti', qs.size>0);
+    if(qs.size>0) msg('📮 미답변 문의 '+qs.size+'건 — 꾸미기 → 기본 정보 문의함에서 확인하세요.');
+  }catch(e){}
+}
+
 /* ---------- 초대코드 생성 (운영자) ---------- */
 const admMsg=t=>{ const e=$('#adm-msg'); if(e) e.textContent=t; };
 const rnd4=()=>Math.random().toString(36).slice(2,6);
@@ -2664,7 +2736,7 @@ onAuthStateChanged(auth,async user=>{
   else if(!st.myHandle){ show('view-signup');
     getDoc(doc(db,'config','signup')).then(sc=>{
       if(!sc.exists()) return; const m=sc.data().mode||'open';
-      if(m==='code'){ $('#invite-wrap').classList.remove('hidden');
+      if(m==='code'){ $('#invite-wrap').classList.remove('hidden'); $('#ref-wrap').classList.remove('hidden');
         $('#signup-err').textContent=sc.data().notice||'초대코드가 있어야 가입할 수 있어요.'; }
       if(m==='closed'){ $('#signup-err').textContent=sc.data().notice||'지금은 새 홈 만들기가 닫혀 있어요.'; }
     }).catch(()=>{});
