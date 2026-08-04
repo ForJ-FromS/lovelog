@@ -2580,8 +2580,16 @@ async function renderAdmInq(){
         <div class="ib">${esc(r.body)}</div>
         ${r.reply?`<div class="ir">${esc(r.reply)}</div>`:''}
         <textarea data-ir="${r.id}" placeholder="답변 쓰기...">${esc(r.reply||'')}</textarea>
-        <div class="p-row"><button class="btn" data-irs="${r.id}" style="font-size:11px">답변 저장</button></div>
+        <div class="p-row">
+          <button class="btn" data-irs="${r.id}" style="font-size:11px">답변 저장</button>
+          <button class="rmv" data-ird="${r.id}" style="font-size:11px;color:hsl(6 55% 68%)">삭제</button>
+        </div>
       </div>`).join('') : '<p class="pl-empty">문의가 없어요.</p>';
+    box.querySelectorAll('[data-ird]').forEach(b=>b.onclick=async()=>{
+      if(!confirm('이 문의를 삭제할까요?\n삭제하면 보낸 사람 화면에서도 사라져요.')) return;
+      try{ await deleteDoc(doc(db,'inquiries',b.dataset.ird)); renderAdmInq(); admInqBadge(); }
+      catch(e){ alert('삭제 실패 — '+e.message); }
+    });
     box.querySelectorAll('[data-irs]').forEach(b=>b.onclick=async()=>{
       const id=b.dataset.irs, t=box.querySelector(`[data-ir="${id}"]`).value.trim();
       try{
