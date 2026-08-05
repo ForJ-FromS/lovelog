@@ -1196,7 +1196,11 @@ function renderGuest(){
     <li class="gb-item">
       <p class="who"><span>${g.home?`<a class="who-h" href="${urlFor(g.home)}">@${esc(g.home)}</a>`:`@${esc(g.name||'guest')}`}${(st.mine||g.uid===st.me?.uid)?`<i class="del" data-gbd="${g.id}">삭제</i>`:''}</span>
       <span class="dt">${fmtTs(g.ts)}</span></p>
-      <p>${esc(g.text)}</p></li>`).join('')
+      ${g.secret
+        ? ((st.mine||g.uid===st.me?.uid)
+            ? `<p>${esc(g.text)}${st.mine?'<span class="gb-badge">🔒 비공개</span>':'<span class="gb-badge">🔒 내 글</span>'}</p>`
+            : `<p class="gb-lock">🔒 주인에게만 남긴 비공개 방명록이에요.</p>`)
+        : `<p>${esc(g.text)}</p>`}</li>`).join('')
     :'<p class="pl-empty">아직 방명록이 비어 있어요 — 첫 흔적을 남겨주세요.</p>';
   $('#gb-list').querySelectorAll('[data-gbd]').forEach(b=>b.onclick=async()=>{
     if(!confirm('이 방명록 글을 삭제할까요?')) return;
@@ -1311,8 +1315,9 @@ $('#gb-go').onclick=async()=>{
   const t=$('#gb-text').value.trim(); if(!t||!st.me) return;
   await addDoc(collection(db,'pages',st.handle,'guest'),
     {uid:st.me.uid, name:st.myHandle||st.me.displayName||'guest',
-     home:st.myHandle||'', text:t, ts:serverTimestamp()});
-  $('#gb-text').value='';
+     home:st.myHandle||'', text:t, ts:serverTimestamp(),
+     secret: $('#gb-secret').checked||false});
+  $('#gb-text').value=''; $('#gb-secret').checked=false;
   const gb=await getDocs(query(collection(db,'pages',st.handle,'guest'),orderBy('ts','desc')));
   st.guest=gb.docs.map(d=>({id:d.id,...d.data()})); renderGuest();
 };
