@@ -744,12 +744,12 @@
   .mmv button{width:26px;height:26px;border-radius:8px;border:1px solid var(--line);
     background:var(--card2);color:var(--body);font-size:12px;cursor:pointer}
   .mmv button:hover{border-color:var(--pri);color:var(--ink)}
-  .stk{position:absolute;pointer-events:auto;user-select:none;touch-action:none;
+  .stk{position:absolute;pointer-events:none;user-select:none;touch-action:none;
     -webkit-user-drag:none;transform-origin:center}
   .stk img{width:100%;height:100%;object-fit:contain;display:block;
     -webkit-user-drag:none;pointer-events:none;
     filter:drop-shadow(0 4px 10px rgba(0,0,0,.3))}
-  body.mine .stk{cursor:grab}
+  body.mine .stk{pointer-events:auto;cursor:grab}   /* 주인만 잡을 수 있음 — 방문자 클릭은 통과 */
   /* ── 카테고리 모양: 글씨만 ── */
   body.catsh-text #catbar{gap:2px 22px}
   body.catsh-text #catbar a{background:none;border:none;border-radius:0;padding:6px 2px}
@@ -1407,6 +1407,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=132"></script>
+<script type="module" src="./app.js?v=133"></script>
 </body>
 </html>
