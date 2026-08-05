@@ -416,7 +416,7 @@ async function enterPage(){
   document.body.classList.toggle('style-blog', homeStyle()==='blog');
   document.body.classList.remove('theme-win98','theme-vhs');
   if(p.theme && p.theme!=='default') document.body.classList.add('theme-'+p.theme);
-  document.body.classList.remove('catsh-pill','catsh-text','catsh-box');
+  document.body.classList.remove('catsh-list','catsh-pill','catsh-text','catsh-box');
   document.body.classList.add('catsh-'+catShape());
   document.body.classList.toggle('side-left', p.sidePos==='left');
   document.body.classList.toggle('side-both', p.sidePos==='both');
@@ -649,7 +649,7 @@ function goBoard(cat){ st.cat=cat||'recent'; applyView(); renderWidgets(); rende
 function catStyle(){
   return st.page.catStyle || (st.page.catBar===false ? 'widget' : 'bar');
 }
-function catShape(){ return st.page.catShape || 'pill'; }
+function catShape(){ return st.page.catShape || 'list'; }
 function renderCatbar(){
   const bar=$('#catbar');
   if(homeStyle()==='blog' || catStyle()!=='bar'){ bar.classList.add('hidden'); return; }
@@ -2869,7 +2869,7 @@ const RESET={
     sparkle:false,fx:'',fxC:'',labelIcon:'◈',postPage:false,priColor:''},
   widget:{side:[],ddays:[],bgm:{url:'',title:''}},
   sticker:{stickers:[],stkOff:false,stkHideM:false},
-  layout:{homeStyle:'grid',headMode:'wide',headH:380,headFit:'cover',headGrad:'dark',headText:true,sidePos:'right',catStyle:'bar',catShape:'pill',
+  layout:{homeStyle:'grid',headMode:'wide',headH:380,headFit:'cover',headGrad:'dark',headText:true,sidePos:'right',catStyle:'bar',catShape:'list',
     galOn:true,stripOn:true},
   media:{heroImgs:[],heroImg:'',enterImg:'',enterRef:'',enterText:'',
     cardImg:'',bannerImg:'',catImgs:{},gate:'',gateBtn:'',gateColor:'',gateBtnC:'',galName:'',gbName:''}
