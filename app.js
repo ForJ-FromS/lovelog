@@ -654,7 +654,7 @@ function catShape(){ return st.page.catShape || 'list'; }
 function galCols(){ const n=+st.page.galCols; return (n>=1&&n<=4)?n:3; }
 function renderCatbar(){
   const bar=$('#catbar');
-  if(homeStyle()==='blog' || catStyle()!=='bar'){ bar.classList.add('hidden'); return; }
+  if(catStyle()!=='bar'){ bar.classList.add('hidden'); return; }   // 블로그형에서도 '상단 알약 바' 선택 존중
   bar.classList.remove('hidden');
   const homeOn = homeStyle()==='blog' ? st.cat==='recent' : st.cat==='home';
   const ci=st.page.catImgs||{};
@@ -933,7 +933,7 @@ function renderSide(){
       return;
     }
     if(w.t==='category'){
-      if(catStyle()==='bar' && homeStyle()!=='blog') return;   // 알약 바 모드에선 사이드 카테고리 숨김(블로그형 제외)
+      if(catStyle()==='bar') return;   // 알약 바 모드에선 사이드 카테고리 숨김
       const cnt=c=> isG(c) ? st.gallery.filter(x=>x.cat===c).length
                            : st.posts.filter(x=>x.cat===c).length;
       d.innerHTML=`<p class="label">CATEGORY</p><ul id="cats">`+
@@ -1141,11 +1141,14 @@ function renderSide(){
       return;
     }
   });
-  if(home && st.mine){
+  const blogEdit = st.mine && homeStyle()==='blog';   // 블로그형은 위젯이 늘 사이드라 여기서 편집
+  if((home || blogEdit) && st.mine){
     const pcMove=async(wi,dir)=>{
       const arr=JSON.parse(JSON.stringify(sideCfg()));
       const w0=arr[wi]; if(!w0) return;
-      const colOf=x=>x.col||DEFCOL[x.t]||'r';
+      const colOf = blogEdit
+        ? (x=> (both && (x.col||DEFCOL[x.t]||'r')==='l') ? 'l' : 'r')   // 사이드 화면 컬럼 기준
+        : (x=> x.col||DEFCOL[x.t]||'r');
       const same=arr.map((x,i)=>({x,i})).filter(o=>colOf(o.x)===colOf(w0));
       const p=same.findIndex(o=>o.i===wi), t=p+dir;
       if(t<0||t>=same.length) return;
@@ -1165,7 +1168,7 @@ function renderSide(){
       st.page.side=arr; renderSide();
       try{ await updateDoc(doc(db,'pages',st.handle),{side:arr}); }catch(e){}
     };
-    const cols = isM ? [hC] : [hL,hC,hR];
+    const cols = blogEdit ? [boxL,boxR] : (isM ? [hC] : [hL,hC,hR]);
     cols.forEach(colEl=> colEl && colEl.querySelectorAll(':scope > [data-wi]').forEach(el=>{
       const m=document.createElement('div'); m.className='mmv';
       m.innerHTML='<button data-mv="-1">↑</button><button data-mv="1">↓</button>';

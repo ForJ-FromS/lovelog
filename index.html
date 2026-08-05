@@ -770,7 +770,9 @@
   .w-notice .nt-x{margin:0;font-size:12.5px;line-height:1.75}
   .mmv{position:absolute;top:7px;right:8px;display:none;gap:5px;z-index:2}
   .hcol > [data-wi],#aside > [data-wi],#aside-l > [data-wi]{position:relative}
-  .hcol > [data-wi]:hover > .mmv{display:flex}
+  .hcol > [data-wi]:hover > .mmv,
+  #aside > [data-wi]:hover > .mmv,
+  #aside-l > [data-wi]:hover > .mmv{display:flex}
   .side.dropzone.dz-b{box-shadow:0 -3px 0 0 var(--pri)}
   .side.dropzone.dz-a{box-shadow:0 3px 0 0 var(--pri)}
   @media(max-width:640px){
@@ -1455,6 +1457,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=138"></script>
+<script type="module" src="./app.js?v=140"></script>
 </body>
 </html>
