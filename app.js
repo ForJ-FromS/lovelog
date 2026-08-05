@@ -874,8 +874,7 @@ async function nbInfo(h){
     nbCache[h] = dd ? {name:dd.name||h, sub:dd.sub||'',
       img: dd.cardImg || (dd.heroImgs||[])[0]?.img || dd.heroImg || '',
       banner: dd.bannerImg || '',
-      nbs:(dd.side||[]).filter(w=>w.t==='nb')
-            .flatMap(w=>(w.items||[]).map(x=>String(x||'').toLowerCase()))} : null;
+      nbs:[...linkedSetOf(dd)]} : null;   // 이웃+배너 어디에 걸었든 '서로' 판정(♥)
   }catch(e){ nbCache[h]=null; }
   return nbCache[h];
 }
