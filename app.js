@@ -507,6 +507,7 @@ async function loadContent(){
     getDocs(query(collection(db,'pages',st.handle,'guest'),orderBy('ts','desc')))
   ]);
   st.posts=ps.docs.map(d=>({id:d.id,...d.data()}));
+  if(!st.mine) st.posts=st.posts.filter(p=>!p.priv);   // 비공개 글은 주인에게만 존재
   st.gallery=gs.docs.map(d=>({id:d.id,...d.data()}));
   st.guest=gb.docs.map(d=>({id:d.id,...d.data()}));
 }
@@ -1333,7 +1334,7 @@ function renderList(){
   const rowHTML=p=>{ const t=postThumb(p); return `
     <li class="row ${t?'has-th':''}" data-id="${p.id}">
       <span class="d">${esc((p.date||'').slice(5))}</span>
-      <span class="t">${esc(p.title)} ${p.secret?'<span class="k">🔒</span>':''}</span>
+      <span class="t">${esc(p.title)} ${p.secret?'<span class="k">🔒</span>':''}${p.priv?'<span class="k" title="비공개 — 나만 보여요">🔏</span>':''}</span>
       <span class="c">${esc(p.cat)}</span>
       <span class="k"></span>${t?`<img class="th" src="${t}" alt="" draggable="false">`:''}</li>`; };
   $('#rows').innerHTML = shown.length?shown.map(rowHTML).join('')
@@ -1439,6 +1440,7 @@ $('#pv-back').onclick=backToList;
 $('#go-home').onclick=goHome;
 async function openPost(id, fromHome=false){
   const p=st.posts.find(x=>x.id===id); if(!p) return;
+  if(p.priv && !st.mine){ msg('🔏 비공개 글이에요.'); return; }
   st.backHome=fromHome;                     // 홈에서 연 글은 BACK이 홈으로
   let body;
   if(p.secret){
@@ -1446,7 +1448,20 @@ async function openPost(id, fromHome=false){
     try{ body=await decTxt(pw,p.enc); }catch(e){ alert('비밀번호가 맞지 않습니다.'); return; }
   } else body=p.body;
   st.cur=p; st.curBody=body;
-  $('#pv-meta').textContent=p.cat+' · '+p.date+(p.secret?' · SECRET':'');
+  $('#pv-meta').textContent=p.cat+' · '+p.date+(p.secret?' · SECRET':'')+(p.priv?' · 🔏 비공개':'');
+  const pubBtn=$('#pv-pub');
+  if(pubBtn){
+    pubBtn.classList.toggle('hidden', !(p.priv&&st.mine));
+    pubBtn.onclick=async()=>{
+      if(!confirm('이 글을 공개로 전환할까요?\n모두가 볼 수 있게 됩니다.')) return;
+      try{
+        await updateDoc(doc(db,'pages',st.handle,'posts',p.id),{priv:false});
+        p.priv=false; pubBtn.classList.add('hidden');
+        $('#pv-meta').textContent=p.cat+' · '+p.date+(p.secret?' · SECRET':'');
+        renderList(); msg('공개로 전환했어요!');
+      }catch(e){ msg('전환 실패 — '+e.message); }
+    };
+  }
   $('#pv-title').textContent=p.title;
   $('#pv-body').innerHTML=scopePostCSS(body);
   $('#pv-del').classList.toggle('hidden',!st.mine);
@@ -1531,7 +1546,7 @@ $('#more-btn').onclick=()=>{ st.cat='recent'; st.q='__all__'; st.q='';
   $('#rows').innerHTML=rest.map(p=>{ const t=postThumb(p); return `
     <li class="row ${t?'has-th':''}" data-id="${p.id}">
       <span class="d">${esc((p.date||'').slice(5))}</span>
-      <span class="t">${esc(p.title)} ${p.secret?'<span class="k">🔒</span>':''}</span>
+      <span class="t">${esc(p.title)} ${p.secret?'<span class="k">🔒</span>':''}${p.priv?'<span class="k" title="비공개 — 나만 보여요">🔏</span>':''}</span>
       <span class="c">${esc(p.cat)}</span>
       <span class="k"></span>${t?`<img class="th" src="${t}" alt="" draggable="false">`:''}</li>`; }).join('');
   $('#more-btn').style.display='none';
@@ -2175,7 +2190,7 @@ let editPost=null, editGal=null;
 function clearWriteForm(){
   editPost=null;
   ['w-title','w-pw','w-body'].forEach(i=>$('#'+i).value='');
-  $('#w-secret').checked=false; $('#w-pin').checked=false; $('#w-pw').style.display='none';
+  $('#w-secret').checked=false; $('#w-pin').checked=false; $('#w-priv').checked=false; $('#w-pw').style.display='none';
   $('#w-cmt').checked=true; $('#w-html').checked=false; wImgs=[]; renderWImgs();
   $('#w-go').textContent='발행'; $('#w-edit-note').classList.add('hidden');
 }
@@ -2194,7 +2209,7 @@ function startEditPost(){
   wImgs = Array.isArray(p.imgs) ? p.imgs.slice() : []; renderWImgs();
   $('#w-pin').checked=!!p.pinned;
   $('#w-cmt').checked=!p.cmtOff;
-  $('#w-secret').checked=!!p.secret;
+  $('#w-secret').checked=!!p.secret; $('#w-priv').checked=!!p.priv;
   $('#w-pw').style.display=p.secret?'':'none';
   $('#w-pw').value='';
   $('#w-go').textContent='수정 완료';
@@ -2221,6 +2236,7 @@ $('#w-go').onclick=async()=>{
     });
     const data={ title, cat, date:today(), ts:serverTimestamp(),
       secret, pinned:pin, cmtOff,
+      priv: $('#w-priv').checked,
       excerpt: secret?'':(asHtml?raw.replace(/<[^>]+>/g,' '):raw).replace(/\s+/g,' ').trim().slice(0,70),
       html: asHtml, imgs: wImgs.slice() };
     if(!secret) data.raw = raw;          // 원문 보관(수정 시 그대로 열기)

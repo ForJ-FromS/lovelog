@@ -994,6 +994,7 @@
             <div id="pv-body"></div>
             <div class="pv-actions">
               <button id="pv-copy">🔗 링크 복사</button>
+              <button id="pv-pub" class="btn hidden" style="border-color:var(--pri);color:var(--pri)">🔏 공개로 전환</button>
               <button id="pv-edit" class="hidden">✎ 수정</button>
               <button id="pv-del" class="hidden">🗑 삭제</button>
             </div>
@@ -1063,6 +1064,7 @@
       <select id="w-cat"></select>
       <button class="btn" id="w-catadd" title="새 카테고리 즉석 추가" style="font-size:12px">＋</button>
       <label class="chk"><input type="checkbox" id="w-secret"> 비밀글</label>
+      <label class="chk" title="나만 볼 수 있게 발행 — 나중에 공개로 전환할 수 있어요"><input type="checkbox" id="w-priv"> 🔏 비공개</label>
       <input id="w-pw" placeholder="비밀번호" style="display:none">
       <label class="chk"><input type="checkbox" id="w-pin"> 고정</label>
       <label class="chk"><input type="checkbox" id="w-cmt" checked> 댓글 허용</label>
@@ -1457,6 +1459,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=143"></script>
+<script type="module" src="./app.js?v=144"></script>
 </body>
 </html>
