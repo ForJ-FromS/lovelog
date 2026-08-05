@@ -290,8 +290,16 @@
     font-size:14px;line-height:2.05;color:var(--body)}
   #pv-body p{margin-bottom:1em}
   #pv-body img{max-width:100%;border-radius:10px;margin:8px 0;display:block}
-  .gal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding-top:4px}
-  @media(max-width:640px){.gal-grid{grid-template-columns:repeat(2,1fr)}}
+  .gal-grid{display:grid;grid-template-columns:repeat(var(--galc,3),1fr);gap:10px;padding-top:4px}
+  @media(max-width:640px){.gal-grid{grid-template-columns:repeat(min(var(--galc,3),2),1fr)}}
+  .lb-nav{position:fixed;top:50%;transform:translateY(-50%);z-index:2;
+    width:44px;height:64px;border:none;background:rgba(0,0,0,.35);color:#fff;
+    font-size:30px;line-height:1;border-radius:10px;cursor:pointer;user-select:none}
+  .lb-nav:hover{background:rgba(0,0,0,.6)}
+  #lb-prev{left:14px} #lb-next{right:14px}
+  #lb-n{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);
+    color:rgba(255,255,255,.85);font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.15em}
+  @media(max-width:640px){.lb-nav{width:38px;height:56px;font-size:26px}}
   .gal-grid a{aspect-ratio:4/3;border-radius:9px;overflow:hidden;cursor:pointer;
     border:1px solid var(--line);background:var(--card2);display:block;position:relative}
   .gdel{position:absolute;top:6px;right:6px;z-index:2;width:22px;height:22px;
@@ -993,7 +1001,12 @@
 <button id="btn-deco" class="hidden fab" title="꾸미기" style="bottom:76px">✦</button>
 
 <!-- 라이트박스 -->
-<div id="lb"><img id="lb-img" alt=""></div>
+<div id="lb">
+  <button id="lb-prev" class="lb-nav hidden">‹</button>
+  <img id="lb-img" alt="">
+  <button id="lb-next" class="lb-nav hidden">›</button>
+  <span id="lb-n"></span>
+</div>
 
 <!-- 관리 패널 -->
 <div id="panel"><div class="p-card">
@@ -1291,6 +1304,12 @@
         <option value="text">카테고리 모양 — 글씨만 (담백하게)</option>
         <option value="box">카테고리 모양 — 네모</option>
       </select>
+      <select id="s-galcols">
+        <option value="1">갤러리 — 한 줄에 1장 (크게)</option>
+        <option value="2">갤러리 — 한 줄에 2장</option>
+        <option value="3" selected>갤러리 — 한 줄에 3장 (기본)</option>
+        <option value="4">갤러리 — 한 줄에 4장</option>
+      </select>
     </div>
     <p class="p-h">테마</p>
     <div class="p-row chks">
@@ -1407,6 +1426,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=133"></script>
+<script type="module" src="./app.js?v=134"></script>
 </body>
 </html>
