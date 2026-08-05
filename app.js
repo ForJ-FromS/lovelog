@@ -1462,12 +1462,12 @@ function refreshGalCats(){
     g.map(c=>`<option>${esc(c)}</option>`).join('');
 }
 function openPanel(mode){
-  const groups={write:['write','galup'], deco:['wid','cats','set','theme','bg','stk','adm']};
+  const groups={write:['write','galup'], deco:['set','wid','cats','theme','bg','stk','mng','adm']};
   document.querySelectorAll('.tabs button').forEach(b=>{
     b.style.display=groups[mode].includes(b.dataset.tab)?'':'none';
   });
   if(st.myHandle!=='jeste') $('#tab-adm').style.display='none';   // 운영 탭은 운영자만
-  const first = mode==='write'?'write':'wid';
+  const first = mode==='write'?'write':'set';   // 꾸미기는 기본 정보부터
   document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===first));
   document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('hidden',p.dataset.pane!==first));
   $('#panel').classList.toggle('big', mode==='deco');
@@ -2816,7 +2816,6 @@ async function saveSettings(){
     }
     const data={
       name:$('#s-name').value.trim()||st.handle,
-      mutualMemo:{ title:$('#s-mut-title').value.trim(), text:$('#s-mut-text').value.trim() },
       sub:$('#s-sub').value.trim(),
       heroImgs: heroOut,
       heroImg: '',
@@ -3008,6 +3007,28 @@ async function checkMutualMemo(){
   };
   $('#mut-pop-ok').onclick=()=>$('#mut-pop').classList.add('hidden');
 }
+const mutMsg=t=>{ const e=$('#s-mut-msg'); if(e) e.textContent=t; };
+$('#s-mut-save').onclick=async()=>{
+  if(!st.mine) return;
+  const title=$('#s-mut-title').value.trim(), text=$('#s-mut-text').value.trim();
+  if(!text){ mutMsg('내용을 적어주세요 — 지우려면 [메모 삭제]!'); return; }
+  mutMsg('저장 중...');
+  try{
+    await updateDoc(doc(db,'pages',st.handle),{mutualMemo:{title,text}});
+    st.page.mutualMemo={title,text}; checkMutualMemo();
+    mutMsg('저장했어요! 맞배너 분들 화면 오른쪽 위에 🔒가 떠요.');
+  }catch(e){ mutMsg('실패 — '+e.message); }
+};
+$('#s-mut-del').onclick=async()=>{
+  if(!st.mine) return;
+  if(!confirm('이웃 전용 메모를 삭제할까요?\n🔒도 함께 사라져요.')) return;
+  try{
+    await updateDoc(doc(db,'pages',st.handle),{mutualMemo:{title:'',text:''}});
+    st.page.mutualMemo=null;
+    $('#s-mut-title').value=''; $('#s-mut-text').value='';
+    checkMutualMemo(); mutMsg('삭제했어요 — 🔒도 사라졌어요.');
+  }catch(e){ mutMsg('실패 — '+e.message); }
+};
 
 /* ---------- 업데이트 공지 토스트 ---------- */
 async function checkUpdNotice(){

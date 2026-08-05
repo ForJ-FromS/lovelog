@@ -996,12 +996,13 @@
   <div class="tabs">
     <button data-tab="write" class="on">새 글</button>
     <button data-tab="galup">갤러리</button>
+    <button data-tab="set">기본 정보</button>
     <button data-tab="wid">위젯 구성</button>
     <button data-tab="cats">카테고리</button>
-    <button data-tab="set">기본 정보</button>
     <button data-tab="theme">테마 · 레이아웃</button>
     <button data-tab="bg">배경</button>
     <button data-tab="stk">스티커</button>
+    <button data-tab="mng">관리</button>
     <button data-tab="adm" id="tab-adm">운영</button>
   </div>
 
@@ -1154,7 +1155,19 @@
     </div>
     <input id="s-gate" type="password" placeholder="새 비밀번호 입력 (비워두면 지금 설정 그대로)">
     <p class="note">가벼운 잠금이에요 — 진짜 비밀 내용은 글을 '비밀글'로 발행하세요(그건 암호화됩니다).</p>
-    <button class="go s-go" style="margin-top:14px">설정 저장</button>
+
+
+    <p class="p-h" style="margin-top:30px">이웃 전용 메모 🔒</p>
+    <p class="note" style="margin-top:-4px">서로의 홈을 배너칸·이웃 홈에 걸어둔(맞배너) 분에게만,
+      화면 오른쪽 위에 🔒로 나타나는 비밀 메모입니다. 비밀글 비번 안내 등에 쓰세요.
+      저장·삭제는 바로 아래 버튼으로 합니다(설정 저장과 무관). <b>아주 중요한 비밀번호는 넣지 말아 주세요.</b></p>
+    <input id="s-mut-title" placeholder="제목 (선택 — 비우면 FOR NEIGHBORS)">
+    <textarea id="s-mut-text" placeholder="예: 비밀글 비번은 생일 4자리예요!" style="min-height:64px"></textarea>
+    <div class="p-row" style="align-items:center">
+      <button class="btn" id="s-mut-save" style="font-size:12px">메모 저장</button>
+      <button class="rmv" id="s-mut-del" style="font-size:11px;color:hsl(6 55% 68%)">메모 삭제</button>
+      <span class="note" id="s-mut-msg"></span>
+    </div>
     <p class="p-h" style="margin-top:26px;color:hsl(6 55% 68%)">꾸미기 초기화</p>
     <p class="note" style="margin-top:-4px">글·갤러리·방명록은 그대로 남고, 꾸민 설정만 처음 상태로 돌아가요.</p>
     <div class="p-row">
@@ -1167,14 +1180,10 @@
       </select>
       <button class="rmv" id="s-reset" style="font-size:12px;color:hsl(6 55% 68%);border-color:hsl(6 40% 40%)">초기화</button>
     </div>
+    <button class="go s-go" style="margin-top:14px">설정 저장</button>
+  </div>
 
-    <p class="p-h" style="margin-top:30px">이웃 전용 메모 🔒</p>
-    <p class="note" style="margin-top:-4px">서로의 홈을 배너칸·이웃 홈에 걸어둔(맞배너) 분에게만,
-      화면 오른쪽 위에 🔒로 나타나는 비밀 메모입니다. 비밀글 비번 안내 등에 쓰세요.
-      내용을 비우면 🔒도 사라집니다. <b>아주 중요한 비밀번호는 넣지 말아 주세요.</b></p>
-    <input id="s-mut-title" placeholder="제목 (선택 — 비우면 FOR NEIGHBORS)">
-    <textarea id="s-mut-text" placeholder="예: 비밀글 비번은 생일 4자리예요!" style="min-height:64px"></textarea>
-
+<div class="pane hidden" data-pane="mng">
     <p class="p-h" style="margin-top:30px">문의 · 제보</p>
     <p class="note" style="margin-top:-4px">버그, 오류, 바라는 기능을 운영자(유월)에게 바로 보내요.
       답변이 달리면 여기서 확인할 수 있어요.</p>
@@ -1393,6 +1402,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=127"></script>
+<script type="module" src="./app.js?v=129"></script>
 </body>
 </html>
