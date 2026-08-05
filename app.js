@@ -510,7 +510,7 @@ async function enterPage(){
   renderWidgets(); renderCatbar(); renderList(); renderGal(); renderStickers();
   // 딥링크 — loadPage에서 보관해둔 글ID를 1회 소비
   const pm=st.deepPost; st.deepPost=null;
-  if(pm){ st.cat='recent'; applyView(); renderWidgets(); renderList(); openPost(pm); }
+  if(pm){ st.cat='recent'; applyView(); renderWidgets(); renderList(); openPost(pm, true); }   // 링크 진입 글도 BACK=홈
 }
 async function loadContent(){
   const [ps,gs,gb]=await Promise.all([
@@ -2333,6 +2333,7 @@ $('#w-go').onclick=async()=>{
     await setDoc(doc(db,'pages',st.handle,'posts',nid),data);
     await loadContent(); renderWidgets(); renderList();
     clearWriteForm();
+    $('#panel').classList.remove('show','wfull');   // 집필 창 닫기
     msg('발행 완료!');
   }catch(e){ msg('오류: '+e.message); }
 };
