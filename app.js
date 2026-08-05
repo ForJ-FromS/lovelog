@@ -193,7 +193,14 @@ function dday(dstr){ const d=new Date(dstr+'T00:00:00'), n=new Date(); n.setHour
   const f=Math.round((n-d)/86400000); return f>=0?'D+'+(f+1):'D'+f; }
 const today=()=>{ const d=new Date();
   return d.getFullYear()+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+String(d.getDate()).padStart(2,'0'); };
-const bodyHTML=t=>t.split(/\n{2,}/).map(p=>'<p>'+esc(p).replace(/\n/g,'<br>')+'</p>').join('');
+/* 다이어리 서식 — **굵게** *기울임* __밑줄__ ~~취소선~~ ==형광== */
+const inlineFmt=s=>s
+  .replace(/\*\*([^\n*]+)\*\*/g,'<b>$1</b>')
+  .replace(/\*([^\n*]+)\*/g,'<i>$1</i>')
+  .replace(/__([^\n_]+)__/g,'<u>$1</u>')
+  .replace(/~~([^\n~]+)~~/g,'<s>$1</s>')
+  .replace(/==([^\n=]+)==/g,'<mark>$1</mark>');
+const bodyHTML=t=>t.split(/\n{2,}/).map(p=>'<p>'+inlineFmt(esc(p)).replace(/\n/g,'<br>')+'</p>').join('');
 const htmlToText=h=>String(h||'')
   .replace(/<br\s*\/?>/gi,'\n')
   .replace(/<\/p>\s*<p[^>]*>/gi,'\n\n')
@@ -1244,6 +1251,7 @@ function renderGuest(){
 function switchTab(name){
   document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===name));
   document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('hidden',p.dataset.pane!==name));
+  $('#panel').classList.toggle('wfull', name==='write');   // 새 글 탭 = 전체 화면 집필 모드
 }
 function updateBoardWrite(){
   const b=$('#board-write'); if(!b) return;
@@ -1580,6 +1588,7 @@ function openPanel(mode){
   const first = mode==='write'?'write':'set';   // 꾸미기는 기본 정보부터
   document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===first));
   document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('hidden',p.dataset.pane!==first));
+  $('#panel').classList.toggle('wfull', first==='write');
   $('#panel').classList.toggle('big', mode==='deco');
   msg(''); $('#panel').classList.remove('hidden'); $('#panel').classList.add('show');
 }
@@ -2149,6 +2158,19 @@ document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('hidden',p.dataset.pane!==b.dataset.tab));
 });
 $('#w-secret').addEventListener('change',e=>$('#w-pw').style.display=e.target.checked?'':'none');
+/* 서식 툴바 — 선택한 글자를 감싸요 */
+function wrapSel(mk, tag){
+  const ta=$('#w-body');
+  const s=ta.selectionStart??ta.value.length, e=ta.selectionEnd??s;
+  const sel=ta.value.slice(s,e)||'글자';
+  const [o,c]=$('#w-html').checked ? [`<${tag}>`,`</${tag}>`] : [mk,mk];
+  ta.value=ta.value.slice(0,s)+o+sel+c+ta.value.slice(e);
+  ta.focus(); ta.setSelectionRange(s+o.length, s+o.length+sel.length);
+}
+document.querySelectorAll('#w-fmt [data-fmt]').forEach(b=>{
+  const map={b:['**','b'], i:['*','i'], u:['__','u'], s:['~~','s'], h:['==','mark']};
+  b.onclick=()=>{ const [mk,tag]=map[b.dataset.fmt]; wrapSel(mk,tag); };
+});
 let wImgs=[];
 function insertWTag(n){
   const ta=$('#w-body'), tk=`\n[사진${n}]\n`,
@@ -2237,7 +2259,7 @@ $('#w-go').onclick=async()=>{
     const data={ title, cat, date:today(), ts:serverTimestamp(),
       secret, pinned:pin, cmtOff,
       priv: $('#w-priv').checked,
-      excerpt: secret?'':(asHtml?raw.replace(/<[^>]+>/g,' '):raw).replace(/\s+/g,' ').trim().slice(0,70),
+      excerpt: secret?'':(asHtml?raw.replace(/<[^>]+>/g,' '):raw.replace(/\*\*|__|~~|==|\*/g,'')).replace(/\s+/g,' ').trim().slice(0,70),
       html: asHtml, imgs: wImgs.slice() };
     if(!secret) data.raw = raw;          // 원문 보관(수정 시 그대로 열기)
     else data.raw = '';                  // 비밀글은 원문을 남기지 않음

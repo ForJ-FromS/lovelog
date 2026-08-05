@@ -301,6 +301,28 @@
   #w-img-list .wim i{position:absolute;left:3px;bottom:3px;font-style:normal;
     font-family:'IBM Plex Mono',monospace;font-size:9px;background:rgba(0,0,0,.6);
     color:#fff;border-radius:5px;padding:1px 5px}
+  #w-fmt button{width:30px;height:28px;border:1px solid var(--line);border-radius:7px;
+    background:var(--card2);color:var(--body);font-size:12.5px;cursor:pointer}
+  #w-fmt button:hover{border-color:var(--pri);color:var(--ink)}
+  /* ── 집필 모드: 새 글 탭에서 화면 전체 ── */
+  #panel.wfull{background:rgba(5,6,9,.55);padding:0;align-items:stretch}
+  #panel.wfull .p-card{width:100%;max-width:none;min-height:100dvh;border-radius:0;border:none;
+    background:color-mix(in srgb, var(--card) 84%, transparent);
+    backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    display:flex;flex-direction:column;padding:22px clamp(16px, 12vw, 220px) 26px}
+  #panel.wfull .p-panes{flex:1;display:flex;flex-direction:column}
+  #panel.wfull .pane[data-pane="write"]{flex:1;display:flex;flex-direction:column}
+  #panel.wfull .pane[data-pane="write"].hidden{display:none}
+  #panel.wfull #w-title{font-family:'Noto Serif KR',serif;font-weight:900;font-size:clamp(22px,3.2vw,30px);
+    background:transparent;border:none;border-bottom:1px solid var(--line);border-radius:0;
+    padding:10px 2px 14px;margin-bottom:14px}
+  #panel.wfull #w-title:focus{outline:none;border-bottom-color:var(--pri)}
+  #panel.wfull #w-body{flex:1;min-height:46dvh;font-size:14.5px;line-height:2.15;
+    background:transparent;border:none;border-radius:0;padding:6px 2px;resize:none}
+  #panel.wfull #w-body:focus{outline:none}
+  @media(max-width:720px){#panel.wfull .p-card{padding:18px 14px 22px}}
+  #pv-body mark{background:color-mix(in srgb, var(--pri) 32%, transparent);
+    color:inherit;padding:0 3px;border-radius:3px}
   #pager{display:flex;gap:6px;justify-content:center;align-items:center;margin-top:22px;
     font-family:'IBM Plex Mono',monospace;font-size:11px}
   #pager a{min-width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;
@@ -1070,7 +1092,15 @@
       <label class="chk"><input type="checkbox" id="w-cmt" checked> 댓글 허용</label>
       <label class="chk" title="본문을 HTML 코드 그대로 저장해요"><input type="checkbox" id="w-html"> HTML</label>
     </div>
-    <textarea id="w-body" placeholder="본문"></textarea>
+    <div id="w-fmt" style="display:flex;gap:5px;margin:0 0 6px">
+      <button type="button" data-fmt="b" title="굵게 — **글자**"><b>B</b></button>
+      <button type="button" data-fmt="i" title="기울임 — *글자*"><i>I</i></button>
+      <button type="button" data-fmt="u" title="밑줄 — __글자__"><u>U</u></button>
+      <button type="button" data-fmt="s" title="취소선 — ~~글자~~"><s>S</s></button>
+      <button type="button" data-fmt="h" title="형광펜 — ==글자==">H</button>
+      <span class="note" style="align-self:center;margin-left:4px">글자를 드래그로 고르고 누르세요</span>
+    </div>
+    <textarea id="w-body" placeholder="본문 — **굵게** *기울임* __밑줄__ ~~취소선~~ ==형광== 도 돼요"></textarea>
     <div class="p-row">
       <label class="filelab">🖼 본문에 이미지 넣기 <input type="file" id="w-img" accept="image/*"></label>
       <span class="note" id="w-img-note">첨부하면 커서 위치에 [사진N]이 자동으로 들어가요. 아래 사진을 누르면 원하는 자리에 또 넣을 수 있어요.</span>
@@ -1459,6 +1489,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=144"></script>
+<script type="module" src="./app.js?v=146"></script>
 </body>
 </html>
