@@ -345,7 +345,7 @@ async function loadPage(handle){
   const snap=await getDoc(doc(db,'pages',handle));
   if(!snap.exists()){ show('view-page');
     $('#pg-name').textContent='없는 페이지예요'; $('#pg-sub').textContent='@'+handle; return; }
-  st.page=snap.data();
+  st.page=snap.data(); st._mutual=undefined;
   await resolveImgs(st.page);
   st.mine = st.me && st.page.owner===st.me.uid;
   applyColor(st.page.hue ?? 222, st.page.sat, st.page.lum);
@@ -392,7 +392,7 @@ async function enterPage(){
   $('#pg-over').textContent='@'+h.toUpperCase();
   $('#gb-title').textContent=gbNm(); $('#strip-title').textContent=galNm();
   if(st.mine) admInqBadge();
-  checkUpdNotice();
+  checkUpdNotice(); checkMutualMemo();
   const hs=heroObjs();
   st.autoRatio=0;                                    // 홈 전환 — 이전 홈 사진 비율 리셋
   clearInterval(st.heroTimer);
@@ -832,6 +832,25 @@ const nbImg=x=> (typeof x==='object'&&x&&x.img)||'';
 const nbUrlRaw=x=> (typeof x==='object'&&x&&x.url)||'';
 const nbUrl=x=>{ const u=nbUrlRaw(x); return (u && ownHandle(u)) ? '' : u; };
 const nbName=x=> (typeof x==='object'&&x&&x.name)||'';
+function linkedSetOf(page){
+  const out=new Set();
+  ((page&&page.side)||[]).forEach(w=>{
+    if(w.t==='banner') (w.items||[]).forEach(b=>{ const h=((b&&b.h)||'').trim().toLowerCase(); if(h) out.add(h); });
+    if(w.t==='nb') (w.items||[]).forEach(x=>{ const h=nbH(x); if(h) out.add(h); });
+  });
+  return out;
+}
+async function ensureMutual(){
+  if(st.mine) return true;
+  if(!st.me || !st.myHandle) return false;
+  if(st._mutual!==undefined) return st._mutual;
+  try{
+    if(!linkedSetOf(st.page).has(st.myHandle)) return st._mutual=false;   // 이 홈이 나를 걸었나
+    const my=(await getDoc(doc(db,'pages',st.myHandle))).data()||{};
+    st._mutual=linkedSetOf(my).has(st.handle);                            // 나도 이 홈을 걸었나
+  }catch(e){ st._mutual=false; }
+  return st._mutual;
+}
 const nbHost=u=>{ try{ return new URL(u).hostname.replace(/^www\./,''); }catch(e){ return u; } };
 // luvlog.me/핸들 · github.io/...?u=핸들 처럼 우리 주소면 핸들만 뽑아냄
 function ownHandle(raw){
@@ -2731,6 +2750,7 @@ $('#s-bg-clear').onclick=()=>{
 function fillSettings(){
   const p=st.page;
   $('#s-name').value=p.name||''; $('#s-sub').value=p.sub||'';
+  $('#s-mut-title').value=(p.mutualMemo&&p.mutualMemo.title)||''; $('#s-mut-text').value=(p.mutualMemo&&p.mutualMemo.text)||'';
   $('#s-gate').value=''; gateClear=false; renderGateState(); priVal=null; $('#s-pri').value=p.priColor||'#9db4ff'; $('#s-color').value=hslToHex(p.hue??222, p.sat??60, p.lum??62);
   $('#s-headmode').value=p.headMode||'wide'; $('#s-headh').value=p.headH||380; $('#s-headfit').value=p.headFit||'cover';
   $('#s-headgrad').value=p.headGrad||'dark'; $('#s-headtext').checked=p.headText!==false; $('#s-headh-v').textContent=(p.headH||380)+'px';
@@ -2796,6 +2816,7 @@ async function saveSettings(){
     }
     const data={
       name:$('#s-name').value.trim()||st.handle,
+      mutualMemo:{ title:$('#s-mut-title').value.trim(), text:$('#s-mut-text').value.trim() },
       sub:$('#s-sub').value.trim(),
       heroImgs: heroOut,
       heroImg: '',
@@ -2971,6 +2992,23 @@ $('#btn-login').onclick=()=>signInWithPopup(auth,new GoogleAuthProvider()).catch
 $('#btn-signup').onclick=signup;
 
 /* ---------- 시작 ---------- */
+/* ---------- 이웃 전용 메모 (우상단 🔒) ---------- */
+async function checkMutualMemo(){
+  const link=$('#seal-mut'); if(!link) return;
+  link.classList.add('hidden');
+  const memo=st.page&&st.page.mutualMemo;
+  if(!memo||!memo.text) return;
+  const ok = st.mine || await ensureMutual();
+  if(!ok) return;
+  link.classList.remove('hidden');
+  link.onclick=()=>{
+    $('#mut-pop-t').textContent=memo.title||'FOR NEIGHBORS';
+    $('#mut-pop-x').textContent=memo.text;
+    $('#mut-pop').classList.remove('hidden');
+  };
+  $('#mut-pop-ok').onclick=()=>$('#mut-pop').classList.add('hidden');
+}
+
 /* ---------- 업데이트 공지 토스트 ---------- */
 async function checkUpdNotice(){
   if(!st.myHandle) return;                              // 가입자에게만

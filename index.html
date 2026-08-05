@@ -421,6 +421,16 @@
     transition:opacity .25s, transform .25s;max-width:min(420px,calc(100% - 30px));
     box-shadow:0 8px 26px rgba(0,0,0,.4)}
   #toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+  #mut-pop{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;z-index:61;
+    width:min(430px,calc(100% - 28px));background:var(--card);border:1px dashed var(--pri);
+    border-radius:14px;padding:16px 18px 14px;box-shadow:0 10px 34px rgba(0,0,0,.45)}
+  #mut-pop.hidden{display:none}
+  #mut-pop .ut-tag{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.26em;
+    color:var(--pri);margin:0 0 8px}
+  #mut-pop-x{font-size:12.5px;line-height:1.85;white-space:pre-wrap;color:var(--body)}
+  #mut-pop-ok{margin-top:12px;width:100%;border:1px solid var(--line);background:none;
+    color:var(--muted);border-radius:8px;padding:7px 0;font-size:11.5px;cursor:pointer}
+  #mut-pop-ok:hover{color:var(--body);border-color:var(--pri)}
   #upd-toast{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;z-index:60;
     width:min(430px,calc(100% - 28px));background:var(--card);border:1px solid var(--pri);
     border-radius:14px;padding:16px 18px 14px;box-shadow:0 10px 34px rgba(0,0,0,.45)}
@@ -819,7 +829,7 @@
 
 <div id="bgphoto"></div>
 <div id="bgm-dock" class="hidden"><div id="bgm-dock-fr"></div><button id="bgm-dock-x" title="재생 종료">✕</button></div>
-<div class="seal"><span id="seal-txt">LOVELOG</span><a href="/guide.html" style="text-decoration:none;color:inherit">GUIDE</a><a id="seal-auth"></a></div>
+<div class="seal"><span id="seal-txt">LOVELOG</span><a id="seal-mut" class="hidden" title="이웃 전용 메모" style="cursor:pointer">🔒</a><a href="/guide.html" style="text-decoration:none;color:inherit">GUIDE</a><a id="seal-auth"></a></div>
 <div id="homes"><div class="homes-box">
   <p class="p-h" style="margin:0 0 12px">◈ HOMES — 공개된 러브로그</p>
   <button id="homes-x" class="rmv" style="position:absolute;top:14px;right:16px">✕</button>
@@ -829,6 +839,12 @@
 <div class="wrap">
 <div id="stk-layer"></div>
 <div id="toast"></div>
+
+<div id="mut-pop" class="hidden">
+  <p class="ut-tag">🔒 <span id="mut-pop-t">FOR NEIGHBORS</span></p>
+  <div id="mut-pop-x"></div>
+  <button id="mut-pop-ok">닫기</button>
+</div>
 
 <div id="upd-toast" class="hidden">
   <p class="ut-tag">📢 UPDATE</p>
@@ -1152,6 +1168,13 @@
       <button class="rmv" id="s-reset" style="font-size:12px;color:hsl(6 55% 68%);border-color:hsl(6 40% 40%)">초기화</button>
     </div>
 
+    <p class="p-h" style="margin-top:30px">이웃 전용 메모 🔒</p>
+    <p class="note" style="margin-top:-4px">서로의 홈을 배너칸·이웃 홈에 걸어둔(맞배너) 분에게만,
+      화면 오른쪽 위에 🔒로 나타나는 비밀 메모입니다. 비밀글 비번 안내 등에 쓰세요.
+      내용을 비우면 🔒도 사라집니다. <b>아주 중요한 비밀번호는 넣지 말아 주세요.</b></p>
+    <input id="s-mut-title" placeholder="제목 (선택 — 비우면 FOR NEIGHBORS)">
+    <textarea id="s-mut-text" placeholder="예: 비밀글 비번은 생일 4자리예요!" style="min-height:64px"></textarea>
+
     <p class="p-h" style="margin-top:30px">문의 · 제보</p>
     <p class="note" style="margin-top:-4px">버그, 오류, 바라는 기능을 운영자(유월)에게 바로 보내요.
       답변이 달리면 여기서 확인할 수 있어요.</p>
@@ -1242,7 +1265,7 @@
     <div class="p-row">
       <select id="s-homestyle">
         <option value="grid">홈 — 위젯 그리드형 (지금 구조)</option>
-        <option value="blog">홈 — 클래식 블로그형 (프로스트 버드 구조: 글 목록이 메인)</option>
+        <option value="blog">홈 — 클래식 블로그형 (글 목록이 메인)</option>
       </select>
       <select id="s-catstyle">
         <option value="bar">카테고리 — 상단 알약 바</option>
@@ -1370,6 +1393,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=125"></script>
+<script type="module" src="./app.js?v=127"></script>
 </body>
 </html>
