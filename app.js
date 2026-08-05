@@ -2110,15 +2110,29 @@ document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
 });
 $('#w-secret').addEventListener('change',e=>$('#w-pw').style.display=e.target.checked?'':'none');
 let wImgs=[];
+function insertWTag(n){
+  const ta=$('#w-body'), tk=`\n[사진${n}]\n`,
+        s=ta.selectionStart??ta.value.length;
+  ta.value = ta.value.slice(0,s)+tk+ta.value.slice(ta.selectionEnd??s);
+  const c=s+tk.length; ta.focus(); ta.setSelectionRange(c,c);
+}
+function renderWImgs(){
+  const box=$('#w-img-list'); if(!box) return;
+  box.innerHTML = wImgs.map((im,i)=>
+    `<span class="wim" data-wim="${i}" title="누르면 커서 자리에 [사진${i+1}] 삽입"><img src="${im}" alt=""><i>${i+1}</i></span>`).join('');
+  box.querySelectorAll('[data-wim]').forEach(el=>el.onclick=()=>{
+    insertWTag(+el.dataset.wim+1);
+    msg(`[사진${+el.dataset.wim+1}] 넣었어요 — 발행하면 그 자리에 사진이 나와요.`);
+  });
+}
 $('#w-img').addEventListener('change',async e=>{
   const f=e.target.files[0]; if(!f) return;
   msg('이미지 압축 중...');
   wImgs.push(await upFile(f,1600,.88,180));
-  const ta=$('#w-body'), tk=`\n[사진${wImgs.length}]\n`,
-        s=ta.selectionStart??ta.value.length;
-  ta.value = ta.value.slice(0,s)+tk+ta.value.slice(ta.selectionEnd??s);
+  insertWTag(wImgs.length);
+  renderWImgs();
   e.target.value='';
-  msg(`사진 ${wImgs.length} 삽입됨 — 위치는 본문에서 [사진${wImgs.length}] 글자를 옮기면 돼요.`);
+  msg(`사진 ${wImgs.length} 삽입됨 — 아래 썸네일을 누르면 다른 자리에도 넣을 수 있어요.`);
 });
 let msgTimer=null;
 const msg=t=>{
@@ -2137,7 +2151,7 @@ function clearWriteForm(){
   editPost=null;
   ['w-title','w-pw','w-body'].forEach(i=>$('#'+i).value='');
   $('#w-secret').checked=false; $('#w-pin').checked=false; $('#w-pw').style.display='none';
-  $('#w-cmt').checked=true; $('#w-html').checked=false; wImgs=[];
+  $('#w-cmt').checked=true; $('#w-html').checked=false; wImgs=[]; renderWImgs();
   $('#w-go').textContent='발행'; $('#w-edit-note').classList.add('hidden');
 }
 function startEditPost(){
@@ -2152,7 +2166,7 @@ function startEditPost(){
     const src = p.secret ? (st.curBody||'') : (p.body||'');
     $('#w-body').value = htmlToText(src); $('#w-html').checked=false;
   }
-  wImgs = Array.isArray(p.imgs) ? p.imgs.slice() : [];
+  wImgs = Array.isArray(p.imgs) ? p.imgs.slice() : []; renderWImgs();
   $('#w-pin').checked=!!p.pinned;
   $('#w-cmt').checked=!p.cmtOff;
   $('#w-secret').checked=!!p.secret;
