@@ -646,7 +646,7 @@ function goHome(){
   st.cur=null;
   st.cat='home'; applyView(); renderWidgets(); renderCatbar();
 }
-function goBoard(cat){ st.cat=cat||'recent'; applyView(); renderWidgets(); renderList(); backToList(); renderCatbar(); }
+function goBoard(cat){ st.cat=cat||'recent'; st.pg=1; applyView(); renderWidgets(); renderList(); backToList(); renderCatbar(); }
 function catStyle(){
   return st.page.catStyle || (st.page.catBar===false ? 'widget' : 'bar');
 }
@@ -929,7 +929,7 @@ function renderSide(){
         <div class="s-search">⌕ <input id="q" placeholder="search"></div>`;
       box.appendChild(d);
       d.querySelector('#q').addEventListener('input',e=>{
-        st.q=e.target.value.trim().toLowerCase(); renderList(); });
+        st.q=e.target.value.trim().toLowerCase(); st.pg=1; renderList(); });
       return;
     }
     if(w.t==='category'){
@@ -1233,6 +1233,34 @@ function updateBoardWrite(){
   };
 }
 const postThumb=p=>{ if(p.secret||!p.body) return ''; const m=p.body.match(/<img[^>]+src="([^"]+)"/); return m?m[1]:''; };
+function renderPager(total, per){
+  const box=$('#pager'); if(!box) return [];
+  const pages=Math.ceil(total/per);
+  if(pages<=1){ box.innerHTML=''; return null; }
+  st.pg=Math.min(Math.max(1,st.pg||1), pages);
+  const p=st.pg;
+  let nums=[];
+  if(pages<=7) nums=Array.from({length:pages},(_,i)=>i+1);
+  else{
+    nums=[1];
+    if(p>3) nums.push('…');
+    for(let i=Math.max(2,p-1); i<=Math.min(pages-1,p+1); i++) nums.push(i);
+    if(p<pages-2) nums.push('…');
+    nums.push(pages);
+  }
+  box.innerHTML =
+    `<a class="pg-arr${p<=1?' off':''}" data-pg="${p-1}">‹</a>`+
+    nums.map(n=> n==='…' ? `<span class="pg-gap">…</span>`
+      : `<a class="${n===p?'on':''}" data-pg="${n}">${n}</a>`).join('')+
+    `<a class="pg-arr${p>=pages?' off':''}" data-pg="${p+1}">›</a>`;
+  box.querySelectorAll('a[data-pg]').forEach(a=>a.onclick=()=>{
+    const n=+a.dataset.pg;
+    if(n<1||n>pages||n===st.pg) return;
+    st.pg=n; renderList();
+    $('#list-view').scrollIntoView({behavior:'smooth',block:'start'});
+  });
+  return null;
+}
 function renderList(){
   updateBoardWrite();
   if(st.cat==='__gb'){ $('#guest-view').classList.remove('hidden');
@@ -1242,7 +1270,10 @@ function renderList(){
   if(st.cat==='__gal' || (st.cat!=='recent' && st.cat!=='home' && isG(st.cat))){
     $('#v-label').textContent = st.cat==='__gal' ? galNm() : st.cat.toUpperCase();
     $('#pin-slot').innerHTML='';
-    const items = st.cat==='__gal' ? st.gallery : st.gallery.filter(g=>g.cat===st.cat);
+    const all = st.cat==='__gal' ? st.gallery : st.gallery.filter(g=>g.cat===st.cat);
+    const gper = galCols()*5;
+    renderPager(all.length, gper);
+    const items = all.slice(((st.pg||1)-1)*gper, (st.pg||1)*gper);
     $('#rows').innerHTML = items.length
       ? `<div class="gal-grid">`+items.map(g=>
           `<a data-gg="${g.id}"><img src="${g.img}" alt="" draggable="false">${st.mine?
@@ -1271,7 +1302,9 @@ function renderList(){
       <p class="t">${esc(pin.title)}${pin.secret?' 🔒':''}</p>
       ${pin.excerpt?`<p class="ex">${esc(pin.excerpt)}</p>`:''}
       <p class="meta">${esc(pin.cat)} · ${esc(pin.date)}</p></a>`:'';
-  const shown=(st.cat==='recent'&&!st.q)?rest.slice(0,7):rest;
+  const PER=12;
+  renderPager(rest.length, PER);
+  const shown=rest.slice(((st.pg||1)-1)*PER, (st.pg||1)*PER);
   const rowHTML=p=>{ const t=postThumb(p); return `
     <li class="row ${t?'has-th':''}" data-id="${p.id}">
       <span class="d">${esc((p.date||'').slice(5))}</span>
@@ -1280,7 +1313,7 @@ function renderList(){
       <span class="k"></span>${t?`<img class="th" src="${t}" alt="" draggable="false">`:''}</li>`; };
   $('#rows').innerHTML = shown.length?shown.map(rowHTML).join('')
     :'<p class="pl-empty">아직 글이 없습니다.</p>';
-  $('#more-btn').style.display=(st.cat==='recent'&&!st.q&&rest.length>7)?'':'none';
+  $('#more-btn').style.display='none';
   document.querySelectorAll('[data-id]').forEach(el=>el.onclick=()=>openPost(el.dataset.id));
 }
 const galPins=()=> st.page?.stripPin||[];
