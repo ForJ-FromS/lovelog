@@ -203,6 +203,29 @@ const htmlToText=h=>String(h||'')
   .replace(/&nbsp;/g,' ').replace(/&lt;/g,'<').replace(/&gt;/g,'>')
   .replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&amp;/g,'&')
   .trim();
+/* 글 속 <style>이 홈 전체를 물들이지 않게 — 셀렉터를 #pv-body 스코프로 */
+function scopePostCSS(html){
+  if(!/<style/i.test(html)) return html;
+  const SC='#pv-body';
+  const scopeSel=sel=>sel.split(',').map(s=>{
+    s=s.trim(); if(!s) return '';
+    if(/^(body|html|:root)$/i.test(s)) return SC;
+    if(s==='*') return SC+' *';
+    return SC+' '+s.replace(/^(body|html|:root)\s+/i,'');
+  }).filter(Boolean).join(', ');
+  const scopeRules=block=>block.replace(/([^{}@]+)(\{[^{}]*\})/g,
+    (m,sel,body)=> scopeSel(sel)+body );
+  return html.replace(/(<style[^>]*>)([\s\S]*?)(<\/style\s*>)/gi,(m,o,css,c)=>{
+    let out='', pos=0, re=/@media[^{]+\{((?:[^{}]*\{[^{}]*\})*)\s*\}/g, am;
+    while((am=re.exec(css))){
+      out+=scopeRules(css.slice(pos,am.index));
+      out+=css.slice(am.index, css.indexOf('{',am.index)+1)+scopeRules(am[1])+'}';
+      pos=am.index+am[0].length;
+    }
+    out+=scopeRules(css.slice(pos));
+    return o+out+c;
+  });
+}
 const cleanHTML=h=>h
   .replace(/<script[\s\S]*?<\/script\s*>/gi,'')
   .replace(/\son\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi,'')
@@ -1425,7 +1448,7 @@ async function openPost(id, fromHome=false){
   st.cur=p; st.curBody=body;
   $('#pv-meta').textContent=p.cat+' · '+p.date+(p.secret?' · SECRET':'');
   $('#pv-title').textContent=p.title;
-  $('#pv-body').innerHTML=body;
+  $('#pv-body').innerHTML=scopePostCSS(body);
   $('#pv-del').classList.toggle('hidden',!st.mine);
   $('#pv-edit').classList.toggle('hidden',!st.mine);
   $('#list-view').classList.add('hidden');
