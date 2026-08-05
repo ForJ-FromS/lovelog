@@ -392,6 +392,7 @@ async function enterPage(){
   $('#pg-over').textContent='@'+h.toUpperCase();
   $('#gb-title').textContent=gbNm(); $('#strip-title').textContent=galNm();
   if(st.mine) admInqBadge();
+  checkUpdNotice();
   const hs=heroObjs();
   st.autoRatio=0;                                    // 홈 전환 — 이전 홈 사진 비율 리셋
   clearInterval(st.heroTimer);
@@ -2323,6 +2324,8 @@ function fillSettings(){
   $('#s-gatecolor').value=p.gateColor||'#ffffff';
   $('#del-h').textContent=st.handle||'—'; $('#s-del-confirm').value=''; delMsg('');
   renderMyInq(); renderAdmInq();
+  if(st.myHandle==='jeste'){ getDoc(doc(db,'config','notice')).then(s=>{
+    if(s.exists()) $('#adm-notice').value=s.data().text||''; }).catch(()=>{}); }
   $('#s-gatebtnc').value=p.gateBtnC||'#e691a9'; gateBtnCVal=null;
   $('#s-gategrad').checked=p.gateGrad!==false;
   heroDraft=JSON.parse(JSON.stringify(heroObjs())); renderHeroList();
@@ -2543,6 +2546,40 @@ $('#btn-login').onclick=()=>signInWithPopup(auth,new GoogleAuthProvider()).catch
 $('#btn-signup').onclick=signup;
 
 /* ---------- 시작 ---------- */
+/* ---------- 업데이트 공지 토스트 ---------- */
+async function checkUpdNotice(){
+  if(!st.myHandle) return;                              // 가입자에게만
+  try{
+    const sn=await getDoc(doc(db,'config','notice'));
+    if(!sn.exists()) return;
+    const n=sn.data();
+    if(!n.text || !n.ver) return;
+    if(localStorage.getItem('lv-upd-seen')===String(n.ver)) return;
+    $('#upd-body').textContent=n.text;
+    $('#upd-toast').classList.remove('hidden');
+    $('#upd-ok').onclick=()=>{
+      localStorage.setItem('lv-upd-seen',String(n.ver));
+      $('#upd-toast').classList.add('hidden');
+    };
+  }catch(e){}
+}
+/* ── 운영자: 공지 올리기/내리기 ── */
+const admNtcMsg=t=>{ const e=$('#adm-notice-msg'); if(e) e.textContent=t; };
+$('#adm-notice-up').onclick=async()=>{
+  if(st.myHandle!=='jeste') return;
+  const text=$('#adm-notice').value.trim();
+  if(!text){ admNtcMsg('내용을 적어주세요.'); return; }
+  try{
+    await setDoc(doc(db,'config','notice'),{text,ver:Date.now(),at:serverTimestamp()});
+    admNtcMsg('올렸어요! 가입자들이 다음 접속에 보게 돼요.');
+  }catch(e){ admNtcMsg('실패 — '+e.message+' (config/notice 규칙 필요)'); }
+};
+$('#adm-notice-dn').onclick=async()=>{
+  if(st.myHandle!=='jeste') return;
+  try{ await setDoc(doc(db,'config','notice'),{text:'',ver:Date.now()}); admNtcMsg('내렸어요.'); }
+  catch(e){ admNtcMsg('실패 — '+e.message); }
+};
+
 /* ---------- 문의 · 제보 ---------- */
 const inqMsg=t=>{ const e=$('#inq-msg'); if(e) e.textContent=t; };
 const inqDate=ts=>{ try{ return ts?.toDate?.().toLocaleDateString('ko-KR',{month:'numeric',day:'numeric'})||''; }catch(e){ return ''; } };

@@ -415,6 +415,16 @@
   .inq-card .ir{margin-top:9px;padding:9px 12px;border-left:2px solid var(--pri);
     background:hsl(var(--h) 30% 15%);border-radius:0 8px 8px 0;white-space:pre-wrap}
   .inq-card textarea{min-height:52px;margin-top:8px}
+  #upd-toast{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;z-index:60;
+    width:min(430px,calc(100% - 28px));background:var(--card);border:1px solid var(--pri);
+    border-radius:14px;padding:16px 18px 14px;box-shadow:0 10px 34px rgba(0,0,0,.45)}
+  #upd-toast.hidden{display:none}
+  #upd-toast .ut-tag{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.26em;
+    color:var(--pri);margin:0 0 8px}
+  #upd-body{font-size:12.5px;line-height:1.8;white-space:pre-wrap;color:var(--body)}
+  #upd-ok{margin-top:12px;width:100%;border:1px solid var(--line);background:none;
+    color:var(--muted);border-radius:8px;padding:7px 0;font-size:11.5px;cursor:pointer}
+  #upd-ok:hover{color:var(--body);border-color:var(--pri)}
   #btn-deco.noti::after{content:'';position:absolute;top:7px;right:7px;width:9px;height:9px;
     border-radius:50%;background:hsl(6 75% 62%);box-shadow:0 0 6px hsl(6 75% 62%)}
   .p-x{position:absolute;top:14px;right:16px;border:none;background:none;
@@ -781,6 +791,12 @@
 
 <div class="wrap">
 <div id="stk-layer"></div>
+
+<div id="upd-toast" class="hidden">
+  <p class="ut-tag">📢 UPDATE</p>
+  <div id="upd-body"></div>
+  <button id="upd-ok">확인 — 다시 뜨지 않아요</button>
+</div>
 
   <div id="view-setup" class="center hidden"><h1>SETUP</h1>
     <p>firebase-config.js에 설정을 붙여넣어 주세요.</p></div>
@@ -1149,6 +1165,16 @@
 
       <p class="p-h" style="margin-top:30px">문의함 <span id="adm-inq-n" style="font-size:10px;color:hsl(42 70% 65%)"></span></p>
       <div id="adm-inq"></div>
+
+      <p class="p-h" style="margin-top:30px">업데이트 공지</p>
+      <p class="note" style="margin-top:-4px">올리면 가입자들이 홈에 들어올 때 화면 하단에 한 번 떠요.
+        [확인]을 누른 사람에겐 다시 안 뜨고, 새로 올리면 다시 떠요.</p>
+      <textarea id="adm-notice" placeholder="예: 스티커 모바일 크기 조절과 커서 효과 3종이 추가됐어요!" style="min-height:70px"></textarea>
+      <div class="p-row" style="align-items:center">
+        <button class="btn" id="adm-notice-up" style="font-size:12px">공지 올리기</button>
+        <button class="rmv" id="adm-notice-dn" style="font-size:11px">공지 내리기</button>
+        <span class="note" id="adm-notice-msg"></span>
+      </div>
     </div>
   </div>
 
@@ -1291,6 +1317,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=110"></script>
+<script type="module" src="./app.js?v=111"></script>
 </body>
 </html>
