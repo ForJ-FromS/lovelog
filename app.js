@@ -564,9 +564,14 @@ function fillStamps(){
   }
 }
 async function loadStamps(){
-  if(!((st.page.widgets||[]).some(w=>w.t==='stamp'))) return;
-  try{ st.stamps=(await getDoc(doc(db,'pages',st.handle,'stats','stamps'))).data()||{}; }
+  if(!((st.page.widgets||[]).some(w=>w.t==='stamp'))){ console.log('[lovelog] stamps: 위젯 없음, 로드 생략'); return; }
+  try{
+    const sn=await getDoc(doc(db,'pages',st.handle,'stats','stamps'));
+    console.log('[lovelog] stamps 로드:', 'handle='+st.handle, 'exists='+sn.exists(), sn.data());
+    st.stamps=sn.data()||{};
+  }
   catch(e){ st.stamps={};
+    console.warn('[lovelog] stamps 로드 실패:', e.code||e.message, e);
     if(st.mine) msg('⚠ 발도장 불러오기 실패 — '+(e.code||e.message)); }
   fillStamps();
 }
@@ -602,6 +607,7 @@ async function bumpCounter(){
         const upd={ total:(cur.total||0)+1, day:t, today: cur.day===t ? (cur.today||0)+1 : 1 };
         tx.set(ref,upd); return upd;
       });
+      console.log('[lovelog] counter 커밋:', 'handle='+st.handle, c);
       sessionStorage.setItem(key,'1');
     }catch(e){
       console.warn('[lovelog] 방문자수 기록 실패:', e.code||e.message, e);
@@ -609,8 +615,11 @@ async function bumpCounter(){
       if(st.mine) msg('⚠ 방문자수 기록 실패 — '+(e.code||e.message)+' (규칙의 stats 부분을 확인해주세요)');
     }
   }else{
-    try{ c=(await getDoc(ref)).data()||{}; }
-    catch(e){ if(st.mine) msg('⚠ 방문자수 불러오기 실패 — '+(e.code||e.message)); }
+    try{ const sn=await getDoc(ref);
+      console.log('[lovelog] counter 로드:', 'exists='+sn.exists(), sn.data());
+      c=sn.data()||{}; }
+    catch(e){ console.warn('[lovelog] counter 로드 실패:', e.code||e.message, e);
+      if(st.mine) msg('⚠ 방문자수 불러오기 실패 — '+(e.code||e.message)); }
   }
   st.cnt=c; fillCounter();
 }
