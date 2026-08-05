@@ -353,6 +353,11 @@ $('#homes-x').onclick=()=>$('#homes').classList.remove('show');
 $('#homes').onclick=e=>{ if(e.target.id==='homes') $('#homes').classList.remove('show'); };
 function renderSeal(){
   $('#seal-txt').textContent = st.myHandle ? 'LOVELOG · @'+st.myHandle.toUpperCase() : 'LOVELOG';
+  const myBtn=$('#seal-my');
+  if(myBtn){
+    myBtn.classList.toggle('hidden', !st.myHandle || st.handle===st.myHandle);   // 남의 홈에서만
+    myBtn.onclick=()=>location.href='/'+st.myHandle;
+  }
   const a=$('#seal-auth');
   if(st.me){ a.textContent='OUT'; a.onclick=()=>signOut(auth); }
   else if(st.handle){ a.textContent='IN'; a.onclick=()=>signInWithPopup(auth,new GoogleAuthProvider()).catch(()=>{}); }
@@ -1240,8 +1245,27 @@ function renderGuest(){
         ? ((st.mine||g.uid===st.me?.uid)
             ? `<p>${esc(g.text)}${st.mine?'<span class="gb-badge">🔒 비공개</span>':'<span class="gb-badge">🔒 내 글</span>'}</p>`
             : `<p class="gb-lock">🔒 주인에게만 남긴 비공개 방명록이에요.</p>`)
-        : `<p>${esc(g.text)}</p>`}</li>`).join('')
+        : `<p>${esc(g.text)}</p>`}
+      ${g.reply && (!g.secret || st.mine || g.uid===st.me?.uid)
+        ? `<p class="gb-re">↳ <b>${esc(st.page.name||st.handle)}</b> ${esc(g.reply)}</p>`:''}
+      ${st.mine?`<i class="gb-rebtn" data-gbr="${g.id}">${g.reply?'답글 수정':'답글'}</i>`:''}
+      <span class="gb-reform hidden" data-gbf="${g.id}"></span></li>`).join('')
     :'<p class="pl-empty">아직 방명록이 비어 있어요 — 첫 흔적을 남겨주세요.</p>';
+  $('#gb-list').querySelectorAll('[data-gbr]').forEach(b=>b.onclick=()=>{
+    const id=b.dataset.gbr, g=st.guest.find(x=>x.id===id); if(!g) return;
+    const box=$('#gb-list').querySelector(`[data-gbf="${id}"]`);
+    if(!box.classList.contains('hidden')){ box.classList.add('hidden'); box.innerHTML=''; return; }
+    box.classList.remove('hidden');
+    box.innerHTML=`<textarea class="gb-reta" rows="2" placeholder="답글 — 비우고 저장하면 지워져요">${g.reply?esc(g.reply):''}</textarea>
+      <button class="btn pri gb-rego" style="font-size:11.5px">저장</button>`;
+    box.querySelector('.gb-rego').onclick=async()=>{
+      const t=box.querySelector('.gb-reta').value.trim();
+      try{
+        await updateDoc(doc(db,'pages',st.handle,'guest',id),{reply:t});
+        g.reply=t; renderGuest(); msg(t?'답글을 남겼어요.':'답글을 지웠어요.');
+      }catch(e){ msg('답글 저장 실패 — 규칙 게시가 필요할 수 있어요: '+e.message); }
+    };
+  });
   $('#gb-list').querySelectorAll('[data-gbd]').forEach(b=>b.onclick=async()=>{
     if(!confirm('이 방명록 글을 삭제할까요?')) return;
     await deleteDoc(doc(db,'pages',st.handle,'guest',b.dataset.gbd));
@@ -1457,6 +1481,26 @@ async function openPost(id, fromHome=false){
   } else body=p.body;
   st.cur=p; st.curBody=body;
   $('#pv-meta').textContent=p.cat+' · '+p.date+(p.secret?' · SECRET':'')+(p.priv?' · 🔏 비공개':'');
+  /* ── 공감 ♥ ── */
+  (async()=>{
+    const el=$('#pv-like'); if(!el) return;
+    el.classList.add('hidden');
+    let u=[];
+    try{ const s=await getDoc(doc(db,'pages',st.handle,'likes',p.id));
+         if(s.exists()) u=s.data().u||[]; }catch(e){}
+    const draw=()=>{ el.innerHTML=(st.me&&u.includes(st.me.uid)?'♥':'♡')+(u.length?` ${u.length}`:'');
+                     el.classList.toggle('on', !!(st.me&&u.includes(st.me.uid))); };
+    draw(); el.classList.remove('hidden');
+    el.onclick=async()=>{
+      if(!st.me){ msg('공감은 로그인하고 눌러주세요.'); return; }
+      const has=u.includes(st.me.uid);
+      u = has ? u.filter(x=>x!==st.me.uid) : [...u,st.me.uid];
+      draw();
+      try{ await setDoc(doc(db,'pages',st.handle,'likes',p.id),{u},{merge:false}); }
+      catch(e){ u = has ? [...u,st.me.uid] : u.filter(x=>x!==st.me.uid); draw();
+                msg('공감 저장 실패 — 규칙 게시가 필요할 수 있어요: '+e.message); }
+    };
+  })();
   const pubBtn=$('#pv-pub');
   if(pubBtn){
     pubBtn.classList.toggle('hidden', !(p.priv&&st.mine));
