@@ -547,12 +547,21 @@ const galNm=()=>st.page?.galName||'GALLERY';
 const gbNm=()=>st.page?.gbName||'GUESTBOOK';
 const WNAME={latest:'최신글',notice:'공지',chat:'채팅로그',img:'이미지',nb:'이웃 홈',profile:'프로필',search:'검색',category:'카테고리',
   dday:'디데이',bgm:'BGM',quote:'인용구',links:'링크',banner:'배너칸',text:'글',cnt:'방문자수',stamp:'발도장'};
-const STAMP_KEYS=['heart','paw','star','drop'];
+const STAMP_LEGACY=['heart','paw','star','drop'];   // 옛 슬롯 이름 — 카운트 승계용
+function parseEmo(s){
+  const raw=(s||'').replace(/\s+/g,'');
+  if(!raw) return ['🐾'];
+  let arr;
+  try{ arr=[...new Intl.Segmenter('ko',{granularity:'grapheme'}).segment(raw)].map(x=>x.segment); }
+  catch(e){ arr=[...raw]; }
+  return arr.slice(0,4);
+}
 function fillStamps(){
   const s=st.stamps||{};
-  STAMP_KEYS.forEach(k=>{
-    document.querySelectorAll(`[data-sc="${k}"]`).forEach(el=>el.textContent=s[k]||0);
-  });
+  for(let i=0;i<4;i++){
+    const v=s['s'+i] ?? s[STAMP_LEGACY[i]] ?? 0;
+    document.querySelectorAll(`[data-sc="s${i}"]`).forEach(el=>el.textContent=v);
+  }
 }
 async function loadStamps(){
   if(!((st.page.widgets||[]).some(w=>w.t==='stamp'))) return;
@@ -567,7 +576,10 @@ async function hitStamp(k,btn){
     const ref=doc(db,'pages',st.handle,'stats','stamps');
     st.stamps=await runTransaction(db,async tx=>{
       const cur=(await tx.get(ref)).data()||{};
-      const upd={...cur,[k]:(cur[k]||0)+1};
+      const li=STAMP_LEGACY[+k.slice(1)];               // s0→heart … 옛 카운트 승계
+      const base=(cur[k] ?? cur[li] ?? 0);
+      const upd={...cur,[k]:base+1};
+      if(li in upd && k!==li) delete upd[li];
       tx.set(ref,upd); return upd;
     });
     localStorage.setItem(key,k);
@@ -1020,13 +1032,14 @@ function renderSide(){
     }
     if(w.t==='stamp'){
       d.className+=' w-stamp';
+      const emos=parseEmo(w.icons);
       d.innerHTML=`<p class="label">${esc(w.title||'STAMP')}</p>
-        <p class="stamp-hint">발도장 꾹 — 하루에 하나!</p>
-        <div class="stamp-row">
-          ${['heart','paw','star','drop'].map(k=>`
-            <button class="stamp-b" data-stamp="${k}">
-              <span class="si">${ {heart:'❤️',paw:'🐾',star:'⭐',drop:'💧'}[k] }</span>
-              <b data-sc="${k}">–</b>
+        ${w.hint===false?'':'<p class="stamp-hint">발도장 꾹 — 하루에 하나!</p>'}
+        <div class="stamp-row${emos.length===1?' one':''}">
+          ${emos.map((e2,i)=>`
+            <button class="stamp-b" data-stamp="s${i}">
+              <span class="si">${e2}</span>
+              <b data-sc="s${i}">–</b>
             </button>`).join('')}
         </div>`;
       box.appendChild(d);
@@ -1706,7 +1719,9 @@ function renderWidEdit(){
     <textarea id="we-text" placeholder="자유롭게 쓰는 글 — 줄바꿈 그대로 표시돼요" style="min-height:130px">${w.text||''}</textarea>`;
   if(w.t==='stamp') html+=`
     <input id="we-ntt" placeholder="위젯 제목 (선택 — 비우면 STAMP)" value="${esc(w.title||'')}">
-    <p class="note">방문자가 하루 하나씩 ❤️ 🐾 ⭐ 💧 발도장을 찍고 갈 수 있어요.</p>`;
+    <input id="we-semo" placeholder="도장 이모지 — 붙여서 1~4개 (예: 🐾 또는 ❤️🐾⭐💧)" value="${esc(w.icons||'')}">
+    <label class="chk" style="margin-top:6px"><input type="checkbox" id="we-shint" ${w.hint===false?'':'checked'}> '발도장 꾹 — 하루에 하나!' 문구 표시</label>
+    <p class="note">방문자가 하루에 하나씩 도장을 찍고 갑니다. 이모지를 바꿔도 찍힌 개수는 이어져요.</p>`;
   if(w.t==='dday') html+=pdraft.ddays.map((d,i)=>`
     <div class="p-row"><input data-dt="${i}" placeholder="제목" value="${esc(d.title)}">
     <input type="date" data-dd="${i}" value="${esc(d.date)}" style="flex:.8">
@@ -1815,6 +1830,9 @@ function renderWidEdit(){
   // 라이브 바인딩: 쓰는 즉시 draft에 반영
   const t=$('#we-text'); if(t) t.addEventListener('input',()=>{ w.text=t.value; });
   const ntt=$('#we-ntt'); if(ntt) ntt.addEventListener('input',()=>{ w.title=ntt.value; });
+  const semo=$('#we-semo'); if(semo) semo.addEventListener('input',()=>{ w.icons=semo.value; });
+  const shint=$('#we-shint'); if(shint) shint.addEventListener('change',()=>{
+    if(shint.checked) delete w.hint; else w.hint=false; });
   const nblab=$('#we-nblab'); if(nblab) nblab.addEventListener('input',()=>{ w.label=nblab.value; });
   const nbcut=$('#we-nbcut'); if(nbcut) nbcut.addEventListener('change',()=>{
     if(nbcut.value==='cut') w.cut=true; else delete w.cut; });
