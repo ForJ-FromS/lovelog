@@ -1045,11 +1045,14 @@ function renderSide(){
     if(w.t==='stamp'){
       d.className+=' w-stamp';
       const emos=parseEmo(w.icons);
+      const sbg = w.sbg==='none' ? 'background:transparent'
+        : w.sbg==='custom' ? `background:color-mix(in srgb, ${/^#[0-9a-fA-F]{3,8}$/.test(w.sbgc||'')?w.sbgc:'#9db8ff'} ${Math.min(100,Math.max(4,+w.sbga||12))}%, transparent)`
+        : '';
       d.innerHTML=`<p class="label">${esc(w.title||'STAMP')}</p>
         ${w.hint===false?'':'<p class="stamp-hint">발도장 꾹 — 하루에 하나!</p>'}
         <div class="stamp-row${emos.length===1?' one':''}">
           ${emos.map((e2,i)=>`
-            <button class="stamp-b" data-stamp="s${i}">
+            <button class="stamp-b" data-stamp="s${i}" style="${sbg}">
               <span class="si">${e2}</span>
               <b data-sc="s${i}">–</b>
             </button>`).join('')}
@@ -1733,6 +1736,15 @@ function renderWidEdit(){
     <input id="we-ntt" placeholder="위젯 제목 (선택 — 비우면 STAMP)" value="${esc(w.title||'')}">
     <input id="we-semo" placeholder="도장 이모지 — 붙여서 1~4개 (예: 🐾 또는 ❤️🐾⭐💧)" value="${esc(w.icons||'')}">
     <label class="chk" style="margin-top:6px"><input type="checkbox" id="we-shint" ${w.hint===false?'':'checked'}> '발도장 꾹 — 하루에 하나!' 문구 표시</label>
+    <div class="p-row" style="align-items:center;margin-top:8px">
+      <select id="we-sbg" style="flex:1.3;margin-bottom:0">
+        <option value=""${!w.sbg?' selected':''}>도장 배경 — 은은한 테마색 (기본)</option>
+        <option value="none"${w.sbg==='none'?' selected':''}>도장 배경 — 완전 투명</option>
+        <option value="custom"${w.sbg==='custom'?' selected':''}>도장 배경 — 직접 고르기 →</option>
+      </select>
+      <input type="color" id="we-sbgc" value="${/^#[0-9a-fA-F]{6}$/.test(w.sbgc||'')?w.sbgc:'#9db8ff'}" title="배경색" style="width:38px;height:30px;padding:2px;margin-bottom:0">
+      <input type="range" id="we-sbga" min="4" max="100" value="${Math.min(100,Math.max(4,+w.sbga||12))}" style="flex:1;min-width:70px" title="진하기">
+    </div>
     <p class="note">방문자가 하루에 하나씩 도장을 찍고 갑니다. 이모지를 바꿔도 찍힌 개수는 이어져요.</p>`;
   if(w.t==='dday') html+=pdraft.ddays.map((d,i)=>`
     <div class="p-row"><input data-dt="${i}" placeholder="제목" value="${esc(d.title)}">
@@ -1845,6 +1857,10 @@ function renderWidEdit(){
   const semo=$('#we-semo'); if(semo) semo.addEventListener('input',()=>{ w.icons=semo.value; });
   const shint=$('#we-shint'); if(shint) shint.addEventListener('change',()=>{
     if(shint.checked) delete w.hint; else w.hint=false; });
+  const sbg=$('#we-sbg'); if(sbg) sbg.addEventListener('change',()=>{
+    if(sbg.value) w.sbg=sbg.value; else delete w.sbg; });
+  const sbgc=$('#we-sbgc'); if(sbgc) sbgc.addEventListener('input',()=>{ w.sbgc=sbgc.value; });
+  const sbga=$('#we-sbga'); if(sbga) sbga.addEventListener('input',()=>{ w.sbga=+sbga.value; });
   const nblab=$('#we-nblab'); if(nblab) nblab.addEventListener('input',()=>{ w.label=nblab.value; });
   const nbcut=$('#we-nbcut'); if(nbcut) nbcut.addEventListener('change',()=>{
     if(nbcut.value==='cut') w.cut=true; else delete w.cut; });
