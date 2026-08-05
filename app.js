@@ -894,7 +894,7 @@ function renderSide(){
   const boxR=$('#aside'), boxL=$('#aside-l'),
         hL=$('#hcol-l'), hC=$('#hcol-c'), hR=$('#hcol-r');
   const both = p.sidePos==='both';
-  const headEl=document.querySelector('#aside .head, #aside-l .head');
+  const headEl=document.querySelector('#aside .head, #aside-l .head, .hcol .head');   // 홈 기둥으로 옮겨간 헤더도 추적
   boxR.innerHTML=''; boxL.innerHTML='';
   hL.innerHTML=''; hC.innerHTML=''; hR.innerHTML='';
   if(headEl){
