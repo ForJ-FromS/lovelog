@@ -100,10 +100,10 @@
   body.glass .side{background:hsl(var(--h) calc(28% * var(--sf,1)) 13% / .55);
     backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
   body.light.glass .side{background:hsl(var(--h) calc(40% * var(--sf,1)) 99% / .55)}
-  body.glass .head,body.glass #post-view article{
+  body.glass .head,body.glass #post-view > article{
     background:hsl(var(--h) calc(28% * var(--sf,1)) 13% / .6);
     backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
-  body.light.glass .head,body.light.glass #post-view article{
+  body.light.glass .head,body.light.glass #post-view > article{
     background:hsl(var(--h) calc(40% * var(--sf,1)) 99% / .6)}
   #bgphoto{position:fixed;inset:0;z-index:-1;background-size:cover;background-position:center;display:none}
   body.has-bg #bgphoto{display:block}
@@ -280,9 +280,9 @@
   .pl-empty{font-size:12px;color:var(--muted);padding:10px 4px}
 
   /* ── 글 읽기 ── */
-  #post-view article{border:1px solid var(--line);border-radius:12px;
+  #post-view > article{border:1px solid var(--line);border-radius:12px;
     background:var(--card);padding:clamp(22px,4vw,42px);position:relative;overflow:hidden}
-  #post-view article::before{content:'';position:absolute;left:0;top:0;right:0;height:3px;
+  #post-view > article::before{content:'';position:absolute;left:0;top:0;right:0;height:3px;
     background:linear-gradient(90deg,var(--pri),transparent 70%)}
   #pv-meta{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.15em;color:var(--muted)}
   #pv-title{margin-top:6px;font-size:20px;font-weight:600;color:var(--ink)}
@@ -592,7 +592,7 @@
     --ink:#000; --body:#222; --muted:#555; --pri:#000080;
     background-image:none}
   body.theme-win98 .side,body.theme-win98 .head,body.theme-win98 .p-card,
-  body.theme-win98 #post-view article,body.theme-win98 .pin{
+  body.theme-win98 #post-view > article,body.theme-win98 .pin{
     border-radius:0;border:2px solid;border-color:#fff #404040 #404040 #fff;
     background:#c0c0c0;box-shadow:none;backdrop-filter:none}
   body.theme-win98 .side::before{display:none}
@@ -679,7 +679,7 @@
   body.reading #aside,body.reading #aside-l,body.reading #catbar,
   body.reading .strip-sec{display:none}
   body.reading .cols{grid-template-columns:1fr!important}
-  body.reading #post-view article{max-width:820px;margin:0 auto;
+  body.reading #post-view > article{max-width:820px;margin:0 auto;
     padding:clamp(26px,3.4vw,46px) clamp(22px,3.2vw,50px)}
   body.reading #post-view #pv-body{font-size:14.5px;line-height:2}
   body.reading #pv-nav{max-width:820px;margin:14px auto 0}
@@ -1457,6 +1457,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=142"></script>
+<script type="module" src="./app.js?v=143"></script>
 </body>
 </html>
