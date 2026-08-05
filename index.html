@@ -126,6 +126,7 @@
     width:44px;height:44px;border-radius:50%;border:1px solid var(--line);
     background:var(--card);color:var(--body);font-size:16px;cursor:pointer}
   .fab:hover{color:var(--ink);border-color:var(--pri)}
+  .fab.on{background:var(--pri);border-color:var(--pri);color:hsl(var(--h) calc(30% * var(--sf,1)) 12%)}
   /* 꾸미기 모드: 넓은 창 + 위젯 목록/편집 2단 */
   #panel.big .p-card{width:min(1240px,96vw);height:90vh;max-height:90vh;
     display:flex;gap:28px;padding:28px 30px}
@@ -821,7 +822,7 @@
   .stk img{width:100%;height:100%;object-fit:contain;display:block;
     -webkit-user-drag:none;pointer-events:none;
     filter:drop-shadow(0 4px 10px rgba(0,0,0,.3))}
-  body.mine .stk{pointer-events:auto;cursor:grab}   /* 주인만 잡을 수 있음 — 방문자 클릭은 통과 */
+  body.mine.editmode .stk{pointer-events:auto;cursor:grab}   /* 편집 모드의 주인만 잡을 수 있음 — 평소엔 모두 클릭 통과 */
   /* ── 카테고리 모양: 글씨만 ── */
   body.catsh-text #catbar{gap:2px 22px}
   body.catsh-text #catbar a{background:none;border:none;border-radius:0;padding:6px 2px}
@@ -1066,6 +1067,7 @@
 
 <button id="btn-write" class="hidden fab" title="글쓰기">✎</button>
 <button id="btn-deco" class="hidden fab" title="꾸미기" style="bottom:76px">✦</button>
+<button id="btn-edit" class="hidden fab" title="위젯 편집 — 켜야 위젯을 움직일 수 있어요" style="bottom:132px">⠿</button>
 
 <!-- 라이트박스 -->
 <div id="lb">
@@ -1503,6 +1505,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=149"></script>
+<script type="module" src="./app.js?v=150"></script>
 </body>
 </html>

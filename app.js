@@ -500,6 +500,8 @@ async function enterPage(){
   else { headEl.classList.remove('v');
     const anchor=$('#catbar'); anchor.parentNode.insertBefore(headEl, anchor); }
   $('#btn-write').classList.toggle('hidden',!st.mine);
+  $('#btn-edit').classList.toggle('hidden',!st.mine);
+  if(!st.mine && st.editMode){ st.editMode=false; $('#btn-edit').classList.remove('on'); document.body.classList.remove('editmode'); }
   $('#btn-deco').classList.toggle('hidden',!st.mine);
   show('view-page');
   await loadContent();
@@ -717,7 +719,7 @@ function applyView(){
 
 /* ── 위젯 드래그 앤 드롭 (주인장 전용) ── */
 function bindDrag(d){
-  if(!st.mine) return;
+  if(!st.mine || !st.editMode) return;
   d.draggable=true;
   d.addEventListener('dragstart',e=>{
     e.dataTransfer.setData('text/plain', d.dataset.wi);
@@ -1176,8 +1178,8 @@ function renderSide(){
       return;
     }
   });
-  const blogEdit = st.mine && homeStyle()==='blog';   // 블로그형은 위젯이 늘 사이드라 여기서 편집
-  if((home || blogEdit) && st.mine){
+  const blogEdit = st.mine && st.editMode && homeStyle()==='blog';
+  if((home || blogEdit) && st.mine && st.editMode){
     const pcMove=async(wi,dir)=>{
       const arr=JSON.parse(JSON.stringify(sideCfg()));
       const w0=arr[wi]; if(!w0) return;
@@ -2196,6 +2198,16 @@ $('#wid-save').onclick=async()=>{
   }catch(e){ msg('오류: '+e.message); alert('저장 실패: '+e.message); }
 };
 $('#p-close').onclick=()=>$('#panel').classList.remove('show');
+/* ── 위젯 편집 모드 ── */
+st.editMode=false;
+$('#btn-edit').onclick=()=>{
+  st.editMode=!st.editMode;
+  $('#btn-edit').classList.toggle('on', st.editMode);
+  document.body.classList.toggle('editmode', st.editMode);
+  renderSide();
+  msg(st.editMode ? '위젯 편집 모드 — 드래그·↑↓로 배치를 바꾸세요. 다 되면 ⠿를 다시 누르세요.'
+                  : '편집 모드를 껐어요.');
+};
 $('#panel').addEventListener('click',e=>{ if(e.target.id==='panel') $('#panel').classList.remove('show'); });
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));
