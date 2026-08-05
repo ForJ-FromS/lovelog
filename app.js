@@ -564,7 +564,7 @@ function fillStamps(){
   }
 }
 async function loadStamps(){
-  if(!((st.page.widgets||[]).some(w=>w.t==='stamp'))){ console.log('[lovelog] stamps: 위젯 없음, 로드 생략'); return; }
+  if(!sideCfg().some(w=>w.t==='stamp')){ console.log('[lovelog] stamps: 위젯 없음, 로드 생략'); return; }
   try{
     const sn=await getDoc(doc(db,'pages',st.handle,'stats','stamps'));
     console.log('[lovelog] stamps 로드:', 'handle='+st.handle, 'exists='+sn.exists(), sn.data());
@@ -595,7 +595,7 @@ async function hitStamp(k,btn){
   }catch(e){ console.warn('[lovelog] 발도장 실패:', e.code||e.message, e); msg('발도장 실패 — '+(e.code||e.message)); }
 }
 async function bumpCounter(){
-  if(!((st.page.widgets||[]).some(w=>w.t==='cnt'))) return;
+  if(!sideCfg().some(w=>w.t==='cnt')) return;
   const ref=doc(db,'pages',st.handle,'stats','counter');
   const t=today(), key='lvcnt-'+st.handle+'-'+t;
   let c={};
