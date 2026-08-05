@@ -587,7 +587,7 @@ async function hitStamp(k,btn){
     fillStamps();
     if(btn){ btn.classList.add('pop'); setTimeout(()=>btn.classList.remove('pop'),500); }
     msg('발도장 찍었어요! 고마워요 💗 (서버 저장: '+(st.stamps[k]||0)+')');
-  }catch(e){ msg('발도장 실패 — '+(e.code||e.message)); }
+  }catch(e){ console.warn('[lovelog] 발도장 실패:', e.code||e.message, e); msg('발도장 실패 — '+(e.code||e.message)); }
 }
 async function bumpCounter(){
   if(!((st.page.widgets||[]).some(w=>w.t==='cnt'))) return;
@@ -604,6 +604,7 @@ async function bumpCounter(){
       });
       sessionStorage.setItem(key,'1');
     }catch(e){
+      console.warn('[lovelog] 방문자수 기록 실패:', e.code||e.message, e);
       try{ c=(await getDoc(ref)).data()||{}; }catch(e2){}
       if(st.mine) msg('⚠ 방문자수 기록 실패 — '+(e.code||e.message)+' (규칙의 stats 부분을 확인해주세요)');
     }
@@ -2002,7 +2003,17 @@ $('#w-img').addEventListener('change',async e=>{
   e.target.value='';
   msg(`사진 ${wImgs.length} 삽입됨 — 위치는 본문에서 [사진${wImgs.length}] 글자를 옮기면 돼요.`);
 });
-const msg=t=>$('#p-msg').textContent=t;
+let msgTimer=null;
+const msg=t=>{
+  const p=$('#p-msg'); if(p) p.textContent=t;
+  const panelOpen=$('#panel')?.classList.contains('show');
+  const el=$('#toast');
+  if(!panelOpen && t && el){
+    el.textContent=t; el.classList.add('on');
+    clearTimeout(msgTimer);
+    msgTimer=setTimeout(()=>el.classList.remove('on'),3400);
+  }
+};
 
 let editPost=null, editGal=null;
 function clearWriteForm(){
