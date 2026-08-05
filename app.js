@@ -566,7 +566,8 @@ function fillStamps(){
 async function loadStamps(){
   if(!((st.page.widgets||[]).some(w=>w.t==='stamp'))) return;
   try{ st.stamps=(await getDoc(doc(db,'pages',st.handle,'stats','stamps'))).data()||{}; }
-  catch(e){ st.stamps={}; }
+  catch(e){ st.stamps={};
+    if(st.mine) msg('⚠ 발도장 불러오기 실패 — '+(e.code||e.message)); }
   fillStamps();
 }
 async function hitStamp(k,btn){
@@ -585,7 +586,7 @@ async function hitStamp(k,btn){
     localStorage.setItem(key,k);
     fillStamps();
     if(btn){ btn.classList.add('pop'); setTimeout(()=>btn.classList.remove('pop'),500); }
-    msg('발도장 찍었어요! 고마워요 💗');
+    msg('발도장 찍었어요! 고마워요 💗 (서버 저장: '+(st.stamps[k]||0)+')');
   }catch(e){ msg('발도장 실패 — '+(e.code||e.message)); }
 }
 async function bumpCounter(){
@@ -607,7 +608,8 @@ async function bumpCounter(){
       if(st.mine) msg('⚠ 방문자수 기록 실패 — '+(e.code||e.message)+' (규칙의 stats 부분을 확인해주세요)');
     }
   }else{
-    try{ c=(await getDoc(ref)).data()||{}; }catch(e){}
+    try{ c=(await getDoc(ref)).data()||{}; }
+    catch(e){ if(st.mine) msg('⚠ 방문자수 불러오기 실패 — '+(e.code||e.message)); }
   }
   st.cnt=c; fillCounter();
 }
