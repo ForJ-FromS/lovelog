@@ -465,7 +465,7 @@ async function enterPage(){
   $('#btn-deco').classList.toggle('hidden',!st.mine);
   show('view-page');
   await loadContent();
-  bumpCounter();
+  bumpCounter(); loadStamps();
   if(homeStyle()==='blog'){ st.cat='recent'; applyView(); }
   else { st.cat='home'; applyView(); }
   document.querySelector('.strip-sec').classList.toggle('hidden', !(galOn()&&stripOn()));
@@ -546,7 +546,36 @@ function setGateCover(url){                          // 대문 배경 — 사진
 const galNm=()=>st.page?.galName||'GALLERY';
 const gbNm=()=>st.page?.gbName||'GUESTBOOK';
 const WNAME={latest:'최신글',notice:'공지',chat:'채팅로그',img:'이미지',nb:'이웃 홈',profile:'프로필',search:'검색',category:'카테고리',
-  dday:'디데이',bgm:'BGM',quote:'인용구',links:'링크',banner:'배너칸',text:'글',cnt:'방문자수'};
+  dday:'디데이',bgm:'BGM',quote:'인용구',links:'링크',banner:'배너칸',text:'글',cnt:'방문자수',stamp:'발도장'};
+const STAMP_KEYS=['heart','paw','star','drop'];
+function fillStamps(){
+  const s=st.stamps||{};
+  STAMP_KEYS.forEach(k=>{
+    document.querySelectorAll(`[data-sc="${k}"]`).forEach(el=>el.textContent=s[k]||0);
+  });
+}
+async function loadStamps(){
+  if(!((st.page.widgets||[]).some(w=>w.t==='stamp'))) return;
+  try{ st.stamps=(await getDoc(doc(db,'pages',st.handle,'stats','stamps'))).data()||{}; }
+  catch(e){ st.stamps={}; }
+  fillStamps();
+}
+async function hitStamp(k,btn){
+  const key='lvstamp-'+st.handle+'-'+today();
+  if(localStorage.getItem(key)){ msg('오늘은 이미 발도장을 찍었어요 — 내일 또 찍어주세요! 🐾'); return; }
+  try{
+    const ref=doc(db,'pages',st.handle,'stats','stamps');
+    st.stamps=await runTransaction(db,async tx=>{
+      const cur=(await tx.get(ref)).data()||{};
+      const upd={...cur,[k]:(cur[k]||0)+1};
+      tx.set(ref,upd); return upd;
+    });
+    localStorage.setItem(key,k);
+    fillStamps();
+    if(btn){ btn.classList.add('pop'); setTimeout(()=>btn.classList.remove('pop'),500); }
+    msg('발도장 찍었어요! 고마워요 💗');
+  }catch(e){ msg('발도장 실패 — '+(e.code||e.message)); }
+}
 async function bumpCounter(){
   if(!((st.page.widgets||[]).some(w=>w.t==='cnt'))) return;
   const ref=doc(db,'pages',st.handle,'stats','counter');
@@ -988,6 +1017,21 @@ function renderSide(){
       d.innerHTML=`<p class="label">COUNT</p>
         <div class="cnt-row"><span>TODAY <b id="cnt-today">–</b></span><span>TOTAL <b id="cnt-total">–</b></span></div>`;
       box.appendChild(d); fillCounter(); return;
+    }
+    if(w.t==='stamp'){
+      d.className+=' w-stamp';
+      d.innerHTML=`<p class="label">${esc(w.title||'STAMP')}</p>
+        <p class="stamp-hint">발도장 꾹 — 하루에 하나!</p>
+        <div class="stamp-row">
+          ${['heart','paw','star','drop'].map(k=>`
+            <button class="stamp-b" data-stamp="${k}">
+              <span class="si">${ {heart:'❤️',paw:'🐾',star:'⭐',drop:'💧'}[k] }</span>
+              <b data-sc="${k}">–</b>
+            </button>`).join('')}
+        </div>`;
+      box.appendChild(d);
+      d.querySelectorAll('[data-stamp]').forEach(b=>b.onclick=()=>hitStamp(b.dataset.stamp,b));
+      fillStamps(); return;
     }
     if(w.t==='notice'){
       if(!w.title && !w.text && !st.mine) return;
@@ -1590,7 +1634,7 @@ function renderWidList(){
   $('#wid-list').innerHTML = draft.map((w,i)=>`
     <div class="wl">
       <span class="nm">${WNAME[w.t]||w.t}${w.t==='links'?` (${(w.items||[]).length})`:''}${w.t==='banner'?` (${(w.items||[]).length})`:''}</span>
-      ${['profile','quote','links','banner','dday','bgm','notice','chat','img','nb','text'].includes(w.t)?`<button data-e="${i}">✎</button>`:''}
+      ${['profile','quote','links','banner','dday','bgm','notice','chat','img','nb','text','stamp'].includes(w.t)?`<button data-e="${i}">✎</button>`:''}
       <button data-u="${i}">↑</button><button data-d="${i}">↓</button><button data-x="${i}">✕</button>
     </div>`).join('') || '<p class="pl-empty">위젯이 없어요 — 아래에서 추가하세요.</p>';
   $('#wid-list').querySelectorAll('button').forEach(b=>b.onclick=()=>{
@@ -1660,6 +1704,9 @@ function renderWidEdit(){
   if(w.t==='text') html+=`
     <input id="we-ntt" placeholder="위젯 제목 (선택 — 비우면 TEXT)" value="${esc(w.title||'')}">
     <textarea id="we-text" placeholder="자유롭게 쓰는 글 — 줄바꿈 그대로 표시돼요" style="min-height:130px">${w.text||''}</textarea>`;
+  if(w.t==='stamp') html+=`
+    <input id="we-ntt" placeholder="위젯 제목 (선택 — 비우면 STAMP)" value="${esc(w.title||'')}">
+    <p class="note">방문자가 하루 하나씩 ❤️ 🐾 ⭐ 💧 발도장을 찍고 갈 수 있어요.</p>`;
   if(w.t==='dday') html+=pdraft.ddays.map((d,i)=>`
     <div class="p-row"><input data-dt="${i}" placeholder="제목" value="${esc(d.title)}">
     <input type="date" data-dd="${i}" value="${esc(d.date)}" style="flex:.8">
@@ -1896,7 +1943,7 @@ $('#wid-add').onclick=()=>{
     msg('이미 있는 위젯이에요.'); return; }
   draft.push(['links','banner','nb'].includes(t)?{t,items:[]}:{t});
   editIdx=draft.length-1; renderWidList();
-  if(['profile','quote','links','banner','dday','bgm','notice','chat','img','nb','text'].includes(t)) renderWidEdit();
+  if(['profile','quote','links','banner','dday','bgm','notice','chat','img','nb','text','stamp'].includes(t)) renderWidEdit();
 };
 $('#wid-save').onclick=async()=>{
   if(editIdx>=0 && draft[editIdx]) syncWid(draft[editIdx]);
@@ -2080,8 +2127,12 @@ function renderHeroList(){
   box.innerHTML = heroDraft.map((o,i)=>`
     <div style="width:100%;border:1px solid var(--line);border-radius:11px;padding:10px;margin-bottom:10px">
       <div class="p-row" style="align-items:center;justify-content:space-between">
-        <span style="font-size:11px;color:var(--muted)">사진 ${i+1} — 실제로 보이는 범위</span>
-        <button class="rm2" data-hx="${i}">✕</button>
+        <span style="font-size:11px;color:var(--muted)">사진 ${i+1}${i===0?' (첫 장 — 슬라이드 시작·입장 화면 기본)':''}</span>
+        <span style="display:flex;gap:5px">
+          <button class="rmv" data-hu="${i}" title="위로" ${i===0?'disabled':''}>↑</button>
+          <button class="rmv" data-hd="${i}" title="아래로" ${i===heroDraft.length-1?'disabled':''}>↓</button>
+          <button class="rm2" data-hx="${i}">✕</button>
+        </span>
       </div>
       <div class="hpv-wrap">
         <div class="hpv">
@@ -2107,6 +2158,12 @@ function renderHeroList(){
     || '<span class="note">아직 사진이 없어요 — 위에서 추가하세요.</span>';
   box.querySelectorAll('[data-hx]').forEach(b=>b.onclick=()=>{
     heroDraft.splice(+b.dataset.hx,1); renderHeroList(); });
+  const hmove=(i,d)=>{ const j=i+d;
+    if(j<0||j>=heroDraft.length) return;
+    [heroDraft[i],heroDraft[j]]=[heroDraft[j],heroDraft[i]];
+    renderHeroList(); msg('순서 변경 — [설정 저장]을 눌러야 확정돼요.'); };
+  box.querySelectorAll('[data-hu]').forEach(b=>b.onclick=()=>hmove(+b.dataset.hu,-1));
+  box.querySelectorAll('[data-hd]').forEach(b=>b.onclick=()=>hmove(+b.dataset.hd, 1));
   const upd=i=>{ const o=heroDraft[i];
     [`[data-hp="${i}"]`,`[data-hpm="${i}"]`].forEach(sel=>{
       const pv=box.querySelector(sel); if(!pv) return;
@@ -2255,6 +2312,313 @@ $('#s-css-clear').onclick=()=>{ $('#s-css').value=''; msg('CSS 비움 — [설�
 
 /* ── 컨셉 CSS 프리셋 모음 ── */
 const CSS_PRESETS={
+  snow:{ nm:'눈 내리는 밤', css:
+`/* ═ 프리셋: 눈 내리는 밤 ═ */
+body::before,
+body::after{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:4;
+}
+/* 잔눈 — 조금 빠르게, 살짝 비스듬히 */
+body::before{
+  background-image:
+    radial-gradient(1.7px 1.7px at 64px 155px, rgba(255,255,255,0.67), transparent 100%),
+    radial-gradient(1.8px 1.8px at 158px 125px, rgba(255,255,255,0.53), transparent 100%),
+    radial-gradient(2.0px 2.0px at 7px 236px, rgba(255,255,255,0.62), transparent 100%),
+    radial-gradient(2.2px 2.2px at 63px 53px, rgba(255,255,255,0.71), transparent 100%),
+    radial-gradient(1.7px 1.7px at 218px 144px, rgba(255,255,255,0.79), transparent 100%),
+    radial-gradient(1.8px 1.8px at 42px 63px, rgba(255,255,255,0.89), transparent 100%),
+    radial-gradient(1.9px 1.9px at 137px 103px, rgba(255,255,255,0.8), transparent 100%),
+    radial-gradient(2.0px 2.0px at 20px 44px, rgba(255,255,255,0.77), transparent 100%),
+    radial-gradient(1.2px 1.2px at 81px 203px, rgba(255,255,255,0.89), transparent 100%),
+    radial-gradient(1.9px 1.9px at 125px 156px, rgba(255,255,255,0.9), transparent 100%),
+    radial-gradient(2.1px 2.1px at 186px 205px, rgba(255,255,255,0.68), transparent 100%),
+    radial-gradient(1.6px 1.6px at 209px 151px, rgba(255,255,255,0.92), transparent 100%),
+    radial-gradient(1.3px 1.3px at 228px 97px, rgba(255,255,255,0.56), transparent 100%),
+    radial-gradient(2.2px 2.2px at 59px 70px, rgba(255,255,255,0.7), transparent 100%),
+    radial-gradient(1.5px 1.5px at 164px 222px, rgba(255,255,255,0.73), transparent 100%),
+    radial-gradient(1.6px 1.6px at 102px 150px, rgba(255,255,255,0.76), transparent 100%);
+  background-size:260px 260px;
+  animation:snowA 13s linear infinite;
+}
+/* 함박눈 — 크고 흐리게, 천천히 */
+body::after{
+  background-image:
+    radial-gradient(4.4px 4.4px at 303px 122px, rgba(255,255,255,0.42) 60%, transparent 100%),
+    radial-gradient(4.6px 4.6px at 18px 147px, rgba(255,255,255,0.42) 60%, transparent 100%),
+    radial-gradient(4.3px 4.3px at 87px 361px, rgba(255,255,255,0.49) 60%, transparent 100%),
+    radial-gradient(2.8px 2.8px at 296px 295px, rgba(255,255,255,0.41) 60%, transparent 100%),
+    radial-gradient(3.1px 3.1px at 328px 297px, rgba(255,255,255,0.28) 60%, transparent 100%),
+    radial-gradient(4.6px 4.6px at 250px 331px, rgba(255,255,255,0.27) 60%, transparent 100%),
+    radial-gradient(4.4px 4.4px at 38px 214px, rgba(255,255,255,0.26) 60%, transparent 100%),
+    radial-gradient(4.3px 4.3px at 222px 216px, rgba(255,255,255,0.26) 60%, transparent 100%),
+    radial-gradient(3.4px 3.4px at 318px 27px, rgba(255,255,255,0.4) 60%, transparent 100%);
+  background-size:380px 380px;
+  animation:snowB 27s linear infinite;
+}
+@keyframes snowA{from{background-position:0 0}to{background-position:-46px 260px}}
+@keyframes snowB{from{background-position:0 0}to{background-position:58px 380px}}
+@media (max-width:640px){ body::after{opacity:.6} }`},
+  sakura:{ nm:'벚꽃 흩날림', css:
+`/* ═ 프리셋: 벚꽃 흩날림 ═ */
+
+/* 색 — 기본 벚꽃 분홍. #fff0f5(연하게), #f6a8c0(진하게) 등으로 바꿔도 돼요. */
+body{ --sakura:#ffd7e2; }
+
+body::before,
+body::after{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:4;
+  background-color:var(--sakura);
+  -webkit-mask-repeat:repeat; mask-repeat:repeat;
+}
+/* 앞쪽 꽃잎 — 빙글 돌며 비스듬히 */
+body::before{
+  -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='280'%20height='280'%20viewBox='0%200%20280%20280'%3E%3Cpath%20d='M0,-1%20C0.55,-0.9%200.75,-0.3%200.45,0.35%20C0.25,0.75%20-0.25,0.75%20-0.45,0.35%20C-0.75,-0.3%20-0.55,-0.9%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.93'%20transform='translate(245,199)%20rotate(95)%20scale(5.4)'/%3E%3Cpath%20d='M0,-1%20C0.55,-0.9%200.75,-0.3%200.45,0.35%20C0.25,0.75%20-0.25,0.75%20-0.45,0.35%20C-0.75,-0.3%20-0.55,-0.9%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.54'%20transform='translate(11,181)%20rotate(309)%20scale(6.3)'/%3E%3Cpath%20d='M0,-1%20C0.55,-0.9%200.75,-0.3%200.45,0.35%20C0.25,0.75%20-0.25,0.75%20-0.45,0.35%20C-0.75,-0.3%20-0.55,-0.9%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.98'%20transform='translate(28,202)%20rotate(231)%20scale(5.1)'/%3E%3Cpath%20d='M0,-1%20C0.55,-0.9%200.75,-0.3%200.45,0.35%20C0.25,0.75%20-0.25,0.75%20-0.45,0.35%20C-0.75,-0.3%20-0.55,-0.9%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.56'%20transform='translate(224,88)%20rotate(26)%20scale(5.1)'/%3E%3Cpath%20d='M0,-1%20C0.55,-0.9%200.75,-0.3%200.45,0.35%20C0.25,0.75%20-0.25,0.75%20-0.45,0.35%20C-0.75,-0.3%20-0.55,-0.9%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.89'%20transform='translate(267,40)%20rotate(196)%20scale(7.2)'/%3E%3Cpath%20d='M0,-1%20C0.55,-0.9%200.75,-0.3%200.45,0.35%20C0.25,0.75%20-0.25,0.75%20-0.45,0.35%20C-0.75,-0.3%20-0.55,-0.9%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.86'%20transform='translate(60,157)%20rotate(114)%20scale(5.2)'/%3E%3Cpath%20d='M0,-1%20C0.55,-0.9%200.75,-0.3%200.45,0.35%20C0.25,0.75%20-0.25,0.75%20-0.45,0.35%20C-0.75,-0.3%20-0.55,-0.9%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.7'%20transform='translate(223,52)%20rotate(107)%20scale(7.2)'/%3E%3Cpath%20d='M0,-1%20C0.55,-0.9%200.75,-0.3%200.45,0.35%20C0.25,0.75%20-0.25,0.75%20-0.45,0.35%20C-0.75,-0.3%20-0.55,-0.9%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.94'%20transform='translate(182,30)%20rotate(2)%20scale(5.2)'/%3E%3Cpath%20d='M0,-1%20C0.55,-0.9%200.75,-0.3%200.45,0.35%20C0.25,0.75%20-0.25,0.75%20-0.45,0.35%20C-0.75,-0.3%20-0.55,-0.9%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.51'%20transform='translate(36,201)%20rotate(71)%20scale(7.5)'/%3E%3Cpath%20d='M0,-1%20C0.55,-0.9%200.75,-0.3%200.45,0.35%20C0.25,0.75%20-0.25,0.75%20-0.45,0.35%20C-0.75,-0.3%20-0.55,-0.9%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.56'%20transform='translate(225,65)%20rotate(1)%20scale(7.9)'/%3E%3C/svg%3E");
+          mask-image:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='280'%20height='280'%20viewBox='0%200%20280%20280'%3E%3Cpath%20d='M0,-1%20C0.55,-0.9%200.75,-0.3%200.45,0.35%20C0.25,0.75%20-0.25,0.75%20-0.45,0.35%20C-0.75,-0.3%20-0.55,-0.9%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.93'%20transform='translate(245,199)%20rotate(95)%20scale(5.4)'/%3E%3Cpath%20d='M0,-1%20C0.55,-0.9%200.75,-0.3%200.45,0.35%20C0.25,0.75%20-0.25,0.75%20-0.45,0.35%20C-0.75,-0.3%20-0.55,-0.9%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.54'%20transform='translate(11,181)%20rotate(309)%20scale(6.3)'/%3E%3Cpath%20d='M0,-1%20C0.55,-0.9%200.75,-0.3%200.45,0.35%20C0.25,0.75%20-0.25,0.75%20-0.45,0.35%20C-0.75,-0.3%20-0.55,-0.9%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.98'%20transform='translate(28,202)%20rotate(231)%20scale(5.1)'/%3E%3Cpath%20d='M0,-1%20C0.55,-0.9%200.75,-0.3%200.45,0.35%20C0.25,0.75%20-0.25,0.75%20-0.45,0.35%20C-0.75,-0.3%20-0.55,-0.9%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.56'%20transform='translate(224,88)%20rotate(26)%20scale(5.1)'/%3E%3Cpath%20d='M0,-1%20C0.55,-0.9%200.75,-0.3%200.45,0.35%20C0.25,0.75%20-0.25,0.75%20-0.45,0.35%20C-0.75,-0.3%20-0.55,-0.9%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.89'%20transform='translate(267,40)%20rotate(196)%20scale(7.2)'/%3E%3Cpath%20d='M0,-1%20C0.55,-0.9%200.75,-0.3%200.45,0.35%20C0.25,0.75%20-0.25,0.75%20-0.45,0.35%20C-0.75,-0.3%20-0.55,-0.9%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.86'%20transform='translate(60,157)%20rotate(114)%20scale(5.2)'/%3E%3Cpath%20d='M0,-1%20C0.55,-0.9%200.75,-0.3%200.45,0.35%20C0.25,0.75%20-0.25,0.75%20-0.45,0.35%20C-0.75,-0.3%20-0.55,-0.9%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.7'%20transform='translate(223,52)%20rotate(107)%20scale(7.2)'/%3E%3Cpath%20d='M0,-1%20C0.55,-0.9%200.75,-0.3%200.45,0.35%20C0.25,0.75%20-0.25,0.75%20-0.45,0.35%20C-0.75,-0.3%20-0.55,-0.9%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.94'%20transform='translate(182,30)%20rotate(2)%20scale(5.2)'/%3E%3Cpath%20d='M0,-1%20C0.55,-0.9%200.75,-0.3%200.45,0.35%20C0.25,0.75%20-0.25,0.75%20-0.45,0.35%20C-0.75,-0.3%20-0.55,-0.9%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.51'%20transform='translate(36,201)%20rotate(71)%20scale(7.5)'/%3E%3Cpath%20d='M0,-1%20C0.55,-0.9%200.75,-0.3%200.45,0.35%20C0.25,0.75%20-0.25,0.75%20-0.45,0.35%20C-0.75,-0.3%20-0.55,-0.9%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.56'%20transform='translate(225,65)%20rotate(1)%20scale(7.9)'/%3E%3C/svg%3E");
+  -webkit-mask-size:280px 280px; mask-size:280px 280px;
+  animation:sakA 17s linear infinite;
+}
+/* 뒤쪽 꽃잎 — 크고 흐리게 */
+body::after{
+  -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='400'%20height='400'%20viewBox='0%200%20400%20400'%3E%3Cpath%20d='M0,-1%20C0.55,-0.9%200.75,-0.3%200.45,0.35%20C0.25,0.75%20-0.25,0.75%20-0.45,0.35%20C-0.75,-0.3%20-0.55,-0.9%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.67'%20transform='translate(304,109)%20rotate(103)%20scale(11.5)'/%3E%3Cpath%20d='M0,-1%20C0.55,-0.9%200.75,-0.3%200.45,0.35%20C0.25,0.75%20-0.25,0.75%20-0.45,0.35%20C-0.75,-0.3%20-0.55,-0.9%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.75'%20transform='translate(50,76)%20rotate(8)%20scale(9.7)'/%3E%3Cpath%20d='M0,-1%20C0.55,-0.9%200.75,-0.3%200.45,0.35%20C0.25,0.75%20-0.25,0.75%20-0.45,0.35%20C-0.75,-0.3%20-0.55,-0.9%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.71'%20transform='translate(301,262)%20rotate(101)%20scale(9.7)'/%3E%3Cpath%20d='M0,-1%20C0.55,-0.9%200.75,-0.3%200.45,0.35%20C0.25,0.75%20-0.25,0.75%20-0.45,0.35%20C-0.75,-0.3%20-0.55,-0.9%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.85'%20transform='translate(211,106)%20rotate(47)%20scale(10.2)'/%3E%3Cpath%20d='M0,-1%20C0.55,-0.9%200.75,-0.3%200.45,0.35%20C0.25,0.75%20-0.25,0.75%20-0.45,0.35%20C-0.75,-0.3%20-0.55,-0.9%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.53'%20transform='translate(82,96)%20rotate(21)%20scale(11.7)'/%3E%3Cpath%20d='M0,-1%20C0.55,-0.9%200.75,-0.3%200.45,0.35%20C0.25,0.75%20-0.25,0.75%20-0.45,0.35%20C-0.75,-0.3%20-0.55,-0.9%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.87'%20transform='translate(292,357)%20rotate(76)%20scale(10.0)'/%3E%3Cpath%20d='M0,-1%20C0.55,-0.9%200.75,-0.3%200.45,0.35%20C0.25,0.75%20-0.25,0.75%20-0.45,0.35%20C-0.75,-0.3%20-0.55,-0.9%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.93'%20transform='translate(385,302)%20rotate(62)%20scale(12.0)'/%3E%3C/svg%3E");
+          mask-image:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='400'%20height='400'%20viewBox='0%200%20400%20400'%3E%3Cpath%20d='M0,-1%20C0.55,-0.9%200.75,-0.3%200.45,0.35%20C0.25,0.75%20-0.25,0.75%20-0.45,0.35%20C-0.75,-0.3%20-0.55,-0.9%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.67'%20transform='translate(304,109)%20rotate(103)%20scale(11.5)'/%3E%3Cpath%20d='M0,-1%20C0.55,-0.9%200.75,-0.3%200.45,0.35%20C0.25,0.75%20-0.25,0.75%20-0.45,0.35%20C-0.75,-0.3%20-0.55,-0.9%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.75'%20transform='translate(50,76)%20rotate(8)%20scale(9.7)'/%3E%3Cpath%20d='M0,-1%20C0.55,-0.9%200.75,-0.3%200.45,0.35%20C0.25,0.75%20-0.25,0.75%20-0.45,0.35%20C-0.75,-0.3%20-0.55,-0.9%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.71'%20transform='translate(301,262)%20rotate(101)%20scale(9.7)'/%3E%3Cpath%20d='M0,-1%20C0.55,-0.9%200.75,-0.3%200.45,0.35%20C0.25,0.75%20-0.25,0.75%20-0.45,0.35%20C-0.75,-0.3%20-0.55,-0.9%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.85'%20transform='translate(211,106)%20rotate(47)%20scale(10.2)'/%3E%3Cpath%20d='M0,-1%20C0.55,-0.9%200.75,-0.3%200.45,0.35%20C0.25,0.75%20-0.25,0.75%20-0.45,0.35%20C-0.75,-0.3%20-0.55,-0.9%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.53'%20transform='translate(82,96)%20rotate(21)%20scale(11.7)'/%3E%3Cpath%20d='M0,-1%20C0.55,-0.9%200.75,-0.3%200.45,0.35%20C0.25,0.75%20-0.25,0.75%20-0.45,0.35%20C-0.75,-0.3%20-0.55,-0.9%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.87'%20transform='translate(292,357)%20rotate(76)%20scale(10.0)'/%3E%3Cpath%20d='M0,-1%20C0.55,-0.9%200.75,-0.3%200.45,0.35%20C0.25,0.75%20-0.25,0.75%20-0.45,0.35%20C-0.75,-0.3%20-0.55,-0.9%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.93'%20transform='translate(385,302)%20rotate(62)%20scale(12.0)'/%3E%3C/svg%3E");
+  -webkit-mask-size:400px 400px; mask-size:400px 400px;
+  opacity:.55;
+  animation:sakB 31s linear infinite;
+}
+@keyframes sakA{from{-webkit-mask-position:0 0;mask-position:0 0}
+  to{-webkit-mask-position:-120px 280px;mask-position:-120px 280px}}
+@keyframes sakB{from{-webkit-mask-position:0 0;mask-position:0 0}
+  to{-webkit-mask-position:90px 400px;mask-position:90px 400px}}
+@media (max-width:640px){ body::after{opacity:.35} }`},
+  firefly:{ nm:'반딧불이', css:
+`/* ═ 프리셋: 반딧불이 ═ */
+
+/* 색 — 기본 연둣빛 반딧불. #ffe9a8(호박빛), #bfe3ff(푸른빛)도 예뻐요. */
+body{ --firefly:#d8f3b0; }
+
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:4;
+  background-color:var(--firefly);
+  -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='400'%20height='400'%20viewBox='0%200%20400%20400'%3E%3Ccircle%20cx='74'%20cy='335'%20r='2.7'%20fill='%23fff'%3E%3Canimate%20attributeName='opacity'%20values='0;1;0'%20dur='6.1s'%20begin='-0.4s'%20repeatCount='indefinite'/%3E%3CanimateTransform%20attributeName='transform'%20type='translate'%20values='0,0;-9,-4;0,0'%20dur='12.2s'%20begin='-0.4s'%20repeatCount='indefinite'/%3E%3C/circle%3E%3Ccircle%20cx='169'%20cy='57'%20r='2.7'%20fill='%23fff'%3E%3Canimate%20attributeName='opacity'%20values='0;1;0'%20dur='4.7s'%20begin='-2.2s'%20repeatCount='indefinite'/%3E%3CanimateTransform%20attributeName='transform'%20type='translate'%20values='0,0;-1,5;0,0'%20dur='9.4s'%20begin='-2.2s'%20repeatCount='indefinite'/%3E%3C/circle%3E%3Ccircle%20cx='80'%20cy='154'%20r='2.0'%20fill='%23fff'%3E%3Canimate%20attributeName='opacity'%20values='0;1;0'%20dur='7.1s'%20begin='-4.5s'%20repeatCount='indefinite'/%3E%3CanimateTransform%20attributeName='transform'%20type='translate'%20values='0,0;-10,3;0,0'%20dur='14.2s'%20begin='-4.5s'%20repeatCount='indefinite'/%3E%3C/circle%3E%3Ccircle%20cx='343'%20cy='343'%20r='2.4'%20fill='%23fff'%3E%3Canimate%20attributeName='opacity'%20values='0;1;0'%20dur='4.1s'%20begin='-2.3s'%20repeatCount='indefinite'/%3E%3CanimateTransform%20attributeName='transform'%20type='translate'%20values='0,0;-9,-10;0,0'%20dur='8.2s'%20begin='-2.3s'%20repeatCount='indefinite'/%3E%3C/circle%3E%3Ccircle%20cx='25'%20cy='353'%20r='1.7'%20fill='%23fff'%3E%3Canimate%20attributeName='opacity'%20values='0;1;0'%20dur='5.9s'%20begin='-6.8s'%20repeatCount='indefinite'/%3E%3CanimateTransform%20attributeName='transform'%20type='translate'%20values='0,0;-9,-7;0,0'%20dur='11.8s'%20begin='-6.8s'%20repeatCount='indefinite'/%3E%3C/circle%3E%3Ccircle%20cx='215'%20cy='226'%20r='2.5'%20fill='%23fff'%3E%3Canimate%20attributeName='opacity'%20values='0;1;0'%20dur='7.2s'%20begin='-0.7s'%20repeatCount='indefinite'/%3E%3CanimateTransform%20attributeName='transform'%20type='translate'%20values='0,0;-20,-13;0,0'%20dur='14.4s'%20begin='-0.7s'%20repeatCount='indefinite'/%3E%3C/circle%3E%3Ccircle%20cx='316'%20cy='321'%20r='2.6'%20fill='%23fff'%3E%3Canimate%20attributeName='opacity'%20values='0;1;0'%20dur='5.0s'%20begin='-0.9s'%20repeatCount='indefinite'/%3E%3CanimateTransform%20attributeName='transform'%20type='translate'%20values='0,0;21,11;0,0'%20dur='10.0s'%20begin='-0.9s'%20repeatCount='indefinite'/%3E%3C/circle%3E%3Ccircle%20cx='283'%20cy='364'%20r='1.9'%20fill='%23fff'%3E%3Canimate%20attributeName='opacity'%20values='0;1;0'%20dur='5.3s'%20begin='-5.5s'%20repeatCount='indefinite'/%3E%3CanimateTransform%20attributeName='transform'%20type='translate'%20values='0,0;25,-2;0,0'%20dur='10.6s'%20begin='-5.5s'%20repeatCount='indefinite'/%3E%3C/circle%3E%3Ccircle%20cx='276'%20cy='150'%20r='1.8'%20fill='%23fff'%3E%3Canimate%20attributeName='opacity'%20values='0;1;0'%20dur='6.8s'%20begin='-6.4s'%20repeatCount='indefinite'/%3E%3CanimateTransform%20attributeName='transform'%20type='translate'%20values='0,0;-9,-13;0,0'%20dur='13.6s'%20begin='-6.4s'%20repeatCount='indefinite'/%3E%3C/circle%3E%3C/svg%3E");
+          mask-image:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='400'%20height='400'%20viewBox='0%200%20400%20400'%3E%3Ccircle%20cx='74'%20cy='335'%20r='2.7'%20fill='%23fff'%3E%3Canimate%20attributeName='opacity'%20values='0;1;0'%20dur='6.1s'%20begin='-0.4s'%20repeatCount='indefinite'/%3E%3CanimateTransform%20attributeName='transform'%20type='translate'%20values='0,0;-9,-4;0,0'%20dur='12.2s'%20begin='-0.4s'%20repeatCount='indefinite'/%3E%3C/circle%3E%3Ccircle%20cx='169'%20cy='57'%20r='2.7'%20fill='%23fff'%3E%3Canimate%20attributeName='opacity'%20values='0;1;0'%20dur='4.7s'%20begin='-2.2s'%20repeatCount='indefinite'/%3E%3CanimateTransform%20attributeName='transform'%20type='translate'%20values='0,0;-1,5;0,0'%20dur='9.4s'%20begin='-2.2s'%20repeatCount='indefinite'/%3E%3C/circle%3E%3Ccircle%20cx='80'%20cy='154'%20r='2.0'%20fill='%23fff'%3E%3Canimate%20attributeName='opacity'%20values='0;1;0'%20dur='7.1s'%20begin='-4.5s'%20repeatCount='indefinite'/%3E%3CanimateTransform%20attributeName='transform'%20type='translate'%20values='0,0;-10,3;0,0'%20dur='14.2s'%20begin='-4.5s'%20repeatCount='indefinite'/%3E%3C/circle%3E%3Ccircle%20cx='343'%20cy='343'%20r='2.4'%20fill='%23fff'%3E%3Canimate%20attributeName='opacity'%20values='0;1;0'%20dur='4.1s'%20begin='-2.3s'%20repeatCount='indefinite'/%3E%3CanimateTransform%20attributeName='transform'%20type='translate'%20values='0,0;-9,-10;0,0'%20dur='8.2s'%20begin='-2.3s'%20repeatCount='indefinite'/%3E%3C/circle%3E%3Ccircle%20cx='25'%20cy='353'%20r='1.7'%20fill='%23fff'%3E%3Canimate%20attributeName='opacity'%20values='0;1;0'%20dur='5.9s'%20begin='-6.8s'%20repeatCount='indefinite'/%3E%3CanimateTransform%20attributeName='transform'%20type='translate'%20values='0,0;-9,-7;0,0'%20dur='11.8s'%20begin='-6.8s'%20repeatCount='indefinite'/%3E%3C/circle%3E%3Ccircle%20cx='215'%20cy='226'%20r='2.5'%20fill='%23fff'%3E%3Canimate%20attributeName='opacity'%20values='0;1;0'%20dur='7.2s'%20begin='-0.7s'%20repeatCount='indefinite'/%3E%3CanimateTransform%20attributeName='transform'%20type='translate'%20values='0,0;-20,-13;0,0'%20dur='14.4s'%20begin='-0.7s'%20repeatCount='indefinite'/%3E%3C/circle%3E%3Ccircle%20cx='316'%20cy='321'%20r='2.6'%20fill='%23fff'%3E%3Canimate%20attributeName='opacity'%20values='0;1;0'%20dur='5.0s'%20begin='-0.9s'%20repeatCount='indefinite'/%3E%3CanimateTransform%20attributeName='transform'%20type='translate'%20values='0,0;21,11;0,0'%20dur='10.0s'%20begin='-0.9s'%20repeatCount='indefinite'/%3E%3C/circle%3E%3Ccircle%20cx='283'%20cy='364'%20r='1.9'%20fill='%23fff'%3E%3Canimate%20attributeName='opacity'%20values='0;1;0'%20dur='5.3s'%20begin='-5.5s'%20repeatCount='indefinite'/%3E%3CanimateTransform%20attributeName='transform'%20type='translate'%20values='0,0;25,-2;0,0'%20dur='10.6s'%20begin='-5.5s'%20repeatCount='indefinite'/%3E%3C/circle%3E%3Ccircle%20cx='276'%20cy='150'%20r='1.8'%20fill='%23fff'%3E%3Canimate%20attributeName='opacity'%20values='0;1;0'%20dur='6.8s'%20begin='-6.4s'%20repeatCount='indefinite'/%3E%3CanimateTransform%20attributeName='transform'%20type='translate'%20values='0,0;-9,-13;0,0'%20dur='13.6s'%20begin='-6.4s'%20repeatCount='indefinite'/%3E%3C/circle%3E%3C/svg%3E");
+  -webkit-mask-repeat:repeat; mask-repeat:repeat;
+  -webkit-mask-size:400px 400px; mask-size:400px 400px;
+  filter:drop-shadow(0 0 5px var(--firefly));
+  animation:ffDrift 60s linear infinite;
+}
+@keyframes ffDrift{from{-webkit-mask-position:0 0;mask-position:0 0}
+  to{-webkit-mask-position:-400px -180px;mask-position:-400px -180px}}`},
+  marine:{ nm:'심해 부유물', css:
+`/* ═ 프리셋: 심해 부유물 ═ */
+body::before,
+body::after{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:4;
+}
+/* 미세 입자 — 아주 천천히 가라앉으며 흔들려요 */
+body::before{
+  background-image:
+    radial-gradient(1.6px 1.6px at 249px 145px, rgba(230,240,250,0.23) 55%, transparent 100%),
+    radial-gradient(1.4px 1.4px at 37px 134px, rgba(230,240,250,0.26) 55%, transparent 100%),
+    radial-gradient(0.9px 0.9px at 194px 210px, rgba(230,240,250,0.4) 55%, transparent 100%),
+    radial-gradient(1.4px 1.4px at 255px 40px, rgba(230,240,250,0.33) 55%, transparent 100%),
+    radial-gradient(1.4px 1.4px at 44px 221px, rgba(230,240,250,0.36) 55%, transparent 100%),
+    radial-gradient(0.7px 0.7px at 229px 183px, rgba(230,240,250,0.41) 55%, transparent 100%),
+    radial-gradient(0.8px 0.8px at 248px 133px, rgba(230,240,250,0.41) 55%, transparent 100%),
+    radial-gradient(0.8px 0.8px at 120px 272px, rgba(230,240,250,0.41) 55%, transparent 100%),
+    radial-gradient(1.4px 1.4px at 158px 23px, rgba(230,240,250,0.31) 55%, transparent 100%),
+    radial-gradient(1.3px 1.3px at 91px 239px, rgba(230,240,250,0.24) 55%, transparent 100%),
+    radial-gradient(1.6px 1.6px at 30px 92px, rgba(230,240,250,0.34) 55%, transparent 100%),
+    radial-gradient(1.0px 1.0px at 235px 81px, rgba(230,240,250,0.32) 55%, transparent 100%),
+    radial-gradient(1.0px 1.0px at 216px 37px, rgba(230,240,250,0.29) 55%, transparent 100%),
+    radial-gradient(0.7px 0.7px at 243px 184px, rgba(230,240,250,0.22) 55%, transparent 100%),
+    radial-gradient(1.1px 1.1px at 139px 94px, rgba(230,240,250,0.39) 55%, transparent 100%),
+    radial-gradient(0.9px 0.9px at 35px 268px, rgba(230,240,250,0.23) 55%, transparent 100%),
+    radial-gradient(0.8px 0.8px at 254px 288px, rgba(230,240,250,0.26) 55%, transparent 100%),
+    radial-gradient(1.0px 1.0px at 33px 205px, rgba(230,240,250,0.21) 55%, transparent 100%);
+  background-size:300px 300px;
+  animation:msA 52s linear infinite, msSway 9s ease-in-out infinite alternate;
+}
+/* 큰 부유물 — 더 느리게 */
+body::after{
+  background-image:
+    radial-gradient(2.6px 2.6px at 134px 411px, rgba(230,240,250,0.18) 55%, transparent 100%),
+    radial-gradient(2.4px 2.4px at 157px 237px, rgba(230,240,250,0.16) 55%, transparent 100%),
+    radial-gradient(3.1px 3.1px at 303px 15px, rgba(230,240,250,0.13) 55%, transparent 100%),
+    radial-gradient(2.6px 2.6px at 399px 248px, rgba(230,240,250,0.21) 55%, transparent 100%),
+    radial-gradient(1.8px 1.8px at 354px 65px, rgba(230,240,250,0.11) 55%, transparent 100%),
+    radial-gradient(2.2px 2.2px at 412px 101px, rgba(230,240,250,0.17) 55%, transparent 100%),
+    radial-gradient(2.6px 2.6px at 53px 20px, rgba(230,240,250,0.15) 55%, transparent 100%),
+    radial-gradient(1.8px 1.8px at 239px 381px, rgba(230,240,250,0.21) 55%, transparent 100%);
+  background-size:440px 440px;
+  animation:msB 90s linear infinite, msSway 13s ease-in-out -4s infinite alternate;
+}
+@keyframes msA{from{background-position:0 0}to{background-position:22px 300px}}
+@keyframes msB{from{background-position:0 0}to{background-position:-30px 440px}}
+@keyframes msSway{from{transform:translateX(-6px)}to{transform:translateX(6px)}}`},
+  vhs:{ nm:'VHS 테이프', css:
+`/* ═ 프리셋: VHS 테이프 ═ */
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:5;opacity:.16;
+  background:
+    repeating-linear-gradient(0deg, rgba(255,255,255,.55) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(90deg, rgba(0,0,0,.5) 0 1px, transparent 1px 5px);
+  animation:vhsJit .4s steps(2) infinite;
+}
+body::after{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:5;
+  background:
+    linear-gradient(180deg, rgba(120,255,220,.05), transparent 12%, transparent 88%, rgba(255,120,200,.06)),
+    radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.34) 100%);
+  mix-blend-mode:screen;
+}
+@keyframes vhsJit{
+  0%{background-position:0 0,0 0}
+  50%{background-position:1px -1px,-2px 1px}
+  100%{background-position:0 0,0 0}
+}
+/* 화면 전체 색감 — 살짝 바랜 테이프 톤 */
+.head .bgimg,#bgphoto{filter:saturate(.82) contrast(1.06) hue-rotate(-4deg)}`},
+  bubble:{ nm:'올라오는 거품', css:
+`/* ═ 프리셋: 올라오는 거품 ═ */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%201200%201200'%3E%3Ccircle%20cx='90'%20cy='1260'%20r='7.0'%20fill='rgba(225,242,254,0.34)'%3E%3Canimate%20attributeName='cy'%20values='1260;-60'%20dur='14s'%20begin='-2s'%20repeatCount='indefinite'/%3E%3Canimate%20attributeName='cx'%20values='90;108;84;98;90'%20dur='14s'%20begin='-2s'%20repeatCount='indefinite'/%3E%3Canimate%20attributeName='opacity'%20values='0;1;1;0'%20keyTimes='0;0.08;0.82;1'%20dur='14s'%20begin='-2s'%20repeatCount='indefinite'/%3E%3C/circle%3E%3Ccircle%20cx='250'%20cy='1260'%20r='4.0'%20fill='rgba(225,242,254,0.39)'%3E%3Canimate%20attributeName='cy'%20values='1260;-60'%20dur='18s'%20begin='-9s'%20repeatCount='indefinite'/%3E%3Canimate%20attributeName='cx'%20values='250;238;260;246;250'%20dur='18s'%20begin='-9s'%20repeatCount='indefinite'/%3E%3Canimate%20attributeName='opacity'%20values='0;1;1;0'%20keyTimes='0;0.08;0.82;1'%20dur='18s'%20begin='-9s'%20repeatCount='indefinite'/%3E%3C/circle%3E%3Ccircle%20cx='390'%20cy='1260'%20r='9.0'%20fill='rgba(225,242,254,0.3)'%3E%3Canimate%20attributeName='cy'%20values='1260;-60'%20dur='12s'%20begin='-5s'%20repeatCount='indefinite'/%3E%3Canimate%20attributeName='cx'%20values='390;404;380;396;390'%20dur='12s'%20begin='-5s'%20repeatCount='indefinite'/%3E%3Canimate%20attributeName='opacity'%20values='0;1;1;0'%20keyTimes='0;0.08;0.82;1'%20dur='12s'%20begin='-5s'%20repeatCount='indefinite'/%3E%3C/circle%3E%3Ccircle%20cx='520'%20cy='1260'%20r='5.0'%20fill='rgba(225,242,254,0.37)'%3E%3Canimate%20attributeName='cy'%20values='1260;-60'%20dur='16s'%20begin='-13s'%20repeatCount='indefinite'/%3E%3Canimate%20attributeName='cx'%20values='520;504;528;514;520'%20dur='16s'%20begin='-13s'%20repeatCount='indefinite'/%3E%3Canimate%20attributeName='opacity'%20values='0;1;1;0'%20keyTimes='0;0.08;0.82;1'%20dur='16s'%20begin='-13s'%20repeatCount='indefinite'/%3E%3C/circle%3E%3Ccircle%20cx='670'%20cy='1260'%20r='6.5'%20fill='rgba(225,242,254,0.34)'%3E%3Canimate%20attributeName='cy'%20values='1260;-60'%20dur='13s'%20begin='-1s'%20repeatCount='indefinite'/%3E%3Canimate%20attributeName='cx'%20values='670;680;656;674;670'%20dur='13s'%20begin='-1s'%20repeatCount='indefinite'/%3E%3Canimate%20attributeName='opacity'%20values='0;1;1;0'%20keyTimes='0;0.08;0.82;1'%20dur='13s'%20begin='-1s'%20repeatCount='indefinite'/%3E%3C/circle%3E%3Ccircle%20cx='800'%20cy='1260'%20r='3.5'%20fill='rgba(225,242,254,0.4)'%3E%3Canimate%20attributeName='cy'%20values='1260;-60'%20dur='19s'%20begin='-7s'%20repeatCount='indefinite'/%3E%3Canimate%20attributeName='cx'%20values='800;791;812;795;800'%20dur='19s'%20begin='-7s'%20repeatCount='indefinite'/%3E%3Canimate%20attributeName='opacity'%20values='0;1;1;0'%20keyTimes='0;0.08;0.82;1'%20dur='19s'%20begin='-7s'%20repeatCount='indefinite'/%3E%3C/circle%3E%3Ccircle%20cx='930'%20cy='1260'%20r='8.0'%20fill='rgba(225,242,254,0.32)'%3E%3Canimate%20attributeName='cy'%20values='1260;-60'%20dur='15s'%20begin='-11s'%20repeatCount='indefinite'/%3E%3Canimate%20attributeName='cx'%20values='930;946;922;940;930'%20dur='15s'%20begin='-11s'%20repeatCount='indefinite'/%3E%3Canimate%20attributeName='opacity'%20values='0;1;1;0'%20keyTimes='0;0.08;0.82;1'%20dur='15s'%20begin='-11s'%20repeatCount='indefinite'/%3E%3C/circle%3E%3Ccircle%20cx='1080'%20cy='1260'%20r='5.0'%20fill='rgba(225,242,254,0.37)'%3E%3Canimate%20attributeName='cy'%20values='1260;-60'%20dur='17s'%20begin='-4s'%20repeatCount='indefinite'/%3E%3Canimate%20attributeName='cx'%20values='1080;1067;1089;1073;1080'%20dur='17s'%20begin='-4s'%20repeatCount='indefinite'/%3E%3Canimate%20attributeName='opacity'%20values='0;1;1;0'%20keyTimes='0;0.08;0.82;1'%20dur='17s'%20begin='-4s'%20repeatCount='indefinite'/%3E%3C/circle%3E%3Ccircle%20cx='180'%20cy='1260'%20r='3.0'%20fill='rgba(225,242,254,0.41)'%3E%3Canimate%20attributeName='cy'%20values='1260;-60'%20dur='20s'%20begin='-15s'%20repeatCount='indefinite'/%3E%3Canimate%20attributeName='cx'%20values='180;191;173;185;180'%20dur='20s'%20begin='-15s'%20repeatCount='indefinite'/%3E%3Canimate%20attributeName='opacity'%20values='0;1;1;0'%20keyTimes='0;0.08;0.82;1'%20dur='20s'%20begin='-15s'%20repeatCount='indefinite'/%3E%3C/circle%3E%3Ccircle%20cx='1160'%20cy='1260'%20r='6.0'%20fill='rgba(225,242,254,0.35)'%3E%3Canimate%20attributeName='cy'%20values='1260;-60'%20dur='11s'%20begin='-6s'%20repeatCount='indefinite'/%3E%3Canimate%20attributeName='cx'%20values='1160;1150;1173;1157;1160'%20dur='11s'%20begin='-6s'%20repeatCount='indefinite'/%3E%3Canimate%20attributeName='opacity'%20values='0;1;1;0'%20keyTimes='0;0.08;0.82;1'%20dur='11s'%20begin='-6s'%20repeatCount='indefinite'/%3E%3C/circle%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+  background-size: auto 100%;   /* 화면 높이에 맞춤 — 거품이 바닥부터 천장까지 */
+  background-position: bottom center;
+}`},
+  lightdust:{ nm:'떠다니는 빛 입자', css:
+`/* ═ 프리셋: 떠다니는 빛 입자 ═ */
+
+/* 색 — 기본은 홈 테마색을 따라가요.
+   직접 정하고 싶으면 var(--pri) 자리에 #ffe9b8 같은 색을 넣으세요. */
+body{ --dust: var(--pri); }
+
+body::before,
+body::after{
+  content:'';
+  position:fixed;
+  inset:0;
+  pointer-events:none;   /* 클릭 방해 안 함 */
+  z-index:4;             /* 화면을 덮지 않는 안전한 높이 */
+}
+
+/* 작은 알갱이 — 천천히 위로 */
+body::before{
+  background-image:
+    radial-gradient(1.7px 1.7px at 88px 44px, color-mix(in srgb, var(--dust) 58%, transparent) 0%, transparent 100%),
+    radial-gradient(1.8px 1.8px at 24px 216px, color-mix(in srgb, var(--dust) 78%, transparent) 0%, transparent 100%),
+    radial-gradient(2.3px 2.3px at 155px 20px, color-mix(in srgb, var(--dust) 68%, transparent) 0%, transparent 100%),
+    radial-gradient(1.7px 1.7px at 15px 28px, color-mix(in srgb, var(--dust) 59%, transparent) 0%, transparent 100%),
+    radial-gradient(1.9px 1.9px at 67px 29px, color-mix(in srgb, var(--dust) 58%, transparent) 0%, transparent 100%),
+    radial-gradient(1.3px 1.3px at 217px 150px, color-mix(in srgb, var(--dust) 69%, transparent) 0%, transparent 100%),
+    radial-gradient(1.9px 1.9px at 167px 166px, color-mix(in srgb, var(--dust) 58%, transparent) 0%, transparent 100%),
+    radial-gradient(1.7px 1.7px at 153px 155px, color-mix(in srgb, var(--dust) 69%, transparent) 0%, transparent 100%),
+    radial-gradient(2.2px 2.2px at 17px 148px, color-mix(in srgb, var(--dust) 73%, transparent) 0%, transparent 100%),
+    radial-gradient(1.8px 1.8px at 113px 42px, color-mix(in srgb, var(--dust) 74%, transparent) 0%, transparent 100%),
+    radial-gradient(2.0px 2.0px at 149px 214px, color-mix(in srgb, var(--dust) 61%, transparent) 0%, transparent 100%),
+    radial-gradient(2.0px 2.0px at 154px 152px, color-mix(in srgb, var(--dust) 78%, transparent) 0%, transparent 100%),
+    radial-gradient(2.1px 2.1px at 30px 146px, color-mix(in srgb, var(--dust) 58%, transparent) 0%, transparent 100%),
+    radial-gradient(1.8px 1.8px at 164px 58px, color-mix(in srgb, var(--dust) 89%, transparent) 0%, transparent 100%);
+  background-size:240px 240px;
+  animation: dustRise 46s linear infinite,
+             dustGlow 7s ease-in-out infinite;
+}
+
+/* 큰 입자 — 더 느리게, 은은하게 */
+body::after{
+  background-image:
+    radial-gradient(3.1px 3.1px at 224px 166px, color-mix(in srgb, var(--dust) 44%, transparent) 0%, transparent 100%),
+    radial-gradient(2.7px 2.7px at 191px 159px, color-mix(in srgb, var(--dust) 35%, transparent) 0%, transparent 100%),
+    radial-gradient(3.3px 3.3px at 130px 47px, color-mix(in srgb, var(--dust) 46%, transparent) 0%, transparent 100%),
+    radial-gradient(3.7px 3.7px at 259px 181px, color-mix(in srgb, var(--dust) 39%, transparent) 0%, transparent 100%),
+    radial-gradient(2.4px 2.4px at 317px 43px, color-mix(in srgb, var(--dust) 43%, transparent) 0%, transparent 100%),
+    radial-gradient(2.5px 2.5px at 90px 181px, color-mix(in srgb, var(--dust) 45%, transparent) 0%, transparent 100%),
+    radial-gradient(4.1px 4.1px at 221px 26px, color-mix(in srgb, var(--dust) 32%, transparent) 0%, transparent 100%),
+    radial-gradient(3.8px 3.8px at 291px 299px, color-mix(in srgb, var(--dust) 40%, transparent) 0%, transparent 100%),
+    radial-gradient(3.4px 3.4px at 180px 185px, color-mix(in srgb, var(--dust) 48%, transparent) 0%, transparent 100%);
+  background-size:340px 340px;
+  animation: dustDrift 88s linear infinite,
+             dustGlow 11s ease-in-out -3s infinite;
+}
+
+@keyframes dustRise{
+  from{ background-position:0 0; }
+  to  { background-position:0 -240px; }
+}
+@keyframes dustDrift{
+  from{ background-position:0 0; }
+  to  { background-position:-340px -340px; }
+}
+@keyframes dustGlow{
+  0%,100%{ opacity:.55; }
+  50%    { opacity:1; }
+}
+
+/* 폰에서는 조금 옅게 */
+@media (max-width:640px){
+  body::before{ opacity:.7 }
+  body::after { opacity:.55 }
+}`},
+  goldstar:{ nm:'금빛 별가루', css:
+`/* ═ 프리셋: 금빛 별가루 ═ */
+
+/* 색 — 금빛 별가루.
+   테마색을 따라가게 하려면 var(--pri), 흰 눈가루는 #ffffff 로 바꾸세요. */
+body{ --stardust: #ffe6a8; }
+
+body::before,
+body::after{
+  content:'';
+  position:fixed;
+  inset:0;
+  pointer-events:none;   /* 클릭 방해 없음 */
+  z-index:4;             /* 화면을 덮지 않는 안전한 높이 */
+  background-color:var(--stardust);
+  -webkit-mask-repeat:repeat;  mask-repeat:repeat;
+}
+
+/* 앞쪽 별가루 — 조금 크고 빠르게 */
+body::before{
+  -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='230'%20height='230'%20viewBox='0%200%20230%20230'%3E%3Cpath%20d='M0,-1%20Q0.14,-0.14%201,0%20Q0.14,0.14%200,1%20Q-0.14,0.14%20-1,0%20Q-0.14,-0.14%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.8'%20transform='translate(46,111)%20rotate(61)%20scale(4.5)'/%3E%3Cpath%20d='M0,-1%20Q0.14,-0.14%201,0%20Q0.14,0.14%200,1%20Q-0.14,0.14%20-1,0%20Q-0.14,-0.14%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.71'%20transform='translate(219,59)%20rotate(65)%20scale(5.6)'/%3E%3Cpath%20d='M0,-1%20Q0.14,-0.14%201,0%20Q0.14,0.14%200,1%20Q-0.14,0.14%20-1,0%20Q-0.14,-0.14%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.88'%20transform='translate(50,133)%20rotate(1)%20scale(4.0)'/%3E%3Cpath%20d='M0,-1%20Q0.14,-0.14%201,0%20Q0.14,0.14%200,1%20Q-0.14,0.14%20-1,0%20Q-0.14,-0.14%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.53'%20transform='translate(98,153)%20rotate(29)%20scale(3.7)'/%3E%3Cpath%20d='M0,-1%20Q0.14,-0.14%201,0%20Q0.14,0.14%200,1%20Q-0.14,0.14%20-1,0%20Q-0.14,-0.14%200,-1%20Z'%20fill='%23fff'%20fill-opacity='1.0'%20transform='translate(63,181)%20rotate(52)%20scale(2.3)'/%3E%3Cpath%20d='M0,-1%20Q0.14,-0.14%201,0%20Q0.14,0.14%200,1%20Q-0.14,0.14%20-1,0%20Q-0.14,-0.14%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.63'%20transform='translate(161,117)%20rotate(63)%20scale(2.3)'/%3E%3Cpath%20d='M0,-1%20Q0.14,-0.14%201,0%20Q0.14,0.14%200,1%20Q-0.14,0.14%20-1,0%20Q-0.14,-0.14%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.97'%20transform='translate(181,33)%20rotate(2)%20scale(4.4)'/%3E%3Cpath%20d='M0,-1%20Q0.14,-0.14%201,0%20Q0.14,0.14%200,1%20Q-0.14,0.14%20-1,0%20Q-0.14,-0.14%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.52'%20transform='translate(43,193)%20rotate(2)%20scale(5.0)'/%3E%3Cpath%20d='M0,-1%20Q0.14,-0.14%201,0%20Q0.14,0.14%200,1%20Q-0.14,0.14%20-1,0%20Q-0.14,-0.14%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.64'%20transform='translate(120,45)%20rotate(62)%20scale(4.1)'/%3E%3Ccircle%20cx='40'%20cy='49'%20r='1.0'%20fill='%23fff'%20fill-opacity='0.51'/%3E%3Ccircle%20cx='211'%20cy='62'%20r='0.6'%20fill='%23fff'%20fill-opacity='0.39'/%3E%3Ccircle%20cx='174'%20cy='207'%20r='1.1'%20fill='%23fff'%20fill-opacity='0.64'/%3E%3Ccircle%20cx='197'%20cy='150'%20r='1.2'%20fill='%23fff'%20fill-opacity='0.33'/%3E%3Ccircle%20cx='145'%20cy='123'%20r='0.9'%20fill='%23fff'%20fill-opacity='0.47'/%3E%3Ccircle%20cx='89'%20cy='39'%20r='1.1'%20fill='%23fff'%20fill-opacity='0.48'/%3E%3Ccircle%20cx='95'%20cy='117'%20r='0.9'%20fill='%23fff'%20fill-opacity='0.44'/%3E%3Ccircle%20cx='126'%20cy='100'%20r='0.7'%20fill='%23fff'%20fill-opacity='0.68'/%3E%3Ccircle%20cx='42'%20cy='185'%20r='1.0'%20fill='%23fff'%20fill-opacity='0.74'/%3E%3Ccircle%20cx='2'%20cy='127'%20r='0.5'%20fill='%23fff'%20fill-opacity='0.57'/%3E%3Ccircle%20cx='135'%20cy='58'%20r='0.9'%20fill='%23fff'%20fill-opacity='0.44'/%3E%3Ccircle%20cx='161'%20cy='30'%20r='0.6'%20fill='%23fff'%20fill-opacity='0.38'/%3E%3Ccircle%20cx='91'%20cy='215'%20r='1.1'%20fill='%23fff'%20fill-opacity='0.46'/%3E%3Ccircle%20cx='154'%20cy='80'%20r='0.7'%20fill='%23fff'%20fill-opacity='0.38'/%3E%3Ccircle%20cx='210'%20cy='46'%20r='1.0'%20fill='%23fff'%20fill-opacity='0.47'/%3E%3Ccircle%20cx='176'%20cy='11'%20r='1.0'%20fill='%23fff'%20fill-opacity='0.7'/%3E%3Ccircle%20cx='63'%20cy='106'%20r='1.1'%20fill='%23fff'%20fill-opacity='0.37'/%3E%3Ccircle%20cx='191'%20cy='153'%20r='0.5'%20fill='%23fff'%20fill-opacity='0.46'/%3E%3Ccircle%20cx='131'%20cy='98'%20r='1.0'%20fill='%23fff'%20fill-opacity='0.72'/%3E%3Ccircle%20cx='64'%20cy='43'%20r='0.9'%20fill='%23fff'%20fill-opacity='0.5'/%3E%3Ccircle%20cx='106'%20cy='200'%20r='1.0'%20fill='%23fff'%20fill-opacity='0.33'/%3E%3Ccircle%20cx='75'%20cy='15'%20r='1.1'%20fill='%23fff'%20fill-opacity='0.6'/%3E%3C/svg%3E");
+          mask-image:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='230'%20height='230'%20viewBox='0%200%20230%20230'%3E%3Cpath%20d='M0,-1%20Q0.14,-0.14%201,0%20Q0.14,0.14%200,1%20Q-0.14,0.14%20-1,0%20Q-0.14,-0.14%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.8'%20transform='translate(46,111)%20rotate(61)%20scale(4.5)'/%3E%3Cpath%20d='M0,-1%20Q0.14,-0.14%201,0%20Q0.14,0.14%200,1%20Q-0.14,0.14%20-1,0%20Q-0.14,-0.14%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.71'%20transform='translate(219,59)%20rotate(65)%20scale(5.6)'/%3E%3Cpath%20d='M0,-1%20Q0.14,-0.14%201,0%20Q0.14,0.14%200,1%20Q-0.14,0.14%20-1,0%20Q-0.14,-0.14%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.88'%20transform='translate(50,133)%20rotate(1)%20scale(4.0)'/%3E%3Cpath%20d='M0,-1%20Q0.14,-0.14%201,0%20Q0.14,0.14%200,1%20Q-0.14,0.14%20-1,0%20Q-0.14,-0.14%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.53'%20transform='translate(98,153)%20rotate(29)%20scale(3.7)'/%3E%3Cpath%20d='M0,-1%20Q0.14,-0.14%201,0%20Q0.14,0.14%200,1%20Q-0.14,0.14%20-1,0%20Q-0.14,-0.14%200,-1%20Z'%20fill='%23fff'%20fill-opacity='1.0'%20transform='translate(63,181)%20rotate(52)%20scale(2.3)'/%3E%3Cpath%20d='M0,-1%20Q0.14,-0.14%201,0%20Q0.14,0.14%200,1%20Q-0.14,0.14%20-1,0%20Q-0.14,-0.14%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.63'%20transform='translate(161,117)%20rotate(63)%20scale(2.3)'/%3E%3Cpath%20d='M0,-1%20Q0.14,-0.14%201,0%20Q0.14,0.14%200,1%20Q-0.14,0.14%20-1,0%20Q-0.14,-0.14%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.97'%20transform='translate(181,33)%20rotate(2)%20scale(4.4)'/%3E%3Cpath%20d='M0,-1%20Q0.14,-0.14%201,0%20Q0.14,0.14%200,1%20Q-0.14,0.14%20-1,0%20Q-0.14,-0.14%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.52'%20transform='translate(43,193)%20rotate(2)%20scale(5.0)'/%3E%3Cpath%20d='M0,-1%20Q0.14,-0.14%201,0%20Q0.14,0.14%200,1%20Q-0.14,0.14%20-1,0%20Q-0.14,-0.14%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.64'%20transform='translate(120,45)%20rotate(62)%20scale(4.1)'/%3E%3Ccircle%20cx='40'%20cy='49'%20r='1.0'%20fill='%23fff'%20fill-opacity='0.51'/%3E%3Ccircle%20cx='211'%20cy='62'%20r='0.6'%20fill='%23fff'%20fill-opacity='0.39'/%3E%3Ccircle%20cx='174'%20cy='207'%20r='1.1'%20fill='%23fff'%20fill-opacity='0.64'/%3E%3Ccircle%20cx='197'%20cy='150'%20r='1.2'%20fill='%23fff'%20fill-opacity='0.33'/%3E%3Ccircle%20cx='145'%20cy='123'%20r='0.9'%20fill='%23fff'%20fill-opacity='0.47'/%3E%3Ccircle%20cx='89'%20cy='39'%20r='1.1'%20fill='%23fff'%20fill-opacity='0.48'/%3E%3Ccircle%20cx='95'%20cy='117'%20r='0.9'%20fill='%23fff'%20fill-opacity='0.44'/%3E%3Ccircle%20cx='126'%20cy='100'%20r='0.7'%20fill='%23fff'%20fill-opacity='0.68'/%3E%3Ccircle%20cx='42'%20cy='185'%20r='1.0'%20fill='%23fff'%20fill-opacity='0.74'/%3E%3Ccircle%20cx='2'%20cy='127'%20r='0.5'%20fill='%23fff'%20fill-opacity='0.57'/%3E%3Ccircle%20cx='135'%20cy='58'%20r='0.9'%20fill='%23fff'%20fill-opacity='0.44'/%3E%3Ccircle%20cx='161'%20cy='30'%20r='0.6'%20fill='%23fff'%20fill-opacity='0.38'/%3E%3Ccircle%20cx='91'%20cy='215'%20r='1.1'%20fill='%23fff'%20fill-opacity='0.46'/%3E%3Ccircle%20cx='154'%20cy='80'%20r='0.7'%20fill='%23fff'%20fill-opacity='0.38'/%3E%3Ccircle%20cx='210'%20cy='46'%20r='1.0'%20fill='%23fff'%20fill-opacity='0.47'/%3E%3Ccircle%20cx='176'%20cy='11'%20r='1.0'%20fill='%23fff'%20fill-opacity='0.7'/%3E%3Ccircle%20cx='63'%20cy='106'%20r='1.1'%20fill='%23fff'%20fill-opacity='0.37'/%3E%3Ccircle%20cx='191'%20cy='153'%20r='0.5'%20fill='%23fff'%20fill-opacity='0.46'/%3E%3Ccircle%20cx='131'%20cy='98'%20r='1.0'%20fill='%23fff'%20fill-opacity='0.72'/%3E%3Ccircle%20cx='64'%20cy='43'%20r='0.9'%20fill='%23fff'%20fill-opacity='0.5'/%3E%3Ccircle%20cx='106'%20cy='200'%20r='1.0'%20fill='%23fff'%20fill-opacity='0.33'/%3E%3Ccircle%20cx='75'%20cy='15'%20r='1.1'%20fill='%23fff'%20fill-opacity='0.6'/%3E%3C/svg%3E");
+  -webkit-mask-size:230px 230px;  mask-size:230px 230px;
+  animation: sdFallA 34s linear infinite,
+             sdTwinkle 6s ease-in-out infinite;
+}
+
+/* 뒤쪽 별가루 — 곱고 느리게 */
+body::after{
+  -webkit-mask-image:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='310'%20height='310'%20viewBox='0%200%20310%20310'%3E%3Cpath%20d='M0,-1%20Q0.14,-0.14%201,0%20Q0.14,0.14%200,1%20Q-0.14,0.14%20-1,0%20Q-0.14,-0.14%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.67'%20transform='translate(21,218)%20rotate(43)%20scale(3.0)'/%3E%3Cpath%20d='M0,-1%20Q0.14,-0.14%201,0%20Q0.14,0.14%200,1%20Q-0.14,0.14%20-1,0%20Q-0.14,-0.14%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.71'%20transform='translate(78,81)%20rotate(32)%20scale(4.7)'/%3E%3Cpath%20d='M0,-1%20Q0.14,-0.14%201,0%20Q0.14,0.14%200,1%20Q-0.14,0.14%20-1,0%20Q-0.14,-0.14%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.71'%20transform='translate(75,273)%20rotate(27)%20scale(5.3)'/%3E%3Cpath%20d='M0,-1%20Q0.14,-0.14%201,0%20Q0.14,0.14%200,1%20Q-0.14,0.14%20-1,0%20Q-0.14,-0.14%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.78'%20transform='translate(191,82)%20rotate(54)%20scale(5.2)'/%3E%3Cpath%20d='M0,-1%20Q0.14,-0.14%201,0%20Q0.14,0.14%200,1%20Q-0.14,0.14%20-1,0%20Q-0.14,-0.14%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.71'%20transform='translate(252,301)%20rotate(17)%20scale(5.3)'/%3E%3Cpath%20d='M0,-1%20Q0.14,-0.14%201,0%20Q0.14,0.14%200,1%20Q-0.14,0.14%20-1,0%20Q-0.14,-0.14%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.87'%20transform='translate(277,305)%20rotate(1)%20scale(3.1)'/%3E%3Ccircle%20cx='197'%20cy='66'%20r='1.2'%20fill='%23fff'%20fill-opacity='0.31'/%3E%3Ccircle%20cx='305'%20cy='168'%20r='1.0'%20fill='%23fff'%20fill-opacity='0.68'/%3E%3Ccircle%20cx='301'%20cy='217'%20r='0.7'%20fill='%23fff'%20fill-opacity='0.48'/%3E%3Ccircle%20cx='72'%20cy='70'%20r='0.6'%20fill='%23fff'%20fill-opacity='0.48'/%3E%3Ccircle%20cx='97'%20cy='14'%20r='0.9'%20fill='%23fff'%20fill-opacity='0.65'/%3E%3Ccircle%20cx='38'%20cy='62'%20r='1.0'%20fill='%23fff'%20fill-opacity='0.36'/%3E%3Ccircle%20cx='277'%20cy='168'%20r='0.8'%20fill='%23fff'%20fill-opacity='0.7'/%3E%3Ccircle%20cx='87'%20cy='94'%20r='0.6'%20fill='%23fff'%20fill-opacity='0.47'/%3E%3Ccircle%20cx='283'%20cy='25'%20r='0.9'%20fill='%23fff'%20fill-opacity='0.53'/%3E%3Ccircle%20cx='31'%20cy='6'%20r='0.8'%20fill='%23fff'%20fill-opacity='0.69'/%3E%3Ccircle%20cx='205'%20cy='292'%20r='0.6'%20fill='%23fff'%20fill-opacity='0.62'/%3E%3Ccircle%20cx='131'%20cy='162'%20r='1.0'%20fill='%23fff'%20fill-opacity='0.41'/%3E%3Ccircle%20cx='81'%20cy='160'%20r='1.0'%20fill='%23fff'%20fill-opacity='0.75'/%3E%3Ccircle%20cx='259'%20cy='283'%20r='0.8'%20fill='%23fff'%20fill-opacity='0.56'/%3E%3Ccircle%20cx='281'%20cy='32'%20r='0.9'%20fill='%23fff'%20fill-opacity='0.63'/%3E%3Ccircle%20cx='266'%20cy='160'%20r='0.7'%20fill='%23fff'%20fill-opacity='0.58'/%3E%3Ccircle%20cx='289'%20cy='99'%20r='0.5'%20fill='%23fff'%20fill-opacity='0.67'/%3E%3Ccircle%20cx='105'%20cy='183'%20r='0.5'%20fill='%23fff'%20fill-opacity='0.6'/%3E%3Ccircle%20cx='217'%20cy='57'%20r='1.1'%20fill='%23fff'%20fill-opacity='0.59'/%3E%3Ccircle%20cx='231'%20cy='260'%20r='0.9'%20fill='%23fff'%20fill-opacity='0.31'/%3E%3Ccircle%20cx='228'%20cy='243'%20r='0.9'%20fill='%23fff'%20fill-opacity='0.48'/%3E%3Ccircle%20cx='207'%20cy='38'%20r='0.7'%20fill='%23fff'%20fill-opacity='0.32'/%3E%3Ccircle%20cx='224'%20cy='23'%20r='0.7'%20fill='%23fff'%20fill-opacity='0.62'/%3E%3Ccircle%20cx='209'%20cy='220'%20r='0.8'%20fill='%23fff'%20fill-opacity='0.41'/%3E%3Ccircle%20cx='199'%20cy='169'%20r='0.8'%20fill='%23fff'%20fill-opacity='0.58'/%3E%3Ccircle%20cx='45'%20cy='21'%20r='0.8'%20fill='%23fff'%20fill-opacity='0.52'/%3E%3Ccircle%20cx='112'%20cy='232'%20r='0.9'%20fill='%23fff'%20fill-opacity='0.64'/%3E%3Ccircle%20cx='136'%20cy='127'%20r='0.8'%20fill='%23fff'%20fill-opacity='0.52'/%3E%3Ccircle%20cx='158'%20cy='197'%20r='1.1'%20fill='%23fff'%20fill-opacity='0.73'/%3E%3Ccircle%20cx='5'%20cy='84'%20r='0.7'%20fill='%23fff'%20fill-opacity='0.44'/%3E%3C/svg%3E");
+          mask-image:url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='310'%20height='310'%20viewBox='0%200%20310%20310'%3E%3Cpath%20d='M0,-1%20Q0.14,-0.14%201,0%20Q0.14,0.14%200,1%20Q-0.14,0.14%20-1,0%20Q-0.14,-0.14%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.67'%20transform='translate(21,218)%20rotate(43)%20scale(3.0)'/%3E%3Cpath%20d='M0,-1%20Q0.14,-0.14%201,0%20Q0.14,0.14%200,1%20Q-0.14,0.14%20-1,0%20Q-0.14,-0.14%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.71'%20transform='translate(78,81)%20rotate(32)%20scale(4.7)'/%3E%3Cpath%20d='M0,-1%20Q0.14,-0.14%201,0%20Q0.14,0.14%200,1%20Q-0.14,0.14%20-1,0%20Q-0.14,-0.14%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.71'%20transform='translate(75,273)%20rotate(27)%20scale(5.3)'/%3E%3Cpath%20d='M0,-1%20Q0.14,-0.14%201,0%20Q0.14,0.14%200,1%20Q-0.14,0.14%20-1,0%20Q-0.14,-0.14%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.78'%20transform='translate(191,82)%20rotate(54)%20scale(5.2)'/%3E%3Cpath%20d='M0,-1%20Q0.14,-0.14%201,0%20Q0.14,0.14%200,1%20Q-0.14,0.14%20-1,0%20Q-0.14,-0.14%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.71'%20transform='translate(252,301)%20rotate(17)%20scale(5.3)'/%3E%3Cpath%20d='M0,-1%20Q0.14,-0.14%201,0%20Q0.14,0.14%200,1%20Q-0.14,0.14%20-1,0%20Q-0.14,-0.14%200,-1%20Z'%20fill='%23fff'%20fill-opacity='0.87'%20transform='translate(277,305)%20rotate(1)%20scale(3.1)'/%3E%3Ccircle%20cx='197'%20cy='66'%20r='1.2'%20fill='%23fff'%20fill-opacity='0.31'/%3E%3Ccircle%20cx='305'%20cy='168'%20r='1.0'%20fill='%23fff'%20fill-opacity='0.68'/%3E%3Ccircle%20cx='301'%20cy='217'%20r='0.7'%20fill='%23fff'%20fill-opacity='0.48'/%3E%3Ccircle%20cx='72'%20cy='70'%20r='0.6'%20fill='%23fff'%20fill-opacity='0.48'/%3E%3Ccircle%20cx='97'%20cy='14'%20r='0.9'%20fill='%23fff'%20fill-opacity='0.65'/%3E%3Ccircle%20cx='38'%20cy='62'%20r='1.0'%20fill='%23fff'%20fill-opacity='0.36'/%3E%3Ccircle%20cx='277'%20cy='168'%20r='0.8'%20fill='%23fff'%20fill-opacity='0.7'/%3E%3Ccircle%20cx='87'%20cy='94'%20r='0.6'%20fill='%23fff'%20fill-opacity='0.47'/%3E%3Ccircle%20cx='283'%20cy='25'%20r='0.9'%20fill='%23fff'%20fill-opacity='0.53'/%3E%3Ccircle%20cx='31'%20cy='6'%20r='0.8'%20fill='%23fff'%20fill-opacity='0.69'/%3E%3Ccircle%20cx='205'%20cy='292'%20r='0.6'%20fill='%23fff'%20fill-opacity='0.62'/%3E%3Ccircle%20cx='131'%20cy='162'%20r='1.0'%20fill='%23fff'%20fill-opacity='0.41'/%3E%3Ccircle%20cx='81'%20cy='160'%20r='1.0'%20fill='%23fff'%20fill-opacity='0.75'/%3E%3Ccircle%20cx='259'%20cy='283'%20r='0.8'%20fill='%23fff'%20fill-opacity='0.56'/%3E%3Ccircle%20cx='281'%20cy='32'%20r='0.9'%20fill='%23fff'%20fill-opacity='0.63'/%3E%3Ccircle%20cx='266'%20cy='160'%20r='0.7'%20fill='%23fff'%20fill-opacity='0.58'/%3E%3Ccircle%20cx='289'%20cy='99'%20r='0.5'%20fill='%23fff'%20fill-opacity='0.67'/%3E%3Ccircle%20cx='105'%20cy='183'%20r='0.5'%20fill='%23fff'%20fill-opacity='0.6'/%3E%3Ccircle%20cx='217'%20cy='57'%20r='1.1'%20fill='%23fff'%20fill-opacity='0.59'/%3E%3Ccircle%20cx='231'%20cy='260'%20r='0.9'%20fill='%23fff'%20fill-opacity='0.31'/%3E%3Ccircle%20cx='228'%20cy='243'%20r='0.9'%20fill='%23fff'%20fill-opacity='0.48'/%3E%3Ccircle%20cx='207'%20cy='38'%20r='0.7'%20fill='%23fff'%20fill-opacity='0.32'/%3E%3Ccircle%20cx='224'%20cy='23'%20r='0.7'%20fill='%23fff'%20fill-opacity='0.62'/%3E%3Ccircle%20cx='209'%20cy='220'%20r='0.8'%20fill='%23fff'%20fill-opacity='0.41'/%3E%3Ccircle%20cx='199'%20cy='169'%20r='0.8'%20fill='%23fff'%20fill-opacity='0.58'/%3E%3Ccircle%20cx='45'%20cy='21'%20r='0.8'%20fill='%23fff'%20fill-opacity='0.52'/%3E%3Ccircle%20cx='112'%20cy='232'%20r='0.9'%20fill='%23fff'%20fill-opacity='0.64'/%3E%3Ccircle%20cx='136'%20cy='127'%20r='0.8'%20fill='%23fff'%20fill-opacity='0.52'/%3E%3Ccircle%20cx='158'%20cy='197'%20r='1.1'%20fill='%23fff'%20fill-opacity='0.73'/%3E%3Ccircle%20cx='5'%20cy='84'%20r='0.7'%20fill='%23fff'%20fill-opacity='0.44'/%3E%3C/svg%3E");
+  -webkit-mask-size:310px 310px;  mask-size:310px 310px;
+  animation: sdFallB 62s linear infinite,
+             sdTwinkle 9s ease-in-out -4s infinite;
+}
+
+/* 살짝 비스듬히 흩날려 내려요 */
+@keyframes sdFallA{
+  from{ -webkit-mask-position:0 0;          mask-position:0 0; }
+  to  { -webkit-mask-position:-52px 230px;  mask-position:-52px 230px; }
+}
+@keyframes sdFallB{
+  from{ -webkit-mask-position:0 0;          mask-position:0 0; }
+  to  { -webkit-mask-position:44px 310px;   mask-position:44px 310px; }
+}
+@keyframes sdTwinkle{
+  0%,100%{ opacity:.5; }
+  50%    { opacity:1; }
+}
+
+/* 폰에서는 조금 옅게 */
+@media (max-width:640px){
+  body::before{ opacity:.75 }
+  body::after { opacity:.5 }
+}`},
   rain:{ nm:'비 오는 창가', css:
 `/* ═ 프리셋: 비 오는 창가 ═ */
 body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:4;opacity:.28;
