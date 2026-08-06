@@ -651,7 +651,7 @@ function setGateCover(url){                          // 대문 배경 — 사진
 }
 const galNm=()=>st.page?.galName||'GALLERY';
 const gbNm=()=>st.page?.gbName||'GUESTBOOK';
-const WNAME={latest:'최신글',notice:'공지',chat:'채팅로그',img:'이미지',nb:'이웃 홈',profile:'프로필',search:'검색',category:'카테고리',
+const WNAME={latest:'최신글',notice:'공지',chat:'채팅로그',phone:'단말기',img:'이미지',nb:'이웃 홈',profile:'프로필',search:'검색',category:'카테고리',
   dday:'디데이',bgm:'BGM',quote:'인용구',links:'링크',banner:'배너칸',text:'글',cnt:'방문자수',stamp:'발도장'};
 const STAMP_LEGACY=['heart','paw','star','drop'];   // 옛 슬롯 이름 — 카운트 승계용
 function parseEmo(s){
@@ -735,7 +735,7 @@ function fillCounter(){
   a.textContent = c.day===t ? (c.today||0) : 0;
   b.textContent = c.total||0;
 }
-const DEFCOL={search:'l',category:'l',profile:'l',latest:'c',quote:'c',notice:'c',chat:'c',img:'l',nb:'r',
+const DEFCOL={search:'l',category:'l',profile:'l',latest:'c',quote:'c',notice:'c',chat:'c',phone:'c',img:'l',nb:'r',
   dday:'r',bgm:'r',links:'r',banner:'r',text:'c',cnt:'l'};
 const homeStyle=()=>st.page?.homeStyle||'grid';
 const galOn=()=>st.page?.galOn!==false;
@@ -1112,7 +1112,7 @@ function renderSide(){
       const cut = w.cut===true;                    // true=잘라내기, 기본=스크롤
       if(lim>0 && cut) hs=hs.slice(0,lim);
       if(lim>0 && !cut) d.style.setProperty('--nbH', (lim*55-7)+'px');
-      if(!hs.length){ if(st.mine){ d.innerHTML=`<p class="label">${esc(w.label||'NEIGHBORS')}</p><p class="pl-empty">✎ 편집에서 이웃 주소를 추가하세요.</p>`; box.appendChild(d); } return; }
+      if(!hs.length){ if(st.mine){ d.innerHTML=`<p class="label">${esc(w.label||'NEIGHBORS')}</p><p class="pl-empty">✎ 편집에서 이웃 주소를 추가하세요.</p><p class="pl-ghost">👻 지금은 방문자에게 안 보이는 카드예요</p>`; box.appendChild(d); } return; }
       d.innerHTML=`<p class="label">${esc(w.label||'NEIGHBORS')}</p><div class="nb-list">`+
         hs.map(x=>{ const hh=nbH(x), ur=nbUrl(x), im=nbImg(x);
           if(ur) return `<a class="nb ext" href="${esc(ur)}" target="_blank" rel="noopener">
@@ -1136,7 +1136,7 @@ function renderSide(){
       return;
     }
     if(w.t==='img'){
-      if(!w.img){ if(st.mine){ d.innerHTML=`<p class="label">${esc(w.label||'IMAGE')}</p><p class="pl-empty">✎ 편집에서 사진을 올려주세요.</p>`; box.appendChild(d); } return; }
+      if(!w.img){ if(st.mine){ d.innerHTML=`<p class="label">${esc(w.label||'IMAGE')}</p><p class="pl-empty">✎ 편집에서 사진을 올려주세요.</p><p class="pl-ghost">👻 지금은 방문자에게 안 보이는 카드예요</p>`; box.appendChild(d); } return; }
       d.className+=' w-img';
       const pic=`<img src="${w.img}" alt="" draggable="false">`;
       d.innerHTML=(w.label===''?'':`<p class="label">${esc(w.label||'IMAGE')}</p>`)
@@ -1170,7 +1170,7 @@ function renderSide(){
           ${imgs&&l.img?`<img class="ch-p" src="${l.img}" alt="" draggable="false">`:''}
           <div class="ch-b">${l.name?`<span class="ch-n">${esc(l.name)}</span>`:''}<p>${esc(l.text)}</p></div>
         </div>`).join('')+`</div>`
-        :'<p class="pl-empty">✎ 편집에서 대사를 추가해주세요.</p>');
+        :'<p class="pl-empty">✎ 편집에서 대사를 추가해주세요.</p><p class="pl-ghost">👻 지금은 방문자에게 안 보이는 카드예요</p>');
       box.appendChild(d);
       /* 움짤 자리 예약: 재생 전에 '다 떴을 때 실제 높이'만큼 min-height 확보 —
          ① 높이제한 있으면 min(내용, maxH)만 (빈 공간이 아래 위젯 자리를 먹던 버그)
@@ -1182,12 +1182,58 @@ function renderSide(){
           d.classList.add('ch-anim'); if(need>0) cb.style.minHeight=need+'px'; } }
       return;
     }
+    if(w.t==='phone'){
+      const ls=(w.lines||[]).filter(l=>l.text||l.app);
+      if(!ls.length && !st.mine) return;
+      const stl=w.style||'oled';                      // oled(미니멀) | glass(글래스) | term(관제 단말)
+      d.className+=' w-phone ph-'+stl;
+      if(w.anim){ d.className+=' ch-anim'; if(w.loop) d.dataset.loop='1'; chatObserve(d); }
+      const lum=hx=>{ try{ const n=parseInt(hx.slice(1),16);
+        return (((n>>16)&255)*.299+((n>>8)&255)*.587+(n&255)*.114)/255; }catch(e){ return .2; } };
+      const sv=[];
+      if(w.bg) sv.push(`--phBg:${w.bg}`);
+      const tc=w.tc || (w.bg ? (lum(w.bg)>.62?'#23252d':'#eef0f6') : '');
+      if(tc) sv.push(`--phTx:${tc}`);
+      if(w.ac) sv.push(`--phAc:${w.ac}`);
+      if(sv.length) d.setAttribute('style', sv.join(';'));   // ⚠ --chMax는 반드시 이 다음(phase167 교훈)
+      if(+w.maxH>0){ d.className+=' ch-scroll'; d.style.setProperty('--chMax',(+w.maxH)+'px'); }
+      const now=new Date(),
+            hh=String(now.getHours()).padStart(2,'0'), mi=String(now.getMinutes()).padStart(2,'0'),
+            ss=String(now.getSeconds()).padStart(2,'0'),
+            days=['일','월','화','수','목','금','토'],
+            dt=(now.getMonth()+1)+'월 '+now.getDate()+'일 '+days[now.getDay()]+'요일';
+      const head = stl==='term'
+        ? `<div class="ph-top"><span class="l">${esc(w.hd||'SECURE LINE')}</span><span class="r">${esc(w.hd2||'CH-07')}</span></div>
+           <div class="ph-meta"><span>${esc(w.sub||'INCOMING TRANSMISSION')}</span><b>${hh}:${mi}:${ss}</b></div>`
+        : (stl==='oled' ? `<div class="ph-isl"></div>` : `<div class="ph-bar"><span>${hh}:${mi}</span><span>ıllı&nbsp; ᯤ&nbsp; ▮▮▯</span></div>`)
+          +(w.clk===false?'':`<div class="ph-clock"><b>${hh}:${mi}</b><span>${dt}</span></div>`);
+      const noti = l=>`
+        <div class="ch-line ph-n">
+          ${stl!=='term'&&l.icon?`<span class="ph-ic2">${esc(l.icon)}</span>`:''}
+          <div class="ph-bd">
+            <span class="ph-app"><span>${stl==='term'?'[ ':''}${stl==='term'&&l.icon?esc(l.icon)+' ':''}${esc(l.app||'알림')}${stl==='term'?' ]':''}</span>${l.time?`<i>${esc(l.time)}</i>`:''}</span>
+            ${l.text?`<p class="ph-t">${esc(l.text)}</p>`:''}
+          </div>
+        </div>`;
+      d.innerHTML=(w.label===''?'':`<p class="label">${esc(w.label||'DEVICE')}</p>`)+
+        `<div class="ph-frame">`+head+
+        (ls.length?`<div class="ch-box ph-list">`+ls.map(noti).join('')+`</div>`
+          :'<p class="pl-empty">✎ 편집에서 알림을 추가해주세요.</p><p class="pl-ghost">👻 지금은 방문자에게 안 보이는 카드예요</p>')+
+        (stl==='term'?`<div class="ph-foot">END OF FEED ─────────</div>`:'')+
+        `</div>`;
+      box.appendChild(d);
+      if(w.anim){ const cb=d.querySelector('.ch-box');            // 자리 예약(phase168) — 높이 고정 모드면 그 안에서
+        if(cb){ d.classList.remove('ch-anim');
+          const need=+w.maxH>0 ? Math.min(cb.scrollHeight, +w.maxH) : cb.scrollHeight;
+          d.classList.add('ch-anim'); if(need>0) cb.style.minHeight=need+'px'; } }
+      return;
+    }
     if(w.t==='text'){
       if(!w.title && !w.text && !st.mine) return;
       d.className+=' w-text';
       d.innerHTML=`<p class="label">${esc(w.title||'TEXT')}</p>`+
         (w.text?`<p class="tx-x">${esc(w.text).replace(/\n/g,'<br>')}</p>`
-          :(st.mine?'<p class="pl-empty">✎ 편집에서 내용을 채워주세요.</p>':''));
+          :(st.mine?('<p class="pl-empty">✎ 편집에서 내용을 채워주세요.</p>'+(!w.title?'<p class="pl-ghost">👻 지금은 방문자에게 안 보이는 카드예요</p>':'')):''));
       box.appendChild(d); return;
     }
     if(w.t==='cnt'){
@@ -1221,7 +1267,7 @@ function renderSide(){
       d.innerHTML=`<p class="label">NOTICE</p>
         ${w.title?`<p class="nt-t">${esc(w.title)}</p>`:''}
         ${w.text?`<p class="nt-x">${esc(w.text).replace(/\n/g,'<br>')}</p>`
-          :(!w.title&&st.mine?'<p class="pl-empty">✎ 편집에서 내용을 채워주세요.</p>':'')}`;
+          :(!w.title&&st.mine?'<p class="pl-empty">✎ 편집에서 내용을 채워주세요.</p><p class="pl-ghost">👻 지금은 방문자에게 안 보이는 카드예요</p>':'')}`;
       box.appendChild(d); return;
     }
     if(w.t==='quote'){
@@ -1936,11 +1982,12 @@ $('#w-catadd').onclick=async()=>{
 };
 
 /* ---------- 위젯 편집 탭 ---------- */
-let draft=[]; let editIdx=-1; let pdraft={ddays:[],bgm:{}};
+let draft=[]; let editIdx=-1; let pdraft={ddays:[],bgm:{}}; let widSnap='';
 function fillWidgets(){
   draft=JSON.parse(JSON.stringify(sideCfg()));
   pdraft={ ddays:JSON.parse(JSON.stringify(st.page.ddays||[])),
            bgm:{url:st.page.bgm?.url||'', title:st.page.bgm?.title||''} };
+  widSnap=JSON.stringify({d:draft,p:pdraft});   // 닫을 때 저장 안 한 변경 감지용
   editIdx=-1; renderWidList(); $('#wid-edit').innerHTML='';
 }
 function renderWidList(){
@@ -1948,7 +1995,7 @@ function renderWidList(){
     <div class="wl">
       <span class="nm">${WNAME[w.t]||w.t}${w.t==='links'?` (${(w.items||[]).length})`:''}${w.t==='banner'?` (${(w.items||[]).length})`:''}${w.float?' <span style="color:var(--pri);font-size:10px">📌 띄움</span>':''}</span>
       ${w.t!=='latest'?`<button data-f="${i}" title="컬럼에서 떼어 화면에 자유 배치 (PC 전용)"${w.float?' style="color:var(--pri)"':''}>📌</button>`:''}
-      ${['profile','quote','links','banner','dday','bgm','notice','chat','img','nb','text','stamp'].includes(w.t)?`<button data-e="${i}">✎</button>`:''}
+      ${['profile','quote','links','banner','dday','bgm','notice','chat','phone','img','nb','text','stamp'].includes(w.t)?`<button data-e="${i}">✎</button>`:''}
       <button data-u="${i}">↑</button><button data-d="${i}">↓</button><button data-x="${i}">✕</button>
     </div>`).join('') || '<p class="pl-empty">위젯이 없어요 — 아래에서 추가하세요.</p>';
   if(draft.some(w=>w.float))
@@ -2147,6 +2194,47 @@ function renderWidEdit(){
       <textarea data-cht="${i}" placeholder="대사를 입력하세요" class="chl-tx">${esc(l.text||'')}</textarea>
     </div>`).join('')
     +`<button class="btn" id="we-chadd" style="font-size:12px">+ 대사 추가</button>`;
+  if(w.t==='phone') html+=`
+    <div class="p-row" style="align-items:center">
+      <select id="we-phst" style="flex:1">
+        <option value="oled" ${(w.style||'oled')==='oled'?'selected':''}>OLED 미니멀 (검정 잠금화면)</option>
+        <option value="glass" ${w.style==='glass'?'selected':''}>프로스트 글래스 (유리 알림)</option>
+        <option value="term" ${w.style==='term'?'selected':''}>관제 단말 (세계관 터미널)</option>
+      </select>
+      ${w.style!=='term'?`<label class="chk" title="잠금화면처럼 큰 시계와 날짜가 떠요 (보는 사람의 현재 시각)"><input type="checkbox" id="we-phclk" ${w.clk!==false?'checked':''}> 🕐 시계</label>`:''}
+      <label class="chk" title="화면에 보일 때 알림이 순서대로 떠올라요"><input type="checkbox" id="we-phanim" ${w.anim?'checked':''}> ✨ 움짤 효과</label>
+      <label class="chk" title="다 뜨면 잠시 쉬었다가 처음부터 다시 재생돼요"><input type="checkbox" id="we-phloop" ${w.loop?'checked':''}> ↻ 반복 재생</label>
+    </div>
+    ${w.style==='term'?`
+    <div class="p-row">
+      <input data-phhd placeholder="헤더 라벨 (기본: SECURE LINE)" value="${esc(w.hd||'')}" style="flex:2" title="세계관 이름을 넣어보세요 — 예: FEARLESS · SECURE LINE">
+      <input data-phhd2 placeholder="우측 코드 (기본: CH-07)" value="${esc(w.hd2||'')}" style="flex:1">
+    </div>
+    <input data-phsub placeholder="부제 (기본: INCOMING TRANSMISSION)" value="${esc(w.sub||'')}">`:''}
+    <input id="we-phlab" placeholder="위젯 제목 (기본: DEVICE — 공백 한 칸이면 숨김)" value="${esc(w.label??'')}">
+    <div class="p-row" style="align-items:center;font-size:11px;color:var(--muted);gap:7px">
+      바탕 <input type="color" id="we-phbg" value="${w.bg||'#0b0d12'}" style="width:34px;padding:0" title="단말기 화면 배경색 — 밝은 색도 돼요 (글자색이 자동으로 맞춰져요)">
+      글자 <input type="color" id="we-phtc" value="${w.tc||'#eef0f6'}" style="width:34px;padding:0" title="비우면 바탕에 맞춰 자동">
+      포인트 <input type="color" id="we-phac" value="${w.ac||'#d9a614'}" style="width:34px;padding:0" title="관제 단말의 헤더·인디케이터 색">
+      <button class="rmv" id="we-phrst" style="font-size:10px" title="색을 디자인 기본(홈 테마 추종)으로 되돌려요">기본으로</button>
+      <input type="number" id="we-phmax" placeholder="높이 px" value="${+w.maxH>0?+w.maxH:''}" min="120" max="900" style="width:96px" title="정하면 그 높이로 고정되고 넘치는 알림은 스크롤 — 비우면 알림 개수만큼만 좁아져요 (삐삐st)">
+    </div>
+    <p class="note">알림은 원하는 만큼 추가할 수 있어요. 높이를 비우면 알림 1~2개일 때 삐삐처럼 착 좁아지고, 정하면 그 크기로 고정돼요.</p>`
+    +(w.lines||[]).map((l,i)=>`
+    <div class="chl">
+      <div class="chl-h">
+        <input data-phic="${i}" placeholder="💬" value="${esc(l.icon||'')}" style="width:44px;text-align:center" title="알림 아이콘 (이모지)">
+        <input data-phap="${i}" placeholder="앱·발신처 (예: FEARLESS 건강관리부)" value="${esc(l.app||'')}" class="chl-nm">
+        <input data-phtm="${i}" placeholder="시간" value="${esc(l.time||'')}" style="width:64px" title="예: 지금, 9:41, 5분 전">
+        <span class="chl-r">
+          <button class="rmv" data-phup="${i}">↑</button>
+          <button class="rmv" data-phdn="${i}">↓</button>
+          <button class="rmv" data-phx="${i}">✕</button>
+        </span>
+      </div>
+      <textarea data-phtx="${i}" placeholder="알림 내용" class="chl-tx">${esc(l.text||'')}</textarea>
+    </div>`).join('')
+    +`<button class="btn" id="we-phadd" style="font-size:12px">+ 알림 추가</button>`;
   html+=`<p class="note">입력은 즉시 반영돼요 — 마지막에 [위젯 구성 저장]만 누르면 저장 완료.</p>`;
   $('#wid-edit').innerHTML=html;
   // 라이브 바인딩: 쓰는 즉시 draft에 반영
@@ -2215,6 +2303,38 @@ function renderWidEdit(){
   const chff=$('#we-chff'); if(chff) chff.addEventListener('change',()=>{ w.font=chff.value; });
   const chfs=$('#we-chfs'); if(chfs) chfs.addEventListener('input',()=>{ w.fs=+chfs.value; });
   const chimg=$('#we-chimg'); if(chimg) chimg.addEventListener('change',()=>{ w.imgs=chimg.checked; });
+  /* 단말기(phone) 위젯 바인딩 */
+  const phlab=$('#we-phlab'); if(phlab) phlab.addEventListener('input',()=>{ w.label=phlab.value; });
+  const phst=$('#we-phst'); if(phst) phst.addEventListener('change',()=>{
+    if(phst.value==='oled') delete w.style; else w.style=phst.value; renderWidEdit(); });
+  const phbg=$('#we-phbg'); if(phbg) phbg.addEventListener('input',()=>{ w.bg=phbg.value; });
+  const phtc=$('#we-phtc'); if(phtc) phtc.addEventListener('input',()=>{ w.tc=phtc.value; });
+  const phac=$('#we-phac'); if(phac) phac.addEventListener('input',()=>{ w.ac=phac.value; });
+  const phrst=$('#we-phrst'); if(phrst) phrst.onclick=()=>{
+    delete w.bg; delete w.tc; delete w.ac; renderWidEdit(); msg('색을 디자인 기본으로 되돌렸어요.'); };
+  const phmax=$('#we-phmax'); if(phmax) phmax.addEventListener('input',()=>{
+    const n=+phmax.value; if(n>0) w.maxH=n; else delete w.maxH; });
+  const phhd=$('#wid-edit [data-phhd]'); if(phhd) phhd.addEventListener('input',()=>{ w.hd=phhd.value; });
+  const phhd2=$('#wid-edit [data-phhd2]'); if(phhd2) phhd2.addEventListener('input',()=>{ w.hd2=phhd2.value; });
+  const phsub=$('#wid-edit [data-phsub]'); if(phsub) phsub.addEventListener('input',()=>{ w.sub=phsub.value; });
+  const phclk=$('#we-phclk'); if(phclk) phclk.addEventListener('change',()=>{
+    if(phclk.checked) delete w.clk; else w.clk=false; });
+  const phanim=$('#we-phanim'); if(phanim) phanim.addEventListener('change',()=>{
+    if(phanim.checked) w.anim='pop'; else{ delete w.anim; delete w.loop; renderWidEdit(); } });
+  const phloop=$('#we-phloop'); if(phloop) phloop.addEventListener('change',()=>{
+    if(phloop.checked) w.loop=true; else delete w.loop; });
+  const phadd=$('#we-phadd'); if(phadd) phadd.onclick=()=>{
+    w.lines=w.lines||[]; w.lines.push({icon:'💬',app:'',time:'지금',text:''}); renderWidEdit(); };
+  const phmv=(i,dir)=>{ const j=i+dir; if(j<0||j>=w.lines.length) return;
+    [w.lines[i],w.lines[j]]=[w.lines[j],w.lines[i]]; renderWidEdit(); };
+  $('#wid-edit').querySelectorAll('[data-phup]').forEach(b=>b.onclick=()=>phmv(+b.dataset.phup,-1));
+  $('#wid-edit').querySelectorAll('[data-phdn]').forEach(b=>b.onclick=()=>phmv(+b.dataset.phdn,1));
+  $('#wid-edit').querySelectorAll('[data-phic]').forEach(i2=>i2.addEventListener('input',()=>{ w.lines[i2.dataset.phic].icon=i2.value; }));
+  $('#wid-edit').querySelectorAll('[data-phap]').forEach(i2=>i2.addEventListener('input',()=>{ w.lines[i2.dataset.phap].app=i2.value; }));
+  $('#wid-edit').querySelectorAll('[data-phtm]').forEach(i2=>i2.addEventListener('input',()=>{ w.lines[i2.dataset.phtm].time=i2.value; }));
+  $('#wid-edit').querySelectorAll('[data-phtx]').forEach(i2=>i2.addEventListener('input',()=>{ w.lines[i2.dataset.phtx].text=i2.value; }));
+  $('#wid-edit').querySelectorAll('[data-phx]').forEach(b=>b.onclick=()=>{
+    w.lines.splice(+b.dataset.phx,1); renderWidEdit(); });
   const chadd=$('#we-chadd'); if(chadd) chadd.onclick=()=>{
     w.lines=w.lines||[]; w.lines.push({side:w.lines.length%2?'r':'l',text:''}); renderWidEdit(); };
   $('#wid-edit').querySelectorAll('[data-chsl]').forEach(b=>b.onclick=()=>{ w.lines[b.dataset.chsl].side='l'; renderWidEdit(); });
@@ -2291,7 +2411,7 @@ $('#wid-add').onclick=()=>{
     msg('이미 있는 위젯이에요.'); return; }
   draft.push(['links','banner','nb'].includes(t)?{t,items:[]}:{t});
   editIdx=draft.length-1; renderWidList();
-  if(['profile','quote','links','banner','dday','bgm','notice','chat','img','nb','text','stamp'].includes(t)) renderWidEdit();
+  if(['profile','quote','links','banner','dday','bgm','notice','chat','phone','img','nb','text','stamp'].includes(t)) renderWidEdit();
 };
 $('#wid-save').onclick=async()=>{
   if(editIdx>=0 && draft[editIdx]) syncWid(draft[editIdx]);
@@ -2309,10 +2429,20 @@ $('#wid-save').onclick=async()=>{
     st.page.ddays=dd; st.page.bgm={...pdraft.bgm};
     const d0=dd[0];
     $('#pg-dday-main').innerHTML = d0?`<p class="n">${esc(dday(d0.date))}</p><p class="t">${esc(d0.title)}</p>`:'';
+    widSnap=JSON.stringify({d:draft,p:pdraft});   // 저장됨 — dirty 해제
     renderSide(); msg('위젯 구성 저장 완료!');
   }catch(e){ msg('오류: '+e.message); alert('저장 실패: '+e.message); }
 };
-$('#p-close').onclick=()=>$('#panel').classList.remove('show');
+function closePanelGuard(){
+  /* 위젯 구성에 저장 안 한 변경이 있으면 경고 — 공지 내용 증발 사건 재발 방지 */
+  if(widSnap){
+    if(editIdx>=0 && draft[editIdx]) syncWid(draft[editIdx]);
+    if(JSON.stringify({d:draft,p:pdraft})!==widSnap
+       && !confirm('위젯 구성에 저장 안 한 변경이 있어요!\n[위젯 구성 저장]을 누르지 않으면 사라져요.\n\n그래도 닫을까요?')) return;
+  }
+  widSnap=''; $('#panel').classList.remove('show','wfull');
+}
+$('#p-close').onclick=closePanelGuard;
 /* ── 위젯 편집 모드 ── */
 st.editMode=false;
 $('#btn-edit').onclick=()=>{
@@ -2323,7 +2453,7 @@ $('#btn-edit').onclick=()=>{
   msg(st.editMode ? '위젯 편집 모드 — 드래그·↑↓로 배치를 바꾸세요. 다 되면 ⠿를 다시 누르세요.'
                   : '편집 모드를 껐어요.');
 };
-$('#panel').addEventListener('click',e=>{ if(e.target.id==='panel') $('#panel').classList.remove('show'); });
+$('#panel').addEventListener('click',e=>{ if(e.target.id==='panel') closePanelGuard(); });
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));
   document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('hidden',p.dataset.pane!==b.dataset.tab));
@@ -3427,7 +3557,7 @@ async function checkUpdNotice(){
     if(+n.ver<=seen) return;                            // 새 항목 없음
     $('#upd-body').innerHTML=items.map(it=>`
       <div class="upd-item">
-        <p class="upd-meta">${+it.id>seen?'<b class="upd-new">NEW!</b>':''}${esc(it.date||'')}</p>
+        ${(+it.id>seen||it.date)?`<p class="upd-meta">${+it.id>seen?'<b class="upd-new">NEW!</b>':''}${esc(it.date||'')}</p>`:''}
         <div class="upd-tx">${esc(it.text)}</div>
       </div>`).join('');
     $('#upd-toast').classList.remove('hidden');

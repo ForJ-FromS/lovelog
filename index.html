@@ -231,7 +231,7 @@
   body.light .mini-rows a{border-bottom-color:hsl(var(--h) calc(25% * var(--sf,1)) 88%)}
   @media(max-width:720px){.cols{grid-template-columns:1fr!important}  /* 사이드 왼쪽·블로그형도 모바일 1열 강제 */
     body.in-board .sw-banner,body.in-board .sw-bgm,body.in-board .sw-profile,
-    body.in-board .sw-quote,body.in-board .sw-links,body.in-board .sw-dday,body.in-board .sw-chat{display:none}}
+    body.in-board .sw-quote,body.in-board .sw-links,body.in-board .sw-dday,body.in-board .sw-chat,body.in-board .sw-phone{display:none}}
 
   .sec-head{display:flex;justify-content:space-between;align-items:baseline;
     border-bottom:1px solid var(--line);padding-bottom:9px;margin-bottom:10px;position:relative}
@@ -320,6 +320,8 @@
   @keyframes tCur{50%{opacity:0}}
   /* 공지 목록 + NEW 뱃지 */
   .upd-item{padding:10px 0;border-bottom:1px dashed var(--line)}
+  .upd-item:first-child{padding-top:2px}   /* 첫 공지 위 여백 제거 */
+  .upd-meta:empty{display:none}            /* 빈 메타 줄 안전망 */
   .upd-item:last-child{border-bottom:none}
   .upd-meta{margin:0 0 4px;font-family:'IBM Plex Mono',monospace;font-size:9px;
     letter-spacing:.16em;color:var(--muted);display:flex;gap:8px;align-items:center}
@@ -710,6 +712,7 @@
   .cmt-item .who .dt{color:var(--muted);font-size:8.5px}
   .cmt-item p{font-size:12.5px;color:var(--body);white-space:pre-wrap;margin-top:2px}
   #stk-layer{position:absolute;inset:0;pointer-events:none;z-index:5}
+  .side .pl-ghost,.pl-ghost{font-size:10px;color:hsl(42 70% 65%)!important;margin-top:6px;letter-spacing:.02em}
   /* ── 플로팅 위젯 레이어 (PC 전용 — 위젯을 컬럼에서 떼어 자유 배치) ── */
   #wfl-layer{position:absolute;inset:0;pointer-events:none;z-index:6;transition:opacity .35s}
   .wfl{position:absolute;width:270px;pointer-events:auto}
@@ -751,6 +754,82 @@
   .w-chat.ch-script .ch-b p{background:none;border:none;border-radius:0;
     padding:0 0 8px;border-bottom:1px dashed var(--line)}
   .w-chat.ch-script .ch-line.r .ch-b p{color:var(--chRt,var(--pri))}
+  /* ── 단말기 위젯 — 3디자인 · 색 변수(--phBg 바탕 / --phTx 글자 / --phAc 포인트) ── */
+  .w-phone{--phMut:color-mix(in srgb, var(--phTx,#aeb4c2) 58%, transparent)}
+  .w-phone .ph-frame{position:relative;overflow:hidden;
+    box-shadow:0 16px 44px rgba(0,0,0,.35)}
+  .w-phone .ph-list{gap:0}
+  .w-phone .ch-line{flex-direction:column;align-items:stretch;gap:0}
+  .ph-bd{min-width:0;flex:1}
+  .ph-app{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .ph-app i{font-style:normal;flex:none;font-size:9.5px;color:var(--phMut)}
+  .ph-t{margin:3px 0 0;font-size:12px;line-height:1.64;color:var(--phTx,#d9dce6);
+    white-space:pre-wrap;overflow-wrap:anywhere}
+  .w-phone.ch-scroll .ch-box{max-height:var(--chMax,380px);overflow-y:auto;
+    overscroll-behavior:contain;padding-right:4px}
+  .w-phone.ch-scroll .ch-box::-webkit-scrollbar{width:4px}
+  .w-phone.ch-scroll .ch-box::-webkit-scrollbar-thumb{background:var(--phMut);border-radius:99px}
+
+  /* A. OLED 미니멀 */
+  .ph-oled .ph-frame{background:var(--phBg,#000);border:1px solid var(--line);
+    border-radius:24px;padding:12px 14px 15px}
+  .ph-oled .ph-isl{width:78px;height:20px;border-radius:99px;margin:2px auto 14px;
+    background:color-mix(in srgb, var(--phTx,#fff) 7%, transparent)}
+  .ph-oled .ph-clock{text-align:center;margin-bottom:16px}
+  .ph-oled .ph-clock b{display:block;font-size:46px;font-weight:200;letter-spacing:-.01em;
+    line-height:1;color:var(--phTx,#fff)}
+  .ph-oled .ph-clock span{display:block;margin-top:6px;font-size:10.5px;color:var(--phMut)}
+  .ph-oled .ch-line{flex-direction:row;gap:10px;align-items:flex-start;padding:11px 2px 12px;
+    border-top:1px solid color-mix(in srgb, var(--phTx,#fff) 8%, transparent)}
+  .ph-oled .ch-line:first-child{border-top:none}
+  .ph-oled .ph-ic2{width:29px;height:29px;border-radius:9px;flex:none;margin-top:1px;
+    display:flex;align-items:center;justify-content:center;font-size:14px;
+    background:color-mix(in srgb, var(--phTx,#fff) 8%, transparent)}
+  .ph-oled .ph-app span{font-size:10.5px;font-weight:600;color:var(--phTx,#aeb4c2)}
+
+  /* B. 프로스트 글래스 — 기본 배경이 홈 테마색(--h)을 따라감 */
+  .ph-glass .ph-frame{border-radius:24px;padding:14px 12px;
+    background:var(--phBg,linear-gradient(160deg,hsl(var(--h) calc(34% * var(--sf,1)) 19%),hsl(var(--h) calc(30% * var(--sf,1)) 12%) 55%,hsl(var(--h) calc(28% * var(--sf,1)) 9%)));
+    border:1px solid var(--line)}
+  .ph-glass .ph-frame::before{content:'';position:absolute;top:-70px;right:-60px;width:220px;height:220px;
+    border-radius:50%;background:radial-gradient(circle,color-mix(in srgb, var(--pri) 18%, transparent),transparent 70%);pointer-events:none}
+  body.light .ph-glass .ph-frame{background:var(--phBg,linear-gradient(160deg,hsl(var(--h) calc(46% * var(--sf,1)) 95%),hsl(var(--h) calc(40% * var(--sf,1)) 89%)))}
+  .ph-glass .ph-bar{display:flex;justify-content:space-between;padding:0 7px 12px;
+    font-size:9.5px;font-weight:500;color:var(--phMut)}
+  .ph-glass .ph-clock{text-align:center;margin-bottom:16px;position:relative}
+  .ph-glass .ph-clock b{display:block;font-size:42px;font-weight:300;line-height:1;color:var(--phTx,var(--ink))}
+  .ph-glass .ph-clock span{display:block;margin-top:6px;font-size:10.5px;color:var(--phMut)}
+  .ph-glass .ch-line{flex-direction:row;gap:10px;align-items:flex-start;
+    background:color-mix(in srgb, var(--phTx,#fff) 8%, transparent);
+    border:1px solid color-mix(in srgb, var(--phTx,#fff) 9%, transparent);
+    backdrop-filter:blur(14px);border-radius:16px;padding:10px 12px;margin-bottom:8px}
+  .ph-glass .ph-ic2{width:31px;height:31px;border-radius:10px;flex:none;
+    display:flex;align-items:center;justify-content:center;font-size:14.5px;
+    background:linear-gradient(150deg,color-mix(in srgb, var(--pri) 42%, transparent),color-mix(in srgb, var(--pri) 16%, transparent))}
+  .ph-glass .ph-app span{font-size:10.5px;font-weight:600;color:var(--phTx,var(--ink))}
+  body.light .ph-glass .ch-line{background:rgba(255,255,255,.6);border-color:rgba(255,255,255,.8)}
+
+  /* C. 관제 단말 — 포인트색 --phAc (기본 금색) */
+  .ph-term .ph-frame{background:var(--phBg,#07090e);border:1px solid var(--line);
+    border-radius:7px;padding:0 0 12px}
+  .ph-term .ph-top{display:flex;justify-content:space-between;align-items:center;padding:10px 13px 9px;
+    border-bottom:1px solid color-mix(in srgb, var(--phAc,#d9a614) 26%, transparent)}
+  .ph-term .ph-top .l{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.28em;
+    color:var(--phAc,#d9a614)}
+  .ph-term .ph-top .r{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--phMut)}
+  .ph-term .ph-meta{display:flex;justify-content:space-between;align-items:flex-end;padding:9px 13px 12px;
+    font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.14em;color:var(--phMut)}
+  .ph-term .ph-meta b{font-size:19px;font-weight:500;letter-spacing:.06em;line-height:1;color:var(--phTx,#c9cdd8);white-space:nowrap;flex:none}
+  .ph-term .ch-line{margin:0 11px 8px;padding:9px 12px 10px;border-radius:3px;
+    background:color-mix(in srgb, var(--phTx,#fff) 4%, transparent);
+    border:1px solid color-mix(in srgb, var(--phTx,#fff) 8%, transparent);
+    border-left:2px solid var(--phAc,#d9a614)}
+  .ph-term .ph-app span{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.12em;
+    color:var(--phAc,#d9a614)}
+  .ph-term .ph-app i{font-family:'IBM Plex Mono',monospace}
+  .ph-term .ph-foot{margin-top:3px;text-align:center;font-family:'IBM Plex Mono',monospace;
+    font-size:8.5px;letter-spacing:.2em;color:var(--phMut)}
+  .ph-term.ch-scroll .ch-box{margin-bottom:6px}
   /* 글 전용 페이지 보기 */
   body.reading #aside,body.reading #aside-l,body.reading #catbar,
   body.reading .strip-sec{display:none}
@@ -1196,6 +1275,7 @@
         <option value="latest">최신글 블록 (고정글+최신 5)</option>
         <option value="notice">공지 (제목+내용 고정 카드)</option>
         <option value="chat">채팅로그 (좌우 대사 말풍선)</option>
+        <option value="phone">단말기 (핸드폰 알림 화면)</option>
         <option value="img">이미지 (제목 직접 입력)</option>
         <option value="nb">이웃 홈 (다른 러브로그 링크)</option>
         <option value="text">글 (자유 텍스트)</option>
@@ -1548,6 +1628,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=169"></script>
+<script type="module" src="./app.js?v=173"></script>
 </body>
 </html>
