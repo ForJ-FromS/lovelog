@@ -1072,7 +1072,9 @@ function renderSide(){
       const ls=(w.lines||[]).filter(l=>l.text||l.name);
       if(!ls.length && !st.mine) return;
       d.className+=' w-chat ch-'+(w.style||'msg');
-      if(w.anim){ d.className+=' ch-anim'; chatObserve(d); }
+      const am = w.anim===true ? ((w.style||'msg')==='script'?'pop':'up') : w.anim;   // 옛 체크 저장분 호환
+      if(am==='up'||am==='pop'){ d.className+=' ch-anim ch-a'+am; chatObserve(d); }
+      if(+w.maxH>0){ d.className+=' ch-scroll'; d.style.setProperty('--chMax', (+w.maxH)+'px'); }
       const imgs=w.imgs!==false;
       const lum=hx=>{ try{ const n=parseInt(hx.slice(1),16);
         return (((n>>16)&255)*.299+((n>>8)&255)*.587+(n&255)*.114)/255; }catch(e){ return .5; } };
@@ -1089,7 +1091,7 @@ function renderSide(){
       if(w.font==='mono') sv.push(`--chFf:'IBM Plex Mono',monospace`);
       if(sv.length) d.setAttribute('style', sv.join(';'));
       d.innerHTML=`<p class="label">CHAT</p>`+(ls.length?`<div class="ch-box">`+ls.map((l,li)=>`
-        <div class="ch-line ${l.side==='r'?'r':'l'}" style="--chd:${(Math.min(li,16)*.45).toFixed(2)}s">
+        <div class="ch-line ${l.side==='r'?'r':'l'}">
           ${imgs&&l.img?`<img class="ch-p" src="${l.img}" alt="" draggable="false">`:''}
           <div class="ch-b">${l.name?`<span class="ch-n">${esc(l.name)}</span>`:''}<p>${esc(l.text)}</p></div>
         </div>`).join('')+`</div>`
@@ -2001,7 +2003,12 @@ function renderWidEdit(){
         <option value="script" ${w.style==='script'?'selected':''}>대본형 (미니멀)</option>
       </select>
       <label class="chk"><input type="checkbox" id="we-chimg" ${w.imgs!==false?'checked':''}> 프사 표시</label>
-      <label class="chk" title="화면에 보일 때 말풍선이 메시지 오듯 순서대로 나타나요"><input type="checkbox" id="we-chanim" ${w.anim?'checked':''}> ✨ 움짤 효과</label>
+      <select id="we-chanim" title="화면에 보일 때 말풍선이 순서대로 나타나요">
+        <option value="">✨ 움짤 효과 — 끄기</option>
+        <option value="up" ${(w.anim==='up'||(w.anim===true&&(w.style||'msg')!=='script'))?'selected':''}>✨ 메시지 효과 — 아래에서 올라와요</option>
+        <option value="pop" ${(w.anim==='pop'||(w.anim===true&&(w.style||'msg')==='script'))?'selected':''}>✨ 제자리 효과 — 그 자리에서 뿅</option>
+      </select>
+      <input type="number" id="we-chmax" placeholder="최대 높이 px (비우면 전체 표시)" value="${+w.maxH>0?+w.maxH:''}" min="120" max="900" style="width:190px" title="정하면 그 높이를 넘는 채팅은 스크롤로 봐요">
     </div>
     <div class="p-row" style="align-items:center;font-size:11px;color:var(--muted);gap:7px">
       왼쪽 <input type="color" id="we-chcl" value="${w.cL||'#2a2f3a'}" style="width:34px;padding:0">
@@ -2096,7 +2103,8 @@ function renderWidEdit(){
     msg('사진 반영됨 — [위젯 구성 저장]까지!'); });
   const iimgx=$('#we-iimgx'); if(iimgx) iimgx.onclick=()=>{ delete w.img; renderWidEdit(); };
   const chst=$('#we-chst'); if(chst) chst.addEventListener('change',()=>{ w.style=chst.value; });
-  const chan=$('#we-chanim'); if(chan) chan.addEventListener('change',()=>{ w.anim=chan.checked; });
+  const chan=$('#we-chanim'); if(chan) chan.addEventListener('change',()=>{ if(chan.value) w.anim=chan.value; else delete w.anim; });
+  const chmx=$('#we-chmax'); if(chmx) chmx.addEventListener('input',()=>{ const n=+chmx.value; if(n>0) w.maxH=n; else delete w.maxH; });
   const qan=$('#we-qanim'); if(qan) qan.addEventListener('change',()=>{ w.anim=qan.checked; });
   const chcl=$('#we-chcl'); if(chcl) chcl.addEventListener('input',()=>{ w.cL=chcl.value; });
   const chcr=$('#we-chcr'); if(chcr) chcr.addEventListener('input',()=>{ w.cR=chcr.value; });
@@ -2221,13 +2229,29 @@ document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('hidden',p.dataset.pane!==b.dataset.tab));
 });
 $('#w-secret').addEventListener('change',e=>$('#w-pw').style.display=e.target.checked?'':'none');
-/* 채팅 뾰로롱 — 화면에 보일 때 1회 재생 */
+/* 채팅 움짤 — 화면에 보일 때 1회, 말풍선을 순서대로 재생 */
+function chatPlay(el){
+  const lines=[...el.querySelectorAll('.ch-line')];
+  const box=el.querySelector('.ch-box');
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches){
+    lines.forEach(l=>l.classList.add('ch-in')); return;
+  }
+  let i=0;
+  const step=()=>{
+    if(i>=lines.length) return;
+    lines[i].classList.add('ch-in');
+    if(box && box.scrollHeight>box.clientHeight)
+      box.scrollTo({top:box.scrollHeight, behavior:'smooth'});   // 메시지가 밑에서 차오르듯
+    i++; setTimeout(step, 650);
+  };
+  setTimeout(step, 420);
+}
 const chatIO = ('IntersectionObserver' in window)
   ? new IntersectionObserver(es=>es.forEach(e=>{
-      if(e.isIntersecting){ e.target.classList.add('ch-play'); chatIO.unobserve(e.target); }
+      if(e.isIntersecting){ chatIO.unobserve(e.target); chatPlay(e.target); }
     }),{threshold:.25})
   : null;
-function chatObserve(el){ if(chatIO) chatIO.observe(el); else el.classList.add('ch-play'); }
+function chatObserve(el){ if(chatIO) chatIO.observe(el); else chatPlay(el); }
 /* 인용구 타이핑 — 보일 때 1회, 한 글자씩 */
 function typeRun(p, text){
   if(matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -3012,7 +3036,7 @@ function fillSettings(){
   $('#del-h').textContent=st.handle||'—'; $('#s-del-confirm').value=''; delMsg('');
   renderMyInq(); renderAdmInq();
   if(st.myHandle==='jeste'){ getDoc(doc(db,'config','notice')).then(s=>{
-    if(s.exists()) $('#adm-notice').value=s.data().text||''; }).catch(()=>{}); }
+    if(s.exists()) admNtcRender(noticeItems(s.data())); }).catch(()=>{}); }
   $('#s-gatebtnc').value=p.gateBtnC||'#e691a9'; gateBtnCVal=null;
   $('#s-gategrad').checked=p.gateGrad!==false;
   heroDraft=JSON.parse(JSON.stringify(heroObjs())); renderHeroList();
@@ -3275,15 +3299,25 @@ $('#s-mut-del').onclick=async()=>{
 };
 
 /* ---------- 업데이트 공지 토스트 ---------- */
+function noticeItems(n){
+  if(Array.isArray(n.items) && n.items.length) return n.items;
+  return n.text ? [{id:n.ver||1, text:n.text, date:''}] : [];   // 옛 단일 공지 호환
+}
 async function checkUpdNotice(){
   if(!st.myHandle) return;                              // 가입자에게만
   try{
     const sn=await getDoc(doc(db,'config','notice'));
     if(!sn.exists()) return;
     const n=sn.data();
-    if(!n.text || !n.ver) return;
-    if(localStorage.getItem('lv-upd-seen')===String(n.ver)) return;
-    $('#upd-body').textContent=n.text;
+    const items=noticeItems(n);
+    if(!items.length || !n.ver) return;
+    const seen=+localStorage.getItem('lv-upd-seen')||0;
+    if(+n.ver<=seen) return;                            // 새 항목 없음
+    $('#upd-body').innerHTML=items.map(it=>`
+      <div class="upd-item">
+        <p class="upd-meta">${+it.id>seen?'<b class="upd-new">NEW!</b>':''}${esc(it.date||'')}</p>
+        <div class="upd-tx">${esc(it.text)}</div>
+      </div>`).join('');
     $('#upd-toast').classList.remove('hidden');
     $('#upd-ok').onclick=()=>{
       localStorage.setItem('lv-upd-seen',String(n.ver));
@@ -3293,18 +3327,42 @@ async function checkUpdNotice(){
 }
 /* ── 운영자: 공지 올리기/내리기 ── */
 const admNtcMsg=t=>{ const e=$('#adm-notice-msg'); if(e) e.textContent=t; };
+async function admNtcLoad(){
+  try{ const s=await getDoc(doc(db,'config','notice'));
+       return s.exists()? noticeItems(s.data()) : []; }
+  catch(e){ return []; }
+}
+function admNtcRender(items){
+  const box=$('#adm-ntc-list'); if(!box) return;
+  box.innerHTML=items.length? items.map(it=>`
+    <div class="ntc-row"><span class="ntc-d">${esc(it.date||'')}</span>
+      <span class="ntc-t">${esc(it.text.slice(0,46))}${it.text.length>46?'…':''}</span>
+      <button class="rmv" data-ntcx="${it.id}" style="font-size:10px">삭제</button></div>`).join('')
+    : '<p class="note">떠 있는 공지가 없어요.</p>';
+  box.querySelectorAll('[data-ntcx]').forEach(b=>b.onclick=async()=>{
+    const items2=(await admNtcLoad()).filter(x=>String(x.id)!==b.dataset.ntcx);
+    try{ await setDoc(doc(db,'config','notice'),
+      {items:items2, ver:items2.length?Math.max(...items2.map(x=>+x.id||0)):Date.now(), at:serverTimestamp()});
+      admNtcRender(items2); admNtcMsg('지웠어요.');
+    }catch(e){ admNtcMsg('실패 — '+e.message); }
+  });
+}
 $('#adm-notice-up').onclick=async()=>{
   if(st.myHandle!=='jeste') return;
   const text=$('#adm-notice').value.trim();
   if(!text){ admNtcMsg('내용을 적어주세요.'); return; }
   try{
-    await setDoc(doc(db,'config','notice'),{text,ver:Date.now(),at:serverTimestamp()});
-    admNtcMsg('올렸어요! 가입자들이 다음 접속에 보게 돼요.');
+    const items=[{id:Date.now(), text, date:today()}, ...await admNtcLoad()];
+    await setDoc(doc(db,'config','notice'),{items, ver:items[0].id, at:serverTimestamp()});
+    $('#adm-notice').value='';
+    admNtcRender(items);
+    admNtcMsg('올렸어요! 새 항목엔 NEW! 뱃지가 붙어요. 오래된 공지는 아래에서 지우면 돼요.');
   }catch(e){ admNtcMsg('실패 — '+e.message+' (config/notice 규칙 필요)'); }
 };
 $('#adm-notice-dn').onclick=async()=>{
   if(st.myHandle!=='jeste') return;
-  try{ await setDoc(doc(db,'config','notice'),{text:'',ver:Date.now()}); admNtcMsg('내렸어요.'); }
+  if(!confirm('공지를 전부 내릴까요?')) return;
+  try{ await setDoc(doc(db,'config','notice'),{items:[],ver:Date.now()}); admNtcRender([]); admNtcMsg('전부 내렸어요.'); }
   catch(e){ admNtcMsg('실패 — '+e.message); }
 };
 

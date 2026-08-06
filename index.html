@@ -318,14 +318,32 @@
   .w-quote p.typing::after{content:'▍';color:var(--pri);
     animation:tCur .9s steps(1) infinite;margin-left:1px}
   @keyframes tCur{50%{opacity:0}}
-  /* 채팅 뾰로롱 등장 */
+  /* 공지 목록 + NEW 뱃지 */
+  .upd-item{padding:10px 0;border-bottom:1px dashed var(--line)}
+  .upd-item:last-child{border-bottom:none}
+  .upd-meta{margin:0 0 4px;font-family:'IBM Plex Mono',monospace;font-size:9px;
+    letter-spacing:.16em;color:var(--muted);display:flex;gap:8px;align-items:center}
+  .upd-new{color:#fff;background:#e5484d;border-radius:5px;padding:1px 6px;
+    font-size:8.5px;letter-spacing:.1em}
+  .upd-tx{white-space:pre-wrap}
+  .ntc-row{display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);font-size:12px}
+  .ntc-row .ntc-d{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--muted);flex:none}
+  .ntc-row .ntc-t{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  /* 채팅 높이 제한 + 스크롤 */
+  .w-chat.ch-scroll .ch-box{max-height:var(--chMax,380px);overflow-y:auto;
+    overscroll-behavior:contain;padding-right:5px}
+  .w-chat.ch-scroll .ch-box::-webkit-scrollbar{width:4px}
+  .w-chat.ch-scroll .ch-box::-webkit-scrollbar-thumb{background:var(--line);border-radius:99px}
+  /* 채팅 움짤 — 메신저·윈도우: 아래서 올라오듯 / 대본형: 제자리 뿅 */
   .ch-anim .ch-line{opacity:0}
-  .ch-anim.ch-play .ch-line{animation:chPop .42s cubic-bezier(.26,1.36,.5,1) forwards;
-    animation-delay:var(--chd,0s)}
-  @keyframes chPop{
-    0%{opacity:0;transform:translateY(10px) scale(.92)}
-    70%{opacity:1;transform:translateY(-2px) scale(1.02)}
-    100%{opacity:1;transform:translateY(0) scale(1)}}
+  .ch-anim.ch-aup .ch-line.ch-in{animation:chUp .4s cubic-bezier(.3,1.2,.5,1) forwards}
+  .ch-anim.ch-apop .ch-line.ch-in{animation:chBloom .34s ease-out forwards}
+  @keyframes chUp{
+    0%{opacity:0;transform:translateY(14px)}
+    100%{opacity:1;transform:translateY(0)}}
+  @keyframes chBloom{
+    0%{opacity:0;transform:scale(.965)}
+    100%{opacity:1;transform:scale(1)}}
   @media(prefers-reduced-motion:reduce){
     .ch-anim .ch-line{opacity:1;animation:none!important}}
   .gpriv{position:absolute;left:6px;top:6px;font-style:normal;font-size:12px;
@@ -1352,14 +1370,15 @@
       <div id="adm-inq"></div>
 
       <p class="p-h" style="margin-top:30px">업데이트 공지</p>
-      <p class="note" style="margin-top:-4px">올리면 가입자들이 홈에 들어올 때 화면 하단에 한 번 떠요.
-        [확인]을 누른 사람에겐 다시 안 뜨고, 새로 올리면 다시 떠요.</p>
+      <p class="note" style="margin-top:-4px">공지는 여러 개가 쌓여요 — 새로 올리면 목록 맨 위에 붙고,
+        각자 아직 안 본 항목에만 <b>NEW!</b>가 표시돼요. 오래된 공지는 아래 목록에서 지우면 됩니다.</p>
       <textarea id="adm-notice" placeholder="예: 스티커 모바일 크기 조절과 커서 효과 3종이 추가됐어요!" style="min-height:260px;font-size:13px;line-height:1.9;resize:vertical"></textarea>
       <div class="p-row" style="align-items:center">
         <button class="btn" id="adm-notice-up" style="font-size:12px">공지 올리기</button>
         <button class="rmv" id="adm-notice-dn" style="font-size:11px">공지 내리기</button>
         <span class="note" id="adm-notice-msg"></span>
       </div>
+      <div id="adm-ntc-list" style="margin-top:8px"></div>
     </div>
   </div>
 
@@ -1522,6 +1541,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=155"></script>
+<script type="module" src="./app.js?v=158"></script>
 </body>
 </html>
