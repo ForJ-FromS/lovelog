@@ -531,16 +531,23 @@ async function enterPage(){
   if(pm){ st.cat='recent'; applyView(); renderWidgets(); renderList(); openPost(pm, true); }   // 링크 진입 글도 BACK=홈
 }
 async function loadContent(){
-  const [ps,gs,gb]=await Promise.all([
+  /* 컬렉션별 격리: 예전엔 Promise.all이라 셋 중 하나만 규칙 오류가 나도
+     글·갤러리·방명록이 통째로 빈 홈이 됐음(비로그인만 막히는 규칙 실수 때 특히) */
+  const [ps,gs,gb]=await Promise.allSettled([
     getDocs(query(collection(db,'pages',st.handle,'posts'),orderBy('ts','desc'))),
     getDocs(query(collection(db,'pages',st.handle,'gallery'),orderBy('ts','desc'))),
     getDocs(query(collection(db,'pages',st.handle,'guest'),orderBy('ts','desc')))
   ]);
-  st.posts=ps.docs.map(d=>({id:d.id,...d.data()}));
+  const take=(r,name)=>{
+    if(r.status==='fulfilled') return r.value.docs.map(d=>({id:d.id,...d.data()}));
+    console.log('[lovelog] '+name+' 불러오기 실패 —', r.reason?.message||r.reason);
+    return [];
+  };
+  st.posts=take(ps,'posts');
   if(!st.mine) st.posts=st.posts.filter(p=>!p.priv);   // 비공개 글은 주인에게만 존재
-  st.gallery=gs.docs.map(d=>({id:d.id,...d.data()}));
+  st.gallery=take(gs,'gallery');
   if(!st.mine) st.gallery=st.gallery.filter(g=>!g.priv);   // 비공개 사진은 주인에게만
-  st.guest=gb.docs.map(d=>({id:d.id,...d.data()}));
+  st.guest=take(gb,'guest');
 }
 
 /* ---------- 사이드 위젯 렌더 ---------- */
@@ -599,7 +606,7 @@ function latestBlock(box){
   if(pin){
     const pd=document.createElement('a'); pd.className='pin';
     pd.innerHTML=`<span class="tag">◈ PINNED</span>
-      <p class="t">${esc(pin.title)}${pin.secret?' 🔒':''}</p>
+      <p class="t">${esc(pin.title)}${pin.secret?' 🔒':''}${pin.priv?' 🔏':''}</p>
       ${pin.excerpt?`<p class="ex">${esc(pin.excerpt)}</p>`:''}
       <p class="meta">${esc(pin.cat)} · ${esc(pin.date)}</p>`;
     pd.onclick=()=>{ goBoard('recent'); openPost(pin.id,true); };
@@ -609,7 +616,7 @@ function latestBlock(box){
   const arr=st.posts.filter(p=>!p.pinned).slice(0,5);
   d.innerHTML=`<p class="label">LATEST</p><div class="mini-rows">`+
     (arr.length?arr.map(p2=>`<a data-lid="${p2.id}">
-      <span class="dot">◈</span><span class="t">${esc(p2.title)}${p2.secret?' 🔒':''}</span>
+      <span class="dot">◈</span><span class="t">${esc(p2.title)}${p2.secret?' 🔒':''}${p2.priv?' 🔏':''}</span>
       <span class="dt">${esc((p2.date||'').slice(5))}</span></a>`).join('')
     :'<p class="pl-empty">아직 글이 없습니다.</p>')+
     `</div><p class="cat-add" style="display:block" id="latest-more">전체 보기 →</p>`;
@@ -1436,7 +1443,7 @@ function renderList(){
   $('#pin-slot').innerHTML = pin?`
     <a class="pin" data-id="${pin.id}">
       <span class="tag">◈ PINNED</span>
-      <p class="t">${esc(pin.title)}${pin.secret?' 🔒':''}</p>
+      <p class="t">${esc(pin.title)}${pin.secret?' 🔒':''}${pin.priv?' 🔏':''}</p>
       ${pin.excerpt?`<p class="ex">${esc(pin.excerpt)}</p>`:''}
       <p class="meta">${esc(pin.cat)} · ${esc(pin.date)}</p></a>`:'';
   const PER=12;
