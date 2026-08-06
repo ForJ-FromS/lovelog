@@ -314,6 +314,20 @@
   .gb-reform{display:flex;gap:7px;margin-top:7px;align-items:flex-start}
   .gb-reform.hidden{display:none}
   .gb-reform .gb-reta{flex:1;font-size:12.5px}
+  /* 인용구 타이핑 커서 */
+  .w-quote p.typing::after{content:'▍';color:var(--pri);
+    animation:tCur .9s steps(1) infinite;margin-left:1px}
+  @keyframes tCur{50%{opacity:0}}
+  /* 채팅 뾰로롱 등장 */
+  .ch-anim .ch-line{opacity:0}
+  .ch-anim.ch-play .ch-line{animation:chPop .42s cubic-bezier(.26,1.36,.5,1) forwards;
+    animation-delay:var(--chd,0s)}
+  @keyframes chPop{
+    0%{opacity:0;transform:translateY(10px) scale(.92)}
+    70%{opacity:1;transform:translateY(-2px) scale(1.02)}
+    100%{opacity:1;transform:translateY(0) scale(1)}}
+  @media(prefers-reduced-motion:reduce){
+    .ch-anim .ch-line{opacity:1;animation:none!important}}
   .gpriv{position:absolute;left:6px;top:6px;font-style:normal;font-size:12px;
     background:rgba(0,0,0,.55);border-radius:6px;padding:2px 6px;pointer-events:none}
   #pv-like{border:1px solid var(--line);background:var(--card2);color:var(--body);
@@ -1508,6 +1522,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=151"></script>
+<script type="module" src="./app.js?v=155"></script>
 </body>
 </html>

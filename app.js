@@ -1072,6 +1072,7 @@ function renderSide(){
       const ls=(w.lines||[]).filter(l=>l.text||l.name);
       if(!ls.length && !st.mine) return;
       d.className+=' w-chat ch-'+(w.style||'msg');
+      if(w.anim){ d.className+=' ch-anim'; chatObserve(d); }
       const imgs=w.imgs!==false;
       const lum=hx=>{ try{ const n=parseInt(hx.slice(1),16);
         return (((n>>16)&255)*.299+((n>>8)&255)*.587+(n&255)*.114)/255; }catch(e){ return .5; } };
@@ -1087,8 +1088,8 @@ function renderSide(){
       if(w.font==='serif') sv.push(`--chFf:'Noto Serif KR',serif`);
       if(w.font==='mono') sv.push(`--chFf:'IBM Plex Mono',monospace`);
       if(sv.length) d.setAttribute('style', sv.join(';'));
-      d.innerHTML=`<p class="label">CHAT</p>`+(ls.length?`<div class="ch-box">`+ls.map(l=>`
-        <div class="ch-line ${l.side==='r'?'r':'l'}">
+      d.innerHTML=`<p class="label">CHAT</p>`+(ls.length?`<div class="ch-box">`+ls.map((l,li)=>`
+        <div class="ch-line ${l.side==='r'?'r':'l'}" style="--chd:${(Math.min(li,16)*.45).toFixed(2)}s">
           ${imgs&&l.img?`<img class="ch-p" src="${l.img}" alt="" draggable="false">`:''}
           <div class="ch-b">${l.name?`<span class="ch-n">${esc(l.name)}</span>`:''}<p>${esc(l.text)}</p></div>
         </div>`).join('')+`</div>`
@@ -1140,6 +1141,7 @@ function renderSide(){
     if(w.t==='quote'){
       d.className+=' w-quote';
       d.innerHTML=`<span class="qm">❝</span><p>${esc(w.text||'').replace(/\n/g,'<br>')}</p>`;
+      if(w.anim && (w.text||'').trim()) typeObserve(d.querySelector('p'), w.text);
       box.appendChild(d); return;
     }
     if(w.t==='links'){
@@ -1873,7 +1875,8 @@ function renderWidEdit(){
     </div>
     <textarea id="we-text" placeholder="아래 캡션 (선택 — 비우면 사진만 꽉 차게)" style="min-height:60px">${w.text||''}</textarea>`;
   if(w.t==='quote') html+=`
-    <textarea id="we-text" placeholder="걸어둘 문장" style="min-height:90px">${w.text||''}</textarea>`;
+    <textarea id="we-text" placeholder="걸어둘 문장" style="min-height:90px">${w.text||''}</textarea>
+    <label class="chk" title="화면에 보일 때 한 글자씩 타이핑되듯 나타나요"><input type="checkbox" id="we-qanim" ${w.anim?'checked':''}> ✨ 움짤 효과 (타이핑)</label>`;
   if(w.t==='nb') html+=`
     <input id="we-nblab" placeholder="제목 (기본: NEIGHBORS)" value="${esc(w.label??'')}">
     <div class="p-row" style="align-items:center">
@@ -1998,6 +2001,7 @@ function renderWidEdit(){
         <option value="script" ${w.style==='script'?'selected':''}>대본형 (미니멀)</option>
       </select>
       <label class="chk"><input type="checkbox" id="we-chimg" ${w.imgs!==false?'checked':''}> 프사 표시</label>
+      <label class="chk" title="화면에 보일 때 말풍선이 메시지 오듯 순서대로 나타나요"><input type="checkbox" id="we-chanim" ${w.anim?'checked':''}> ✨ 움짤 효과</label>
     </div>
     <div class="p-row" style="align-items:center;font-size:11px;color:var(--muted);gap:7px">
       왼쪽 <input type="color" id="we-chcl" value="${w.cL||'#2a2f3a'}" style="width:34px;padding:0">
@@ -2092,6 +2096,8 @@ function renderWidEdit(){
     msg('사진 반영됨 — [위젯 구성 저장]까지!'); });
   const iimgx=$('#we-iimgx'); if(iimgx) iimgx.onclick=()=>{ delete w.img; renderWidEdit(); };
   const chst=$('#we-chst'); if(chst) chst.addEventListener('change',()=>{ w.style=chst.value; });
+  const chan=$('#we-chanim'); if(chan) chan.addEventListener('change',()=>{ w.anim=chan.checked; });
+  const qan=$('#we-qanim'); if(qan) qan.addEventListener('change',()=>{ w.anim=qan.checked; });
   const chcl=$('#we-chcl'); if(chcl) chcl.addEventListener('input',()=>{ w.cL=chcl.value; });
   const chcr=$('#we-chcr'); if(chcr) chcr.addEventListener('input',()=>{ w.cR=chcr.value; });
   const chtl=$('#we-chtl'); if(chtl) chtl.addEventListener('input',()=>{ w.tL=chtl.value; });
@@ -2215,6 +2221,37 @@ document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('hidden',p.dataset.pane!==b.dataset.tab));
 });
 $('#w-secret').addEventListener('change',e=>$('#w-pw').style.display=e.target.checked?'':'none');
+/* 채팅 뾰로롱 — 화면에 보일 때 1회 재생 */
+const chatIO = ('IntersectionObserver' in window)
+  ? new IntersectionObserver(es=>es.forEach(e=>{
+      if(e.isIntersecting){ e.target.classList.add('ch-play'); chatIO.unobserve(e.target); }
+    }),{threshold:.25})
+  : null;
+function chatObserve(el){ if(chatIO) chatIO.observe(el); else el.classList.add('ch-play'); }
+/* 인용구 타이핑 — 보일 때 1회, 한 글자씩 */
+function typeRun(p, text){
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const full=String(text); let i=0;
+  p.classList.add('typing'); p.textContent='';
+  const tick=()=>{
+    i++;
+    p.innerHTML=esc(full.slice(0,i)).replace(/\n/g,'<br>');
+    if(i<full.length) setTimeout(tick, full[i-1]==='\n'?260:62);
+    else setTimeout(()=>p.classList.remove('typing'), 2600);
+  };
+  setTimeout(tick, 350);
+}
+const typeIO = ('IntersectionObserver' in window)
+  ? new IntersectionObserver(es=>es.forEach(e=>{
+      if(e.isIntersecting){ typeIO.unobserve(e.target);
+        typeRun(e.target, e.target.dataset.typetext); }
+    }),{threshold:.35})
+  : null;
+function typeObserve(p, text){
+  p.dataset.typetext=text;
+  if(typeIO) typeIO.observe(p); else typeRun(p, text);
+}
+
 /* 서식 툴바 — 선택한 글자를 감싸요 */
 function wrapSel(mk, tag){
   const ta=$('#w-body');
