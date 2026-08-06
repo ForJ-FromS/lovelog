@@ -1072,8 +1072,7 @@ function renderSide(){
       const ls=(w.lines||[]).filter(l=>l.text||l.name);
       if(!ls.length && !st.mine) return;
       d.className+=' w-chat ch-'+(w.style||'msg');
-      const am = w.anim===true ? ((w.style||'msg')==='script'?'pop':'up') : w.anim;   // 옛 체크 저장분 호환
-      if(am==='up'||am==='pop'){ d.className+=' ch-anim ch-a'+am; chatObserve(d); }
+      if(w.anim){ d.className+=' ch-anim'; chatObserve(d); }   // 과거 값(true/'up'/'pop') 전부 제자리 효과로
       if(+w.maxH>0){ d.className+=' ch-scroll'; d.style.setProperty('--chMax', (+w.maxH)+'px'); }
       const imgs=w.imgs!==false;
       const lum=hx=>{ try{ const n=parseInt(hx.slice(1),16);
@@ -2003,12 +2002,10 @@ function renderWidEdit(){
         <option value="script" ${w.style==='script'?'selected':''}>대본형 (미니멀)</option>
       </select>
       <label class="chk"><input type="checkbox" id="we-chimg" ${w.imgs!==false?'checked':''}> 프사 표시</label>
-      <select id="we-chanim" title="화면에 보일 때 말풍선이 순서대로 나타나요">
-        <option value="">✨ 움짤 효과 — 끄기</option>
-        <option value="up" ${(w.anim==='up'||(w.anim===true&&(w.style||'msg')!=='script'))?'selected':''}>✨ 메시지 효과 — 아래에서 올라와요</option>
-        <option value="pop" ${(w.anim==='pop'||(w.anim===true&&(w.style||'msg')==='script'))?'selected':''}>✨ 제자리 효과 — 그 자리에서 뿅</option>
-      </select>
+      <label class="chk" title="화면에 보일 때 말풍선이 순서대로 그 자리에서 떠올라요"><input type="checkbox" id="we-chanim" ${w.anim?'checked':''}> ✨ 움짤 효과 (제자리)</label>
       <input type="number" id="we-chmax" placeholder="최대 높이 px (비우면 전체 표시)" value="${+w.maxH>0?+w.maxH:''}" min="120" max="900" style="width:190px" title="정하면 그 높이를 넘는 채팅은 스크롤로 봐요">
+      <p class="note" style="margin:4px 0 0">최대 높이는 사이드(옆 기둥) 위젯 기준 <b>360px</b>가 적당합니다.
+        중앙·블로그형처럼 넓은 자리는 <b>440~480px</b>가 예쁩니다. 비우면 채팅 전체가 표시됩니다.</p>
     </div>
     <div class="p-row" style="align-items:center;font-size:11px;color:var(--muted);gap:7px">
       왼쪽 <input type="color" id="we-chcl" value="${w.cL||'#2a2f3a'}" style="width:34px;padding:0">
@@ -2103,7 +2100,7 @@ function renderWidEdit(){
     msg('사진 반영됨 — [위젯 구성 저장]까지!'); });
   const iimgx=$('#we-iimgx'); if(iimgx) iimgx.onclick=()=>{ delete w.img; renderWidEdit(); };
   const chst=$('#we-chst'); if(chst) chst.addEventListener('change',()=>{ w.style=chst.value; });
-  const chan=$('#we-chanim'); if(chan) chan.addEventListener('change',()=>{ if(chan.value) w.anim=chan.value; else delete w.anim; });
+  const chan=$('#we-chanim'); if(chan) chan.addEventListener('change',()=>{ if(chan.checked) w.anim='pop'; else delete w.anim; });
   const chmx=$('#we-chmax'); if(chmx) chmx.addEventListener('input',()=>{ const n=+chmx.value; if(n>0) w.maxH=n; else delete w.maxH; });
   const qan=$('#we-qanim'); if(qan) qan.addEventListener('change',()=>{ w.anim=qan.checked; });
   const chcl=$('#we-chcl'); if(chcl) chcl.addEventListener('input',()=>{ w.cL=chcl.value; });
@@ -2234,14 +2231,17 @@ function chatPlay(el){
   const lines=[...el.querySelectorAll('.ch-line')];
   const box=el.querySelector('.ch-box');
   if(matchMedia('(prefers-reduced-motion: reduce)').matches){
-    lines.forEach(l=>l.classList.add('ch-in')); return;
+    lines.forEach(l=>l.classList.add('ch-in'));
+    if(box) box.scrollTop=0;                       // 다 뜬 상태 — 처음부터 읽게 맨 위
+    return;
   }
+  if(box) box.scrollTop=0;                         // 맨 위에서 시작
   let i=0;
   const step=()=>{
     if(i>=lines.length) return;
     lines[i].classList.add('ch-in');
-    if(box && box.scrollHeight>box.clientHeight)
-      box.scrollTo({top:box.scrollHeight, behavior:'smooth'});   // 메시지가 밑에서 차오르듯
+    if(box && box.scrollHeight>box.clientHeight)   // 창이 차오른 뒤부터만 아래로
+      box.scrollTo({top:box.scrollHeight, behavior:'smooth'});
     i++; setTimeout(step, 650);
   };
   setTimeout(step, 420);

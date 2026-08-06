@@ -335,17 +335,14 @@
   .w-chat.ch-scroll .ch-box::-webkit-scrollbar{width:4px}
   .w-chat.ch-scroll .ch-box::-webkit-scrollbar-thumb{background:var(--line);border-radius:99px}
   /* 채팅 움짤 — 메신저·윈도우: 아래서 올라오듯 / 대본형: 제자리 뿅 */
-  .ch-anim .ch-line{opacity:0}
-  .ch-anim.ch-aup .ch-line.ch-in{animation:chUp .4s cubic-bezier(.3,1.2,.5,1) forwards}
-  .ch-anim.ch-apop .ch-line.ch-in{animation:chBloom .34s ease-out forwards}
-  @keyframes chUp{
-    0%{opacity:0;transform:translateY(14px)}
-    100%{opacity:1;transform:translateY(0)}}
+  .ch-anim .ch-line{display:none}
+  .ch-anim .ch-line.ch-in{display:flex;opacity:0;animation:chBloom .34s ease-out forwards}
+  .w-chat.ch-scroll.ch-anim .ch-box{min-height:var(--chMax,380px)}   /* 재생 중에도 창 크기 고정 */
   @keyframes chBloom{
     0%{opacity:0;transform:scale(.965)}
     100%{opacity:1;transform:scale(1)}}
   @media(prefers-reduced-motion:reduce){
-    .ch-anim .ch-line{opacity:1;animation:none!important}}
+    .ch-anim .ch-line{display:flex;opacity:1;animation:none!important}}
   .gpriv{position:absolute;left:6px;top:6px;font-style:normal;font-size:12px;
     background:rgba(0,0,0,.55);border-radius:6px;padding:2px 6px;pointer-events:none}
   #pv-like{border:1px solid var(--line);background:var(--card2);color:var(--body);
@@ -1541,6 +1538,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=158"></script>
+<script type="module" src="./app.js?v=160"></script>
 </body>
 </html>
