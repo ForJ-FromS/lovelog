@@ -1246,6 +1246,7 @@ function renderSide(){
       d.innerHTML=`<p class="label">${esc(w.title||'TEXT')}</p>`+
         (w.text?`<p class="tx-x">${esc(w.text).replace(/\n/g,'<br>')}</p>`
           :(st.mine?('<p class="pl-empty">✎ 편집에서 내용을 채워주세요.</p>'+(!w.title?'<p class="pl-ghost">👻 지금은 방문자에게 안 보이는 카드예요</p>':'')):''));
+      if(w.anim && (w.text||'').trim()){ const tx=d.querySelector('.tx-x'); if(tx) typeObserve(tx, w.text); }   // ✨ 타이핑 (인용구와 동일 엔진)
       box.appendChild(d); return;
     }
     if(w.t==='cnt'){
@@ -2083,7 +2084,8 @@ function renderWidEdit(){
     <textarea id="we-text" placeholder="공지 내용 — 줄바꿈 그대로 표시돼요" style="min-height:100px">${w.text||''}</textarea>`;
   if(w.t==='text') html+=`
     <input id="we-ntt" placeholder="위젯 제목 (선택 — 비우면 TEXT)" value="${esc(w.title||'')}">
-    <textarea id="we-text" placeholder="자유롭게 쓰는 글 — 줄바꿈 그대로 표시돼요" style="min-height:130px">${w.text||''}</textarea>`;
+    <textarea id="we-text" placeholder="자유롭게 쓰는 글 — 줄바꿈 그대로 표시돼요" style="min-height:130px">${w.text||''}</textarea>
+    <label class="chk" title="화면에 보일 때 글이 한 글자씩 적혀요 (인용구와 같은 효과)"><input type="checkbox" id="we-txanim" ${w.anim?'checked':''}> ✨ 타이핑 효과</label>`;
   if(w.t==='stamp') html+=`
     <input id="we-ntt" placeholder="위젯 제목 (선택 — 비우면 STAMP)" value="${esc(w.title||'')}">
     <input id="we-semo" placeholder="도장 이모지 — 붙여서 1~4개 (예: 🐾 또는 ❤️🐾⭐💧)" value="${esc(w.icons||'')}">
@@ -2261,6 +2263,8 @@ function renderWidEdit(){
   $('#wid-edit').innerHTML=html;
   // 라이브 바인딩: 쓰는 즉시 draft에 반영
   const t=$('#we-text'); if(t) t.addEventListener('input',()=>{ w.text=t.value; });
+  const txan=$('#we-txanim'); if(txan) txan.addEventListener('change',()=>{
+    if(txan.checked) w.anim=true; else delete w.anim; });
   const ntt=$('#we-ntt'); if(ntt) ntt.addEventListener('input',()=>{ w.title=ntt.value; });
   const semo=$('#we-semo'); if(semo) semo.addEventListener('input',()=>{ w.icons=semo.value; });
   const shint=$('#we-shint'); if(shint) shint.addEventListener('change',()=>{
