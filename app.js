@@ -1087,13 +1087,45 @@ function renderSide(){
       const cover = vid
         ? `<img src="https://img.youtube.com/vi/${vid}/hqdefault.jpg" alt="">`
         : `<span class="mus">♪</span>`;
-      d.innerHTML=`<p class="label">NOW PLAYING</p>
-        <div class="bgm-w">
-          <span class="bgm-cov">${cover}</span>
-          <span class="bgm-meta"><b>${esc(p.bgm.title|| (list?'플레이리스트':'배경음악'))}</b>
-            <span class="bgm-eq"><i></i><i></i><i></i><i></i><i></i></span></span>
-          <span class="bgm-btn2">▶</span>
-        </div><div class="bgm-fr"></div>`;
+      const bst=w.style||'';                        // ''기본 | cst 카세트 | lp LP | tun 튜너
+      const btit=esc(p.bgm.title|| (list?'플레이리스트':'배경음악'));
+      if(bst==='cst'){
+        d.className+=' bgm-cst';
+        d.innerHTML=`<p class="label">NOW PLAYING</p>
+          <div class="cst-body">
+            <span class="cst-scr s1"></span><span class="cst-scr s2"></span><span class="cst-scr s3"></span><span class="cst-scr s4"></span>
+            <div class="cst-lbl"><span>${esc(w.sub||'SIDE A')}</span><b>${btit}</b></div>
+            <div class="cst-win"><span class="cst-reel"></span><span class="cst-reel rr"></span></div>
+            <div class="cst-foot"><span>STEREO · TAPE</span><span class="bgm-btn2">▶</span></div>
+          </div><div class="bgm-fr"></div>`;
+      }else if(bst==='lp'){
+        d.className+=' bgm-lp';
+        d.innerHTML=`<p class="label">NOW PLAYING</p>
+          <div class="lp-row">
+            <span class="lp-wrap"><span class="lp-disc">${cover}</span><span class="lp-arm"></span></span>
+            <span class="lp-meta"><b>${btit}</b><span>${esc(w.sub||'33⅓ RPM · SIDE A')}</span></span>
+            <span class="bgm-btn2">▶</span>
+          </div><div class="bgm-fr"></div>`;
+      }else if(bst==='tun'){
+        d.className+=' bgm-tun';
+        d.innerHTML=`<p class="label">NOW PLAYING</p>
+          <div class="tun-body">
+            <div class="tun-band"><i></i></div>
+            <div class="tun-nums"><span>88</span><span>90</span><span>92</span><span>96</span><span>102</span><span>108</span></div>
+            <div class="tun-row">
+              <span class="tun-meta"><b>${btit}</b><span>${esc(w.sub||'FM 90.0 · STEREO')}</span></span>
+              <span class="bgm-btn2">▶</span>
+            </div>
+          </div><div class="bgm-fr"></div>`;
+      }else{
+        d.innerHTML=`<p class="label">NOW PLAYING</p>
+          <div class="bgm-w">
+            <span class="bgm-cov">${cover}</span>
+            <span class="bgm-meta"><b>${btit}</b>
+              <span class="bgm-eq"><i></i><i></i><i></i><i></i><i></i></span></span>
+            <span class="bgm-btn2">▶</span>
+          </div><div class="bgm-fr"></div>`;
+      }
       box.appendChild(d);
       const src = list
         ? `https://www.youtube.com/embed/videoseries?list=${list}&autoplay=1`
@@ -2115,7 +2147,16 @@ function renderWidEdit(){
     <p class="note">첫 번째 디데이는 대문에도 표시돼요. 사진을 넣으면 이미지 카드가 됩니다.</p>`;
   if(w.t==='bgm') html+=`
     <input id="we-burl" placeholder="유튜브 링크 https://youtu.be/..." value="${esc(pdraft.bgm.url)}">
-    <input id="we-btitle" placeholder="곡 제목 (선택)" value="${esc(pdraft.bgm.title)}">`;
+    <input id="we-btitle" placeholder="곡 제목 (선택)" value="${esc(pdraft.bgm.title)}">
+    <div class="p-row" style="align-items:center">
+      <select id="we-bgst" style="flex:1">
+        <option value="" ${!w.style?'selected':''}>기본 (앨범아트 + 이퀄라이저)</option>
+        <option value="cst" ${w.style==='cst'?'selected':''}>카세트 테이프 (릴이 감겨요)</option>
+        <option value="lp" ${w.style==='lp'?'selected':''}>LP 턴테이블 (판이 돌아요)</option>
+        <option value="tun" ${w.style==='tun'?'selected':''}>주파수 튜너 (바늘이 떨려요)</option>
+      </select>
+      <input id="we-bgsub" placeholder="보조 문구" value="${esc(w.sub||'')}" style="width:130px" title="카세트: 라벨 위 작은 글씨 (기본 SIDE A) / LP: 제목 아래 (기본 33⅓ RPM · SIDE A) / 튜너: 제목 아래 (기본 FM 90.0 · STEREO)">
+    </div>`;
   if(w.t==='links') html+=(w.items||[]).map((l,i)=>`
     <div class="p-row"><input data-ll="${i}" placeholder="이름" value="${l.label||''}">
     <input data-lu="${i}" placeholder="https://..." value="${l.url||''}"></div>`).join('')+
@@ -2428,6 +2469,10 @@ function renderWidEdit(){
   $('#wid-edit').querySelectorAll('[data-dximg]').forEach(b=>b.onclick=()=>{
     delete pdraft.ddays[+b.dataset.dximg].img; renderWidEdit(); });
   const bu=$('#we-burl'); if(bu) bu.addEventListener('input',()=>{ pdraft.bgm.url=bu.value.trim(); });
+  const bgst=$('#we-bgst'); if(bgst) bgst.addEventListener('change',()=>{
+    if(bgst.value) w.style=bgst.value; else delete w.style; });
+  const bgsub=$('#we-bgsub'); if(bgsub) bgsub.addEventListener('input',()=>{
+    if(bgsub.value.trim()) w.sub=bgsub.value; else delete w.sub; });
   const bt=$('#we-btitle'); if(bt) bt.addEventListener('input',()=>{ pdraft.bgm.title=bt.value.trim(); });
   $('#wid-edit').querySelectorAll('[data-ll]').forEach(i=>i.addEventListener('input',()=>{ w.items[i.dataset.ll].label=i.value; }));
   $('#wid-edit').querySelectorAll('[data-lu]').forEach(i=>i.addEventListener('input',()=>{ w.items[i.dataset.lu].url=i.value.trim(); }));

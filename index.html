@@ -754,6 +754,70 @@
   .w-chat.ch-script .ch-b p{background:none;border:none;border-radius:0;
     padding:0 0 8px;border-bottom:1px dashed var(--line)}
   .w-chat.ch-script .ch-line.r .ch-b p{color:var(--chRt,var(--pri))}
+  /* ── BGM 플레이어 디자인 3종 (기본 외 — phase185) ── */
+  /* 카세트 */
+  .bgm-cst .cst-body{background:linear-gradient(170deg,hsl(var(--h) calc(16% * var(--sf,1)) 15%),hsl(var(--h) calc(14% * var(--sf,1)) 9%));
+    border:1px solid var(--line);border-radius:9px;padding:11px 12px 12px;position:relative}
+  .cst-scr{position:absolute;width:5px;height:5px;border-radius:50%;background:rgba(0,0,0,.55);
+    box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--ink) 22%, transparent)}
+  .cst-scr.s1{top:6px;left:7px}.cst-scr.s2{top:6px;right:7px}.cst-scr.s3{bottom:6px;left:7px}.cst-scr.s4{bottom:6px;right:7px}
+  .cst-lbl{background:#e8e6df;color:#26241f;border-radius:4px;padding:7px 10px 6px;margin-bottom:9px}
+  .cst-lbl b{display:block;font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cst-lbl span{font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.2em;color:#8a8578}
+  .cst-win{background:rgba(0,0,0,.5);border:1px solid var(--line);border-radius:6px;height:52px;
+    display:flex;align-items:center;justify-content:space-between;padding:0 26px;position:relative;overflow:hidden}
+  .cst-win::before{content:'';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:64px;height:20px;border:1px solid var(--line);border-radius:10px}
+  .cst-reel{width:34px;height:34px;border-radius:50%;position:relative;
+    border:2px solid color-mix(in srgb, var(--ink) 32%, transparent);
+    background:repeating-conic-gradient(color-mix(in srgb, var(--ink) 16%, transparent) 0 14deg, transparent 14deg 60deg)}
+  .cst-reel::after{content:'';position:absolute;inset:11px;border-radius:50%;background:rgba(0,0,0,.6);
+    border:1px solid color-mix(in srgb, var(--ink) 24%, transparent)}
+  .playing .cst-reel{animation:bgmspin 2.4s linear infinite}
+  .playing .cst-reel.rr{animation-duration:1.7s}
+  @keyframes bgmspin{to{transform:rotate(360deg)}}
+  .cst-foot{display:flex;justify-content:space-between;align-items:center;margin-top:9px}
+  .cst-foot>span:first-child{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.16em;color:var(--muted)}
+  .bgm-cst .bgm-btn2, .bgm-lp .bgm-btn2, .bgm-tun .bgm-btn2{width:30px;height:30px;border-radius:50%;
+    border:1px solid var(--line);background:color-mix(in srgb, var(--ink) 7%, transparent);
+    color:var(--ink);font-size:11px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none}
+  /* LP */
+  .lp-row{display:flex;gap:14px;align-items:center}
+  .lp-wrap{position:relative;flex:none;display:block;width:92px;height:92px}
+  .lp-disc{display:block;width:92px;height:92px;border-radius:50%;position:relative;overflow:hidden;
+    background:repeating-radial-gradient(circle, color-mix(in srgb, var(--ink) 9%, transparent) 0 2px, rgba(0,0,0,.55) 2px 4px);
+    box-shadow:0 0 0 1px var(--line), 0 6px 18px rgba(0,0,0,.4)}
+  .lp-disc img,.lp-disc .mus{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:34px;height:34px;border-radius:50%;object-fit:cover;border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--muted)}
+  .lp-disc::after{content:'';position:absolute;left:50%;top:50%;width:3px;height:3px;border-radius:50%;
+    background:var(--ink);transform:translate(-50%,-50%)}
+  .playing .lp-disc{animation:bgmspin 3.4s linear infinite}
+  .lp-arm{position:absolute;right:-4px;top:-6px;width:3px;height:56px;border-radius:2px;
+    background:color-mix(in srgb, var(--ink) 40%, transparent);
+    transform-origin:top center;transform:rotate(-24deg);transition:transform .8s}
+  .lp-arm::after{content:'';position:absolute;bottom:-2px;left:-2.5px;width:8px;height:12px;border-radius:2px;
+    background:color-mix(in srgb, var(--ink) 52%, transparent)}
+  .playing .lp-arm{transform:rotate(-14deg)}
+  .lp-meta{min-width:0;flex:1}
+  .lp-meta b{display:block;font-size:12.5px;font-weight:600;margin-bottom:5px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .lp-meta span{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.18em;color:var(--muted)}
+  /* 튜너 */
+  .tun-body{background:rgba(0,0,0,.42);border:1px solid var(--line);border-radius:7px;padding:12px 13px 13px}
+  .tun-band{position:relative;height:34px;border-bottom:1px solid var(--line);margin-bottom:4px;overflow:hidden;
+    background:repeating-linear-gradient(90deg, color-mix(in srgb, var(--ink) 26%, transparent) 0 1px, transparent 1px 18px) 0 100% / 100% 12px no-repeat,
+               repeating-linear-gradient(90deg, color-mix(in srgb, var(--ink) 14%, transparent) 0 1px, transparent 1px 6px) 0 100% / 100% 6px no-repeat}
+  .tun-band i{position:absolute;left:62%;top:0;bottom:0;width:2px;background:var(--pri);
+    box-shadow:0 0 8px color-mix(in srgb, var(--pri) 55%, transparent)}
+  .playing .tun-band i{animation:bgmtune 5s ease-in-out infinite alternate}
+  @keyframes bgmtune{0%{left:62%}45%{left:63.5%}100%{left:61%}}
+  .tun-nums{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;
+    font-size:8px;color:var(--muted);letter-spacing:.1em;margin-bottom:10px}
+  .tun-row{display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .tun-meta{min-width:0}
+  .tun-meta b{display:block;font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tun-meta span{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.16em;color:var(--muted)}
   /* ── 단말기 위젯 — 3디자인 · 색 변수(--phBg 바탕 / --phTx 글자 / --phAc 포인트) ── */
   .w-phone{--phMut:color-mix(in srgb, var(--phTx,#aeb4c2) 58%, transparent);
     --phCs:#262a35;
@@ -1649,6 +1713,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=180"></script>
+<script type="module" src="./app.js?v=181"></script>
 </body>
 </html>
