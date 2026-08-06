@@ -544,6 +544,11 @@ async function loadContent(){
     return [];
   };
   st.posts=take(ps,'posts');
+  /* 진단: 고정글의 저장된 플래그를 필터 '이전' 원본으로 출력 — 로그인/로그아웃 비교용 */
+  const pins=st.posts.filter(p=>p.pinned);
+  if(pins.length) console.log('[lovelog] pinned('+(st.mine?'주인':'방문자')+'):',
+    pins.map(p=>({title:p.title, priv:p.priv??'(없음)', secret:p.secret??'(없음)', pinned:p.pinned, id:p.id})));
+  else console.log('[lovelog] pinned: 없음 (필터 이전 기준)');
   if(!st.mine) st.posts=st.posts.filter(p=>!p.priv);   // 비공개 글은 주인에게만 존재
   st.gallery=take(gs,'gallery');
   if(!st.mine) st.gallery=st.gallery.filter(g=>!g.priv);   // 비공개 사진은 주인에게만
