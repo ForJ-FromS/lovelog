@@ -1789,7 +1789,8 @@ function renderCatFix(){
           ${gcats().map(c=>`<option value="${esc(c)}" ${st.page.stripSrc===c?'selected':''}>대문: ${esc(c)} 카테고리</option>`).join('')}
         </select>`:''))+
     row('__gb',esc(gbNm()),
-      `<input data-cn="__gb" value="${esc(st.page.gbName||'')}" placeholder="GUESTBOOK" title="게시판 이름 바꾸기 — 비우면 GUESTBOOK" style="width:104px;margin-bottom:0;font-size:11.5px">`)+
+      `<input data-cn="__gb" value="${esc(st.page.gbName||'')}" placeholder="GUESTBOOK" title="게시판 이름 바꾸기 — 비우면 GUESTBOOK" style="width:104px;margin-bottom:0;font-size:11.5px">
+       <label class="chk" style="margin:0 0 0 6px;font-size:11px" title="켜면 방명록 탭이 숨겨지고 아무도 남길 수 없어요 — 기존 글은 지워지지 않아요"><input type="checkbox" data-gboff ${st.page.gbOff?'checked':''}> 끄기</label>`)+
     (homeStyle()==='blog'?'':row('recent','ALL'));
   bindCatImg(box);
   box.querySelectorAll('[data-cn]').forEach(inp=>inp.addEventListener('change',async()=>{
@@ -1802,6 +1803,14 @@ function renderCatFix(){
     if(st.cat==='__gal') $('#v-label').textContent=galNm();
     msg('게시판 이름 저장!');
   }));
+  const gbo=box.querySelector('[data-gboff]');
+  if(gbo) gbo.addEventListener('change',async()=>{
+    try{ await updateDoc(doc(db,'pages',st.handle),{gbOff:gbo.checked}); }
+    catch(e){ msg('저장 실패 — '+e.message); gbo.checked=!gbo.checked; return; }
+    st.page.gbOff=gbo.checked;
+    renderCatbar(); renderSide();
+    msg(gbo.checked?'방명록을 껐어요 — 탭이 숨겨졌어요.':'방명록을 다시 켰어요!');
+  });
   const gt=$('#gal-toggle'); if(gt) gt.onclick=async()=>{
     const next=!galOn();
     await updateDoc(doc(db,'pages',st.handle),{galOn:next});
@@ -3029,7 +3038,6 @@ $('#s-bg-clear').onclick=()=>{
 function fillSettings(){
   const p=st.page;
   $('#s-name').value=p.name||''; $('#s-sub').value=p.sub||'';
-  $('#s-gboff').checked=!!p.gbOff;
   $('#s-mut-title').value=(p.mutualMemo&&p.mutualMemo.title)||''; $('#s-mut-text').value=(p.mutualMemo&&p.mutualMemo.text)||'';
   $('#s-gate').value=''; gateClear=false; renderGateState(); priVal=null; $('#s-pri').value=p.priColor||'#9db4ff'; $('#s-color').value=hslToHex(p.hue??222, p.sat??60, p.lum??62);
   $('#s-headmode').value=p.headMode||'wide'; $('#s-headh').value=p.headH||380; $('#s-headfit').value=p.headFit||'cover';
@@ -3097,7 +3105,6 @@ async function saveSettings(){
     }
     const data={
       name:$('#s-name').value.trim()||st.handle,
-      gbOff: $('#s-gboff').checked,
       sub:$('#s-sub').value.trim(),
       heroImgs: heroOut,
       heroImg: '',
