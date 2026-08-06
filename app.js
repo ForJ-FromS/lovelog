@@ -1075,7 +1075,6 @@ function renderSide(){
       if(!ls.length && !st.mine) return;
       d.className+=' w-chat ch-'+(w.style||'msg');
       if(w.anim){ d.className+=' ch-anim'; if(w.loop) d.dataset.loop='1'; chatObserve(d); }   // 과거 값(true/'up'/'pop') 전부 제자리 효과로
-      if(+w.maxH>0){ d.className+=' ch-scroll'; d.style.setProperty('--chMax', (+w.maxH)+'px'); }
       const imgs=w.imgs!==false;
       const lum=hx=>{ try{ const n=parseInt(hx.slice(1),16);
         return (((n>>16)&255)*.299+((n>>8)&255)*.587+(n&255)*.114)/255; }catch(e){ return .5; } };
@@ -1090,14 +1089,24 @@ function renderSide(){
       if(w.fs) sv.push(`--chFs:${w.fs}px`);
       if(w.font==='serif') sv.push(`--chFf:'Noto Serif KR',serif`);
       if(w.font==='mono') sv.push(`--chFf:'IBM Plex Mono',monospace`);
-      if(sv.length) d.setAttribute('style', sv.join(';'));
+      if(sv.length) d.setAttribute('style', sv.join(';'));   // ⚠ 색 변수는 여기서 통째로 씌우므로, --chMax는 반드시 이 다음에
+      if(+w.maxH>0){ d.className+=' ch-scroll'; d.style.setProperty('--chMax', (+w.maxH)+'px'); }
       d.innerHTML=`<p class="label">CHAT</p>`+(ls.length?`<div class="ch-box">`+ls.map((l,li)=>`
         <div class="ch-line ${l.side==='r'?'r':'l'}">
           ${imgs&&l.img?`<img class="ch-p" src="${l.img}" alt="" draggable="false">`:''}
           <div class="ch-b">${l.name?`<span class="ch-n">${esc(l.name)}</span>`:''}<p>${esc(l.text)}</p></div>
         </div>`).join('')+`</div>`
         :'<p class="pl-empty">✎ 편집에서 대사를 추가해주세요.</p>');
-      box.appendChild(d); return;
+      box.appendChild(d);
+      /* 움짤 자리 예약: 재생 전에 '다 떴을 때 실제 높이'만큼 min-height 확보 —
+         ① 높이제한 있으면 min(내용, maxH)만 (빈 공간이 아래 위젯 자리를 먹던 버그)
+         ② 높이제한 없어도 예약 (카드가 작게 시작해 메시지 뜰 때마다 자라던 버그)
+         클래스 떼고 측정 후 같은 프레임에 복원하므로 깜빡임 없음 */
+      if(w.anim){ const cb=d.querySelector('.ch-box');
+        if(cb){ d.classList.remove('ch-anim');
+          const need=+w.maxH>0 ? Math.min(cb.scrollHeight, +w.maxH) : cb.scrollHeight;
+          d.classList.add('ch-anim'); if(need>0) cb.style.minHeight=need+'px'; } }
+      return;
     }
     if(w.t==='text'){
       if(!w.title && !w.text && !st.mine) return;
