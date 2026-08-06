@@ -1285,7 +1285,7 @@ function renderSide(){
     }
     if(w.t==='quote'){
       d.className+=' w-quote';
-      d.innerHTML=`<span class="qm">❝</span><p>${esc(w.text||'').replace(/\n/g,'<br>')}</p>`;
+      d.innerHTML=`${w.noQm?'':'<span class="qm">❝</span>'}<p>${esc(w.text||'').replace(/\n/g,'<br>')}</p>`;
       if(w.anim && (w.text||'').trim()) typeObserve(d.querySelector('p'), w.text);
       box.appendChild(d); return;
     }
@@ -2038,7 +2038,10 @@ function renderWidEdit(){
     <textarea id="we-text" placeholder="아래 캡션 (선택 — 비우면 사진만 꽉 차게)" style="min-height:60px">${w.text||''}</textarea>`;
   if(w.t==='quote') html+=`
     <textarea id="we-text" placeholder="걸어둘 문장" style="min-height:90px">${w.text||''}</textarea>
-    <label class="chk" title="화면에 보일 때 한 글자씩 타이핑되듯 나타나요"><input type="checkbox" id="we-qanim" ${w.anim?'checked':''}> ✨ 움짤 효과 (타이핑)</label>`;
+    <div class="p-row" style="align-items:center">
+      <label class="chk" title="화면에 보일 때 한 글자씩 타이핑되듯 나타나요"><input type="checkbox" id="we-qanim" ${w.anim?'checked':''}> ✨ 움짤 효과 (타이핑)</label>
+      <label class="chk" title="문장 위의 장식 따옴표를 켜고 꺼요"><input type="checkbox" id="we-qmark" ${w.noQm?'':'checked'}> ❝ 따옴표 표시</label>
+    </div>`;
   if(w.t==='nb') html+=`
     <input id="we-nblab" placeholder="제목 (기본: NEIGHBORS)" value="${esc(w.label??'')}">
     <div class="p-row" style="align-items:center">
@@ -2320,6 +2323,8 @@ function renderWidEdit(){
   const chlp=$('#we-chloop'); if(chlp) chlp.addEventListener('change',()=>{ if(chlp.checked) w.loop=true; else delete w.loop; });
   const chmx=$('#we-chmax'); if(chmx) chmx.addEventListener('input',()=>{ const n=+chmx.value; if(n>0) w.maxH=n; else delete w.maxH; });
   const qan=$('#we-qanim'); if(qan) qan.addEventListener('change',()=>{ w.anim=qan.checked; });
+  const qmk=$('#we-qmark'); if(qmk) qmk.addEventListener('change',()=>{
+    if(qmk.checked) delete w.noQm; else w.noQm=true; });
   const chcl=$('#we-chcl'); if(chcl) chcl.addEventListener('input',()=>{ w.cL=chcl.value; });
   const chcr=$('#we-chcr'); if(chcr) chcr.addEventListener('input',()=>{ w.cR=chcr.value; });
   const chtl=$('#we-chtl'); if(chtl) chtl.addEventListener('input',()=>{ w.tL=chtl.value; });
