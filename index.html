@@ -763,8 +763,10 @@
   body.light .ph-glass{--phCs:#9099a8}
   .w-phone .ph-frame{position:relative;overflow:hidden;margin:0 auto;
     box-shadow:0 16px 44px rgba(0,0,0,.35)}
-  .wfl .sw-phone{background:none;border:none;padding:0;overflow:visible}
-  .wfl .sw-phone::before{display:none}   /* 플로팅 단말기는 카드 없이 기기만 */
+  .sw-phone{background:none!important;border:none!important;padding:0!important;
+    overflow:visible!important;box-shadow:none}
+  .sw-phone::before{display:none}        /* 단말기는 어디서든 카드 없이 기기만 */
+  .sw-phone > .label{padding:0 4px;margin-bottom:7px}
   .ph-x{position:absolute;top:8px;right:8px;z-index:2;width:20px;height:20px;border-radius:50%;
     border:none;cursor:pointer;font-size:9px;line-height:1;padding:0;color:var(--phMut);
     background:color-mix(in srgb, var(--phTx,#fff) 9%, transparent)}
@@ -1647,6 +1649,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=176"></script>
+<script type="module" src="./app.js?v=177"></script>
 </body>
 </html>

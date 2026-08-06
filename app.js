@@ -1223,7 +1223,7 @@ function renderSide(){
             ${l.text?`<p class="ph-t">${esc(l.text)}</p>`:''}
           </div>
         </div>`;
-      d.innerHTML=(w.label===''?'':`<p class="label">${esc(w.label||'DEVICE')}</p>`)+
+      d.innerHTML=(w.label?`<p class="label">${esc(w.label)}</p>`:'')+
         `<div class="ph-frame"><button class="ph-x" title="단말기 닫기 — 새로고침하면 다시 떠요">✕</button>`+head+
         (ls.length?`<div class="ch-box ph-list">`+ls.map(noti).join('')+`</div>`
           :'<p class="pl-empty">✎ 편집에서 알림을 추가해주세요.</p><p class="pl-ghost">👻 지금은 방문자에게 안 보이는 카드예요</p>')+
@@ -2223,7 +2223,7 @@ function renderWidEdit(){
       <input data-phhd2 placeholder="우측 코드 (기본: CH-07)" value="${esc(w.hd2||'')}" style="flex:1">
     </div>
     <input data-phsub placeholder="부제 (기본: INCOMING TRANSMISSION)" value="${esc(w.sub||'')}">`:''}
-    <input id="we-phlab" placeholder="위젯 제목 (기본: DEVICE — 공백 한 칸이면 숨김)" value="${esc(w.label??'')}">
+    <input id="we-phlab" placeholder="위젯 제목 (비우면 표시 안 함)" value="${esc(w.label??'')}">
     <div class="p-row" style="align-items:center;font-size:11px;color:var(--muted);gap:7px">
       바탕 <input type="color" id="we-phbg" value="${w.bg||'#0b0d12'}" style="width:34px;padding:0" title="단말기 화면 배경색 — 밝은 색도 돼요 (글자색이 자동으로 맞춰져요)">
       글자 <input type="color" id="we-phtc" value="${w.tc||'#eef0f6'}" style="width:34px;padding:0" title="비우면 바탕에 맞춰 자동">
