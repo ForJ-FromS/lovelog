@@ -314,6 +314,8 @@
   .gb-reform{display:flex;gap:7px;margin-top:7px;align-items:flex-start}
   .gb-reform.hidden{display:none}
   .gb-reform .gb-reta{flex:1;font-size:12.5px}
+  .gpriv{position:absolute;left:6px;top:6px;font-style:normal;font-size:12px;
+    background:rgba(0,0,0,.55);border-radius:6px;padding:2px 6px;pointer-events:none}
   #pv-like{border:1px solid var(--line);background:var(--card2);color:var(--body);
     border-radius:99px;padding:6px 14px;font-size:13px;cursor:pointer;line-height:1}
   #pv-like:hover{border-color:var(--pri)}
@@ -1131,6 +1133,7 @@
     <p class="p-h" style="border:none;padding-top:0;margin-top:0">🖼 갤러리에 이미지 추가</p>
     <p class="note" style="margin:-6px 0 10px">올라간 이미지는 방문자가 우클릭·드래그로 저장할 수 없어요.</p>
     <div class="p-row"><select id="g-cat"></select></div>
+    <label class="chk" title="나만 볼 수 있는 사진 — 수정에서 체크를 풀면 공개돼요"><input type="checkbox" id="g-priv"> 🔏 비공개 (나만 보기)</label>
     <input id="g-title" placeholder="이미지 제목 (선택)">
     <label class="filelab">이미지 선택 <input type="file" id="g-file" accept="image/*"></label>
     <p class="note hidden" id="g-edit-note" style="color:var(--pri)"></p>
@@ -1337,7 +1340,7 @@
       <p class="p-h" style="margin-top:30px">업데이트 공지</p>
       <p class="note" style="margin-top:-4px">올리면 가입자들이 홈에 들어올 때 화면 하단에 한 번 떠요.
         [확인]을 누른 사람에겐 다시 안 뜨고, 새로 올리면 다시 떠요.</p>
-      <textarea id="adm-notice" placeholder="예: 스티커 모바일 크기 조절과 커서 효과 3종이 추가됐어요!" style="min-height:70px"></textarea>
+      <textarea id="adm-notice" placeholder="예: 스티커 모바일 크기 조절과 커서 효과 3종이 추가됐어요!" style="min-height:260px;font-size:13px;line-height:1.9;resize:vertical"></textarea>
       <div class="p-row" style="align-items:center">
         <button class="btn" id="adm-notice-up" style="font-size:12px">공지 올리기</button>
         <button class="rmv" id="adm-notice-dn" style="font-size:11px">공지 내리기</button>
@@ -1505,6 +1508,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=150"></script>
+<script type="module" src="./app.js?v=151"></script>
 </body>
 </html>

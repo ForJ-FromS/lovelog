@@ -523,6 +523,7 @@ async function loadContent(){
   st.posts=ps.docs.map(d=>({id:d.id,...d.data()}));
   if(!st.mine) st.posts=st.posts.filter(p=>!p.priv);   // 비공개 글은 주인에게만 존재
   st.gallery=gs.docs.map(d=>({id:d.id,...d.data()}));
+  if(!st.mine) st.gallery=st.gallery.filter(g=>!g.priv);   // 비공개 사진은 주인에게만
   st.guest=gb.docs.map(d=>({id:d.id,...d.data()}));
 }
 
@@ -1336,7 +1337,7 @@ function renderList(){
     const items = all.slice(((st.pg||1)-1)*gper, (st.pg||1)*gper);
     $('#rows').innerHTML = items.length
       ? `<div class="gal-grid">`+items.map(g=>
-          `<a data-gg="${g.id}"><img src="${g.img}" alt="" draggable="false">${st.mine?
+          `<a data-gg="${g.id}"><img src="${g.img}" alt="" draggable="false">${g.priv?'<i class="gpriv">🔏</i>':''}${st.mine?
             `<i class="gdel" data-gx="${g.id}">✕</i><i class="gedit" data-ge="${g.id}" title="제목·카테고리·사진 수정">✎</i><i class="gpin${galPins().includes(g.id)?' on':''}" data-gp="${g.id}" title="대문 갤러리에 고정">★</i>`:''}</a>`).join('')+`</div>`
         +(st.mine?`<p class="note" style="margin-top:10px">★를 누르면 대문(홈) 갤러리에 걸려요 — 카테고리 탭에서 '대문: ★로 고른 사진'을 선택해야 적용돼요.</p>`:'')
       : '<p class="pl-empty">아직 이미지가 없습니다.</p>';
@@ -1403,7 +1404,7 @@ function renderGal(all){
   galShown=arr;
   const pins=galPins();
   $('#gal').innerHTML = arr.length?arr.map(g=>
-    `<a data-g="${g.id}"><img src="${g.img}" alt="" draggable="false">${st.mine?`<i class="gdel" data-gx="${g.id}">✕</i>`:''}</a>`).join('')
+    `<a data-g="${g.id}"><img src="${g.img}" alt="" draggable="false">${g.priv?'<i class="gpriv">🔏</i>':''}${st.mine?`<i class="gdel" data-gx="${g.id}">✕</i>`:''}</a>`).join('')
     :'<p class="pl-empty">아직 이미지가 없습니다.</p>';
   document.querySelectorAll('#gal a').forEach(a=>a.onclick=e=>{
     if(e.target.dataset.gx){ e.stopPropagation(); delGal(e.target.dataset.gx); return; }
@@ -2353,7 +2354,7 @@ $('#w-go').onclick=async()=>{
 function startEditGal(id){
   const g=st.gallery.find(x=>x.id===id); if(!g) return;
   editGal=id; refreshGalCats();
-  $('#g-title').value=g.title||''; $('#g-cat').value=g.cat||'';
+  $('#g-title').value=g.title||''; $('#g-cat').value=g.cat||''; $('#g-priv').checked=!!g.priv;
   $('#g-file').value='';
   $('#g-go').textContent='수정 완료';
   $('#g-edit-note').classList.remove('hidden');
@@ -2361,7 +2362,7 @@ function startEditGal(id){
   openPanel('write'); switchTab('galup');
 }
 function clearGalForm(){
-  editGal=null; $('#g-title').value=''; $('#g-file').value='';
+  editGal=null; $('#g-title').value=''; $('#g-file').value=''; $('#g-priv').checked=false;
   $('#g-go').textContent='업로드'; $('#g-edit-note').classList.add('hidden');
 }
 $('#g-cancel').onclick=()=>{ clearGalForm(); msg('수정을 취소했어요.'); };
@@ -2369,7 +2370,7 @@ $('#g-go').onclick=async()=>{
   if(editGal){
     try{
       const f=$('#g-file').files[0];
-      const upd={title:$('#g-title').value.trim(), cat:$('#g-cat').value||''};
+      const upd={title:$('#g-title').value.trim(), cat:$('#g-cat').value||'', priv:$('#g-priv').checked};
       if(f){ msg('이미지 교체 중...'); upd.img=await upFile(f,1900,.9,220); }
       await updateDoc(doc(db,'pages',st.handle,'gallery',editGal),upd);
       clearGalForm(); await loadContent(); renderGal();
@@ -2384,7 +2385,7 @@ $('#g-go').onclick=async()=>{
     const img=await upFile(f,1900,.9,220);
     if(img.length>900000){ msg('이미지가 너무 커요 — 더 작은 사진으로 시도해 주세요.'); return; }
     await addDoc(collection(db,'pages',st.handle,'gallery'),
-      {img,title:$('#g-title').value.trim(),cat:$('#g-cat').value||'',ts:serverTimestamp()});
+      {img,title:$('#g-title').value.trim(),cat:$('#g-cat').value||'',priv:$('#g-priv').checked,ts:serverTimestamp()});
     await loadContent(); renderGal(); $('#g-title').value=''; $('#g-file').value='';
     msg('업로드 완료!');
   }catch(e){ msg('오류: '+e.message); }
