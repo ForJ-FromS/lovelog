@@ -1032,6 +1032,7 @@ function renderSide(){
     if(w.float && wide && wfl && w.t!=='latest'){
       flw=document.createElement('div'); flw.className='wfl';
       flw.style.left=(w.fx??62)+'%'; flw.style.top=(w.fy??160)+'px';
+      if(+w.wd>0) flw.style.width=(+w.wd)+'px';        // 위젯별 가로 폭 (단말기 등)
       wfl.appendChild(flw); box=flw;
       bindFloatDrag(flw, wi);
     }
@@ -2226,9 +2227,10 @@ function renderWidEdit(){
       글자 <input type="color" id="we-phtc" value="${w.tc||'#eef0f6'}" style="width:34px;padding:0" title="비우면 바탕에 맞춰 자동">
       포인트 <input type="color" id="we-phac" value="${w.ac||'#d9a614'}" style="width:34px;padding:0" title="관제 단말의 헤더·인디케이터 색">
       <button class="rmv" id="we-phrst" style="font-size:10px" title="색을 디자인 기본(홈 테마 추종)으로 되돌려요">기본으로</button>
+      <input type="number" id="we-phwd" placeholder="가로 px" value="${+w.wd>0?+w.wd:''}" min="240" max="560" style="width:92px" title="단말기 가로 폭 — 📌 플로팅이나 중앙 배치일 때 적용돼요. 비우면 자리 폭(옆 기둥은 기둥 폭)을 따라요. 340~400 추천">
       <input type="number" id="we-phmax" placeholder="높이 px" value="${+w.maxH>0?+w.maxH:''}" min="120" max="900" style="width:96px" title="정하면 그 높이로 고정되고 넘치는 알림은 스크롤 — 비우면 알림 개수만큼만 좁아져요 (삐삐st)">
     </div>
-    <p class="note">알림은 원하는 만큼 추가할 수 있어요. 높이를 비우면 알림 1~2개일 때 삐삐처럼 착 좁아지고, 정하면 그 크기로 고정돼요.</p>`
+    <p class="note">알림은 원하는 만큼 추가할 수 있어요. 높이를 비우면 알림 1~2개일 때 삐삐처럼 착 좁아지고, 정하면 그 크기로 고정돼요. 가로 폭은 📌 플로팅·중앙 배치에서 적용 — 340~400px가 단말기답습니다.</p>`
     +(w.lines||[]).map((l,i)=>`
     <div class="chl">
       <div class="chl-h">
@@ -2323,6 +2325,8 @@ function renderWidEdit(){
     delete w.bg; delete w.tc; delete w.ac; renderWidEdit(); msg('색을 디자인 기본으로 되돌렸어요.'); };
   const phmax=$('#we-phmax'); if(phmax) phmax.addEventListener('input',()=>{
     const n=+phmax.value; if(n>0) w.maxH=n; else delete w.maxH; });
+  const phwd=$('#we-phwd'); if(phwd) phwd.addEventListener('input',()=>{
+    const n=+phwd.value; if(n>0) w.wd=n; else delete w.wd; });
   const phhd=$('#wid-edit [data-phhd]'); if(phhd) phhd.addEventListener('input',()=>{ w.hd=phhd.value; });
   const phhd2=$('#wid-edit [data-phhd2]'); if(phhd2) phhd2.addEventListener('input',()=>{ w.hd2=phhd2.value; });
   const phsub=$('#wid-edit [data-phsub]'); if(phsub) phsub.addEventListener('input',()=>{ w.sub=phsub.value; });
