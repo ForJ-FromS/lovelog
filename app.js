@@ -1010,7 +1010,12 @@ function renderSide(){
   if(home && !sideCfg().some(w=>w.t==='latest')) latestBlock(hC);
   const isM = window.innerWidth<=640;
   const wide = window.innerWidth>960;                       // 플로팅 위젯은 넓은 화면에서만
-  const wfl = $('#wfl-layer'); if(wfl) wfl.innerHTML='';
+  const wfl = $('#wfl-layer');
+  if(wfl){ wfl.innerHTML='';
+    /* 레이어를 .wrap 폭이 아니라 화면 전체 폭으로 — 위젯을 양옆 여백까지 끌 수 있게
+       (스크롤바 제외 폭 기준이라 가로 스크롤 안 생김) */
+    const off=Math.max(0,(document.documentElement.clientWidth - wfl.parentElement.clientWidth)/2);
+    wfl.style.left=(-off)+'px'; wfl.style.right=(-off)+'px'; }
   const mOrd=(w,i)=>w.mo ?? (({c:0,l:1,r:2}[w.col||'r']||2)*100+i);
   let seq = sideCfg().map((w,wi)=>({w,wi}));
   if(home && isM) seq=seq.sort((A,B)=>mOrd(A.w,A.wi)-mOrd(B.w,B.wi));
@@ -1204,7 +1209,7 @@ function renderSide(){
             dt=(now.getMonth()+1)+'월 '+now.getDate()+'일 '+days[now.getDay()]+'요일';
       const head = stl==='term'
         ? `<div class="ph-top"><span class="l">${esc(w.hd||'SECURE LINE')}</span><span class="r">${esc(w.hd2||'CH-07')}</span></div>
-           <div class="ph-meta"><span>${esc(w.sub||'INCOMING TRANSMISSION')}</span><b>${hh}:${mi}:${ss}</b></div>`
+           <div class="ph-meta"><span>${esc(w.sub||'INCOMING TRANSMISSION')}</span>${w.clk===false?'':`<b>${hh}:${mi}:${ss}</b>`}</div>`
         : (stl==='oled' ? `<div class="ph-isl"></div>` : `<div class="ph-bar"><span>${hh}:${mi}</span><span>ıllı&nbsp; ᯤ&nbsp; ▮▮▯</span></div>`)
           +(w.clk===false?'':`<div class="ph-clock"><b>${hh}:${mi}</b><span>${dt}</span></div>`);
       const noti = l=>`
@@ -1216,12 +1221,16 @@ function renderSide(){
           </div>
         </div>`;
       d.innerHTML=(w.label===''?'':`<p class="label">${esc(w.label||'DEVICE')}</p>`)+
-        `<div class="ph-frame">`+head+
+        `<div class="ph-frame"><button class="ph-x" title="단말기 닫기 — 새로고침하면 다시 떠요">✕</button>`+head+
         (ls.length?`<div class="ch-box ph-list">`+ls.map(noti).join('')+`</div>`
           :'<p class="pl-empty">✎ 편집에서 알림을 추가해주세요.</p><p class="pl-ghost">👻 지금은 방문자에게 안 보이는 카드예요</p>')+
         (stl==='term'?`<div class="ph-foot">END OF FEED ─────────</div>`:'')+
         `</div>`;
       box.appendChild(d);
+      const phx=d.querySelector('.ph-x');
+      if(phx) phx.onclick=()=>{                                   // 세션 한정 닫기 — 새로고침하면 복귀
+        const t=d.parentElement&&d.parentElement.classList.contains('wfl')?d.parentElement:d;
+        t.remove(); };
       if(w.anim){ const cb=d.querySelector('.ch-box');            // 자리 예약(phase168) — 높이 고정 모드면 그 안에서
         if(cb){ d.classList.remove('ch-anim');
           const need=+w.maxH>0 ? Math.min(cb.scrollHeight, +w.maxH) : cb.scrollHeight;
@@ -2201,7 +2210,7 @@ function renderWidEdit(){
         <option value="glass" ${w.style==='glass'?'selected':''}>프로스트 글래스 (유리 알림)</option>
         <option value="term" ${w.style==='term'?'selected':''}>관제 단말 (세계관 터미널)</option>
       </select>
-      ${w.style!=='term'?`<label class="chk" title="잠금화면처럼 큰 시계와 날짜가 떠요 (보는 사람의 현재 시각)"><input type="checkbox" id="we-phclk" ${w.clk!==false?'checked':''}> 🕐 시계</label>`:''}
+      <label class="chk" title="미니멀·글래스는 잠금화면 큰 시계, 관제 단말은 헤더의 초 단위 시계를 켜고 꺼요 (보는 사람의 현재 시각)"><input type="checkbox" id="we-phclk" ${w.clk!==false?'checked':''}> 🕐 시계</label>
       <label class="chk" title="화면에 보일 때 알림이 순서대로 떠올라요"><input type="checkbox" id="we-phanim" ${w.anim?'checked':''}> ✨ 움짤 효과</label>
       <label class="chk" title="다 뜨면 잠시 쉬었다가 처음부터 다시 재생돼요"><input type="checkbox" id="we-phloop" ${w.loop?'checked':''}> ↻ 반복 재생</label>
     </div>
