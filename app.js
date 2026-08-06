@@ -685,7 +685,9 @@ function goHome(){
   st.cur=null;
   st.cat='home'; applyView(); renderWidgets(); renderCatbar();
 }
-function goBoard(cat){ st.cat=cat||'recent'; st.pg=1; applyView(); renderWidgets(); renderList(); backToList(); renderCatbar(); }
+function goBoard(cat){
+  if(cat==='__gb' && st.page.gbOff){ msg('방명록이 잠시 닫혀 있어요.'); return; }
+  st.cat=cat||'recent'; st.pg=1; applyView(); renderWidgets(); renderList(); backToList(); renderCatbar(); }
 function catStyle(){
   return st.page.catStyle || (st.page.catBar===false ? 'widget' : 'bar');
 }
@@ -703,7 +705,7 @@ function renderCatbar(){
   bar.innerHTML = pill('home','HOME',homeOn)+
     cats().map(c=>pill(c,c.toUpperCase(),st.cat===c)).join('')+
     (galOn()?pill('__gal',galNm(),st.cat==='__gal'):'')+
-    pill('__gb',gbNm(),st.cat==='__gb')+
+    (st.page.gbOff?'' : pill('__gb',gbNm(),st.cat==='__gb'))+
     (homeStyle()==='blog'?'':pill('recent','ALL',st.cat==='recent'));
   bar.querySelectorAll('a').forEach(el=>el.onclick=()=>{
     el.dataset.c==='home' ? goHome() : goBoard(el.dataset.c);
@@ -979,7 +981,7 @@ function renderSide(){
           <span>${esc(c)}</span>
           <span class="n">${cnt(c)}</span></a></li>`).join('')+
         (galOn()?`<li><a data-c="__gal" class="${st.cat==='__gal'?'on':''}"><span>${esc(galNm())}</span><span class="n">${st.gallery.length}</span></a></li>`:'')+
-        `<li><a data-c="__gb" class="${st.cat==='__gb'?'on':''}"><span>${esc(gbNm())}</span><span class="n">${st.guest.length}</span></a></li>`+
+        (st.page.gbOff?'':`<li><a data-c="__gb" class="${st.cat==='__gb'?'on':''}"><span>${esc(gbNm())}</span><span class="n">${st.guest.length}</span></a></li>`)+
         `<li><a data-c="recent" class="${st.cat==='recent'?'on':''}"><span>전체</span><span class="n">${st.posts.length}</span></a></li></ul>`;
       box.appendChild(d);
       d.querySelectorAll('#cats a').forEach(el=>el.onclick=()=>goBoard(el.dataset.c));
@@ -1072,7 +1074,7 @@ function renderSide(){
       const ls=(w.lines||[]).filter(l=>l.text||l.name);
       if(!ls.length && !st.mine) return;
       d.className+=' w-chat ch-'+(w.style||'msg');
-      if(w.anim){ d.className+=' ch-anim'; chatObserve(d); }   // 과거 값(true/'up'/'pop') 전부 제자리 효과로
+      if(w.anim){ d.className+=' ch-anim'; if(w.loop) d.dataset.loop='1'; chatObserve(d); }   // 과거 값(true/'up'/'pop') 전부 제자리 효과로
       if(+w.maxH>0){ d.className+=' ch-scroll'; d.style.setProperty('--chMax', (+w.maxH)+'px'); }
       const imgs=w.imgs!==false;
       const lum=hx=>{ try{ const n=parseInt(hx.slice(1),16);
@@ -2003,6 +2005,7 @@ function renderWidEdit(){
       </select>
       <label class="chk"><input type="checkbox" id="we-chimg" ${w.imgs!==false?'checked':''}> 프사 표시</label>
       <label class="chk" title="화면에 보일 때 말풍선이 순서대로 그 자리에서 떠올라요"><input type="checkbox" id="we-chanim" ${w.anim?'checked':''}> ✨ 움짤 효과 (제자리)</label>
+      <label class="chk" title="다 뜨면 잠시 쉬었다가 처음부터 다시 재생돼요"><input type="checkbox" id="we-chloop" ${w.loop?'checked':''}> ↻ 반복 재생</label>
       <input type="number" id="we-chmax" placeholder="최대 높이 px (비우면 전체 표시)" value="${+w.maxH>0?+w.maxH:''}" min="120" max="900" style="width:190px" title="정하면 그 높이를 넘는 채팅은 스크롤로 봐요">
       <p class="note" style="margin:4px 0 0">최대 높이는 사이드(옆 기둥) 위젯 기준 <b>360px</b>가 적당합니다.
         중앙·블로그형처럼 넓은 자리는 <b>440~480px</b>가 예쁩니다. 비우면 채팅 전체가 표시됩니다.</p>
@@ -2101,6 +2104,7 @@ function renderWidEdit(){
   const iimgx=$('#we-iimgx'); if(iimgx) iimgx.onclick=()=>{ delete w.img; renderWidEdit(); };
   const chst=$('#we-chst'); if(chst) chst.addEventListener('change',()=>{ w.style=chst.value; });
   const chan=$('#we-chanim'); if(chan) chan.addEventListener('change',()=>{ if(chan.checked) w.anim='pop'; else delete w.anim; });
+  const chlp=$('#we-chloop'); if(chlp) chlp.addEventListener('change',()=>{ if(chlp.checked) w.loop=true; else delete w.loop; });
   const chmx=$('#we-chmax'); if(chmx) chmx.addEventListener('input',()=>{ const n=+chmx.value; if(n>0) w.maxH=n; else delete w.maxH; });
   const qan=$('#we-qanim'); if(qan) qan.addEventListener('change',()=>{ w.anim=qan.checked; });
   const chcl=$('#we-chcl'); if(chcl) chcl.addEventListener('input',()=>{ w.cL=chcl.value; });
@@ -2238,7 +2242,16 @@ function chatPlay(el){
   if(box) box.scrollTop=0;                         // 맨 위에서 시작
   let i=0;
   const step=()=>{
-    if(i>=lines.length) return;
+    if(!el.isConnected) return;                    // 화면이 새로 그려졌으면 중단
+    if(i>=lines.length){
+      if(el.dataset.loop==='1')                    // ↻ 반복 재생
+        setTimeout(()=>{ if(!el.isConnected) return;
+          lines.forEach(l=>l.classList.remove('ch-in'));
+          if(box) box.scrollTop=0;
+          i=0; setTimeout(step, 500);
+        }, 2400);
+      return;
+    }
     lines[i].classList.add('ch-in');
     if(box && box.scrollHeight>box.clientHeight)   // 창이 차오른 뒤부터만 아래로
       box.scrollTo({top:box.scrollHeight, behavior:'smooth'});
@@ -3016,6 +3029,7 @@ $('#s-bg-clear').onclick=()=>{
 function fillSettings(){
   const p=st.page;
   $('#s-name').value=p.name||''; $('#s-sub').value=p.sub||'';
+  $('#s-gboff').checked=!!p.gbOff;
   $('#s-mut-title').value=(p.mutualMemo&&p.mutualMemo.title)||''; $('#s-mut-text').value=(p.mutualMemo&&p.mutualMemo.text)||'';
   $('#s-gate').value=''; gateClear=false; renderGateState(); priVal=null; $('#s-pri').value=p.priColor||'#9db4ff'; $('#s-color').value=hslToHex(p.hue??222, p.sat??60, p.lum??62);
   $('#s-headmode').value=p.headMode||'wide'; $('#s-headh').value=p.headH||380; $('#s-headfit').value=p.headFit||'cover';
@@ -3083,6 +3097,7 @@ async function saveSettings(){
     }
     const data={
       name:$('#s-name').value.trim()||st.handle,
+      gbOff: $('#s-gboff').checked,
       sub:$('#s-sub').value.trim(),
       heroImgs: heroOut,
       heroImg: '',
