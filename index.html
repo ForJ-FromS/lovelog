@@ -710,6 +710,14 @@
   .cmt-item .who .dt{color:var(--muted);font-size:8.5px}
   .cmt-item p{font-size:12.5px;color:var(--body);white-space:pre-wrap;margin-top:2px}
   #stk-layer{position:absolute;inset:0;pointer-events:none;z-index:5}
+  /* ── 플로팅 위젯 레이어 (PC 전용 — 위젯을 컬럼에서 떼어 자유 배치) ── */
+  #wfl-layer{position:absolute;inset:0;pointer-events:none;z-index:6;transition:opacity .35s}
+  .wfl{position:absolute;width:270px;pointer-events:auto}
+  body.mine.editmode .wfl{cursor:grab;outline:1.5px dashed var(--pri);outline-offset:4px;border-radius:14px}
+  body.mine.editmode .wfl:active{cursor:grabbing}
+  body.in-post #wfl-layer{opacity:0;pointer-events:none}   /* 글 읽는 동안 숨김 (스티커와 동일) */
+  body.reading #wfl-layer{display:none}
+  @media(max-width:960px){#wfl-layer{display:none}}         /* 폰·태블릿은 원래 자리(컬럼)로 복귀 */
   @media(max-width:720px){body.stk-hide-m #stk-layer{display:none}}
   #stk-layer{transition:opacity .35s}
   body.in-post #stk-layer{opacity:0;pointer-events:none}  /* 글 읽는 동안은 스티커 숨김 */
@@ -945,6 +953,7 @@
 
 <div class="wrap">
 <div id="stk-layer"></div>
+<div id="wfl-layer"></div>
 <div id="toast"></div>
 
 <div id="mut-pop" class="hidden">
@@ -1539,6 +1548,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=164"></script>
+<script type="module" src="./app.js?v=165"></script>
 </body>
 </html>

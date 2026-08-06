@@ -528,6 +528,42 @@ async function loadContent(){
 }
 
 /* ---------- 사이드 위젯 렌더 ---------- */
+/* 📌 플로팅 위젯 드래그 — 스티커와 같은 방식: ⠿ 편집 모드의 주인만, 위치는 위젯 데이터(fx %, fy px)에 저장 */
+function bindFloatDrag(el, wi){
+  if(!st.mine) return;
+  el.addEventListener('pointerdown', ev=>{
+    if(!st.editMode) return;                       // 평소엔 위젯 안 내용을 그대로 쓸 수 있게
+    ev.preventDefault(); el.setPointerCapture(ev.pointerId);
+    const layer=$('#wfl-layer'); if(!layer) return;
+    const rect=layer.getBoundingClientRect(),
+          ww=el.offsetWidth, wh=el.offsetHeight;
+    const curX=parseFloat(el.style.left)||0, curY=parseFloat(el.style.top)||0;
+    const dx=ev.clientX-(rect.left+(curX/100)*rect.width),
+          dy=ev.clientY-(rect.top+curY);
+    let nx=curX, ny=curY;
+    const move=e2=>{
+      let xp=e2.clientX-rect.left-dx,
+          yp=e2.clientY-rect.top-dy;
+      xp=Math.max(0, Math.min(rect.width-ww, xp));
+      yp=Math.max(0, Math.min(Math.max(0,rect.height-wh), yp));
+      nx=(xp/rect.width)*100; ny=yp;
+      el.style.left=nx+'%'; el.style.top=ny+'px';
+    };
+    const up=async()=>{
+      el.removeEventListener('pointermove',move);
+      el.removeEventListener('pointerup',up);
+      el.removeEventListener('pointercancel',up);
+      const src=st.page.side && st.page.side[wi];
+      if(!src) return;
+      src.fx=Math.round(nx*100)/100; src.fy=Math.round(ny);
+      try{ await updateDoc(doc(db,'pages',st.handle),{side:st.page.side}); }
+      catch(e){ msg('위젯 위치 저장 실패 — '+e.message); }
+    };
+    el.addEventListener('pointermove',move);
+    el.addEventListener('pointerup',up);
+    el.addEventListener('pointercancel',up);
+  });
+}
 function cats(){ return st.page.cats||['archive','ooc']; }
 function gcats(){ return st.page.gcats||[]; }
 const isG=c=>gcats().includes(c);
@@ -945,17 +981,27 @@ function renderSide(){
   }
   if(home && !sideCfg().some(w=>w.t==='latest')) latestBlock(hC);
   const isM = window.innerWidth<=640;
+  const wide = window.innerWidth>960;                       // 플로팅 위젯은 넓은 화면에서만
+  const wfl = $('#wfl-layer'); if(wfl) wfl.innerHTML='';
   const mOrd=(w,i)=>w.mo ?? (({c:0,l:1,r:2}[w.col||'r']||2)*100+i);
   let seq = sideCfg().map((w,wi)=>({w,wi}));
   if(home && isM) seq=seq.sort((A,B)=>mOrd(A.w,A.wi)-mOrd(B.w,B.wi));
   seq.forEach(({w,wi})=>{
     const pos = p.sidePos==='left'?'l' : p.sidePos==='both'?'b' : 'r';
-    const box = (home && isM) ? hC
+    let box = (home && isM) ? hC
       : home
       ? (pos==='b' ? (w.col==='l'?hL : w.col==='c'?hC : hR)
         : pos==='l' ? (w.col==='c'?hC : hL)
         : (w.col==='c'?hC : hR))
       : ((both && w.col==='l') ? boxL : boxR);
+    /* 📌 띄운 위젯: 컬럼 대신 플로팅 레이어에 (PC 전용, 좁으면 원래 자리로 자동 복귀) */
+    let flw=null;
+    if(w.float && wide && wfl && w.t!=='latest'){
+      flw=document.createElement('div'); flw.className='wfl';
+      flw.style.left=(w.fx??62)+'%'; flw.style.top=(w.fy??160)+'px';
+      wfl.appendChild(flw); box=flw;
+      bindFloatDrag(flw, wi);
+    }
     if(w.t==='latest'){
       if(!home) return;
       const el=latestBlock(box);
@@ -963,7 +1009,7 @@ function renderSide(){
       return;
     }
     const d=document.createElement('div'); d.className='side sw-'+w.t;
-    d.dataset.wi=wi; bindDrag(d);
+    d.dataset.wi=wi; if(!flw) bindDrag(d);   // 띄운 위젯은 컬럼 순서 드래그 대상이 아님
     if(w.t==='search'){
       d.innerHTML=`<p class="label">SEARCH</p>
         <div class="s-search">⌕ <input id="q" placeholder="search"></div>`;
@@ -1872,12 +1918,19 @@ function fillWidgets(){
 function renderWidList(){
   $('#wid-list').innerHTML = draft.map((w,i)=>`
     <div class="wl">
-      <span class="nm">${WNAME[w.t]||w.t}${w.t==='links'?` (${(w.items||[]).length})`:''}${w.t==='banner'?` (${(w.items||[]).length})`:''}</span>
+      <span class="nm">${WNAME[w.t]||w.t}${w.t==='links'?` (${(w.items||[]).length})`:''}${w.t==='banner'?` (${(w.items||[]).length})`:''}${w.float?' <span style="color:var(--pri);font-size:10px">📌 띄움</span>':''}</span>
+      ${w.t!=='latest'?`<button data-f="${i}" title="컬럼에서 떼어 화면에 자유 배치 (PC 전용)"${w.float?' style="color:var(--pri)"':''}>📌</button>`:''}
       ${['profile','quote','links','banner','dday','bgm','notice','chat','img','nb','text','stamp'].includes(w.t)?`<button data-e="${i}">✎</button>`:''}
       <button data-u="${i}">↑</button><button data-d="${i}">↓</button><button data-x="${i}">✕</button>
     </div>`).join('') || '<p class="pl-empty">위젯이 없어요 — 아래에서 추가하세요.</p>';
+  if(draft.some(w=>w.float))
+    $('#wid-list').insertAdjacentHTML('beforeend',
+      '<p class="note">📌 띄운 위젯은 넓은 PC 화면에서만 떠 있어요 — 저장 후 홈의 ⠿ 편집 모드에서 드래그로 옮길 수 있고, 폰·좁은 창에서는 원래 자리로 돌아갑니다.</p>');
   $('#wid-list').querySelectorAll('button').forEach(b=>b.onclick=()=>{
-    const {e,u,d,x}=b.dataset;
+    const {e,u,d,x,f}=b.dataset;
+    if(f!==undefined){ const w=draft[+f]; w.float=!w.float;
+      if(w.float){ if(w.fx==null) w.fx=62; if(w.fy==null) w.fy=160; }
+      renderWidList(); return; }
     if(e!==undefined){ editIdx=+e; renderWidEdit(); return; }
     if(u!==undefined && +u>0){ const i=+u; [draft[i-1],draft[i]]=[draft[i],draft[i-1]]; }
     if(d!==undefined && +d<draft.length-1){ const i=+d; [draft[i+1],draft[i]]=[draft[i],draft[i+1]]; }
