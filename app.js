@@ -2224,18 +2224,22 @@ function renderWidEdit(){
     </div>
     <input data-phsub placeholder="부제 (기본: INCOMING TRANSMISSION)" value="${esc(w.sub||'')}">`:''}
     <input id="we-phlab" placeholder="위젯 제목 (비우면 표시 안 함)" value="${esc(w.label??'')}">
-    <div class="p-row" style="align-items:center;font-size:11px;color:var(--muted);gap:7px">
-      바탕 <input type="color" id="we-phbg" value="${w.bg||'#0b0d12'}" style="width:34px;padding:0" title="단말기 화면 배경색 — 밝은 색도 돼요 (글자색이 자동으로 맞춰져요)">
-      글자 <input type="color" id="we-phtc" value="${w.tc||'#eef0f6'}" style="width:34px;padding:0" title="비우면 바탕에 맞춰 자동">
-      포인트 <input type="color" id="we-phac" value="${w.ac||'#d9a614'}" style="width:34px;padding:0" title="관제 단말의 헤더·인디케이터 색">
-      <button class="rmv" id="we-phrst" style="font-size:10px" title="색을 디자인 기본(홈 테마 추종)으로 되돌려요">기본으로</button>
-      케이싱 <select id="we-phcase" style="width:140px" title="기기 테두리(케이싱) 스타일">
+    <div class="p-row" style="align-items:center;font-size:11px;color:var(--muted);gap:8px">
+      바탕 <input type="color" id="we-phbg" value="${w.bg||'#0b0d12'}" style="width:38px;padding:0;flex:none" title="단말기 화면 배경색 — 밝은 색도 돼요 (글자색이 자동으로 맞춰져요)">
+      글자 <input type="color" id="we-phtc" value="${w.tc||'#eef0f6'}" style="width:38px;padding:0;flex:none" title="비우면 바탕에 맞춰 자동">
+      포인트 <input type="color" id="we-phac" value="${w.ac||'#d9a614'}" style="width:38px;padding:0;flex:none" title="관제 단말의 헤더·인디케이터 색">
+      <button class="rmv" id="we-phrst" style="font-size:10px;margin-left:auto" title="색·케이싱을 디자인 기본(홈 테마 추종)으로 되돌려요">기본으로</button>
+    </div>
+    <div class="p-row" style="align-items:center;font-size:11px;color:var(--muted);gap:8px">
+      케이싱 <select id="we-phcase" style="flex:1;max-width:220px" title="기기 테두리(케이싱) 스타일">
         <option value="" ${w.cs!=='solid'?'selected':''}>메탈 그라데이션</option>
         <option value="solid" ${w.cs==='solid'?'selected':''}>단색</option>
       </select>
-      <input type="color" id="we-phcsc" value="${w.csc||'#262a35'}" style="width:34px;padding:0" title="케이싱 색 — 그라데이션이면 이 색 기준으로 명암이 자동으로 잡혀요">
-      <input type="number" id="we-phwd" placeholder="가로 px" value="${+w.wd>0?+w.wd:''}" min="240" max="560" style="width:92px" title="단말기 가로 폭 — 📌 플로팅이나 중앙 배치일 때 적용돼요. 비우면 자리 폭(옆 기둥은 기둥 폭)을 따라요. 340~400 추천">
-      <input type="number" id="we-phmax" placeholder="높이 px" value="${+w.maxH>0?+w.maxH:''}" min="120" max="900" style="width:96px" title="정하면 그 높이로 고정되고 넘치는 알림은 스크롤 — 비우면 알림 개수만큼만 좁아져요 (삐삐st)">
+      <input type="color" id="we-phcsc" value="${w.csc||'#262a35'}" style="width:38px;padding:0;flex:none" title="케이싱 색 — 그라데이션이면 이 색 기준으로 명암이 자동으로 잡혀요">
+    </div>
+    <div class="p-row" style="align-items:center;font-size:11px;color:var(--muted);gap:8px">
+      크기 <input type="number" id="we-phwd" placeholder="가로 px" value="${+w.wd>0?+w.wd:''}" min="240" max="560" style="width:110px;flex:none" title="단말기 가로 폭 — 📌 플로팅이나 중앙 배치일 때 적용돼요. 비우면 자리 폭을 따라요. 340~400 추천">
+      <input type="number" id="we-phmax" placeholder="높이 px" value="${+w.maxH>0?+w.maxH:''}" min="120" max="900" style="width:110px;flex:none" title="정하면 그 높이로 고정되고 넘치는 알림은 스크롤 — 비우면 알림 개수만큼만 좁아져요 (삐삐st)">
     </div>
     <p class="note">알림은 원하는 만큼 추가할 수 있어요. 높이를 비우면 알림 1~2개일 때 삐삐처럼 착 좁아지고, 정하면 그 크기로 고정돼요. 가로 폭은 📌 플로팅·중앙 배치에서 적용 — 340~400px가 단말기답습니다.</p>`
     +(w.lines||[]).map((l,i)=>`
