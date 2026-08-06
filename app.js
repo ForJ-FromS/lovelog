@@ -299,7 +299,9 @@ function renderStkList(){
     : st.page.stkHideM
       ? '<p class="note" style="color:hsl(42 70% 65%)">⚠ <b>모바일에서 스티커 숨기기</b>가 켜져 있어요 — 폰에서는 안 보여요.</p>'
     : '';
-  box.innerHTML = warn + (arr.length? arr.map((s,i)=>`
+  box.innerHTML = warn + (arr.length?
+    `<p class="note" style="margin:0 0 4px">겹칠 때는 <b>목록 위쪽 스티커가 위에</b> 보여요 — ▲▼로 순서를 바꿔요.</p>`
+    + arr.map((s,i)=>`
     <div class="stk-row"${s.off?' style="opacity:.45"':''}>
       <img src="${s.img}">
       <span style="font-size:10px;color:var(--muted)">크기</span>
@@ -308,9 +310,11 @@ function renderStkList(){
       <input type="range" data-sms="${i}" min="40" max="260" value="${s.msz??s.size??120}" title="모바일에서의 크기 — 안 만지면 PC 크기를 따라가요">
       <span style="font-size:10px;color:var(--muted)">회전</span>
       <input type="range" data-sr="${i}" min="-45" max="45" value="${s.rot||0}">
+      <button class="rmv" data-sup="${i}" title="겹칠 때 위로 올리기">▲</button>
+      <button class="rmv" data-sdn="${i}" title="겹칠 때 아래로 내리기">▼</button>
       <button class="rmv" data-so="${i}" title="누르면 홈에서 ${s.off?'다시 보여요':'숨겨져요'}">${s.off?'▷ 보이기':'숨기기'}</button>
       <button class="rmv" data-sx="${i}">✕</button>
-    </div>`).join('')
+    </div>`).reverse().join('')
     :'<p class="pl-empty">아직 스티커가 없어요.</p>');
   const save=async()=>{ try{ await updateDoc(doc(db,'pages',st.handle),{stickers:st.page.stickers}); }
     catch(e){ msg('⚠ 스티커 저장 실패 — 새로고침하면 되돌아가요. ('+e.message+')'); } };
@@ -323,6 +327,18 @@ function renderStkList(){
   box.querySelectorAll('[data-sr]').forEach(r=>r.addEventListener('input',()=>{
     st.page.stickers[+r.dataset.sr].rot=+r.value; renderStickers(); }));
   box.querySelectorAll('[data-sr]').forEach(r=>r.addEventListener('change',save));
+  box.querySelectorAll('[data-sup]').forEach(b=>b.onclick=async()=>{
+    const i=+b.dataset.sup; const a=st.page.stickers;
+    if(i>=a.length-1) return;                       // 이미 맨 위
+    [a[i],a[i+1]]=[a[i+1],a[i]];                    // 배열 뒤쪽 = 화면에서 위
+    await save(); renderStkList(); renderStickers();
+  });
+  box.querySelectorAll('[data-sdn]').forEach(b=>b.onclick=async()=>{
+    const i=+b.dataset.sdn; const a=st.page.stickers;
+    if(i<=0) return;                                // 이미 맨 아래
+    [a[i],a[i-1]]=[a[i-1],a[i]];
+    await save(); renderStkList(); renderStickers();
+  });
   box.querySelectorAll('[data-so]').forEach(b=>b.onclick=async()=>{
     const s=st.page.stickers[+b.dataset.so]; s.off=!s.off;
     await save(); renderStkList(); renderStickers();
