@@ -461,7 +461,8 @@ async function enterPage(){
     }, 5000);
   }
   const dd0=(p.ddays||[])[0];
-  $('#pg-dday-main').innerHTML = dd0?`<p class="n">${esc(dday(dd0.date))}</p><p class="t">${esc(dd0.title)}</p>`:'';
+  $('#pg-dday-main').innerHTML = (dd0 && p.ddHead!==false)
+    ? `<p class="n">${esc(dday(dd0.date))}</p><p class="t">${esc(dd0.title)}</p>` : '';
   // 레이아웃 · 테마
   document.body.classList.toggle('light', !!p.light);
   document.body.classList.toggle('style-blog', homeStyle()==='blog');
@@ -1068,6 +1069,7 @@ function renderSide(){
       return;
     }
     if(w.t==='dday'){
+      if(w.off) return;                             // 카드 숨김(헤더만 모드)
       if(!(p.ddays&&p.ddays.length)){
         if(st.mine){ d.innerHTML=`<p class="label">D-DAY</p><p style="font-size:11px;color:var(--muted)">✦ 꾸미기 → 위젯 → 디데이 ✎에서 날짜를 추가하세요</p>`; box.appendChild(d); }
         return;
@@ -2031,6 +2033,7 @@ let draft=[]; let editIdx=-1; let pdraft={ddays:[],bgm:{}}; let widSnap='';
 function fillWidgets(){
   draft=JSON.parse(JSON.stringify(sideCfg()));
   pdraft={ ddays:JSON.parse(JSON.stringify(st.page.ddays||[])),
+           ddHead: st.page.ddHead!==false,
            bgm:{url:st.page.bgm?.url||'', title:st.page.bgm?.title||''} };
   widSnap=JSON.stringify({d:draft,p:pdraft});   // 닫을 때 저장 안 한 변경 감지용
   editIdx=-1; renderWidList(); $('#wid-edit').innerHTML='';
@@ -2143,7 +2146,11 @@ function renderWidEdit(){
       <label class="filelab" style="font-size:11px">📷 사진 ${d.img?'(있음)':''} <input type="file" data-dimg="${i}" accept="image/*"></label>
       ${d.img?`<button class="rmv" data-dximg="${i}" style="font-size:10px">사진 제거</button>`:''}
     </div>`).join('')+
-    `<button class="btn" id="we-ddadd" style="font-size:12px">+ 디데이 추가</button>
+    `<div class="p-row" style="align-items:center;margin-bottom:2px">
+      <label class="chk" title="끄면 사이드의 D-DAY 카드가 숨겨져요 (날짜·헤더 표시는 유지)"><input type="checkbox" id="we-ddcard" ${w.off?'':'checked'}> 사이드 카드 표시</label>
+      <label class="chk" title="끄면 헤더 오른쪽의 D+ 표시가 숨겨져요 (첫 번째 디데이 기준)"><input type="checkbox" id="we-ddhead" ${pdraft.ddHead===false?'':'checked'}> 헤더에 표시</label>
+    </div>
+    <button class="btn" id="we-ddadd" style="font-size:12px">+ 디데이 추가</button>
     <p class="note">첫 번째 디데이는 대문에도 표시돼요. 사진을 넣으면 이미지 카드가 됩니다.</p>`;
   if(w.t==='bgm') html+=`
     <input id="we-burl" placeholder="유튜브 링크 https://youtu.be/..." value="${esc(pdraft.bgm.url)}">
@@ -2458,6 +2465,10 @@ function renderWidEdit(){
   });
   const ladd=$('#we-add'); if(ladd) ladd.onclick=()=>{ w.items=w.items||[]; w.items.push({label:'',url:''}); renderWidEdit(); };
   const dadd=$('#we-ddadd'); if(dadd) dadd.onclick=()=>{ pdraft.ddays.push({title:'',date:''}); renderWidEdit(); };
+  const ddc=$('#we-ddcard'); if(ddc) ddc.addEventListener('change',()=>{
+    if(ddc.checked) delete w.off; else w.off=true; });
+  const ddh=$('#we-ddhead'); if(ddh) ddh.addEventListener('change',()=>{
+    pdraft.ddHead=ddh.checked; });
   $('#wid-edit').querySelectorAll('[data-dt]').forEach(i=>i.addEventListener('input',()=>{ pdraft.ddays[i.dataset.dt].title=i.value; }));
   $('#wid-edit').querySelectorAll('[data-dd]').forEach(i=>i.addEventListener('change',()=>{ pdraft.ddays[i.dataset.dd].date=i.value; }));
   $('#wid-edit').querySelectorAll('[data-dr]').forEach(b=>b.onclick=()=>{ pdraft.ddays.splice(+b.dataset.dr,1); renderWidEdit(); });
@@ -2499,14 +2510,14 @@ $('#wid-save').onclick=async()=>{
   if(editIdx>=0 && draft[editIdx]) syncWid(draft[editIdx]);
   msg('저장 중...');
   try{
-    const projected={...st.page, side:draft, ddays:pdraft.ddays, bgm:pdraft.bgm};
+    const projected={...st.page, side:draft, ddays:pdraft.ddays, ddHead:pdraft.ddHead!==false, bgm:pdraft.bgm};
     const tot=JSON.stringify(projected).length;
     if(tot>980000){
       const wKB=Math.round((JSON.stringify(draft).length+JSON.stringify(pdraft.ddays).length)/1370);
       msg('용량 초과 — 안내창을 확인하세요.');
       alert('홈 설정 용량 초과!\n\n사진은 별도 저장소에 올라가지만, 옛날에 올린 사진이 남아 있으면 커질 수 있어요.\n해당 위젯 사진을 지우고 다시 올리면 해결돼요.\n지금 합산: 약 '+Math.round(tot/1370)+'KB\n· 위젯 사진(프로필·배너·디데이): 약 '+wKB+'KB\n· 꾸미기 사진(헤더·대문·배경): 약 '+Math.round((tot-JSON.stringify(draft).length-JSON.stringify(pdraft.ddays).length)/1370)+'KB\n\n배너·헤더 등 큰 사진을 지우거나 다시 올리면(자동 압축 강화) 들어가요.'); return; }
     const dd=pdraft.ddays.filter(x=>x.title&&x.date);
-    await updateDoc(doc(db,'pages',st.handle),{side:draft, ddays:dd, bgm:pdraft.bgm});
+    await updateDoc(doc(db,'pages',st.handle),{side:draft, ddays:dd, ddHead:pdraft.ddHead!==false, bgm:pdraft.bgm});
     st.page.side=JSON.parse(JSON.stringify(draft));
     st.page.ddays=dd; st.page.bgm={...pdraft.bgm};
     const d0=dd[0];
