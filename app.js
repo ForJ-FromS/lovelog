@@ -618,7 +618,7 @@ function sideCfg(){
   return s.map(w=>({col:DEFCOL[w.t]||'r', ...w}));
 }
 /* 홈 중앙 붙박이: 고정글 + 최신글 */
-function latestBlock(box){
+function latestBlock(box, n){
   const pin=st.posts.find(p=>p.pinned);
   if(pin){
     const pd=document.createElement('a'); pd.className='pin';
@@ -630,7 +630,7 @@ function latestBlock(box){
     box.appendChild(pd);
   }
   const d=document.createElement('div'); d.className='side sw-latest';
-  const arr=st.posts.filter(p=>!p.pinned).slice(0,5);
+  const arr=st.posts.filter(p=>!p.pinned).slice(0, +n>0?Math.min(+n,20):5);
   d.innerHTML=`<p class="label">LATEST</p><div class="mini-rows">`+
     (arr.length?arr.map(p2=>`<a data-lid="${p2.id}">
       <span class="dot">◈</span><span class="t">${esc(p2.title)}${p2.secret?' 🔒':''}${p2.priv?' 🔏':''}</span>
@@ -1051,7 +1051,7 @@ function renderSide(){
     }
     if(w.t==='latest'){
       if(!home) return;
-      const el=latestBlock(box);
+      const el=latestBlock(box, w.n);
       el.dataset.wi=wi; bindDrag(el);
       return;
     }
@@ -1103,6 +1103,14 @@ function renderSide(){
         : `<span class="mus">♪</span>`;
       const bst=w.style||'';                        // ''기본 | cst 카세트 | lp LP | tun 튜너
       const btit=esc(p.bgm.title|| (list?'플레이리스트':'배경음악'));
+      {const lum=hx=>{ try{ const n=parseInt(hx.slice(1),16);
+        return (((n>>16)&255)*.299+((n>>8)&255)*.587+(n&255)*.114)/255; }catch(e){ return .2; } };
+      const sv=[];
+      if(w.bg) sv.push(`--bgmBg:${w.bg}`);
+      const tc=w.tc || (w.bg ? (lum(w.bg)>.62?'#2a2c33':'#eef0f6') : '');
+      if(tc) sv.push(`--bgmTx:${tc}`);
+      if(w.ac) sv.push(`--bgmAc:${w.ac}`);
+      if(sv.length) d.setAttribute('style', sv.join(';')); }
       if(bst==='cst'){
         d.className+=' bgm-cst';
         d.innerHTML=`<p class="label">NOW PLAYING</p>
@@ -2085,6 +2093,12 @@ function renderWidEdit(){
       <input type="range" id="we-h" min="120" max="480" value="${+(w.h)||210}" style="flex:1;min-width:100px">
     </div>
     <textarea id="we-text" placeholder="아래 캡션 (선택 — 비우면 사진만 꽉 차게)" style="min-height:60px">${w.text||''}</textarea>`;
+  if(w.t==='latest') html+=`
+    <div class="p-row" style="align-items:center;gap:8px;font-size:11.5px;color:var(--muted)">
+      보여줄 최신글 개수
+      <input type="number" id="we-ltn" value="${+w.n>0?+w.n:5}" min="1" max="20" style="width:80px">
+      <span style="font-size:10.5px">(기본 5 · 고정글은 별도로 항상 표시)</span>
+    </div>`;
   if(w.t==='quote') html+=`
     <textarea id="we-text" placeholder="걸어둘 문장" style="min-height:90px">${w.text||''}</textarea>
     <div class="p-row" style="align-items:center">
@@ -2177,6 +2191,12 @@ function renderWidEdit(){
         <option value="tun" ${w.style==='tun'?'selected':''}>주파수 튜너 (바늘이 떨려요)</option>
       </select>
       <input id="we-bgsub" placeholder="보조 문구" value="${esc(w.sub||'')}" style="width:130px" title="카세트: 라벨 위 작은 글씨 (기본 SIDE A) / LP: 제목 아래 (기본 33⅓ RPM · SIDE A) / 튜너: 제목 아래 (기본 FM 90.0 · STEREO)">
+    </div>
+    <div class="p-row" style="align-items:center;font-size:11px;color:var(--muted);gap:8px">
+      바탕 <input type="color" id="we-bgbg" value="${w.bg||'#14161e'}" style="width:38px;padding:0;flex:none" title="플레이어 몸체 색 — 밝은 홈에서 탁해 보이면 여기서 조절 (글자색 자동 대비)">
+      글자 <input type="color" id="we-bgtc" value="${w.tc||'#eef0f6'}" style="width:38px;padding:0;flex:none" title="비우면 바탕에 맞춰 자동">
+      포인트 <input type="color" id="we-bgac" value="${w.ac||'#d9a614'}" style="width:38px;padding:0;flex:none" title="튜너 바늘·카세트 릴·LP 톤암 색">
+      <button class="rmv" id="we-bgrst" style="font-size:10px;margin-left:auto" title="색을 디자인 기본(홈 테마 추종)으로 되돌려요">기본으로</button>
     </div>`;
   if(w.t==='links') html+=(w.items||[]).map((l,i)=>`
     <div class="p-row"><input data-ll="${i}" placeholder="이름" value="${l.label||''}">
@@ -2384,6 +2404,8 @@ function renderWidEdit(){
   const chan=$('#we-chanim'); if(chan) chan.addEventListener('change',()=>{ if(chan.checked) w.anim='pop'; else delete w.anim; });
   const chlp=$('#we-chloop'); if(chlp) chlp.addEventListener('change',()=>{ if(chlp.checked) w.loop=true; else delete w.loop; });
   const chmx=$('#we-chmax'); if(chmx) chmx.addEventListener('input',()=>{ const n=+chmx.value; if(n>0) w.maxH=n; else delete w.maxH; });
+  const ltn=$('#we-ltn'); if(ltn) ltn.addEventListener('input',()=>{
+    const n=+ltn.value; if(n>0) w.n=Math.min(n,20); else delete w.n; });
   const qan=$('#we-qanim'); if(qan) qan.addEventListener('change',()=>{ w.anim=qan.checked; });
   const qmk=$('#we-qmark'); if(qmk) qmk.addEventListener('change',()=>{
     if(qmk.checked) delete w.noQm; else w.noQm=true; });
@@ -2498,6 +2520,11 @@ function renderWidEdit(){
     if(bgst.value) w.style=bgst.value; else delete w.style; });
   const bgsub=$('#we-bgsub'); if(bgsub) bgsub.addEventListener('input',()=>{
     if(bgsub.value.trim()) w.sub=bgsub.value; else delete w.sub; });
+  const bgbg=$('#we-bgbg'); if(bgbg) bgbg.addEventListener('input',()=>{ w.bg=bgbg.value; });
+  const bgtc=$('#we-bgtc'); if(bgtc) bgtc.addEventListener('input',()=>{ w.tc=bgtc.value; });
+  const bgac=$('#we-bgac'); if(bgac) bgac.addEventListener('input',()=>{ w.ac=bgac.value; });
+  const bgrst=$('#we-bgrst'); if(bgrst) bgrst.onclick=()=>{
+    delete w.bg; delete w.tc; delete w.ac; renderWidEdit(); msg('색을 디자인 기본으로 되돌렸어요.'); };
   const bt=$('#we-btitle'); if(bt) bt.addEventListener('input',()=>{ pdraft.bgm.title=bt.value.trim(); });
   $('#wid-edit').querySelectorAll('[data-ll]').forEach(i=>i.addEventListener('input',()=>{ w.items[i.dataset.ll].label=i.value; }));
   $('#wid-edit').querySelectorAll('[data-lu]').forEach(i=>i.addEventListener('input',()=>{ w.items[i.dataset.lu].url=i.value.trim(); }));
