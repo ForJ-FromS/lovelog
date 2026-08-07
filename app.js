@@ -557,6 +557,17 @@ async function loadContent(){
 }
 
 /* ---------- 사이드 위젯 렌더 ---------- */
+/* 📱 단말기 세션 닫힘 — 카테고리 이동해도 유지, 새로고침하면 복귀 */
+let phClosed=new Set();
+function phDock(wi){
+  let dk=document.getElementById('ph-dock');
+  if(!dk){ dk=document.createElement('div'); dk.id='ph-dock'; document.body.appendChild(dk); }
+  if(dk.querySelector(`[data-pwi="${wi}"]`)) return;
+  const c=document.createElement('button'); c.className='ph-chip'; c.dataset.pwi=wi;
+  c.textContent='📱'; c.title='단말기 다시 열기';
+  c.onclick=()=>{ phClosed.delete(wi); renderSide(); };
+  dk.appendChild(c);
+}
 /* 📌 플로팅 위젯 드래그 — 스티커와 같은 방식: ⠿ 편집 모드의 주인만, 위치는 위젯 데이터(fx %, fy px)에 저장 */
 function bindFloatDrag(el, wi){
   if(!st.mine) return;
@@ -1011,6 +1022,7 @@ function renderSide(){
   if(home && !sideCfg().some(w=>w.t==='latest')) latestBlock(hC);
   const isM = window.innerWidth<=640;
   const wide = window.innerWidth>960;                       // 플로팅 위젯은 넓은 화면에서만
+  const pdk=document.getElementById('ph-dock'); if(pdk) pdk.innerHTML='';
   const wfl = $('#wfl-layer');
   if(wfl){ wfl.innerHTML='';
     /* 레이어를 .wrap 폭이 아니라 화면 전체 폭으로 — 위젯을 양옆 여백까지 끌 수 있게
@@ -1223,6 +1235,7 @@ function renderSide(){
       return;
     }
     if(w.t==='phone'){
+      if(phClosed.has(wi)){ phDock(wi); return; }   // 세션 동안 닫힘 유지 → 우하단 칩
       const ls=(w.lines||[]).filter(l=>l.text||l.app);
       if(!ls.length && !st.mine) return;
       const stl=w.style||'oled';                      // oled(미니멀) | glass(글래스) | term(관제 단말)
@@ -1266,8 +1279,9 @@ function renderSide(){
       box.appendChild(d);
       const phx=d.querySelector('.ph-x');
       if(phx) phx.onclick=()=>{                                   // 세션 한정 닫기 — 새로고침하면 복귀
+        phClosed.add(wi);
         const t=d.parentElement&&d.parentElement.classList.contains('wfl')?d.parentElement:d;
-        t.remove(); };
+        t.remove(); phDock(wi); };
       if(w.anim){ const cb=d.querySelector('.ch-box');            // 자리 예약(phase168) — 높이 고정 모드면 그 안에서
         if(cb){ d.classList.remove('ch-anim');
           const need=+w.maxH>0 ? Math.min(cb.scrollHeight, +w.maxH) : cb.scrollHeight;
