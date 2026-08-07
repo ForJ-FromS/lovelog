@@ -793,12 +793,14 @@
   .lp-disc::after{content:'';position:absolute;left:50%;top:50%;width:3px;height:3px;border-radius:50%;
     background:var(--ink);transform:translate(-50%,-50%)}
   .playing .lp-disc{animation:bgmspin 3.4s linear infinite}
-  .lp-arm{position:absolute;right:-4px;top:-6px;width:3px;height:56px;border-radius:2px;
+  .lp-arm{position:absolute;right:-2px;top:-4px;width:3px;height:58px;border-radius:2px;
     background:color-mix(in srgb, var(--ink) 40%, transparent);
-    transform-origin:top center;transform:rotate(-24deg);transition:transform .8s}
+    transform-origin:top center;transform:rotate(4deg);transition:transform .8s}
+  .lp-arm::before{content:'';position:absolute;top:-3px;left:-3.5px;width:10px;height:10px;border-radius:50%;
+    background:color-mix(in srgb, var(--ink) 46%, transparent)}
   .lp-arm::after{content:'';position:absolute;bottom:-2px;left:-2.5px;width:8px;height:12px;border-radius:2px;
     background:color-mix(in srgb, var(--ink) 52%, transparent)}
-  .playing .lp-arm{transform:rotate(-14deg)}
+  .playing .lp-arm{transform:rotate(19deg)}   /* 재생: 바늘이 판 위로 내려앉음 */
   .lp-meta{min-width:0;flex:1}
   .lp-meta b{display:block;font-size:12.5px;font-weight:600;margin-bottom:5px;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1713,6 +1715,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=181"></script>
+<script type="module" src="./app.js?v=182"></script>
 </body>
 </html>
