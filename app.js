@@ -2572,7 +2572,7 @@ function chatPlay(el){
   const box=el.querySelector('.ch-box');
   if(matchMedia('(prefers-reduced-motion: reduce)').matches){
     lines.forEach(l=>l.classList.add('ch-in'));
-    if(box) box.scrollTop=0;                       // 다 뜬 상태 — 처음부터 읽게 맨 위
+    if(box){ box.style.minHeight=''; box.scrollTop=0; }  // 예약 해제 + 처음부터
     return;
   }
   if(box) box.scrollTop=0;                         // 맨 위에서 시작
@@ -2580,6 +2580,10 @@ function chatPlay(el){
   const step=()=>{
     if(!el.isConnected) return;                    // 화면이 새로 그려졌으면 중단
     if(i>=lines.length){
+      if(box){                                     // 자리 예약 보정(phase189) — 폰트 로딩 전 과다 측정으로
+        box.style.minHeight='';                    // 남던 바닥 여백 제거: 완료 시점의 실제 높이로 갱신/해제
+        if(el.dataset.loop==='1') box.style.minHeight=box.scrollHeight+'px';
+      }
       if(el.dataset.loop==='1')                    // ↻ 반복 재생
         setTimeout(()=>{ if(!el.isConnected) return;
           lines.forEach(l=>l.classList.remove('ch-in'));
