@@ -1208,7 +1208,7 @@ function renderSide(){
       const ls=(w.lines||[]).filter(l=>l.text||l.name);
       if(!ls.length && !st.mine) return;
       d.className+=' w-chat ch-'+(w.style||'msg');
-      if(w.anim){ d.className+=' ch-anim'; if(w.loop) d.dataset.loop='1'; chatObserve(d); }   // 과거 값(true/'up'/'pop') 전부 제자리 효과로
+      if(w.anim){ d.className+=' ch-anim'; if(w.loop) d.dataset.loop='1'; if(w.loop&&w.fold) d.dataset.fold='1'; chatObserve(d); }   // 과거 값(true/'up'/'pop') 전부 제자리 효과로
       const imgs=w.imgs!==false;
       const lum=hx=>{ try{ const n=parseInt(hx.slice(1),16);
         return (((n>>16)&255)*.299+((n>>8)&255)*.587+(n&255)*.114)/255; }catch(e){ return .5; } };
@@ -1248,7 +1248,7 @@ function renderSide(){
       if(!ls.length && !st.mine) return;
       const stl=w.style||'oled';                      // oled(미니멀) | glass(글래스) | term(관제 단말)
       d.className+=' w-phone ph-'+stl;
-      if(w.anim){ d.className+=' ch-anim'; if(w.loop) d.dataset.loop='1'; chatObserve(d); }
+      if(w.anim){ d.className+=' ch-anim'; if(w.loop) d.dataset.loop='1'; if(w.loop&&w.fold) d.dataset.fold='1'; chatObserve(d); }
       const lum=hx=>{ try{ const n=parseInt(hx.slice(1),16);
         return (((n>>16)&255)*.299+((n>>8)&255)*.587+(n&255)*.114)/255; }catch(e){ return .2; } };
       const sv=[];
@@ -2251,6 +2251,7 @@ function renderWidEdit(){
       <label class="chk"><input type="checkbox" id="we-chimg" ${w.imgs!==false?'checked':''}> 프사 표시</label>
       <label class="chk" title="화면에 보일 때 말풍선이 순서대로 그 자리에서 떠올라요"><input type="checkbox" id="we-chanim" ${w.anim?'checked':''}> ✨ 움짤 효과 (제자리)</label>
       <label class="chk" title="다 뜨면 잠시 쉬었다가 처음부터 다시 재생돼요"><input type="checkbox" id="we-chloop" ${w.loop?'checked':''}> ↻ 반복 재생</label>
+      <label class="chk" title="반복 한 바퀴가 끝나면 카드가 접혔다가 다시 쌓여요 — 끄면 크기를 유지한 채 다시 떠요 (기본)"><input type="checkbox" id="we-chfold" ${w.fold?'checked':''}> ⇅ 접었다 펴기</label>
       <input type="number" id="we-chmax" placeholder="최대 높이 px (비우면 전체 표시)" value="${+w.maxH>0?+w.maxH:''}" min="120" max="900" style="width:190px" title="정하면 그 높이를 넘는 채팅은 스크롤로 봐요">
       <p class="note" style="margin:4px 0 0">최대 높이는 사이드(옆 기둥) 위젯 기준 <b>360px</b>가 적당합니다.
         중앙·블로그형처럼 넓은 자리는 <b>440~480px</b>가 예쁩니다. 비우면 채팅 전체가 표시됩니다.</p>
@@ -2303,6 +2304,7 @@ function renderWidEdit(){
       <label class="chk" title="미니멀·글래스는 잠금화면 큰 시계, 관제 단말은 헤더의 초 단위 시계를 켜고 꺼요 (보는 사람의 현재 시각)"><input type="checkbox" id="we-phclk" ${w.clk!==false?'checked':''}> 🕐 시계</label>
       <label class="chk" title="화면에 보일 때 알림이 순서대로 떠올라요"><input type="checkbox" id="we-phanim" ${w.anim?'checked':''}> ✨ 움짤 효과</label>
       <label class="chk" title="다 뜨면 잠시 쉬었다가 처음부터 다시 재생돼요"><input type="checkbox" id="we-phloop" ${w.loop?'checked':''}> ↻ 반복 재생</label>
+      <label class="chk" title="반복 한 바퀴가 끝나면 단말기가 접혔다가 다시 쌓여요 — 끄면 크기를 유지한 채 다시 떠요 (기본)"><input type="checkbox" id="we-phfold" ${w.fold?'checked':''}> ⇅ 접었다 펴기</label>
     </div>
     ${w.style==='term'?`
     <div class="p-row">
@@ -2403,6 +2405,7 @@ function renderWidEdit(){
   const chst=$('#we-chst'); if(chst) chst.addEventListener('change',()=>{ w.style=chst.value; });
   const chan=$('#we-chanim'); if(chan) chan.addEventListener('change',()=>{ if(chan.checked) w.anim='pop'; else delete w.anim; });
   const chlp=$('#we-chloop'); if(chlp) chlp.addEventListener('change',()=>{ if(chlp.checked) w.loop=true; else delete w.loop; });
+  const chfd=$('#we-chfold'); if(chfd) chfd.addEventListener('change',()=>{ if(chfd.checked) w.fold=true; else delete w.fold; });
   const chmx=$('#we-chmax'); if(chmx) chmx.addEventListener('input',()=>{ const n=+chmx.value; if(n>0) w.maxH=n; else delete w.maxH; });
   const ltn=$('#we-ltn'); if(ltn) ltn.addEventListener('input',()=>{
     const n=+ltn.value; if(n>0) w.n=Math.min(n,20); else delete w.n; });
@@ -2444,6 +2447,8 @@ function renderWidEdit(){
     if(phanim.checked) w.anim='pop'; else{ delete w.anim; delete w.loop; renderWidEdit(); } });
   const phloop=$('#we-phloop'); if(phloop) phloop.addEventListener('change',()=>{
     if(phloop.checked) w.loop=true; else delete w.loop; });
+  const phfd=$('#we-phfold'); if(phfd) phfd.addEventListener('change',()=>{
+    if(phfd.checked) w.fold=true; else delete w.fold; });
   const phadd=$('#we-phadd'); if(phadd) phadd.onclick=()=>{
     w.lines=w.lines||[]; w.lines.push({icon:'💬',app:'',time:'지금',text:''}); renderWidEdit(); };
   const phmv=(i,dir)=>{ const j=i+dir; if(j<0||j>=w.lines.length) return;
@@ -2614,10 +2619,10 @@ function chatPlay(el){
       }
       if(el.dataset.loop==='1')                    // ↻ 반복 재생
         setTimeout(()=>{ if(!el.isConnected) return;
-          if(box && !el.classList.contains('ch-scroll')){
-            box.style.transition='min-height .5s ease';   // 리셋 때 그 길이로 멈춰 있지 않게(phase191)
-            box.style.minHeight='0px';                    // — 스르륵 접혔다가 다시 쌓이며 자람
-          }                                               //   (최대 높이 고정 창은 유지)
+          if(box && el.dataset.fold==='1' && !el.classList.contains('ch-scroll')){
+            box.style.transition='min-height .5s ease';   // ⇅ 접었다 펴기 옵션(phase193) — 켠 경우에만
+            box.style.minHeight='0px';                    // 접혔다가 다시 쌓임. 기본은 크기 유지
+          }                                               //   (최대 높이 고정 창은 항상 유지)
           lines.forEach(l=>l.classList.remove('ch-in'));
           if(box) box.scrollTop=0;
           i=0; setTimeout(step, 500);
