@@ -2580,12 +2580,17 @@ function chatPlay(el){
   const step=()=>{
     if(!el.isConnected) return;                    // 화면이 새로 그려졌으면 중단
     if(i>=lines.length){
-      if(box){                                     // 자리 예약 보정(phase189) — 폰트 로딩 전 과다 측정으로
-        box.style.minHeight='';                    // 남던 바닥 여백 제거: 완료 시점의 실제 높이로 갱신/해제
-        if(el.dataset.loop==='1') box.style.minHeight=box.scrollHeight+'px';
+      if(box){                                     // 자리 예약 보정(phase189→190) — 폰트 로딩 전 과다 측정 잔존 제거
+        box.style.minHeight='';                    // 해제 후 '표시 높이'로 갱신 — scrollHeight를 쓰면
+        if(el.dataset.loop==='1')                  // 최대 높이로 잘린 채팅이 풀사이즈로 튀어나옴(min>max 우선)
+          box.style.minHeight=box.clientHeight+'px';
       }
       if(el.dataset.loop==='1')                    // ↻ 반복 재생
         setTimeout(()=>{ if(!el.isConnected) return;
+          if(box && !el.classList.contains('ch-scroll')){
+            box.style.transition='min-height .5s ease';   // 리셋 때 그 길이로 멈춰 있지 않게(phase191)
+            box.style.minHeight='0px';                    // — 스르륵 접혔다가 다시 쌓이며 자람
+          }                                               //   (최대 높이 고정 창은 유지)
           lines.forEach(l=>l.classList.remove('ch-in'));
           if(box) box.scrollTop=0;
           i=0; setTimeout(step, 500);
