@@ -1135,7 +1135,7 @@ function renderSide(){
             <div class="tun-band"><i></i></div>
             <div class="tun-nums"><span>88</span><span>90</span><span>92</span><span>96</span><span>102</span><span>108</span></div>
             <div class="tun-row">
-              <span class="tun-meta"><b>${btit}</b><span>${esc(w.sub||'FM 90.0 · STEREO')}</span></span>
+              <span class="tun-meta"><b>${btit}</b><span>${esc(w.sub||'FM 88.1 · STEREO')}</span></span>
               <span class="bgm-btn2">▶</span>
             </div>
           </div><div class="bgm-fr"></div>`;
@@ -1208,7 +1208,12 @@ function renderSide(){
       const ls=(w.lines||[]).filter(l=>l.text||l.name);
       if(!ls.length && !st.mine) return;
       d.className+=' w-chat ch-'+(w.style||'msg');
-      if(w.anim){ d.className+=' ch-anim'; if(w.loop) d.dataset.loop='1'; if(w.loop&&w.fold) d.dataset.fold='1'; chatObserve(d); }   // 과거 값(true/'up'/'pop') 전부 제자리 효과로
+      if(w.anim){
+        const akey='c'+wi, done=(window.__animDone??=new Set()).has(akey);
+        if(done && !w.loop){ /* 이번 세션에 이미 재생 — 완성 상태로 정적 표시(복귀 시 재재생·크기 출렁임 방지) */ }
+        else{ d.className+=' ch-anim'; d.dataset.akey=akey;
+          if(done) d.dataset.warm='1';
+          if(w.loop) d.dataset.loop='1'; if(w.loop&&w.fold) d.dataset.fold='1'; chatObserve(d); } }   // 과거 값(true/'up'/'pop') 전부 제자리 효과로
       const imgs=w.imgs!==false;
       const lum=hx=>{ try{ const n=parseInt(hx.slice(1),16);
         return (((n>>16)&255)*.299+((n>>8)&255)*.587+(n&255)*.114)/255; }catch(e){ return .5; } };
@@ -1236,7 +1241,7 @@ function renderSide(){
          ① 높이제한 있으면 min(내용, maxH)만 (빈 공간이 아래 위젯 자리를 먹던 버그)
          ② 높이제한 없어도 예약 (카드가 작게 시작해 메시지 뜰 때마다 자라던 버그)
          클래스 떼고 측정 후 같은 프레임에 복원하므로 깜빡임 없음 */
-      if(w.anim){ const cb=d.querySelector('.ch-box');
+      if(w.anim && d.classList.contains('ch-anim')){ const cb=d.querySelector('.ch-box');
         if(cb){ d.classList.remove('ch-anim');
           const need=+w.maxH>0 ? Math.min(cb.scrollHeight, +w.maxH) : cb.scrollHeight;
           d.classList.add('ch-anim'); if(need>0) cb.style.minHeight=need+'px'; } }
@@ -1248,7 +1253,12 @@ function renderSide(){
       if(!ls.length && !st.mine) return;
       const stl=w.style||'oled';                      // oled(미니멀) | glass(글래스) | term(관제 단말)
       d.className+=' w-phone ph-'+stl;
-      if(w.anim){ d.className+=' ch-anim'; if(w.loop) d.dataset.loop='1'; if(w.loop&&w.fold) d.dataset.fold='1'; chatObserve(d); }
+      if(w.anim){
+        const akey='p'+wi, done=(window.__animDone??=new Set()).has(akey);
+        if(done && !w.loop){ /* 세션 1회 재생 — 복귀 시 완성 상태 즉시 */ }
+        else{ d.className+=' ch-anim'; d.dataset.akey=akey;
+          if(done) d.dataset.warm='1';
+          if(w.loop) d.dataset.loop='1'; if(w.loop&&w.fold) d.dataset.fold='1'; chatObserve(d); } }
       const lum=hx=>{ try{ const n=parseInt(hx.slice(1),16);
         return (((n>>16)&255)*.299+((n>>8)&255)*.587+(n&255)*.114)/255; }catch(e){ return .2; } };
       const sv=[];
@@ -1290,7 +1300,7 @@ function renderSide(){
         phClosed.add(wi);
         const t=d.parentElement&&d.parentElement.classList.contains('wfl')?d.parentElement:d;
         t.remove(); phDock(wi); };
-      if(w.anim){ const cb=d.querySelector('.ch-box');            // 자리 예약(phase168) — 높이 고정 모드면 그 안에서
+      if(w.anim && d.classList.contains('ch-anim')){ const cb=d.querySelector('.ch-box');   // 자리 예약(phase168)
         if(cb){ d.classList.remove('ch-anim');
           const need=+w.maxH>0 ? Math.min(cb.scrollHeight, +w.maxH) : cb.scrollHeight;
           d.classList.add('ch-anim'); if(need>0) cb.style.minHeight=need+'px'; } }
@@ -2190,7 +2200,7 @@ function renderWidEdit(){
         <option value="lp" ${w.style==='lp'?'selected':''}>LP 턴테이블 (판이 돌아요)</option>
         <option value="tun" ${w.style==='tun'?'selected':''}>주파수 튜너 (바늘이 떨려요)</option>
       </select>
-      <input id="we-bgsub" placeholder="보조 문구" value="${esc(w.sub||'')}" style="width:130px" title="카세트: 라벨 위 작은 글씨 (기본 SIDE A) / LP: 제목 아래 (기본 33⅓ RPM · SIDE A) / 튜너: 제목 아래 (기본 FM 90.0 · STEREO)">
+      <input id="we-bgsub" placeholder="보조 문구" value="${esc(w.sub||'')}" style="width:130px" title="카세트: 라벨 위 작은 글씨 (기본 SIDE A) / LP: 제목 아래 (기본 33⅓ RPM · SIDE A) / 튜너: 제목 아래 (기본 FM 88.1 · STEREO)">
     </div>
     <div class="p-row" style="align-items:center;font-size:11px;color:var(--muted);gap:8px">
       바탕 <input type="color" id="we-bgbg" value="${w.bg||'#14161e'}" style="width:38px;padding:0;flex:none" title="플레이어 몸체 색 — 밝은 홈에서 탁해 보이면 여기서 조절 (글자색 자동 대비)">
@@ -2609,9 +2619,15 @@ function chatPlay(el){
   }
   if(box) box.scrollTop=0;                         // 맨 위에서 시작
   let i=0;
+  if(el.dataset.warm==='1'){                       // 홈 복귀 이어돌기(phase196): 완성 상태로 시작
+    lines.forEach(l=>l.classList.add('ch-in'));    // → 반복 위젯은 다음 사이클부터 자연스럽게
+    i=lines.length;
+    if(box){ box.style.minHeight=''; box.style.minHeight=box.clientHeight+'px'; box.scrollTop=box.scrollHeight; }
+  }
   const step=()=>{
     if(!el.isConnected) return;                    // 화면이 새로 그려졌으면 중단
     if(i>=lines.length){
+      if(el.dataset.akey){ (window.__animDone??=new Set()).add(el.dataset.akey); }  // 세션 재생 완료 표식(phase196)
       if(box){                                     // 자리 예약 보정(phase189→190) — 폰트 로딩 전 과다 측정 잔존 제거
         box.style.minHeight='';                    // 해제 후 '표시 높이'로 갱신 — scrollHeight를 쓰면
         if(el.dataset.loop==='1')                  // 최대 높이로 잘린 채팅이 풀사이즈로 튀어나옴(min>max 우선)
