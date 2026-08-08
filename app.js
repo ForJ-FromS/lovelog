@@ -1279,7 +1279,7 @@ function renderSide(){
       return;
     }
     if(w.t==='tl'){
-      const its=(w.items||[]).filter(i=>i.t||i.d);
+      const its=(w.items||[]).filter(i=>i.t||i.d||i.tt);
       if(!its.length && !st.mine) return;
       const stl=w.style||'line';                     // line(라인·점) | card(마디 카드) | bare(담백)
       d.className+=' w-tl tl-'+stl;
@@ -1293,8 +1293,8 @@ function renderSide(){
       d.innerHTML=`<p class="label">${esc(w.title||'TIMELINE')}</p>
         <div class="ch-box tl-box">`+
         (its.length?its.map(i=>`<div class="ch-line tl-i">
-          <span class="tl-dot"></span>
-          <span class="tl-bd">${i.d?`<i class="tl-d">${esc(i.d)}</i>`:''}<p class="tl-t">${esc(i.t||'').replace(/\n/g,'<br>')}</p></span>
+          <span class="tl-dot${w.dot?' cdot':''}">${esc(w.dot||'')}</span>
+          <span class="tl-bd">${i.d?`<i class="tl-d">${esc(i.d)}</i>`:''}${i.tt?`<b class="tl-tt">${esc(i.tt)}</b>`:''}${i.t?`<p class="tl-t">${esc(i.t).replace(/\n/g,'<br>')}</p>`:''}</span>
         </div>`).join('')
         :(st.mine?('<p class="pl-empty">✎ 편집에서 항목을 채워주세요.</p>'+(!w.title?'<p class="pl-ghost">👻 지금은 방문자에게 안 보이는 카드예요</p>':'')):''))+
         `</div>`;
@@ -1650,16 +1650,27 @@ function renderList(){
   const PER=12;
   renderPager(rest.length, PER);
   const shown=rest.slice(((st.pg||1)-1)*PER, (st.pg||1)*PER);
+  const canFt = st.mine && sideCfg().some(w2=>w2.t==='feat');   // ★ 대표글 위젯을 둔 주인에게만 토글 노출
   const rowHTML=p=>{ const t=postThumb(p); return `
     <li class="row ${t?'has-th':''}" data-id="${p.id}">
       <span class="d">${esc((p.date||'').slice(5))}</span>
-      <span class="t">${esc(p.title)} ${p.secret?'<span class="k">🔒</span>':''}${p.priv?'<span class="k" title="비공개 — 나만 보여요">🔏</span>':''}</span>
+      <span class="t">${esc(p.title)} ${p.secret?'<span class="k">🔒</span>':''}${p.priv?'<span class="k" title="비공개 — 나만 보여요">🔏</span>':''}${canFt?`<button class="ft-star${p.feat?' on':''}" data-ft="${p.id}" title="★ 대표글 위젯에 전시 (다시 누르면 해제)">${p.feat?'★':'☆'}</button>`:''}</span>
       <span class="c">${esc(p.cat)}</span>
       <span class="k"></span>${t?`<img class="th" src="${t}" alt="" draggable="false">`:''}</li>`; };
   $('#rows').innerHTML = shown.length?shown.map(rowHTML).join('')
     :'<p class="pl-empty">아직 글이 없습니다.</p>';
   $('#more-btn').style.display='none';
-  document.querySelectorAll('[data-id]').forEach(el=>el.onclick=()=>openPost(el.dataset.id));
+  document.querySelectorAll('[data-id]').forEach(el=>el.onclick=e=>{
+    if(e.target.dataset.ft){ e.stopPropagation(); toggleFeat(e.target.dataset.ft); return; }
+    openPost(el.dataset.id); });
+}
+async function toggleFeat(id){
+  const p=st.posts.find(x=>x.id===id); if(!p) return;
+  try{ await updateDoc(doc(db,'pages',st.handle,'posts',id),{feat:!p.feat}); }
+  catch(err){ msg('저장 실패 — '+err.message); return; }
+  p.feat=!p.feat;
+  renderList(); renderSide();
+  msg(p.feat?'★ 대표글로 전시했어요.':'대표글에서 내렸어요.');
 }
 const galPins=()=> st.page?.stripPin||[];
 function stripList(){
@@ -2198,10 +2209,14 @@ function renderWidEdit(){
       <option value="card" ${w.style==='card'?'selected':''}>마디 카드 — 항목마다 작은 카드</option>
       <option value="bare" ${w.style==='bare'?'selected':''}>담백 — 선·점 없이 글줄만</option>
     </select>
-    ${(w.items||[]).map((it,ii)=>`<div class="p-row">
-      <input data-tld="${ii}" placeholder="날짜 (자유 형식)" value="${esc(it.d||'')}" style="flex:1">
-      <input data-tlt="${ii}" placeholder="내용" value="${esc(it.t||'')}" style="flex:2">
-      <button class="rmv" data-tlx="${ii}">✕</button></div>`).join('')}
+    <input id="we-tldot" placeholder="점 모양 (비우면 ● — 이모지·문자 가능, 예: ✦ ♥ ✈ 📍)" value="${esc(w.dot||'')}" maxlength="4">
+    ${(w.items||[]).map((it,ii)=>`<div class="tl-ed">
+      <div class="p-row">
+        <input data-tld="${ii}" placeholder="날짜 (자유 형식)" value="${esc(it.d||'')}" style="flex:1">
+        <input data-tltt="${ii}" placeholder="제목 (선택)" value="${esc(it.tt||'')}" style="flex:1.4">
+        <button class="rmv" data-tlx="${ii}">✕</button></div>
+      <textarea data-tlt="${ii}" placeholder="로그 — 줄바꿈 그대로 표시돼요 (선택)" style="min-height:64px">${it.t||''}</textarea>
+    </div>`).join('')}
     <button class="btn" id="we-tladd" style="font-size:12px">+ 항목 추가</button>
     <div class="p-row" style="align-items:center">
       <label class="chk" title="화면에 보일 때 항목이 순서대로 떠올라요"><input type="checkbox" id="we-tlanim" ${w.anim?'checked':''}> ✨ 움짤 효과</label>
@@ -2572,11 +2587,15 @@ function renderWidEdit(){
     if(tlst.value) w.style=tlst.value; else delete w.style; });
   document.querySelectorAll('[data-tld]').forEach(el=>el.addEventListener('input',()=>{
     (w.items??=[])[+el.dataset.tld].d=el.value; }));
+  document.querySelectorAll('[data-tltt]').forEach(el=>el.addEventListener('input',()=>{
+    (w.items??=[])[+el.dataset.tltt].tt=el.value; }));
+  const tldot=$('#we-tldot'); if(tldot) tldot.addEventListener('input',()=>{
+    if(tldot.value.trim()) w.dot=tldot.value.trim(); else delete w.dot; });
   document.querySelectorAll('[data-tlt]').forEach(el=>el.addEventListener('input',()=>{
     (w.items??=[])[+el.dataset.tlt].t=el.value; }));
   document.querySelectorAll('[data-tlx]').forEach(el=>el.onclick=()=>{
     w.items.splice(+el.dataset.tlx,1); renderWidEdit(); });
-  const tlad=$('#we-tladd'); if(tlad) tlad.onclick=()=>{ (w.items??=[]).push({d:'',t:''}); renderWidEdit(); };
+  const tlad=$('#we-tladd'); if(tlad) tlad.onclick=()=>{ (w.items??=[]).push({d:'',tt:'',t:''}); renderWidEdit(); };
   const tlan=$('#we-tlanim'); if(tlan) tlan.addEventListener('change',()=>{
     if(tlan.checked) w.anim=true; else delete w.anim; });
   const tllp=$('#we-tlloop'); if(tllp) tllp.addEventListener('change',()=>{
