@@ -4044,17 +4044,87 @@ function dlFile(name, text, type){
 }
 const expStamp=()=>{ const d=new Date();
   return d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0'); };
+const DECO_SKIP=['uid','handle','createdAt','owner','email'];   // 꾸미기 백업에서 제외할 시스템 필드
+function decoSnap(){                                             // st.page에서 꾸미기 전체 스냅샷
+  const o={};
+  Object.keys(st.page||{}).forEach(k=>{ if(!DECO_SKIP.includes(k)) o[k]=st.page[k]; });
+  return o;
+}
+function buildBackup(withDeco, withPosts){
+  const data={ exported:new Date().toISOString(), service:'lovelog', handle:st.handle,
+    home:{ name:st.page.name||'', sub:st.page.sub||'' } };
+  if(withDeco) data.deco=decoSnap();
+  if(withPosts){ data.posts=st.posts; data.gallery=st.gallery; data.guest=st.guest; }
+  return data;
+}
 $('#s-exp-json').onclick=()=>{
   if(!st.mine) return;
-  const data={
-    exported:new Date().toISOString(), service:'lovelog', handle:st.handle,
-    home:{ name:st.page.name||'', sub:st.page.sub||'' },
-    posts:st.posts, gallery:st.gallery, guest:st.guest
-  };
-  dlFile(`lovelog-${st.handle}-backup-${expStamp()}.json`,
-    JSON.stringify(data,null,2), 'application/json');
-  msg('JSON 백업 저장! 글 '+st.posts.length+'편이 담겼어요.');
+  const wd=$('#bk-deco')?.checked!==false, wp=$('#bk-posts')?.checked!==false;
+  if(!wd && !wp){ msg('담을 항목을 하나는 골라주세요.'); return; }
+  const tag = wd&&wp ? '' : (wd?'-deco':'-posts');
+  dlFile(`lovelog-${st.handle}-backup${tag}-${expStamp()}.json`,
+    JSON.stringify(buildBackup(wd,wp),null,2), 'application/json');
+  msg('JSON 백업 저장!'+(wd?' 꾸미기 포함':'')+(wp?' · 글 '+st.posts.length+'편 포함':''));
 };
+
+/* ---------- 복원 (백업에서 불러오기, phase208) ---------- */
+const POST_KEYS=['title','cat','date','ts','secret','pinned','cmtOff','priv','excerpt','html','imgs','raw','enc','body','feat'];
+let bkData=null;
+$('#bk-file')?.addEventListener('change', async e=>{
+  bkData=null; $('#bk-scope').hidden=true;
+  const f=e.target.files[0]; if(!f) return;
+  try{
+    const j=JSON.parse(await f.text());
+    if(j.service!=='lovelog') throw new Error('러브로그 백업 파일이 아니에요.');
+    bkData=j;
+    const hasD=!!j.deco, hasP=Array.isArray(j.posts);
+    if(!hasD && !hasP) throw new Error('이 백업엔 복원할 수 있는 내용이 없어요. (예전 백업엔 꾸미기가 담기지 않았어요 — 글만 복원할 수 있습니다)');
+    $('#rs-deco').checked=hasD; $('#rs-deco').disabled=!hasD;
+    $('#rs-posts').checked=hasP; $('#rs-posts').disabled=!hasP;
+    $('#bk-scope').hidden=false;
+    msg(`백업 확인 — ${j.handle?'@'+j.handle+' · ':''}${hasD?'꾸미기 ✓ ':''}${hasP?'글 '+j.posts.length+'편 ✓':''}`);
+  }catch(err){ msg('읽기 실패 — '+err.message); e.target.value=''; }
+});
+$('#bk-restore')?.addEventListener('click', async ()=>{
+  if(!st.mine || !bkData) return;
+  const rd=$('#rs-deco').checked && bkData.deco;
+  const rp=$('#rs-posts').checked && Array.isArray(bkData.posts);
+  if(!rd && !rp){ msg('복원할 항목을 골라주세요.'); return; }
+  if(bkData.handle && bkData.handle!==st.handle &&
+     !confirm(`이 백업은 @${bkData.handle}의 것이에요. 이 홈(@${st.handle})에 입힐까요?`)) return;
+  if(!confirm('복원을 시작할까요? 진행 전에 현재 상태가 자동으로 백업 저장됩니다.')) return;
+  dlFile(`lovelog-${st.handle}-before-restore-${expStamp()}.json`,
+    JSON.stringify(buildBackup(true,true),null,2), 'application/json');   // 안전망
+  try{
+    if(rd){
+      const deco={};
+      Object.keys(bkData.deco).forEach(k=>{ if(!DECO_SKIP.includes(k)) deco[k]=bkData.deco[k]; });
+      if(JSON.stringify(deco).length>980000) throw new Error('꾸미기 데이터가 용량을 넘어요.');
+      msg('꾸미기 복원 중...');
+      await updateDoc(doc(db,'pages',st.handle), deco);
+    }
+    if(rp){
+      const posts=bkData.posts.filter(p=>p&&p.id);
+      let n=0;
+      for(const p of posts){
+        const d2={};
+        POST_KEYS.forEach(k=>{ if(p[k]!==undefined) d2[k]=p[k]; });
+        if(d2.ts && typeof d2.ts==='object' && d2.ts.seconds) d2.ts=new Date(d2.ts.seconds*1000);
+        await setDoc(doc(db,'pages',st.handle,'posts',p.id), d2, {merge:true});
+        if(++n%10===0) msg(`글 복원 중... ${n}/${posts.length}`);
+      }
+      const gal=Array.isArray(bkData.gallery)?bkData.gallery.filter(g=>g&&g.id):[];
+      for(const g of gal){
+        const d3={...g}; delete d3.id;
+        if(d3.ts && typeof d3.ts==='object' && d3.ts.seconds) d3.ts=new Date(d3.ts.seconds*1000);
+        await setDoc(doc(db,'pages',st.handle,'gallery',g.id), d3, {merge:true});
+      }
+      msg(`글 ${posts.length}편 · 사진 ${gal.length}장 복원 완료!`);
+    }
+    alert('복원이 끝났어요! 화면을 새로 불러옵니다.');
+    location.reload();
+  }catch(err){ msg('복원 실패 — '+err.message); }
+});
 $('#s-exp-html').onclick=()=>{
   if(!st.mine) return;
   const nm=esc(st.page.name||st.handle);
