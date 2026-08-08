@@ -643,7 +643,8 @@ function latestBlock(box, n){
   box.appendChild(d);
   d.querySelectorAll('[data-lid]').forEach(el=>el.onclick=()=>{
     goBoard('recent'); openPost(el.dataset.lid,true); });
-  d.querySelector('#latest-more').onclick=()=>goBoard('recent');
+  const lm=d.querySelector('#latest-more');                       // allOff면 링크가 없음(phase200 널 가드)
+  if(lm) lm.onclick=()=>goBoard('recent');
   return d;
 }
 const isVid=u=>/\.(mp4|webm|mov)(\?|$)/i.test(u||'')||/video%2F|video\//i.test(u||'');
