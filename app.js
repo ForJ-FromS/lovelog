@@ -195,11 +195,11 @@ const today=()=>{ const d=new Date();
   return d.getFullYear()+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+String(d.getDate()).padStart(2,'0'); };
 /* 다이어리 서식 — **굵게** *기울임* __밑줄__ ~~취소선~~ ==형광== */
 const inlineFmt=s=>s
-  .replace(/\*\*([^\n*]+)\*\*/g,'<b>$1</b>')
-  .replace(/\*([^\n*]+)\*/g,'<i>$1</i>')
-  .replace(/__([^\n_]+)__/g,'<u>$1</u>')
-  .replace(/~~([^\n~]+)~~/g,'<s>$1</s>')
-  .replace(/==([^\n=]+)==/g,'<mark>$1</mark>');
+  .replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>')          /* 줄바꿈에 걸친 굵게 허용(phase211) */
+  .replace(/\*([^\n*]+)\*/g,'<i>$1</i>')             /* 기울임만 한 줄 한정 — 별표 단독 오탐 방지 */
+  .replace(/__([^_]+)__/g,'<u>$1</u>')
+  .replace(/~~([^~]+)~~/g,'<s>$1</s>')
+  .replace(/==([^=]+)==/g,'<mark>$1</mark>');
 const bodyHTML=t=>t.split(/\n{2,}/).map(p=>'<p>'+inlineFmt(esc(p)).replace(/\n/g,'<br>')+'</p>').join('');
 const htmlToText=h=>String(h||'')
   .replace(/<br\s*\/?>/gi,'\n')
