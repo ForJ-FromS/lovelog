@@ -4095,10 +4095,37 @@ $('#bk-restore')?.addEventListener('click', async ()=>{
   if(!confirm('복원을 시작할까요? 진행 전에 현재 상태가 자동으로 백업 저장됩니다.')) return;
   dlFile(`lovelog-${st.handle}-before-restore-${expStamp()}.json`,
     JSON.stringify(buildBackup(true,true),null,2), 'application/json');   // 안전망
+  /* 🚚 사진 이사(phase209): 다른 홈 백업이면 사진을 내 스토리지로 복사해 URL 교체
+     — 옛 홈이 지워져도 새 홈 사진이 안 깨지게. 실패한 사진은 원 주소 유지 */
+  const cross = bkData.handle && bkData.handle!==st.handle;
+  const migMap=new Map(); let migOk=0, migFail=0;
+  const RX_STG=/https:\/\/firebasestorage\.googleapis\.com\/v0\/b\/[^"\\]+/g;
+  async function migUrl(u){
+    if(migMap.has(u)) return migMap.get(u);
+    try{
+      const res=await fetch(u); if(!res.ok) throw 0;
+      const blob=await res.blob();
+      const nm='restore-'+Date.now()+'-'+(migOk+migFail)+'.'+(blob.type.split('/')[1]||'bin').replace('+xml','');
+      const r=sref(stg,'u/'+st.me.uid+'/'+nm);
+      await uploadBytes(r,blob,{contentType:blob.type,cacheControl:'public,max-age=31536000'});
+      const nu=await getDownloadURL(r);
+      migMap.set(u,nu); migOk++; return nu;
+    }catch(e){ migMap.set(u,u); migFail++; return u; }
+  }
+  async function migStr(s){
+    const urls=[...new Set((s.match(RX_STG)||[]))];
+    for(let k=0;k<urls.length;k++){
+      msg(`사진 이사 중... ${migOk+migFail+1}장째`);
+      const raw=urls[k], nu=await migUrl(JSON.parse('"'+raw+'"'));   // JSON 이스케이프 해제 후 복사
+      s=s.split(raw).join(JSON.stringify(nu).slice(1,-1));
+    }
+    return s;
+  }
   try{
     if(rd){
-      const deco={};
+      let deco={};
       Object.keys(bkData.deco).forEach(k=>{ if(!DECO_SKIP.includes(k)) deco[k]=bkData.deco[k]; });
+      if(cross) deco=JSON.parse(await migStr(JSON.stringify(deco)));
       if(JSON.stringify(deco).length>980000) throw new Error('꾸미기 데이터가 용량을 넘어요.');
       msg('꾸미기 복원 중...');
       await updateDoc(doc(db,'pages',st.handle), deco);
@@ -4107,21 +4134,23 @@ $('#bk-restore')?.addEventListener('click', async ()=>{
       const posts=bkData.posts.filter(p=>p&&p.id);
       let n=0;
       for(const p of posts){
-        const d2={};
+        let d2={};
         POST_KEYS.forEach(k=>{ if(p[k]!==undefined) d2[k]=p[k]; });
+        if(cross) d2=JSON.parse(await migStr(JSON.stringify(d2)));   // 비밀글(enc)은 암호문이라 자연히 건드리지 않음
         if(d2.ts && typeof d2.ts==='object' && d2.ts.seconds) d2.ts=new Date(d2.ts.seconds*1000);
         await setDoc(doc(db,'pages',st.handle,'posts',p.id), d2, {merge:true});
         if(++n%10===0) msg(`글 복원 중... ${n}/${posts.length}`);
       }
       const gal=Array.isArray(bkData.gallery)?bkData.gallery.filter(g=>g&&g.id):[];
       for(const g of gal){
-        const d3={...g}; delete d3.id;
+        let d3={...g}; delete d3.id;
+        if(cross) d3=JSON.parse(await migStr(JSON.stringify(d3)));
         if(d3.ts && typeof d3.ts==='object' && d3.ts.seconds) d3.ts=new Date(d3.ts.seconds*1000);
         await setDoc(doc(db,'pages',st.handle,'gallery',g.id), d3, {merge:true});
       }
       msg(`글 ${posts.length}편 · 사진 ${gal.length}장 복원 완료!`);
     }
-    alert('복원이 끝났어요! 화면을 새로 불러옵니다.');
+    alert('복원이 끝났어요!'+(migOk?` 사진 ${migOk}장을 새 홈으로 복사했어요.`:'')+(migFail?` (${migFail}장은 복사하지 못해 원 주소를 유지했어요)`:'')+' 화면을 새로 불러옵니다.');
     location.reload();
   }catch(err){ msg('복원 실패 — '+err.message); }
 });
