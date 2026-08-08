@@ -2065,7 +2065,7 @@ function renderWidList(){
     <div class="wl">
       <span class="nm">${WNAME[w.t]||w.t}${w.t==='links'?` (${(w.items||[]).length})`:''}${w.t==='banner'?` (${(w.items||[]).length})`:''}${w.float?' <span style="color:var(--pri);font-size:10px">📌 띄움</span>':''}</span>
       ${w.t!=='latest'?`<button data-f="${i}" title="컬럼에서 떼어 화면에 자유 배치 (PC 전용)"${w.float?' style="color:var(--pri)"':''}>📌</button>`:''}
-      ${['profile','quote','links','banner','dday','bgm','notice','chat','phone','img','nb','text','stamp'].includes(w.t)?`<button data-e="${i}">✎</button>`:''}
+      ${['profile','quote','links','banner','dday','bgm','notice','chat','phone','img','nb','text','stamp','latest'].includes(w.t)?`<button data-e="${i}">✎</button>`:''}
       <button data-u="${i}">↑</button><button data-d="${i}">↓</button><button data-x="${i}">✕</button>
     </div>`).join('') || '<p class="pl-empty">위젯이 없어요 — 아래에서 추가하세요.</p>';
   if(draft.some(w=>w.float))
