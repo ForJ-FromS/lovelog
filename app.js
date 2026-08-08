@@ -500,7 +500,33 @@ async function enterPage(){
   } else if(!noCss && nb) nb.remove();
   let ccss=document.getElementById('cursor-css');
   if(!ccss){ ccss=document.createElement('style'); ccss.id='cursor-css'; document.head.appendChild(ccss); }
-  ccss.textContent = p.curImg ? `body,body *{cursor:url(${p.curImg}) 4 4, auto !important}` : '';
+  /* 움짤(GIF) 커서 — CSS cursor는 GIF를 첫 프레임으로 얼려버려서,
+     GIF면 진짜 커서를 숨기고 마우스를 따라다니는 이미지로 전환 (PC 전용, phase201) */
+  {
+    const isGif = p.curImg && (/\.gif($|[?#])/i.test(p.curImg) || /^data:image\/gif/i.test(p.curImg));
+    const fine = matchMedia('(pointer:fine)').matches;
+    let cf = document.getElementById('cur-follow');
+    if(isGif && fine){
+      ccss.textContent = 'body, body *{cursor:none !important}';
+      if(!cf){
+        cf = document.createElement('img');
+        cf.id='cur-follow'; cf.alt='';
+        cf.style.cssText='position:fixed;left:0;top:0;pointer-events:none;z-index:99999;'
+          +'max-width:48px;max-height:48px;opacity:0;will-change:transform';
+        document.body.appendChild(cf);
+        addEventListener('pointermove', e=>{
+          const f=document.getElementById('cur-follow');
+          if(f){ f.style.transform=`translate(${e.clientX-4}px, ${e.clientY-4}px)`; f.style.opacity='1'; }
+        }, {passive:true});
+        document.documentElement.addEventListener('mouseleave', ()=>{
+          const f=document.getElementById('cur-follow'); if(f) f.style.opacity='0'; });
+      }
+      if(cf.getAttribute('src')!==p.curImg) cf.src=p.curImg;
+    }else{
+      if(cf) cf.remove();
+      ccss.textContent = p.curImg ? `body,body *{cursor:url(${p.curImg}) 4 4, auto !important}` : '';
+    }
+  }
   spkSync();
   $('#bgphoto').style.backgroundImage = p.bgImg?`url(${p.bgImg})`:'';
   document.body.classList.toggle('has-bg', !!p.bgImg);
