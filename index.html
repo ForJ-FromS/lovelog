@@ -833,7 +833,7 @@
   .tun-meta span{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.16em;
     color:color-mix(in srgb, var(--bgmTx, var(--muted)) 70%, transparent)}
   /* ── 타임라인 위젯 — 3디자인 (phase202) ── */
-  .w-tl .tl-box{display:flex;flex-direction:column}
+  .w-tl .tl-box{display:flex;flex-direction:column;gap:0}   /* ch-box 공용 gap:9px 무력화 — 간격은 tl-i padding이 담당(선 끊김 방지) */
   .tl-i{position:relative;display:flex;gap:10px;padding:0 2px 14px;align-items:flex-start;margin:0;overflow:hidden}
   .tl-dot{position:relative}
   .tl-dot::before,.tl-dot::after{content:'';position:absolute;left:50%;transform:translateX(-50%);
@@ -1769,6 +1769,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=202"></script>
+<script type="module" src="./app.js?v=203"></script>
 </body>
 </html>
