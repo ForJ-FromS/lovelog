@@ -836,7 +836,7 @@
   .w-tl .tl-box{display:flex;flex-direction:column}
   .tl-i{position:relative;display:flex;gap:10px;padding:0 2px 14px;align-items:flex-start;margin:0}
   .tl-dot{flex:none;width:9px;height:9px;border-radius:50%;background:var(--pri);margin-top:4px;position:relative;z-index:1}
-  .tl-i::before{content:'';position:absolute;left:6px;top:13px;bottom:-6px;width:1px;
+  .tl-i::before{content:'';position:absolute;left:6px;top:13px;bottom:-17px;width:1px;
     background:color-mix(in srgb, var(--pri) 35%, var(--line))}
   .tl-i:last-child{padding-bottom:2px}
   .tl-i:last-child::before{display:none}
@@ -845,9 +845,10 @@
     letter-spacing:.14em;color:var(--muted);margin-bottom:3px}
   .tl-t{font-size:12.5px;line-height:1.55;color:var(--ink);margin:0;word-break:break-word}
   .tl-tt{display:block;font-size:12.5px;font-weight:700;color:var(--ink);margin:0 0 3px}
-  .tl-dot.cdot{background:none;width:14px;height:auto;margin-top:1px;font-size:12px;line-height:1.2;
-    display:flex;justify-content:center;color:var(--pri)}
-  .tl-i:has(.cdot)::before{left:6.5px;top:16px}
+  .tl-dot.cdot{background:none;width:16px;height:16px;margin-top:0;font-size:13px;line-height:1;
+    display:flex;align-items:center;justify-content:center;color:var(--pri);overflow:visible}
+  .tl-i:has(.cdot)::before{left:7.5px;top:16px;bottom:-20px}
+  .tl-i:has(.cdot){gap:8px}
   .ft-star{background:none;border:none;cursor:pointer;font-size:13px;color:var(--muted);
     padding:0 2px;line-height:1;vertical-align:-1px}
   .ft-star.on{color:var(--pri)}
@@ -1763,6 +1764,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=199"></script>
+<script type="module" src="./app.js?v=201"></script>
 </body>
 </html>

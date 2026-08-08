@@ -1298,18 +1298,19 @@ function renderSide(){
         </div>`).join('')
         :(st.mine?('<p class="pl-empty">✎ 편집에서 항목을 채워주세요.</p>'+(!w.title?'<p class="pl-ghost">👻 지금은 방문자에게 안 보이는 카드예요</p>':'')):''))+
         `</div>`;
-      if(w.anim && d.classList.contains('ch-anim')){ const cb=d.querySelector('.ch-box');   // 자리 예약
+      box.appendChild(d);
+      if(w.anim && d.classList.contains('ch-anim')){ const cb=d.querySelector('.ch-box');   // 자리 예약 — 부착 후 측정(분리 상태=0 버그 수정, phase205)
         if(cb){ d.classList.remove('ch-anim');
           const need=+w.maxH>0 ? Math.min(cb.scrollHeight, +w.maxH) : cb.scrollHeight;
           d.classList.add('ch-anim'); if(need>0) cb.style.minHeight=need+'px'; } }
-      box.appendChild(d); return;
+      return;
     }
     if(w.t==='feat'){
       const arr=st.posts.filter(p2=>p2.feat).slice(0, +w.n>0?Math.min(+w.n,20):5);
       if(!arr.length && !st.mine) return;
       d.innerHTML=`<p class="label">${esc(w.title||'FEATURED')}</p><div class="mini-rows">`+
         (arr.length?arr.map(p2=>`<a data-fid="${p2.id}">
-          <span class="dot">★</span><span class="t">${esc(p2.title)}${p2.secret?' 🔒':''}${p2.priv?' 🔏':''}</span>
+          <span class="dot">${esc(w.icon||'★')}</span><span class="t">${esc(p2.title)}${p2.secret?' 🔒':''}${p2.priv?' 🔏':''}</span>
           <span class="dt">${esc((p2.date||'').slice(5))}</span></a>`).join('')
         :(st.mine?('<p class="pl-empty">글쓰기 화면에서 ★ 대표글을 체크하면 여기에 모여요.</p>'+(!w.title?'<p class="pl-ghost">👻 지금은 방문자에게 안 보이는 카드예요</p>':'')):''))+`</div>`;
       box.appendChild(d);
@@ -2229,8 +2230,9 @@ function renderWidEdit(){
     <div class="p-row" style="align-items:center;gap:8px;font-size:11.5px;color:var(--muted)">
       보여줄 개수
       <input type="number" id="we-ftn" value="${+w.n>0?+w.n:5}" min="1" max="20" style="width:80px">
-      <span style="font-size:10.5px">— 글쓰기·수정 화면의 '★ 대표글' 체크로 고릅니다</span>
-    </div>`;
+      <span style="font-size:10.5px">— 글 목록의 ☆ 또는 글쓰기 화면 체크로 고릅니다</span>
+    </div>
+    <input id="we-ftic" placeholder="앞머리 모양 (비우면 ★ — 이모지·문자 가능, 예: ✦ ♥ 🌊)" value="${esc(w.icon||'')}" maxlength="4">`;
   if(w.t==='quote') html+=`
     <textarea id="we-text" placeholder="걸어둘 문장" style="min-height:90px">${w.text||''}</textarea>
     <div class="p-row" style="align-items:center">
@@ -2608,6 +2610,8 @@ function renderWidEdit(){
     if(fttt.value.trim()) w.title=fttt.value; else delete w.title; });
   const ftn=$('#we-ftn'); if(ftn) ftn.addEventListener('input',()=>{
     const n=+ftn.value; if(n>0) w.n=Math.min(n,20); else delete w.n; });
+  const ftic=$('#we-ftic'); if(ftic) ftic.addEventListener('input',()=>{
+    if(ftic.value.trim()) w.icon=ftic.value.trim(); else delete w.icon; });
   const phadd=$('#we-phadd'); if(phadd) phadd.onclick=()=>{
     w.lines=w.lines||[]; w.lines.push({icon:'💬',app:'',time:'지금',text:''}); renderWidEdit(); };
   const phmv=(i,dir)=>{ const j=i+dir; if(j<0||j>=w.lines.length) return;
