@@ -609,9 +609,12 @@ function gcats(){ return st.page.gcats||[]; }
 const isG=c=>gcats().includes(c);
 function sideCfg(){
   let s;
-  if(st.page.side && st.page.side.length) s=st.page.side;
-  else{
-    s=[{t:'search'},{t:'category'}];
+  if(st.page.side && st.page.side.length){
+    s=st.page.side;
+    if(!s.some(w=>w.t==='latest') && !st.page.noLatest)   // 기존 홈 이행: 최신글을 위젯으로 자동 편입
+      s=[{t:'latest'}, ...s];                              // 맨 앞 = 옛 붙박이처럼 중앙 상단 유지 (✕ 후 저장하면 noLatest로 완전 제거)
+  }else{
+    s=[{t:'latest'},{t:'search'},{t:'category'}];
     if(st.page.ddays&&st.page.ddays.length) s.push({t:'dday'});
     if(ytId(st.page.bgm?.url)) s.push({t:'bgm'});
   }
@@ -636,7 +639,7 @@ function latestBlock(box, n){
       <span class="dot">◈</span><span class="t">${esc(p2.title)}${p2.secret?' 🔒':''}${p2.priv?' 🔏':''}</span>
       <span class="dt">${esc((p2.date||'').slice(5))}</span></a>`).join('')
     :'<p class="pl-empty">아직 글이 없습니다.</p>')+
-    `</div><p class="cat-add" style="display:block" id="latest-more">전체 보기 →</p>`;
+    `</div>${st.page.allOff?'':'<p class="cat-add" style="display:block" id="latest-more">전체 보기 →</p>'}`;
   box.appendChild(d);
   d.querySelectorAll('[data-lid]').forEach(el=>el.onclick=()=>{
     goBoard('recent'); openPost(el.dataset.lid,true); });
@@ -763,6 +766,7 @@ function goHome(){
 }
 function goBoard(cat){
   if(cat==='__gb' && st.page.gbOff){ msg('방명록이 잠시 닫혀 있어요.'); return; }
+  if(cat==='recent' && st.page.allOff){ msg('전체 글 보기가 꺼져 있어요.'); return; }
   st.cat=cat||'recent'; st.pg=1; applyView(); renderWidgets(); renderList(); backToList(); renderCatbar(); }
 function catStyle(){
   return st.page.catStyle || (st.page.catBar===false ? 'widget' : 'bar');
@@ -782,7 +786,7 @@ function renderCatbar(){
     cats().map(c=>pill(c,c.toUpperCase(),st.cat===c)).join('')+
     (galOn()?pill('__gal',galNm(),st.cat==='__gal'):'')+
     (st.page.gbOff?'' : pill('__gb',gbNm(),st.cat==='__gb'))+
-    (homeStyle()==='blog'?'':pill('recent','ALL',st.cat==='recent'));
+    (homeStyle()==='blog'||st.page.allOff?'':pill('recent','ALL',st.cat==='recent'));
   bar.querySelectorAll('a').forEach(el=>el.onclick=()=>{
     el.dataset.c==='home' ? goHome() : goBoard(el.dataset.c);
   });
@@ -1019,7 +1023,7 @@ function renderSide(){
       : (both?boxL:boxR);
     headBox.appendChild(headEl);
   }
-  if(home && !sideCfg().some(w=>w.t==='latest')) latestBlock(hC);
+  // 최신글은 이제 항상 위젯으로 존재(sideCfg 자동 편입) — 붙박이 폴백 제거(phase198)
   const isM = window.innerWidth<=640;
   const wide = window.innerWidth>960;                       // 플로팅 위젯은 넓은 화면에서만
   const pdk=document.getElementById('ph-dock'); if(pdk) pdk.innerHTML='';
@@ -1075,7 +1079,7 @@ function renderSide(){
           <span class="n">${cnt(c)}</span></a></li>`).join('')+
         (galOn()?`<li><a data-c="__gal" class="${st.cat==='__gal'?'on':''}"><span>${esc(galNm())}</span><span class="n">${st.gallery.length}</span></a></li>`:'')+
         (st.page.gbOff?'':`<li><a data-c="__gb" class="${st.cat==='__gb'?'on':''}"><span>${esc(gbNm())}</span><span class="n">${st.guest.length}</span></a></li>`)+
-        `<li><a data-c="recent" class="${st.cat==='recent'?'on':''}"><span>전체</span><span class="n">${st.posts.length}</span></a></li></ul>`;
+        (st.page.allOff?'</ul>':`<li><a data-c="recent" class="${st.cat==='recent'?'on':''}"><span>전체</span><span class="n">${st.posts.length}</span></a></li></ul>`);
       box.appendChild(d);
       d.querySelectorAll('#cats a').forEach(el=>el.onclick=()=>goBoard(el.dataset.c));
       return;
@@ -1808,7 +1812,8 @@ $('#pv-del').onclick=async()=>{
 };
 
 /* ---------- 검색: search 위젯 내부에서 바인딩 ---------- */
-$('#more-btn').onclick=()=>{ st.cat='recent'; st.q='__all__'; st.q=''; 
+$('#more-btn').onclick=()=>{ if(st.page.allOff){ msg('전체 글 보기가 꺼져 있어요.'); return; }
+  st.cat='recent'; st.q='__all__'; st.q=''; 
   $('#rows').innerHTML=''; const rest=st.posts.filter(p=>!p.pinned);
   $('#v-label').textContent='ALL';
   $('#rows').innerHTML=rest.map(p=>{ const t=postThumb(p); return `
@@ -1999,7 +2004,8 @@ function renderCatFix(){
     row('__gb',esc(gbNm()),
       `<input data-cn="__gb" value="${esc(st.page.gbName||'')}" placeholder="GUESTBOOK" title="게시판 이름 바꾸기 — 비우면 GUESTBOOK" style="width:104px;margin-bottom:0;font-size:11.5px">
        <label class="chk" style="margin:0 0 0 6px;font-size:11px" title="켜면 방명록 탭이 숨겨지고 아무도 남길 수 없어요 — 기존 글은 지워지지 않아요"><input type="checkbox" data-gboff ${st.page.gbOff?'checked':''}> 끄기</label>`)+
-    (homeStyle()==='blog'?'':row('recent','ALL'));
+    (homeStyle()==='blog'?'':row('recent','ALL',
+      `<label class="chk" style="margin:0;font-size:11px" title="켜면 상단의 ALL(전체 글) 탭이 숨겨져요 — 카테고리별 탭은 그대로예요"><input type="checkbox" data-alloff ${st.page.allOff?'checked':''}> 끄기</label>`));
   bindCatImg(box);
   box.querySelectorAll('[data-cn]').forEach(inp=>inp.addEventListener('change',async()=>{
     const v=inp.value.trim().slice(0,20);
@@ -2011,6 +2017,15 @@ function renderCatFix(){
     if(st.cat==='__gal') $('#v-label').textContent=galNm();
     msg('게시판 이름 저장!');
   }));
+  const alo=box.querySelector('[data-alloff]');
+  if(alo) alo.addEventListener('change',async()=>{
+    try{ await updateDoc(doc(db,'pages',st.handle),{allOff:alo.checked}); }
+    catch(err){ msg('저장 실패 — '+err.message); alo.checked=!alo.checked; return; }
+    st.page.allOff=alo.checked;
+    if(alo.checked && st.cat==='recent') st.cat=cats()[0]||'archive';
+    renderCatbar(); renderSide();
+    msg(alo.checked?'ALL 탭을 껐어요.':'ALL 탭을 다시 켰어요!');
+  });
   const gbo=box.querySelector('[data-gboff]');
   if(gbo) gbo.addEventListener('change',async()=>{
     try{ await updateDoc(doc(db,'pages',st.handle),{gbOff:gbo.checked}); }
@@ -2566,14 +2581,14 @@ $('#wid-save').onclick=async()=>{
   if(editIdx>=0 && draft[editIdx]) syncWid(draft[editIdx]);
   msg('저장 중...');
   try{
-    const projected={...st.page, side:draft, ddays:pdraft.ddays, ddHead:pdraft.ddHead!==false, bgm:pdraft.bgm};
+    const projected={...st.page, side:draft, ddays:pdraft.ddays, ddHead:pdraft.ddHead!==false, bgm:pdraft.bgm, noLatest:!draft.some(w=>w.t==='latest')};
     const tot=JSON.stringify(projected).length;
     if(tot>980000){
       const wKB=Math.round((JSON.stringify(draft).length+JSON.stringify(pdraft.ddays).length)/1370);
       msg('용량 초과 — 안내창을 확인하세요.');
       alert('홈 설정 용량 초과!\n\n사진은 별도 저장소에 올라가지만, 옛날에 올린 사진이 남아 있으면 커질 수 있어요.\n해당 위젯 사진을 지우고 다시 올리면 해결돼요.\n지금 합산: 약 '+Math.round(tot/1370)+'KB\n· 위젯 사진(프로필·배너·디데이): 약 '+wKB+'KB\n· 꾸미기 사진(헤더·대문·배경): 약 '+Math.round((tot-JSON.stringify(draft).length-JSON.stringify(pdraft.ddays).length)/1370)+'KB\n\n배너·헤더 등 큰 사진을 지우거나 다시 올리면(자동 압축 강화) 들어가요.'); return; }
     const dd=pdraft.ddays.filter(x=>x.title&&x.date);
-    await updateDoc(doc(db,'pages',st.handle),{side:draft, ddays:dd, ddHead:pdraft.ddHead!==false, bgm:pdraft.bgm});
+    await updateDoc(doc(db,'pages',st.handle),{side:draft, ddays:dd, ddHead:pdraft.ddHead!==false, bgm:pdraft.bgm, noLatest:!draft.some(w=>w.t==='latest')});
     st.page.side=JSON.parse(JSON.stringify(draft));
     st.page.ddays=dd; st.page.bgm={...pdraft.bgm};
     const d0=dd[0];
