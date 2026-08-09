@@ -469,6 +469,7 @@ async function enterPage(){
   document.body.classList.remove('theme-win98','theme-vhs');
   if(p.theme && p.theme!=='default') document.body.classList.add('theme-'+p.theme);
   document.documentElement.style.setProperty('--galc', galCols());
+  document.documentElement.style.setProperty('--memoc', memoCols());
   document.body.classList.remove('catsh-list','catsh-pill','catsh-text','catsh-box');
   document.body.classList.add('catsh-'+catShape());
   document.body.classList.toggle('side-left', p.sidePos==='left');
@@ -633,6 +634,8 @@ function bindFloatDrag(el, wi){
 function cats(){ return st.page.cats||['archive','ooc']; }
 function gcats(){ return st.page.gcats||[]; }
 const isG=c=>gcats().includes(c);
+function mcats(){ return st.page.mcats||[]; }
+const isMemo=c=>mcats().includes(c);
 function sideCfg(){
   let s;
   if(st.page.side && st.page.side.length){
@@ -800,6 +803,7 @@ function catStyle(){
 }
 function catShape(){ return st.page.catShape || 'list'; }
 function galCols(){ const n=+st.page.galCols; return (n>=1&&n<=4)?n:3; }
+function memoCols(){ const n=+st.page.memoCols; return (n>=2&&n<=4)?n:3; }
 function renderCatbar(){
   const bar=$('#catbar');
   if(catStyle()!=='bar'){ bar.classList.add('hidden'); return; }   // 블로그형에서도 '상단 알약 바' 선택 존중
@@ -1636,6 +1640,29 @@ function renderList(){
     });
     return;
   }
+  if(st.cat!=='recent' && st.cat!=='home' && isMemo(st.cat)){
+    $('#v-label').textContent = st.cat.toUpperCase();
+    $('#pin-slot').innerHTML='';
+    let all=st.posts.filter(p=>p.cat===st.cat);
+    if(st.q) all=all.filter(p=>p.title.toLowerCase().includes(st.q));
+    const mper=memoCols()*4;
+    renderPager(all.length, mper);
+    const items=all.slice(((st.pg||1)-1)*mper, (st.pg||1)*mper);
+    const strip=s=>String(s||'').replace(/\[사진\d+\]/g,'').replace(/\*\*|__|~~|==|\*/g,'');
+    $('#rows').innerHTML = items.length
+      ? `<div class="memo-grid">`+items.map(p=>{ const th=p.secret?'':postThumb(p); return `
+          <a class="memo-card${th?' has-mth':''}" data-id="${p.id}">
+            ${th?`<img class="mth" src="${th}" alt="" draggable="false">`:''}
+            ${p.title?`<b class="mt">${esc(p.title)}</b>`:''}
+            <span class="mk">${p.secret?'🔒':''}${p.priv?'🔏':''}</span>
+            <p class="mx">${p.secret?'비밀 메모예요.':esc(strip(p.raw||p.excerpt||''))}</p>
+            <span class="mf"><i>${esc((p.date||'').slice(2))}</i><span>전체 보기 →</span></span>
+          </a>`; }).join('')+`</div>`
+      : '<p class="pl-empty">아직 메모가 없습니다.</p>';
+    $('#more-btn').style.display='none';
+    document.querySelectorAll('.memo-card').forEach(el=>el.onclick=()=>openPost(el.dataset.id));
+    return;
+  }
   let items=st.posts;
   if(st.cat!=='recent') items=items.filter(p=>p.cat===st.cat);
   if(st.q) items=items.filter(p=>p.title.toLowerCase().includes(st.q));
@@ -1981,8 +2008,9 @@ function renderCatMgr(){
     <div class="p-row">
       <input data-ci="${i}" value="${esc(c)}">
       <select data-ct="${i}" style="width:auto;margin-bottom:0">
-        <option value="post" ${!isG(c)?'selected':''}>글</option>
+        <option value="post" ${!isG(c)&&!isMemo(c)?'selected':''}>글</option>
         <option value="gallery" ${isG(c)?'selected':''}>사진</option>
+        <option value="memo" ${isMemo(c)?'selected':''}>메모 (카드 모아보기)</option>
       </select>
       <button class="btn" data-cs="${i}" style="font-size:12px">저장</button>
       <button class="rmv" data-cup="${i}" title="위로" ${i===0?'disabled':''}>↑</button>
@@ -2006,12 +2034,14 @@ function renderCatMgr(){
   box.querySelectorAll('[data-cdn]').forEach(b=>b.onclick=()=>moveCat(+b.dataset.cdn, 1));
   box.querySelectorAll('[data-ct]').forEach(s=>s.onchange=async()=>{
     const name=cats()[+s.dataset.ct];
-    let g=[...gcats()];
-    if(s.value==='gallery'){ if(!g.includes(name)) g.push(name); }
-    else g=g.filter(x=>x!==name);
-    await updateDoc(doc(db,'pages',st.handle),{gcats:g});
-    st.page.gcats=g; refreshWriteCats(); refreshGalCats(); renderSide(); renderCatbar();
-    msg(`'${name}' → ${s.value==='gallery'?'사진':'글'} 카테고리로 변경!`);
+    let g=[...gcats()], m=[...mcats()];
+    if(s.value==='gallery'){ if(!g.includes(name)) g.push(name); m=m.filter(x=>x!==name); }
+    else if(s.value==='memo'){ if(!m.includes(name)) m.push(name); g=g.filter(x=>x!==name); }
+    else{ g=g.filter(x=>x!==name); m=m.filter(x=>x!==name); }
+    try{ await updateDoc(doc(db,'pages',st.handle),{gcats:g, mcats:m}); }
+    catch(e){ msg('저장 실패 — '+e.message); renderCatMgr(); return; }
+    st.page.gcats=g; st.page.mcats=m; refreshWriteCats(); refreshGalCats(); renderSide(); renderCatbar();
+    msg(`'${name}' → ${s.value==='gallery'?'사진':s.value==='memo'?'메모':'글'} 카테고리로 변경!`);
   });
   box.querySelectorAll('[data-cs]').forEach(b=>b.onclick=async()=>{
     const i=+b.dataset.cs, oldName=cats()[i],
@@ -3587,6 +3617,7 @@ function fillSettings(){
   $('#s-catstyle').value=catStyle();
   $('#s-catshape').value=catShape();
   $('#s-galcols').value=String(galCols());
+  const smc=$('#s-memocols'); if(smc) smc.value=String(memoCols());
   $('#s-homestyle').value=homeStyle();
   $('#s-theme').value=p.theme||'default';
   renderStkList();
@@ -3665,6 +3696,7 @@ async function saveSettings(){
       catStyle: $('#s-catstyle').value,
       catShape: $('#s-catshape').value,
       galCols: +$('#s-galcols').value||3,
+      memoCols: +($('#s-memocols')?.value)||3,
       homeStyle: $('#s-homestyle').value,
       theme: $('#s-theme').value,
       bgDim: parseInt($('#s-dim').value)||78,
