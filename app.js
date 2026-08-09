@@ -1625,7 +1625,9 @@ function renderMemoImgs(){
   bx.innerHTML=memoImgs.map((im,i)=>`<span class="mm-th"><img src="${im}"><i data-mmx="${i}">✕</i></span>`).join('');
   bx.querySelectorAll('[data-mmx]').forEach(el=>el.onclick=()=>{ memoImgs.splice(+el.dataset.mmx,1); renderMemoImgs(); });
 }
+let memoEdit=null;                               // 팝업 수정 대상(phase220)
 function openMemoModal(cat){
+  memoEdit=null; $('#mm-go').textContent='추가';
   memoImgs=[]; renderMemoImgs();
   $('#mm-cat').textContent=cat;
   $('#mm-title').value=''; $('#mm-body').value='';
@@ -1633,6 +1635,14 @@ function openMemoModal(cat){
   $('#mm-priv').checked=false;
   $('#memo-modal').classList.remove('hidden');
   setTimeout(()=>$('#mm-body').focus(),60);
+}
+function openMemoModalEdit(p){
+  openMemoModal(p.cat);
+  memoEdit=p; $('#mm-go').textContent='수정';
+  $('#mm-title').value=p.title||'';
+  $('#mm-body').value=(p.raw||'').replace(/\n*\[사진\d+\]/g,'').trim();   // 사진 자리표는 저장 시 끝에 재부착
+  memoImgs=Array.isArray(p.imgs)?p.imgs.slice():[]; renderMemoImgs();
+  $('#mm-priv').checked=!!p.priv;
 }
 function closeMemoModal(){ $('#memo-modal').classList.add('hidden'); }
 $('#mm-x').onclick=closeMemoModal;
@@ -1662,6 +1672,13 @@ $('#mm-go').onclick=async()=>{
   $('#w-secret').checked=$('#mm-secret').checked;
   $('#w-pw').value=$('#mm-pw').value;
   $('#w-priv').checked=$('#mm-priv').checked;
+  if(memoEdit){                                   // 수정: 팝업에 없는 항목은 원본 유지
+    editPost=memoEdit.id;
+    $('#w-pin').checked=!!memoEdit.pinned;
+    $('#w-feat').checked=!!memoEdit.feat;
+    $('#w-cmt').checked=!memoEdit.cmtOff;
+    $('#w-html').checked=!!memoEdit.html;
+  }
   await $('#w-go').onclick();
   if(!$('#w-title').value) closeMemoModal();               // 발행 성공 시 폼이 비워짐 — 실패면 팝업 유지
 };
@@ -2997,6 +3014,7 @@ function clearWriteForm(){
 }
 function startEditPost(){
   const p=st.cur; if(!p) return;
+  if(isMemo(p.cat) && !p.secret){ openMemoModalEdit(p); return; }   // 🗒 메모는 팝업으로 수정(비밀 메모는 기존 경로)
   refreshWriteCats(); refreshGalCats();
   editPost=p.id;
   $('#w-title').value=p.title||'';
@@ -3021,7 +3039,13 @@ function startEditPost(){
   openPanel('write'); switchTab('write');
 }
 $('#pv-edit').onclick=startEditPost;
-$('#w-cancel').onclick=()=>{ clearWriteForm(); msg('수정을 취소했어요.'); };
+$('#w-cancel').onclick=()=>{
+  const pid=editPost;                              // 수정 중이던 글 기억
+  clearWriteForm();
+  $('#panel').classList.remove('show','wfull');    // 패널 닫고
+  if(pid) openPost(pid,true);                      // 원래 글로 복귀 — "글이 사라졌다" 착시 방지(phase221)
+  msg(pid?'수정을 취소했어요 — 글은 원래대로 그대로예요.':'작성을 취소했어요.');
+};
 $('#w-go').onclick=async()=>{
   const title=$('#w-title').value.trim(), cat=$('#w-cat').value,
         secret=$('#w-secret').checked, pw=$('#w-pw').value, pin=$('#w-pin').checked,
