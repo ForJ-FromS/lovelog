@@ -1632,7 +1632,7 @@ function openMemoModal(cat){
   $('#mm-cat').textContent=cat;
   $('#mm-title').value=''; $('#mm-body').value='';
   $('#mm-secret').checked=false; $('#mm-pw').value=''; $('#mm-pw').style.display='none';
-  $('#mm-priv').checked=false;
+  $('#mm-priv').checked=false; $('#mm-cmt').checked=true;
   $('#memo-modal').classList.remove('hidden');
   setTimeout(()=>$('#mm-body').focus(),60);
 }
@@ -1643,6 +1643,7 @@ function openMemoModalEdit(p){
   $('#mm-body').value=(p.raw||'').replace(/\n*\[사진\d+\]/g,'').trim();   // 사진 자리표는 저장 시 끝에 재부착
   memoImgs=Array.isArray(p.imgs)?p.imgs.slice():[]; renderMemoImgs();
   $('#mm-priv').checked=!!p.priv;
+  $('#mm-cmt').checked=!p.cmtOff;
 }
 function closeMemoModal(){ $('#memo-modal').classList.add('hidden'); }
 $('#mm-x').onclick=closeMemoModal;
@@ -1672,11 +1673,11 @@ $('#mm-go').onclick=async()=>{
   $('#w-secret').checked=$('#mm-secret').checked;
   $('#w-pw').value=$('#mm-pw').value;
   $('#w-priv').checked=$('#mm-priv').checked;
+  $('#w-cmt').checked=$('#mm-cmt').checked;       // 💬 댓글 받기 — 팝업 값 사용(phase222)
   if(memoEdit){                                   // 수정: 팝업에 없는 항목은 원본 유지
     editPost=memoEdit.id;
     $('#w-pin').checked=!!memoEdit.pinned;
     $('#w-feat').checked=!!memoEdit.feat;
-    $('#w-cmt').checked=!memoEdit.cmtOff;
     $('#w-html').checked=!!memoEdit.html;
   }
   await $('#w-go').onclick();
