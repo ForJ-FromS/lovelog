@@ -472,6 +472,10 @@ async function enterPage(){
   document.documentElement.style.setProperty('--memoc', memoCols());
   if(st.page.listTc) document.documentElement.style.setProperty('--listTc', st.page.listTc);
   else document.documentElement.style.removeProperty('--listTc');
+  const MH={s:['4','116px'], m:['7','150px'], l:['11','196px']};
+  const mh=MH[st.page.memoH]||MH.m;
+  document.documentElement.style.setProperty('--memoLc', mh[0]);
+  document.documentElement.style.setProperty('--memoMh', mh[1]);
   document.body.classList.remove('catsh-list','catsh-pill','catsh-text','catsh-box');
   document.body.classList.add('catsh-'+catShape());
   document.body.classList.toggle('side-left', p.sidePos==='left');
@@ -1644,7 +1648,8 @@ function openMemoModal(cat){
   $('#mm-cat').textContent=cat;
   $('#mm-title').value=''; $('#mm-body').value='';
   $('#mm-secret').checked=false; $('#mm-pw').value=''; $('#mm-pw').style.display='none';
-  $('#mm-priv').checked=false; $('#mm-cmt').checked=true;
+  $('#mm-priv').checked=false; $('#mm-cmt').checked=false;   // 💬 기본 꺼짐(phase232)
+  $('#mm-title').style.display = st.page.memoNoTt ? 'none' : '';
   $('#memo-modal').classList.remove('hidden');
   setTimeout(()=>$('#mm-body').focus(),60);
 }
@@ -1738,8 +1743,8 @@ function renderList(){
       ? `<div class="memo-grid">`+items.map(p=>{ const th=p.secret?'':postThumb(p); return `
           <a class="memo-card${th?' has-mth':''}" data-id="${p.id}">
             ${th?`<img class="mth" src="${th}" alt="" draggable="false">`:''}
-            ${p.title?`<b class="mt">${esc(p.title)}</b>`:''}
-            <span class="mk">${(st.mine||p.mpin)?`<i class="mp${p.mpin?' on':''}"${st.mine?` data-mp="${p.id}" title="첫 화면에 고정 (${mpinMax()}개까지)"`:''}>📌</i>`:''}${p.secret?'🔒':''}${p.priv?'🔏':''}</span>
+            ${!st.page.memoNoTt&&p.title?`<b class="mt">${esc(p.title)}</b>`:''}
+            <span class="mk">${st.mine?`<i class="mp${p.mpin?' on':''}" data-mp="${p.id}" title="첫 화면에 고정 (${mpinMax()}개까지)">📌</i>`:''}${p.secret?'🔒':''}${p.priv?'🔏':''}</span>
             <p class="mx">${p.secret?'비밀 메모예요.':esc(strip(p.raw||p.excerpt||''))}</p>
             <span class="mf"><i>${esc((p.date||'').slice(2))}</i><span>전체 보기 →</span></span>
           </a>`; }).join('')+`</div>`
@@ -3767,6 +3772,8 @@ function fillSettings(){
   $('#s-galcols').value=String(galCols());
   const smc=$('#s-memocols'); if(smc) smc.value=String(memoCols());
   const smp=$('#s-mpinmax'); if(smp) smp.value=String(mpinMax());
+  const smh=$('#s-memoh'); if(smh) smh.value=st.page.memoH||'m';
+  const smt=$('#s-memott'); if(smt) smt.checked=!!st.page.memoNoTt;
   const slt=$('#s-listtc');
   if(slt){
     slt.value=st.page.listTc||'#8899aa'; slt.dataset.on=st.page.listTc?'1':'';
@@ -3853,6 +3860,8 @@ async function saveSettings(){
       galCols: +$('#s-galcols').value||3,
       memoCols: +($('#s-memocols')?.value)||3,
       mpinMax: +($('#s-mpinmax')?.value)||3,
+      memoH: $('#s-memoh')?.value||'m',
+      memoNoTt: !!$('#s-memott')?.checked,
       listTc: ($('#s-listtc')?.dataset.on ? $('#s-listtc').value : ''),
       homeStyle: $('#s-homestyle').value,
       theme: $('#s-theme').value,
