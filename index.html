@@ -833,6 +833,25 @@
   .tun-meta span{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.16em;
     color:color-mix(in srgb, var(--bgmTx, var(--muted)) 70%, transparent)}
   /* ── 메모형 카테고리 — 카드 모아보기 (phase213) ── */
+  .memo-modal{position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;
+    background:rgba(0,0,0,.55);backdrop-filter:blur(5px);padding:18px}
+  .mm-card{width:min(540px,94vw);max-height:88vh;overflow:auto;display:flex;flex-direction:column;gap:10px;
+    background:hsl(var(--h) calc(18% * var(--sf,1)) 11%);border:1px solid var(--line);border-radius:16px;padding:16px 17px}
+  body.light .mm-card{background:#fff}
+  .mm-top{display:flex;align-items:center;gap:10px}
+  .mm-top b{font-size:14px}
+  .mm-top i{font-family:'IBM Plex Mono',monospace;font-style:normal;font-size:10px;letter-spacing:.14em;color:var(--pri)}
+  .mm-top #mm-x{cursor:pointer;color:var(--muted);font-size:15px;padding:2px 4px}
+  .mm-top #mm-x:hover{color:var(--ink)}
+  .mm-top #mm-go{margin-left:auto;font-size:12px}
+  #mm-body{min-height:170px;resize:vertical}
+  .mm-imgs{display:flex;gap:8px;flex-wrap:wrap}
+  .mm-th{position:relative}
+  .mm-th img{width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
+  .mm-th i{position:absolute;top:-6px;right:-6px;background:hsl(var(--h) 20% 16%);border:1px solid var(--line);
+    border-radius:50%;width:18px;height:18px;font-size:10px;font-style:normal;display:flex;
+    align-items:center;justify-content:center;cursor:pointer;color:var(--ink)}
+  .mm-foot{display:flex;align-items:center;gap:12px;font-size:12px}
   .memo-grid{display:grid;grid-template-columns:repeat(var(--memoc,3),1fr);gap:14px}
   .memo-card{position:relative;display:flex;flex-direction:column;gap:6px;cursor:pointer;
     border:1px solid var(--line);border-radius:12px;padding:14px 15px 12px;
@@ -1346,6 +1365,25 @@
 </div>
 
 <button id="btn-write" class="hidden fab" title="글쓰기">✎</button>
+<div id="memo-modal" class="memo-modal hidden">
+  <div class="mm-card">
+    <div class="mm-top">
+      <span id="mm-x" title="닫기">✕</span>
+      <b>메모 추가</b><i id="mm-cat"></i>
+      <button class="btn" id="mm-go">추가</button>
+    </div>
+    <input id="mm-title" placeholder="제목 없음 — 비우면 첫 줄로 자동">
+    <textarea id="mm-body" placeholder="내용을 입력해 주세요.  (**굵게** 같은 서식 그대로 돼요)"></textarea>
+    <div id="mm-imgs" class="mm-imgs"></div>
+    <div class="mm-foot">
+      <button class="btn" id="mm-img" title="사진 — 최대 4장, 메모 아래에 붙어요">🖼</button>
+      <input type="file" id="mm-file" accept="image/*" multiple hidden>
+      <label class="chk" style="margin:0"><input type="checkbox" id="mm-secret"> 🔒 비밀</label>
+      <input id="mm-pw" placeholder="비밀번호" style="display:none;width:110px;margin:0">
+      <label class="chk" style="margin:0"><input type="checkbox" id="mm-priv" title="나만 보여요"> 🔏 비공개</label>
+    </div>
+  </div>
+</div>
 <button id="btn-deco" class="hidden fab" title="꾸미기" style="bottom:76px">✦</button>
 <button id="btn-edit" class="hidden fab" title="위젯 편집 — 켜야 위젯을 움직일 수 있어요" style="bottom:132px">⠿</button>
 
@@ -1815,6 +1853,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=209"></script>
+<script type="module" src="./app.js?v=211"></script>
 </body>
 </html>

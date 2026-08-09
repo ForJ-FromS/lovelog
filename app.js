@@ -636,6 +636,12 @@ function gcats(){ return st.page.gcats||[]; }
 const isG=c=>gcats().includes(c);
 function mcats(){ return st.page.mcats||[]; }
 const isMemo=c=>mcats().includes(c);
+function navSeq(){                                   // 상단 탭 순서(카테고리+갤러리+방명록, phase217)
+  const base=[...cats(),'__gal','__gb'];
+  let s=Array.isArray(st.page.navSeq)?st.page.navSeq.filter(x=>base.includes(x)):[];
+  base.forEach(x=>{ if(!s.includes(x)) s.push(x); });
+  return s;
+}
 function sideCfg(){
   let s;
   if(st.page.side && st.page.side.length){
@@ -814,9 +820,9 @@ function renderCatbar(){
     ? `<a data-c="${esc(key)}" class="pillimg ${on?'on':''}"><img src="${ci[key]}" alt="${esc(label)}" draggable="false"></a>`
     : `<a data-c="${esc(key)}" class="${on?'on':''}">${esc(label)}</a>`;
   bar.innerHTML = pill('home','HOME',homeOn)+
-    cats().map(c=>pill(c,c.toUpperCase(),st.cat===c)).join('')+
-    (galOn()?pill('__gal',galNm(),st.cat==='__gal'):'')+
-    (st.page.gbOff?'' : pill('__gb',gbNm(),st.cat==='__gb'))+
+    navSeq().map(t=> t==='__gal' ? (galOn()?pill('__gal',galNm(),st.cat==='__gal'):'')
+      : t==='__gb' ? (st.page.gbOff?'' : pill('__gb',gbNm(),st.cat==='__gb'))
+      : pill(t,t.toUpperCase(),st.cat===t)).join('')+
     (homeStyle()==='blog'||st.page.allOff?'':pill('recent','ALL',st.cat==='recent'));
   bar.querySelectorAll('a').forEach(el=>el.onclick=()=>{
     el.dataset.c==='home' ? goHome() : goBoard(el.dataset.c);
@@ -1576,6 +1582,7 @@ function updateBoardWrite(){
   b.classList.toggle('hidden', !ok);
   if(!ok) return;
   b.onclick=()=>{
+    if(isMemo(st.cat)){ openMemoModal(st.cat); return; }   // 🗒 메모형은 팝업 작성(phase216)
     clearWriteForm();
     refreshWriteCats(); refreshGalCats(); openPanel('write');
     if(c==='__gal' || isG(c)){ switchTab('galup'); if(isG(c)) $('#g-cat').value=c; }
@@ -1611,6 +1618,53 @@ function renderPager(total, per){
   });
   return null;
 }
+/* 🗒 메모 팝업(phase216) — 저장은 글쓰기 발행 파이프라인에 위임(서식·암호화·사진 체계 재사용) */
+let memoImgs=[];
+function renderMemoImgs(){
+  const bx=$('#mm-imgs'); if(!bx) return;
+  bx.innerHTML=memoImgs.map((im,i)=>`<span class="mm-th"><img src="${im}"><i data-mmx="${i}">✕</i></span>`).join('');
+  bx.querySelectorAll('[data-mmx]').forEach(el=>el.onclick=()=>{ memoImgs.splice(+el.dataset.mmx,1); renderMemoImgs(); });
+}
+function openMemoModal(cat){
+  memoImgs=[]; renderMemoImgs();
+  $('#mm-cat').textContent=cat;
+  $('#mm-title').value=''; $('#mm-body').value='';
+  $('#mm-secret').checked=false; $('#mm-pw').value=''; $('#mm-pw').style.display='none';
+  $('#mm-priv').checked=false;
+  $('#memo-modal').classList.remove('hidden');
+  setTimeout(()=>$('#mm-body').focus(),60);
+}
+function closeMemoModal(){ $('#memo-modal').classList.add('hidden'); }
+$('#mm-x').onclick=closeMemoModal;
+$('#memo-modal').addEventListener('click',e=>{ if(e.target.id==='memo-modal') closeMemoModal(); });
+$('#mm-secret').addEventListener('change',()=>{ $('#mm-pw').style.display=$('#mm-secret').checked?'':'none'; });
+$('#mm-img').onclick=()=>$('#mm-file').click();
+$('#mm-file').addEventListener('change',async e=>{
+  for(const f of [...e.target.files]){
+    if(memoImgs.length>=4){ msg('메모 사진은 4장까지예요.'); break; }
+    msg('사진 올리는 중...');
+    try{ memoImgs.push(await upFile(f,1600,.88,180)); }
+    catch(err){ msg('업로드 실패 — '+err.message); }
+  }
+  e.target.value=''; renderMemoImgs();
+});
+$('#mm-go').onclick=async()=>{
+  const body=$('#mm-body').value.trim();
+  if(!body && !memoImgs.length){ msg('내용을 입력해 주세요.'); return; }
+  if($('#mm-secret').checked && !$('#mm-pw').value){ msg('비밀 메모의 비밀번호를 입력하세요.'); return; }
+  clearWriteForm(); refreshWriteCats();                     // wImgs도 여기서 초기화됨
+  $('#w-cat').value=$('#mm-cat').textContent;
+  const t=$('#mm-title').value.trim();
+  $('#w-title').value = t || (body.replace(/\s+/g,' ').slice(0,16) || '사진 메모');
+  let raw=body;
+  memoImgs.forEach(im=>{ wImgs.push(im); raw+=`\n\n[사진${wImgs.length}]`; });
+  $('#w-body').value=raw;
+  $('#w-secret').checked=$('#mm-secret').checked;
+  $('#w-pw').value=$('#mm-pw').value;
+  $('#w-priv').checked=$('#mm-priv').checked;
+  await $('#w-go').onclick();
+  if(!$('#w-title').value) closeMemoModal();               // 발행 성공 시 폼이 비워짐 — 실패면 팝업 유지
+};
 function renderList(){
   updateBoardWrite();
   if(st.cat==='__gb'){ $('#guest-view').classList.remove('hidden');
@@ -2004,7 +2058,18 @@ $('#btn-deco').onclick=()=>{ fillSettings(); fillWidgets(); renderCatMgr(); open
 /* ---------- 카테고리 관리 (추가·삭제·이름 변경) ---------- */
 function renderCatMgr(){
   const box=$('#cat-mgr'); if(!box) return;
-  box.innerHTML = cats().map((c,i)=>`
+  const NS=navSeq(); let ci=-1;
+  box.innerHTML = NS.map((t,ni)=>{
+    const ud=`<button class="rmv" data-nup="${ni}" title="위로" ${ni===0?'disabled':''}>↑</button>
+      <button class="rmv" data-ndn="${ni}" title="아래로" ${ni===NS.length-1?'disabled':''}>↓</button>`;
+    if(t==='__gal'||t==='__gb') return `
+    <div class="p-row" style="align-items:center">
+      <span style="flex:1;font-size:12px;color:var(--muted)">▤ ${t==='__gal'?'GALLERY':'GUESTBOOK'} 탭
+        <i style="font-style:normal;font-size:10px;opacity:.8">— 이름·숨김 설정은 아래 고정 버튼에서</i></span>
+      ${ud}
+    </div>`;
+    ci++; const c=t, i=ci;
+    return `
     <div class="p-row">
       <input data-ci="${i}" value="${esc(c)}">
       <select data-ct="${i}" style="width:auto;margin-bottom:0">
@@ -2013,25 +2078,25 @@ function renderCatMgr(){
         <option value="memo" ${isMemo(c)?'selected':''}>메모 (카드 모아보기)</option>
       </select>
       <button class="btn" data-cs="${i}" style="font-size:12px">저장</button>
-      <button class="rmv" data-cup="${i}" title="위로" ${i===0?'disabled':''}>↑</button>
-      <button class="rmv" data-cdn="${i}" title="아래로" ${i===cats().length-1?'disabled':''}>↓</button>
+      ${ud}
       <label class="filelab" style="font-size:11px">🖼 이미지 추가<input type="file" data-cimg="${esc(c)}" accept="image/*" style="display:none"></label>
       ${(st.page.catImgs||{})[c]?`<button class="rmv" data-cimgx="${esc(c)}" style="font-size:10px">이미지 제거</button>`:''}
       <button class="rmv" data-cd="${i}">✕</button>
-    </div>`).join('') || '<p class="pl-empty">카테고리가 없어요.</p>';
+    </div>`; }).join('') || '<p class="pl-empty">카테고리가 없어요.</p>';
   renderCatFix();
-  const moveCat=async(i,d)=>{                     // 카테고리 순서 바꾸기
-    const next=[...cats()], j=i+d;
-    if(j<0||j>=next.length) return;
-    [next[i],next[j]]=[next[j],next[i]];
-    try{ await updateDoc(doc(db,'pages',st.handle),{cats:next}); }
+  const moveNav=async(ni,d)=>{                    // 탭 순서 바꾸기 — 카테고리·갤러리·방명록 공용(phase217)
+    const s=[...navSeq()], j=ni+d;
+    if(j<0||j>=s.length) return;
+    [s[ni],s[j]]=[s[j],s[ni]];
+    const nc=s.filter(x=>x!=='__gal'&&x!=='__gb');
+    try{ await updateDoc(doc(db,'pages',st.handle),{navSeq:s, cats:nc}); }
     catch(e){ msg('순서 저장 실패 — '+e.message); return; }
-    st.page.cats=next;
+    st.page.navSeq=s; st.page.cats=nc;
     renderCatMgr(); renderCatbar(); renderSide(); refreshWriteCats(); refreshGalCats();
     msg('순서 변경!');
   };
-  box.querySelectorAll('[data-cup]').forEach(b=>b.onclick=()=>moveCat(+b.dataset.cup,-1));
-  box.querySelectorAll('[data-cdn]').forEach(b=>b.onclick=()=>moveCat(+b.dataset.cdn, 1));
+  box.querySelectorAll('[data-nup]').forEach(b=>b.onclick=()=>moveNav(+b.dataset.nup,-1));
+  box.querySelectorAll('[data-ndn]').forEach(b=>b.onclick=()=>moveNav(+b.dataset.ndn, 1));
   box.querySelectorAll('[data-ct]').forEach(s=>s.onchange=async()=>{
     const name=cats()[+s.dataset.ct];
     let g=[...gcats()], m=[...mcats()];
@@ -2055,7 +2120,10 @@ function renderCatMgr(){
       st.page.cats=next;
       if(isG(oldName)){
         const g=gcats().map(x=>x===oldName?nv:x);
-        await updateDoc(doc(db,'pages',st.handle),{gcats:g}); st.page.gcats=g;
+        const m2=mcats().map(x=>x===oldName?nv:x);
+        const ns=navSeq().map(x=>x===oldName?nv:x);
+        await updateDoc(doc(db,'pages',st.handle),{gcats:g, mcats:m2, navSeq:ns});
+        st.page.gcats=g; st.page.mcats=m2; st.page.navSeq=ns;
       }
       const moves=st.posts.filter(p=>p.cat===oldName);
       await Promise.all(moves.map(p=>
