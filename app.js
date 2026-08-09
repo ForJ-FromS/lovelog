@@ -1868,14 +1868,36 @@ function backToList(){
   history.replaceState(null,'',urlFor(st.handle)); }
 $('#pv-back').onclick=backToList;
 $('#go-home').onclick=goHome;
+/* 인앱 브라우저(트위터 등)는 prompt()를 차단해 비번 창이 안 뜸 — 자체 입력 모달로 대체(phase224) */
+function askPw(title){
+  return new Promise(res=>{
+    let m=document.getElementById('pw-modal');
+    if(!m){
+      m=document.createElement('div'); m.id='pw-modal'; m.className='memo-modal hidden';
+      m.innerHTML=`<div class="mm-card" style="width:min(380px,92vw)">
+        <div class="mm-top"><b id="pwm-t">비밀번호</b><button class="btn" id="pwm-go" style="margin-left:auto;font-size:12px;padding:8px 18px;border-radius:10px">확인</button></div>
+        <input id="pwm-in" type="password" placeholder="비밀번호를 입력하세요" autocomplete="off">
+      </div>`;
+      document.body.appendChild(m);
+    }
+    m.querySelector('#pwm-t').textContent=title||'비밀번호';
+    const inp=m.querySelector('#pwm-in'); inp.value='';
+    m.classList.remove('hidden');
+    const done=v=>{ m.classList.add('hidden'); m.onclick=null; res(v); };
+    m.querySelector('#pwm-go').onclick=()=>done(inp.value);
+    inp.onkeydown=e=>{ if(e.key==='Enter') done(inp.value); if(e.key==='Escape') done(null); };
+    m.onclick=e=>{ if(e.target===m) done(null); };
+    setTimeout(()=>inp.focus(),60);
+  });
+}
 async function openPost(id, fromHome=false){
   const p=st.posts.find(x=>x.id===id); if(!p) return;
   if(p.priv && !st.mine){ msg('🔏 비공개 글이에요.'); return; }
   st.backHome=fromHome;                     // 홈에서 연 글은 BACK이 홈으로
   let body;
   if(p.secret){
-    const pw=prompt('비밀번호를 입력하세요'); if(pw===null) return;
-    try{ body=await decTxt(pw,p.enc); }catch(e){ alert('비밀번호가 맞지 않습니다.'); return; }
+    const pw=await askPw('🔒 비밀글'); if(pw===null||pw==='') return;
+    try{ body=await decTxt(pw,p.enc); }catch(e){ msg('비밀번호가 맞지 않아요.'); return; }
   } else body=p.body;
   st.cur=p; st.curBody=body;
   $('#pv-meta').textContent=p.cat+' · '+p.date+(p.secret?' · SECRET':'')+(p.priv?' · 🔏 비공개':'');
