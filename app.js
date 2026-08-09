@@ -704,6 +704,7 @@ function setGateCover(url){                          // 대문 배경 — 사진
 }
 const galNm=()=>st.page?.galName||'GALLERY';
 const gbNm=()=>st.page?.gbName||'GUESTBOOK';
+const homeNm=()=>st.page?.homeName||'HOME';
 const WNAME={latest:'최신글',notice:'공지',chat:'채팅로그',phone:'단말기',tl:'타임라인',feat:'★ 대표글',img:'이미지',nb:'이웃 홈',profile:'프로필',search:'검색',category:'카테고리',
   dday:'디데이',bgm:'BGM',quote:'인용구',links:'링크',banner:'배너칸',text:'글',cnt:'방문자수',stamp:'발도장'};
 const STAMP_LEGACY=['heart','paw','star','drop'];   // 옛 슬롯 이름 — 카운트 승계용
@@ -821,7 +822,7 @@ function renderCatbar(){
   const pill=(key,label,on)=> ci[key]
     ? `<a data-c="${esc(key)}" class="pillimg ${on?'on':''}"><img src="${ci[key]}" alt="${esc(label)}" draggable="false"></a>`
     : `<a data-c="${esc(key)}" class="${on?'on':''}">${esc(label)}</a>`;
-  bar.innerHTML = pill('home','HOME',homeOn)+
+  bar.innerHTML = pill('home',homeNm(),homeOn)+
     navSeq().map(t=> t==='__gal' ? (galOn()?pill('__gal',galNm(),st.cat==='__gal'):'')
       : t==='__gb' ? (st.page.gbOff?'' : pill('__gb',gbNm(),st.cat==='__gb'))
       : pill(t,t.toUpperCase(),st.cat===t)).join('')+
@@ -829,6 +830,9 @@ function renderCatbar(){
   bar.querySelectorAll('a').forEach(el=>el.onclick=()=>{
     el.dataset.c==='home' ? goHome() : goBoard(el.dataset.c);
   });
+  const gh=$('#go-home'), gh2=$('#gb-home');                      // 게시판 '‹ HOME' 백링크도 이름 추종
+  if(gh) gh.textContent='‹ '+homeNm();
+  if(gh2) gh2.textContent='‹ '+homeNm();
 }
 function applyView(){
   const home = st.cat==='home';
@@ -2215,7 +2219,8 @@ function renderCatFix(){
       ${extra}
     </div>`;
   box.innerHTML =
-    row('home','HOME')+
+    row('home',esc(homeNm()),
+      `<input data-cn="home" value="${esc(st.page.homeName||'')}" placeholder="HOME" title="홈 탭 이름 바꾸기 — 비우면 HOME" style="width:104px;margin-bottom:0;font-size:11.5px">`)+
     row('__gal',esc(galNm()),
       `<input data-cn="__gal" value="${esc(st.page.galName||'')}" placeholder="GALLERY" title="게시판 이름 바꾸기 — 비우면 GALLERY" style="width:104px;margin-bottom:0;font-size:11.5px">`+
       `<button class="btn" id="gal-toggle" style="font-size:11px">${galOn()?'숨기기 (알약·하단 갤러리 제거)':'표시하기'}</button>`+
@@ -2233,7 +2238,7 @@ function renderCatFix(){
   bindCatImg(box);
   box.querySelectorAll('[data-cn]').forEach(inp=>inp.addEventListener('change',async()=>{
     const v=inp.value.trim().slice(0,20);
-    const field = inp.dataset.cn==='__gal' ? 'galName' : 'gbName';
+    const field = inp.dataset.cn==='__gal' ? 'galName' : inp.dataset.cn==='home' ? 'homeName' : 'gbName';
     try{ await updateDoc(doc(db,'pages',st.handle),{[field]:v}); }catch(e){ msg('저장 실패 — '+e.message); return; }
     st.page[field]=v;
     renderCatbar(); renderSide(); renderCatFix();
