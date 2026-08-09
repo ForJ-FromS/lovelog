@@ -813,6 +813,7 @@ function catStyle(){
 function catShape(){ return st.page.catShape || 'list'; }
 function galCols(){ const n=+st.page.galCols; return (n>=1&&n<=4)?n:3; }
 function memoCols(){ const n=+st.page.memoCols; return (n>=2&&n<=4)?n:3; }
+function mpinMax(){ const n=+st.page.mpinMax; return (n>=1&&n<=6)?n:3; }
 function renderCatbar(){
   const bar=$('#catbar');
   if(catStyle()!=='bar'){ bar.classList.add('hidden'); return; }   // 블로그형에서도 '상단 알약 바' 선택 존중
@@ -1728,6 +1729,7 @@ function renderList(){
     $('#pin-slot').innerHTML='';
     let all=st.posts.filter(p=>p.cat===st.cat);
     if(st.q) all=all.filter(p=>p.title.toLowerCase().includes(st.q));
+    all=[...all.filter(p=>p.mpin), ...all.filter(p=>!p.mpin)];   // 📌 고정 메모는 맨 앞(phase231)
     const mper=memoCols()*4;
     renderPager(all.length, mper);
     const items=all.slice(((st.pg||1)-1)*mper, (st.pg||1)*mper);
@@ -1737,13 +1739,15 @@ function renderList(){
           <a class="memo-card${th?' has-mth':''}" data-id="${p.id}">
             ${th?`<img class="mth" src="${th}" alt="" draggable="false">`:''}
             ${p.title?`<b class="mt">${esc(p.title)}</b>`:''}
-            <span class="mk">${p.secret?'🔒':''}${p.priv?'🔏':''}</span>
+            <span class="mk">${(st.mine||p.mpin)?`<i class="mp${p.mpin?' on':''}"${st.mine?` data-mp="${p.id}" title="첫 화면에 고정 (${mpinMax()}개까지)"`:''}>📌</i>`:''}${p.secret?'🔒':''}${p.priv?'🔏':''}</span>
             <p class="mx">${p.secret?'비밀 메모예요.':esc(strip(p.raw||p.excerpt||''))}</p>
             <span class="mf"><i>${esc((p.date||'').slice(2))}</i><span>전체 보기 →</span></span>
           </a>`; }).join('')+`</div>`
       : '<p class="pl-empty">아직 메모가 없습니다.</p>';
     $('#more-btn').style.display='none';
-    document.querySelectorAll('.memo-card').forEach(el=>el.onclick=()=>openPost(el.dataset.id));
+    document.querySelectorAll('.memo-card').forEach(el=>el.onclick=e=>{
+      if(e.target.dataset.mp){ e.stopPropagation(); toggleMpin(e.target.dataset.mp); return; }
+      openPost(el.dataset.id); });
     return;
   }
   let items=st.posts;
@@ -1774,6 +1778,15 @@ function renderList(){
   document.querySelectorAll('[data-id]').forEach(el=>el.onclick=e=>{
     if(e.target.dataset.ft){ e.stopPropagation(); toggleFeat(e.target.dataset.ft); return; }
     openPost(el.dataset.id); });
+}
+async function toggleMpin(id){
+  const p=st.posts.find(x=>x.id===id); if(!p) return;
+  if(!p.mpin && st.posts.filter(x=>x.cat===p.cat&&x.mpin).length>=mpinMax()){
+    msg(`📌 고정은 ${mpinMax()}개까지예요 — 테마 탭에서 개수를 늘릴 수 있어요.`); return; }
+  try{ await updateDoc(doc(db,'pages',st.handle,'posts',id),{mpin:!p.mpin}); }
+  catch(err){ msg('저장 실패 — '+err.message); return; }
+  p.mpin=!p.mpin; renderList();
+  msg(p.mpin?'📌 첫 화면에 고정했어요.':'고정을 해제했어요.');
 }
 async function toggleFeat(id){
   const p=st.posts.find(x=>x.id===id); if(!p) return;
@@ -3101,6 +3114,7 @@ $('#w-go').onclick=async()=>{
       secret, pinned:pin, cmtOff,
       priv: $('#w-priv').checked,
       feat: $('#w-feat').checked,
+      mpin: editPost ? !!(st.posts.find(p2=>p2.id===editPost)?.mpin) : false,
       excerpt: secret?'':(asHtml?raw.replace(/<[^>]+>/g,' '):raw.replace(/\*\*|__|~~|==|\*/g,'')).replace(/\s+/g,' ').trim().slice(0,70),
       html: asHtml, imgs: wImgs.slice() };
     if(!secret) data.raw = raw;          // 원문 보관(수정 시 그대로 열기)
@@ -3752,6 +3766,7 @@ function fillSettings(){
   $('#s-catshape').value=catShape();
   $('#s-galcols').value=String(galCols());
   const smc=$('#s-memocols'); if(smc) smc.value=String(memoCols());
+  const smp=$('#s-mpinmax'); if(smp) smp.value=String(mpinMax());
   const slt=$('#s-listtc');
   if(slt){
     slt.value=st.page.listTc||'#8899aa'; slt.dataset.on=st.page.listTc?'1':'';
@@ -3837,6 +3852,7 @@ async function saveSettings(){
       catShape: $('#s-catshape').value,
       galCols: +$('#s-galcols').value||3,
       memoCols: +($('#s-memocols')?.value)||3,
+      mpinMax: +($('#s-mpinmax')?.value)||3,
       listTc: ($('#s-listtc')?.dataset.on ? $('#s-listtc').value : ''),
       homeStyle: $('#s-homestyle').value,
       theme: $('#s-theme').value,
@@ -4241,7 +4257,7 @@ $('#s-exp-json').onclick=()=>{
 };
 
 /* ---------- 복원 (백업에서 불러오기, phase208) ---------- */
-const POST_KEYS=['title','cat','date','ts','secret','pinned','cmtOff','priv','excerpt','html','imgs','raw','enc','body','feat'];
+const POST_KEYS=['title','cat','date','ts','secret','pinned','cmtOff','priv','excerpt','html','imgs','raw','enc','body','feat','mpin'];
 let bkData=null;
 $('#bk-file')?.addEventListener('change', async e=>{
   bkData=null; $('#bk-scope').hidden=true;
