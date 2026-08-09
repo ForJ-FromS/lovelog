@@ -1360,7 +1360,7 @@ function renderSide(){
             days=['일','월','화','수','목','금','토'],
             dt=(now.getMonth()+1)+'월 '+now.getDate()+'일 '+days[now.getDay()]+'요일';
       const head = stl==='win'
-        ? `<div class="ph-wtop"><span class="l">${esc(w.hd||'NOTICE.EXE')}</span><span class="r"><i>─</i><i>□</i><i>✕</i></span></div>
+        ? `<div class="ph-wtop"><span class="l">${esc(w.hd||'NOTICE.EXE')}</span><span class="r"><i>─</i><i>□</i></span></div>
            <div class="ph-meta"><span>${esc(w.sub||'INCOMING MESSAGE')}</span>${w.clk===false?'':`<b>${hh}:${mi}:${ss}</b>`}</div>`
         : stl==='term'
         ? `<div class="ph-top"><span class="l">${esc(w.hd||'SECURE LINE')}</span><span class="r">${esc(w.hd2||'CH-07')}</span></div>
