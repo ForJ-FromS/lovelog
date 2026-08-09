@@ -1360,7 +1360,7 @@ function renderSide(){
             days=['일','월','화','수','목','금','토'],
             dt=(now.getMonth()+1)+'월 '+now.getDate()+'일 '+days[now.getDay()]+'요일';
       const head = stl==='win'
-        ? `<div class="ph-wtop"><span class="l">${esc(w.hd||'NOTICE.EXE')}</span><span class="r"><i>─</i><i>□</i></span></div>
+        ? `<div class="ph-wtop"><span class="l">${esc(w.hd||'NOTICE.EXE')}</span><span class="r"><i>─</i><i>□</i><i class="phw-x" title="단말기 닫기">✕</i></span></div>
            <div class="ph-meta"><span>${esc(w.sub||'INCOMING MESSAGE')}</span>${w.clk===false?'':`<b>${hh}:${mi}:${ss}</b>`}</div>`
         : stl==='term'
         ? `<div class="ph-top"><span class="l">${esc(w.hd||'SECURE LINE')}</span><span class="r">${esc(w.hd2||'CH-07')}</span></div>
@@ -1387,6 +1387,8 @@ function renderSide(){
         phClosed.add(wi);
         const t=d.parentElement&&d.parentElement.classList.contains('wfl')?d.parentElement:d;
         t.remove(); phDock(wi); };
+      const pwx=d.querySelector('.phw-x');
+      if(pwx&&phx) pwx.onclick=()=>phx.onclick();                 // 98 타이틀바 ✕ = 같은 닫기(phase228)
       if(w.anim && d.classList.contains('ch-anim')){ const cb=d.querySelector('.ch-box');   // 자리 예약(phase168)
         if(cb){ d.classList.remove('ch-anim');
           const need=+w.maxH>0 ? Math.min(cb.scrollHeight, +w.maxH) : cb.scrollHeight;
