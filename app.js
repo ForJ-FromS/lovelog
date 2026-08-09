@@ -2934,17 +2934,21 @@ function typeObserve(p, text){
 }
 
 /* 서식 툴바 — 선택한 글자를 감싸요 */
-function wrapSel(mk, tag){
-  const ta=$('#w-body');
+function wrapSel(mk, tag, taId){
+  const ta=$(taId||'#w-body');
   const s=ta.selectionStart??ta.value.length, e=ta.selectionEnd??s;
   const sel=ta.value.slice(s,e)||'글자';
-  const [o,c]=$('#w-html').checked ? [`<${tag}>`,`</${tag}>`] : [mk,mk];
+  const [o,c]=(!taId && $('#w-html').checked) ? [`<${tag}>`,`</${tag}>`] : [mk,mk];
   ta.value=ta.value.slice(0,s)+o+sel+c+ta.value.slice(e);
   ta.focus(); ta.setSelectionRange(s+o.length, s+o.length+sel.length);
 }
 document.querySelectorAll('#w-fmt [data-fmt]').forEach(b=>{
   const map={b:['**','b'], i:['*','i'], u:['__','u'], s:['~~','s'], h:['==','mark']};
   b.onclick=()=>{ const [mk,tag]=map[b.dataset.fmt]; wrapSel(mk,tag); };
+});
+document.querySelectorAll('#mm-fmt [data-fmt]').forEach(b=>{
+  const map={b:['**','b'], i:['*','i'], u:['__','u'], s:['~~','s'], h:['==','mark']};
+  b.onclick=()=>{ const [mk,tag]=map[b.dataset.fmt]; wrapSel(mk,tag,'#mm-body'); };
 });
 let wImgs=[];
 function insertWTag(n){

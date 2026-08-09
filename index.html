@@ -308,9 +308,9 @@
   #w-img-list .wim i{position:absolute;left:3px;bottom:3px;font-style:normal;
     font-family:'IBM Plex Mono',monospace;font-size:9px;background:rgba(0,0,0,.6);
     color:#fff;border-radius:5px;padding:1px 5px}
-  #w-fmt button{width:30px;height:28px;border:1px solid var(--line);border-radius:7px;
+  #w-fmt button, #mm-fmt button{width:30px;height:28px;border:1px solid var(--line);border-radius:7px;
     background:var(--card2);color:var(--body);font-size:12.5px;cursor:pointer}
-  #w-fmt button:hover{border-color:var(--pri);color:var(--ink)}
+  #w-fmt button:hover, #mm-fmt button:hover{border-color:var(--pri);color:var(--ink)}
   .gb-re{margin:7px 0 0 14px;padding:8px 12px;border-left:2px solid var(--pri);
     background:color-mix(in srgb, var(--pri) 7%, transparent);border-radius:0 8px 8px 0;
     font-size:12.5px;line-height:1.8}
@@ -1392,7 +1392,15 @@
       <button class="btn" id="mm-go">추가</button>
     </div>
     <input id="mm-title" placeholder="제목 없음 — 비우면 첫 줄로 자동">
-    <textarea id="mm-body" placeholder="내용을 입력해 주세요.  (**굵게** 같은 서식 그대로 돼요)"></textarea>
+    <div id="mm-fmt" style="display:flex;gap:5px">
+      <button type="button" data-fmt="b" title="굵게 — **글자**"><b>B</b></button>
+      <button type="button" data-fmt="i" title="기울임 — *글자*"><i>I</i></button>
+      <button type="button" data-fmt="u" title="밑줄 — __글자__"><u>U</u></button>
+      <button type="button" data-fmt="s" title="취소선 — ~~글자~~"><s>S</s></button>
+      <button type="button" data-fmt="h" title="형광펜 — ==글자==">H</button>
+      <span class="note" style="align-self:center;margin-left:4px">글자를 드래그로 고르고 누르세요</span>
+    </div>
+    <textarea id="mm-body" placeholder="내용을 입력해 주세요."></textarea>
     <div id="mm-imgs" class="mm-imgs"></div>
     <div class="mm-foot">
       <button class="btn" id="mm-img" title="사진 — 최대 4장, 메모 아래에 붙어요">🖼</button>
@@ -1872,6 +1880,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=211"></script>
+<script type="module" src="./app.js?v=212"></script>
 </body>
 </html>
