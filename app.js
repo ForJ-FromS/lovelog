@@ -4005,7 +4005,7 @@ async function checkUpdNotice(){
     $('#upd-body').innerHTML=items.map(it=>`
       <div class="upd-item">
         ${(+it.id>seen||it.date)?`<p class="upd-meta">${+it.id>seen?'<b class="upd-new">NEW!</b>':''}${esc(it.date||'')}</p>`:''}
-        <div class="upd-tx">${esc(it.text)}</div>
+        <div class="upd-tx">${esc(String(it.text||'').trim().replace(/\n{3,}/g,'\n\n'))}</div>
       </div>`).join('');
     $('#upd-toast').classList.remove('hidden');
     $('#upd-ok').onclick=()=>{
