@@ -834,24 +834,43 @@
     color:color-mix(in srgb, var(--bgmTx, var(--muted)) 70%, transparent)}
   /* ── 메모형 카테고리 — 카드 모아보기 (phase213) ── */
   .memo-modal{position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;
-    background:rgba(0,0,0,.55);backdrop-filter:blur(5px);padding:18px}
-  .mm-card{width:min(540px,94vw);max-height:88vh;overflow:auto;display:flex;flex-direction:column;gap:10px;
-    background:hsl(var(--h) calc(18% * var(--sf,1)) 11%);border:1px solid var(--line);border-radius:16px;padding:16px 17px}
-  body.light .mm-card{background:#fff}
-  .mm-top{display:flex;align-items:center;gap:10px}
-  .mm-top b{font-size:14px}
-  .mm-top i{font-family:'IBM Plex Mono',monospace;font-style:normal;font-size:10px;letter-spacing:.14em;color:var(--pri)}
-  .mm-top #mm-x{cursor:pointer;color:var(--muted);font-size:15px;padding:2px 4px}
+    background:rgba(0,0,0,.5);backdrop-filter:blur(6px);padding:18px}
+  .mm-card{width:min(640px,94vw);max-height:90vh;overflow:auto;display:flex;flex-direction:column;gap:12px;
+    background:hsl(var(--h) calc(22% * var(--sf,1)) 12% / .96);backdrop-filter:blur(14px);
+    border:1px solid color-mix(in srgb, var(--pri) 28%, var(--line));border-radius:18px;padding:20px 22px 22px;
+    box-shadow:0 24px 70px rgba(0,0,0,.45)}
+  body.light .mm-card{background:rgba(255,255,255,.97)}
+  .mm-top{display:flex;align-items:center;gap:12px;padding-bottom:12px;margin-bottom:2px;
+    border-bottom:1px solid var(--line)}
+  .mm-top b{font-size:15px;letter-spacing:.02em}
+  .mm-top i{font-family:'IBM Plex Mono',monospace;font-style:normal;font-size:10px;letter-spacing:.16em;color:var(--pri)}
+  .mm-top #mm-x{cursor:pointer;color:var(--muted);font-size:16px;padding:2px 5px}
   .mm-top #mm-x:hover{color:var(--ink)}
-  .mm-top #mm-go{margin-left:auto;font-size:12px}
-  #mm-body{min-height:170px;resize:vertical}
+  .mm-top #mm-go{margin-left:auto;font-size:12.5px;padding:8px 18px;border-radius:10px;
+    border:1px solid color-mix(in srgb, var(--pri) 55%, var(--line));color:var(--pri)}
+  .mm-top #mm-go:hover{background:color-mix(in srgb, var(--pri) 14%, transparent)}
+  /* 입력칸 — 테마 반투명(브라우저 기본 흰색 차단) */
+  .mm-card input, .mm-card textarea{
+    background:color-mix(in srgb, var(--ink) 6%, transparent);
+    border:1px solid var(--line);border-radius:11px;color:var(--ink);
+    padding:11px 13px;font-size:13.5px;margin:0;width:100%;box-sizing:border-box}
+  .mm-card input::placeholder, .mm-card textarea::placeholder{color:var(--muted);opacity:.85}
+  .mm-card input:focus, .mm-card textarea:focus{outline:none;
+    border-color:color-mix(in srgb, var(--pri) 60%, var(--line))}
+  #mm-title{font-weight:600}
+  #mm-body{min-height:250px;resize:vertical;line-height:1.75}
+  #mm-pw{width:120px !important}
   .mm-imgs{display:flex;gap:8px;flex-wrap:wrap}
+  .mm-imgs:empty{display:none}
   .mm-th{position:relative}
-  .mm-th img{width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
+  .mm-th img{width:70px;height:70px;object-fit:cover;border-radius:9px;border:1px solid var(--line)}
   .mm-th i{position:absolute;top:-6px;right:-6px;background:hsl(var(--h) 20% 16%);border:1px solid var(--line);
     border-radius:50%;width:18px;height:18px;font-size:10px;font-style:normal;display:flex;
     align-items:center;justify-content:center;cursor:pointer;color:var(--ink)}
-  .mm-foot{display:flex;align-items:center;gap:12px;font-size:12px}
+  .mm-foot{display:flex;align-items:center;gap:14px;font-size:12.5px;color:var(--muted);padding-top:2px}
+  .mm-foot #mm-img{font-size:15px;padding:7px 13px;border-radius:10px;background:transparent;
+    border:1px solid var(--line)}
+  .mm-foot #mm-img:hover{border-color:var(--pri);color:var(--pri)}
   .memo-grid{display:grid;grid-template-columns:repeat(var(--memoc,3),1fr);gap:14px}
   .memo-card{position:relative;display:flex;flex-direction:column;gap:6px;cursor:pointer;
     border:1px solid var(--line);border-radius:12px;padding:14px 15px 12px;
