@@ -662,17 +662,18 @@ function sideCfg(){
   return s.map(w=>({col:DEFCOL[w.t]||'r', ...w}));
 }
 /* 홈 중앙 붙박이: 고정글 + 최신글 */
-function latestBlock(box, n){
-  const pin=st.posts.find(p=>p.pinned);
-  if(pin){
-    const pd=document.createElement('a'); pd.className='pin';
-    pd.innerHTML=`<span class="tag">◈ PINNED</span>
-      <p class="t">${esc(pin.title)}${pin.secret?' 🔒':''}${pin.priv?' 🔏':''}</p>
-      ${pin.excerpt?`<p class="ex">${esc(pin.excerpt)}</p>`:''}
-      <p class="meta">${esc(pin.cat)} · ${esc(pin.date)}</p>`;
-    pd.onclick=()=>{ goBoard('recent'); openPost(pin.id,true); };
-    box.appendChild(pd);
-  }
+function pinCard(){                              // 고정글 카드 — 단독 위젯·최신글 동거 겸용(phase236)
+  const pin=st.posts.find(p=>p.pinned); if(!pin) return null;
+  const pd=document.createElement('a'); pd.className='pin';
+  pd.innerHTML=`<span class="tag">◈ PINNED</span>
+    <p class="t">${esc(pin.title)}${pin.secret?' 🔒':''}${pin.priv?' 🔏':''}</p>
+    ${pin.excerpt?`<p class="ex">${esc(pin.excerpt)}</p>`:''}
+    <p class="meta">${esc(pin.cat)} · ${esc(pin.date)}</p>`;
+  pd.onclick=()=>{ goBoard('recent'); openPost(pin.id,true); };
+  return pd;
+}
+function latestBlock(box, n, withPin=true){
+  if(withPin){ const pc=pinCard(); if(pc) box.appendChild(pc); }
   const d=document.createElement('div'); d.className='side sw-latest';
   const arr=st.posts.filter(p=>!p.pinned).slice(0, +n>0?Math.min(+n,20):5);
   d.innerHTML=`<p class="label">LATEST</p><div class="mini-rows">`+
@@ -709,7 +710,7 @@ function setGateCover(url){                          // 대문 배경 — 사진
 const galNm=()=>st.page?.galName||'GALLERY';
 const gbNm=()=>st.page?.gbName||'GUESTBOOK';
 const homeNm=()=>st.page?.homeName||'HOME';
-const WNAME={latest:'최신글',notice:'공지',chat:'채팅로그',phone:'단말기',tl:'타임라인',feat:'★ 대표글',img:'이미지',nb:'이웃 홈',profile:'프로필',search:'검색',category:'카테고리',
+const WNAME={latest:'최신글',pin:'📌 고정글',notice:'공지',chat:'채팅로그',phone:'단말기',tl:'타임라인',feat:'★ 대표글',img:'이미지',nb:'이웃 홈',profile:'프로필',search:'검색',category:'카테고리',
   dday:'디데이',bgm:'BGM',quote:'인용구',links:'링크',banner:'배너칸',text:'글',cnt:'방문자수',stamp:'발도장'};
 const STAMP_LEGACY=['heart','paw','star','drop'];   // 옛 슬롯 이름 — 카운트 승계용
 function parseEmo(s){
@@ -1101,9 +1102,16 @@ function renderSide(){
       wfl.appendChild(flw); box=flw;
       bindFloatDrag(flw, wi);
     }
+    if(w.t==='pin'){
+      if(!home) return;
+      const el=pinCard(); if(!el) return;          // 고정글이 없으면 자리도 없음
+      el.dataset.wi=wi; bindDrag(el);
+      box.appendChild(el);
+      return;
+    }
     if(w.t==='latest'){
       if(!home) return;
-      const el=latestBlock(box, w.n);
+      const el=latestBlock(box, w.n, w.noPin!==true);
       el.dataset.wi=wi; bindDrag(el);
       return;
     }
@@ -2370,8 +2378,9 @@ function renderWidEdit(){
     <div class="p-row" style="align-items:center;gap:8px;font-size:11.5px;color:var(--muted)">
       보여줄 최신글 개수
       <input type="number" id="we-ltn" value="${+w.n>0?+w.n:5}" min="1" max="20" style="width:80px">
-      <span style="font-size:10.5px">(기본 5 · 고정글은 별도로 항상 표시)</span>
-    </div>`;
+      <span style="font-size:10.5px">(기본 5)</span>
+    </div>
+    <label class="chk" style="font-size:11.5px"><input type="checkbox" id="we-ltpin" ${w.noPin?'':'checked'}> 📌 고정글 함께 표시 — 끄면 최신글만 나와요 (고정글은 '📌 고정글' 위젯으로 따로 둘 수 있어요)</label>`;
   if(w.t==='tl') html+=`
     <input id="we-tltt" placeholder="위젯 제목 (기본: TIMELINE)" value="${esc(w.title||'')}">
     <select id="we-tlst">
@@ -2713,6 +2722,8 @@ function renderWidEdit(){
   const chmx=$('#we-chmax'); if(chmx) chmx.addEventListener('input',()=>{ const n=+chmx.value; if(n>0) w.maxH=n; else delete w.maxH; });
   const ltn=$('#we-ltn'); if(ltn) ltn.addEventListener('input',()=>{
     const n=+ltn.value; if(n>0) w.n=Math.min(n,20); else delete w.n; });
+  const ltp=$('#we-ltpin'); if(ltp) ltp.addEventListener('change',()=>{
+    if(ltp.checked) delete w.noPin; else w.noPin=true; });
   const qan=$('#we-qanim'); if(qan) qan.addEventListener('change',()=>{ w.anim=qan.checked; });
   const qmk=$('#we-qmark'); if(qmk) qmk.addEventListener('change',()=>{
     if(qmk.checked) delete w.noQm; else w.noQm=true; });
@@ -2879,11 +2890,11 @@ function syncWid(w){
 $('#wid-add').onclick=()=>{
   const t=$('#wid-type').value;
   if(t==='latest' && draft.some(w=>w.t==='latest')){ msg('최신글 블록은 하나만 둘 수 있어요.'); return; }
-  if(['search','category','dday','bgm','profile','cnt'].includes(t) && draft.some(w=>w.t===t)){
+  if(['search','category','dday','bgm','profile','cnt','pin'].includes(t) && draft.some(w=>w.t===t)){
     msg('이미 있는 위젯이에요.'); return; }
   draft.push(['links','banner','nb','tl'].includes(t)?{t,items:[]}:{t});
   editIdx=draft.length-1; renderWidList();
-  if(['profile','quote','links','banner','dday','bgm','notice','chat','phone','img','nb','text','stamp','tl','feat'].includes(t)) renderWidEdit();
+  if(['profile','quote','links','banner','dday','bgm','notice','chat','phone','img','nb','text','stamp','tl','feat','latest'].includes(t)) renderWidEdit();
 };
 $('#wid-save').onclick=async()=>{
   if(editIdx>=0 && draft[editIdx]) syncWid(draft[editIdx]);
@@ -3137,8 +3148,12 @@ $('#w-go').onclick=async()=>{
       updateDoc(doc(db,'pages',st.handle,'posts',p.id),{pinned:false})));
     if(editPost){
       const old=st.posts.find(p=>p.id===editPost)||{};
+      const dateNoon=s=>{ const[y,m,d]=(s||'').split('.').map(Number);
+        return (y&&m&&d)?new Date(y,m-1,d,12,0,0):new Date(); };
       const upd={...data,
-        ts: data.date===(old.date||'') ? (old.ts||data.ts) : data.ts,   // 날짜 그대로면 정렬 시각 승계
+        ts: data.date===(old.date||'')
+          ? (old.ts || dateNoon(old.date||data.date))   // 승계 — ts 없던 옛 글도 '지금'이 아니라 제 날짜 자리로(phase235)
+          : data.ts,
         editedAt: serverTimestamp()};
       if(!secret) upd.enc='';
       await setDoc(doc(db,'pages',st.handle,'posts',editPost), upd);
