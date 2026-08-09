@@ -652,8 +652,8 @@ function sideCfg(){
   let s;
   if(st.page.side && st.page.side.length){
     s=st.page.side;
-    if(!s.some(w=>w.t==='latest') && !st.page.noLatest)   // 기존 홈 이행: 최신글을 위젯으로 자동 편입
-      s=[{t:'latest'}, ...s];                              // 맨 앞 = 옛 붙박이처럼 중앙 상단 유지 (✕ 후 저장하면 noLatest로 완전 제거)
+    if(!Array.isArray(st.page.side) && !st.page.noLatest) // 위젯을 한 번도 저장한 적 없는 홈에만 최신글 자동 편입(phase234)
+      s=[{t:'latest'}, ...s];                              // 저장 이력이 있는 홈은 위젯 목록이 진실 — 지운 최신글 부활 금지
   }else{
     s=[{t:'latest'},{t:'search'},{t:'category'}];
     if(st.page.ddays&&st.page.ddays.length) s.push({t:'dday'});
