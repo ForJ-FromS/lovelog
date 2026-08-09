@@ -1696,6 +1696,7 @@ $('#mm-go').onclick=async()=>{
     $('#w-pin').checked=!!memoEdit.pinned;
     $('#w-feat').checked=!!memoEdit.feat;
     $('#w-html').checked=!!memoEdit.html;
+    const wdm=$('#w-date'); if(wdm&&memoEdit.date) wdm.value=memoEdit.date.replaceAll('.','-');
   }
   await $('#w-go').onclick();
   if(!$('#w-title').value) closeMemoModal();               // 발행 성공 시 폼이 비워짐 — 실패면 팝업 유지
@@ -3066,6 +3067,8 @@ function clearWriteForm(){
   ['w-title','w-pw','w-body'].forEach(i=>$('#'+i).value='');
   $('#w-secret').checked=false; $('#w-pin').checked=false; $('#w-priv').checked=false; $('#w-feat').checked=false; $('#w-pw').style.display='none';
   $('#w-cmt').checked=true; $('#w-html').checked=false; wImgs=[]; renderWImgs();
+  const dN=new Date(), wdi=$('#w-date');
+  if(wdi) wdi.value=dN.getFullYear()+'-'+String(dN.getMonth()+1).padStart(2,'0')+'-'+String(dN.getDate()).padStart(2,'0');
   $('#w-go').textContent='발행'; $('#w-edit-note').classList.add('hidden');
 }
 function startEditPost(){
@@ -3075,6 +3078,7 @@ function startEditPost(){
   editPost=p.id;
   $('#w-title').value=p.title||'';
   $('#w-cat').value=p.cat||'';
+  const wde=$('#w-date'); if(wde&&p.date) wde.value=p.date.replaceAll('.','-');
   if(!p.secret && typeof p.raw==='string' && p.raw!==''){
     $('#w-body').value=p.raw; $('#w-html').checked=!!p.html;
   }else{
@@ -3115,7 +3119,10 @@ $('#w-go').onclick=async()=>{
     wImgs.forEach((im,i)=>{
       html=html.split(`[사진${i+1}]`).join(`<img src="${im}" alt="">`);
     });
-    const data={ title, cat, date:today(), ts:serverTimestamp(),
+    const wd=$('#w-date')?.value||'';                              // YYYY-MM-DD (phase233 작성일 지정)
+    const wdDot=wd?wd.replaceAll('-','.'):today();
+    const data={ title, cat, date:wdDot,
+      ts: wdDot===today()?serverTimestamp():new Date(+wd.slice(0,4), +wd.slice(5,7)-1, +wd.slice(8,10), 12, 0, 0),
       secret, pinned:pin, cmtOff,
       priv: $('#w-priv').checked,
       feat: $('#w-feat').checked,
@@ -3130,7 +3137,8 @@ $('#w-go').onclick=async()=>{
       updateDoc(doc(db,'pages',st.handle,'posts',p.id),{pinned:false})));
     if(editPost){
       const old=st.posts.find(p=>p.id===editPost)||{};
-      const upd={...data, date: old.date||data.date, ts: old.ts||data.ts,
+      const upd={...data,
+        ts: data.date===(old.date||'') ? (old.ts||data.ts) : data.ts,   // 날짜 그대로면 정렬 시각 승계
         editedAt: serverTimestamp()};
       if(!secret) upd.enc='';
       await setDoc(doc(db,'pages',st.handle,'posts',editPost), upd);
@@ -3142,7 +3150,7 @@ $('#w-go').onclick=async()=>{
       msg('수정 완료!');
       return;
     }
-    const d0=new Date(), pad=n=>String(n).padStart(2,'0');
+    const d0=wd?new Date(+wd.slice(0,4),+wd.slice(5,7)-1,+wd.slice(8,10)):new Date(), pad=n=>String(n).padStart(2,'0');
     const base=String(d0.getFullYear()).slice(2)+pad(d0.getMonth()+1)+pad(d0.getDate());
     const used=new Set(st.posts.map(p=>p.id));
     let nid='', n=1;
