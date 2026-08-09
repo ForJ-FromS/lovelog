@@ -470,6 +470,8 @@ async function enterPage(){
   if(p.theme && p.theme!=='default') document.body.classList.add('theme-'+p.theme);
   document.documentElement.style.setProperty('--galc', galCols());
   document.documentElement.style.setProperty('--memoc', memoCols());
+  if(st.page.listTc) document.documentElement.style.setProperty('--listTc', st.page.listTc);
+  else document.documentElement.style.removeProperty('--listTc');
   document.body.classList.remove('catsh-list','catsh-pill','catsh-text','catsh-box');
   document.body.classList.add('catsh-'+catShape());
   document.body.classList.toggle('side-left', p.sidePos==='left');
@@ -1357,7 +1359,10 @@ function renderSide(){
             ss=String(now.getSeconds()).padStart(2,'0'),
             days=['일','월','화','수','목','금','토'],
             dt=(now.getMonth()+1)+'월 '+now.getDate()+'일 '+days[now.getDay()]+'요일';
-      const head = stl==='term'
+      const head = stl==='win'
+        ? `<div class="ph-wtop"><span class="l">${esc(w.hd||'NOTICE.EXE')}</span><span class="r"><i>─</i><i>□</i><i>✕</i></span></div>
+           <div class="ph-meta"><span>${esc(w.sub||'INCOMING MESSAGE')}</span>${w.clk===false?'':`<b>${hh}:${mi}:${ss}</b>`}</div>`
+        : stl==='term'
         ? `<div class="ph-top"><span class="l">${esc(w.hd||'SECURE LINE')}</span><span class="r">${esc(w.hd2||'CH-07')}</span></div>
            <div class="ph-meta"><span>${esc(w.sub||'INCOMING TRANSMISSION')}</span>${w.clk===false?'':`<b>${hh}:${mi}:${ss}</b>`}</div>`
         : (stl==='oled' ? `<div class="ph-isl"></div>` : `<div class="ph-bar"><span>${hh}:${mi}</span><span>ıllı&nbsp; ᯤ&nbsp; ▮▮▯</span></div>`)
@@ -2572,13 +2577,14 @@ function renderWidEdit(){
         <option value="oled" ${(w.style||'oled')==='oled'?'selected':''}>OLED 미니멀 (검정 잠금화면)</option>
         <option value="glass" ${w.style==='glass'?'selected':''}>프로스트 글래스 (유리 알림)</option>
         <option value="term" ${w.style==='term'?'selected':''}>관제 단말 (세계관 터미널)</option>
+        <option value="win" ${w.style==='win'?'selected':''}>레트로 창 (윈도우 98풍)</option>
       </select>
       <label class="chk" title="미니멀·글래스는 잠금화면 큰 시계, 관제 단말은 헤더의 초 단위 시계를 켜고 꺼요 (보는 사람의 현재 시각)"><input type="checkbox" id="we-phclk" ${w.clk!==false?'checked':''}> 🕐 시계</label>
       <label class="chk" title="화면에 보일 때 알림이 순서대로 떠올라요"><input type="checkbox" id="we-phanim" ${w.anim?'checked':''}> ✨ 움짤 효과</label>
       <label class="chk" title="다 뜨면 잠시 쉬었다가 처음부터 다시 재생돼요"><input type="checkbox" id="we-phloop" ${w.loop?'checked':''}> ↻ 반복 재생</label>
       <label class="chk" title="반복 한 바퀴가 끝나면 단말기가 접혔다가 다시 쌓여요 — 끄면 크기를 유지한 채 다시 떠요 (기본)"><input type="checkbox" id="we-phfold" ${w.fold?'checked':''}> ⇅ 접었다 펴기</label>
     </div>
-    ${w.style==='term'?`
+    ${w.style==='term'||w.style==='win'?`
     <div class="p-row">
       <input data-phhd placeholder="헤더 라벨 (기본: SECURE LINE)" value="${esc(w.hd||'')}" style="flex:2" title="세계관 이름을 넣어보세요 — 예: FEARLESS · SECURE LINE">
       <input data-phhd2 placeholder="우측 코드 (기본: CH-07)" value="${esc(w.hd2||'')}" style="flex:1">
@@ -2976,11 +2982,13 @@ function typeObserve(p, text){
 /* 서식 툴바 — 선택한 글자를 감싸요 */
 function wrapSel(mk, tag, taId){
   const ta=$(taId||'#w-body');
+  const sc=ta.scrollTop;                             // 본문 재조립 시 스크롤 유실 방지(phase225)
   const s=ta.selectionStart??ta.value.length, e=ta.selectionEnd??s;
   const sel=ta.value.slice(s,e)||'글자';
   const [o,c]=(!taId && $('#w-html').checked) ? [`<${tag}>`,`</${tag}>`] : [mk,mk];
   ta.value=ta.value.slice(0,s)+o+sel+c+ta.value.slice(e);
   ta.focus(); ta.setSelectionRange(s+o.length, s+o.length+sel.length);
+  ta.scrollTop=sc;
 }
 document.querySelectorAll('#w-fmt [data-fmt]').forEach(b=>{
   const map={b:['**','b'], i:['*','i'], u:['__','u'], s:['~~','s'], h:['==','mark']};
@@ -2993,9 +3001,9 @@ document.querySelectorAll('#mm-fmt [data-fmt]').forEach(b=>{
 let wImgs=[];
 function insertWTag(n){
   const ta=$('#w-body'), tk=`\n[사진${n}]\n`,
-        s=ta.selectionStart??ta.value.length;
+        s=ta.selectionStart??ta.value.length, sc=ta.scrollTop;
   ta.value = ta.value.slice(0,s)+tk+ta.value.slice(ta.selectionEnd??s);
-  const c=s+tk.length; ta.focus(); ta.setSelectionRange(c,c);
+  const c=s+tk.length; ta.focus(); ta.setSelectionRange(c,c); ta.scrollTop=sc;
 }
 function renderWImgs(){
   const box=$('#w-img-list'); if(!box) return;
@@ -3737,6 +3745,12 @@ function fillSettings(){
   $('#s-catshape').value=catShape();
   $('#s-galcols').value=String(galCols());
   const smc=$('#s-memocols'); if(smc) smc.value=String(memoCols());
+  const slt=$('#s-listtc');
+  if(slt){
+    slt.value=st.page.listTc||'#8899aa'; slt.dataset.on=st.page.listTc?'1':'';
+    slt.oninput=()=>{ slt.dataset.on='1'; };
+    const sx=$('#s-listtc-x'); if(sx) sx.onclick=()=>{ slt.dataset.on=''; slt.value='#8899aa'; msg('저장하면 테마 기본 색으로 돌아가요.'); };
+  }
   $('#s-homestyle').value=homeStyle();
   $('#s-theme').value=p.theme||'default';
   renderStkList();
@@ -3816,6 +3830,7 @@ async function saveSettings(){
       catShape: $('#s-catshape').value,
       galCols: +$('#s-galcols').value||3,
       memoCols: +($('#s-memocols')?.value)||3,
+      listTc: ($('#s-listtc')?.dataset.on ? $('#s-listtc').value : ''),
       homeStyle: $('#s-homestyle').value,
       theme: $('#s-theme').value,
       bgDim: parseInt($('#s-dim').value)||78,
