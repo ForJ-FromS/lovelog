@@ -680,22 +680,23 @@ function pinCard(){                              // 고정글 카드 — 단독 
   pd.onclick=()=>openFromHome(pin.id);
   return pd;
 }
-function latestBlock(box, n, withPin=true, cat=''){
-  if(cat && !cats().includes(cat)) cat='';           // 삭제·개명된 카테고리는 전체로 폴백(phase240)
-  if(withPin && !cat){ const pc=pinCard(); if(pc) box.appendChild(pc); }
+function latestBlock(box, n, withPin=true, catL=[]){
+  catL=(Array.isArray(catL)?catL:[catL]).filter(c=>c&&cats().includes(c));   // 복수 선택(phase241) — 삭제·개명분 자동 제외
+  if(withPin && !catL.length){ const pc=pinCard(); if(pc) box.appendChild(pc); }
   const d=document.createElement('div'); d.className='side sw-latest';
-  const arr=st.posts.filter(p=>!p.pinned && (!cat||p.cat===cat)).slice(0, +n>0?Math.min(+n,20):5);
-  d.innerHTML=`<p class="label">LATEST${cat?' · '+esc(cat.toUpperCase()):''}</p><div class="mini-rows">`+
+  const arr=st.posts.filter(p=>!p.pinned && (!catL.length||catL.includes(p.cat))).slice(0, +n>0?Math.min(+n,20):5);
+  const lbl=catL.length ? ' · '+catL.map(c=>esc(c.toUpperCase())).join(' · ') : '';
+  d.innerHTML=`<p class="label">LATEST${lbl}</p><div class="mini-rows">`+
     (arr.length?arr.map(p2=>`<a data-lid="${p2.id}">
       <span class="dot">◈</span><span class="t">${esc(p2.title)}${p2.secret?' 🔒':''}${p2.priv?' 🔏':''}</span>
       <span class="dt">${esc((p2.date||'').slice(5))}</span></a>`).join('')
     :'<p class="pl-empty">아직 글이 없습니다.</p>')+
-    `</div>${cat?`<p class="cat-add" style="display:block" id="latest-more">${esc(cat)} 전체 →</p>`:(st.page.allOff?'':'<p class="cat-add" style="display:block" id="latest-more">전체 보기 →</p>')}`;
+    `</div>${catL.length===1?`<p class="cat-add" style="display:block" id="latest-more">${esc(catL[0])} 전체 →</p>`:(st.page.allOff?'':'<p class="cat-add" style="display:block" id="latest-more">전체 보기 →</p>')}`;
   box.appendChild(d);
   d.querySelectorAll('[data-lid]').forEach(el=>el.onclick=()=>{
     openFromHome(el.dataset.lid); });
   const lm=d.querySelector('#latest-more');                       // allOff면 링크가 없음(phase200 널 가드)
-  if(lm) lm.onclick=()=>goBoard(cat||'recent');
+  if(lm) lm.onclick=()=>goBoard(catL.length===1?catL[0]:'recent');
   return d;
 }
 /* 홈 폰트 10종(phase238) — 선택된 것만 동적 로드 */
@@ -756,7 +757,7 @@ function setGateCover(url){                          // 대문 배경 — 사진
 const galNm=()=>st.page?.galName||'GALLERY';
 const gbNm=()=>st.page?.gbName||'GUESTBOOK';
 const homeNm=()=>st.page?.homeName||'HOME';
-const WNAME={latest:'최신글',pin:'📌 고정글',notice:'공지',chat:'채팅로그',phone:'단말기',tl:'타임라인',feat:'★ 대표글',img:'이미지',nb:'이웃 홈',profile:'프로필',search:'검색',category:'카테고리',
+const WNAME={latest:'최신글',pin:'📌 고정글',char:'캐릭터 프로필',pair:'페어 프로필',cal:'달력',habit:'해빗 트래커',notice:'공지',chat:'채팅로그',phone:'단말기',tl:'타임라인',feat:'★ 대표글',img:'이미지',nb:'이웃 홈',profile:'프로필',search:'검색',category:'카테고리',
   dday:'디데이',bgm:'BGM',quote:'인용구',links:'링크',banner:'배너칸',text:'글',cnt:'방문자수',stamp:'발도장'};
 const STAMP_LEGACY=['heart','paw','star','drop'];   // 옛 슬롯 이름 — 카운트 승계용
 function parseEmo(s){
@@ -841,7 +842,7 @@ function fillCounter(){
   b.textContent = c.total||0;
 }
 const DEFCOL={search:'l',category:'l',profile:'l',latest:'c',tl:'r',feat:'r',quote:'c',notice:'c',chat:'c',phone:'c',img:'l',nb:'r',
-  dday:'r',bgm:'r',links:'r',banner:'r',text:'c',cnt:'l'};
+  dday:'r',bgm:'r',links:'r',banner:'r',text:'c',cnt:'l',char:'r',pair:'c',cal:'r',habit:'r'};
 const homeStyle=()=>st.page?.homeStyle||'grid';
 const galOn=()=>st.page?.galOn!==false;
 const stripOn=()=>st.page?.stripOn!==false;
@@ -1157,7 +1158,7 @@ function renderSide(){
     }
     if(w.t==='latest'){
       if(!home) return;
-      const el=latestBlock(box, w.n, w.noPin!==true, w.cat||'');
+      const el=latestBlock(box, w.n, w.noPin!==true, w.cats||(w.cat?[w.cat]:[]));
       el.dataset.wi=wi; bindDrag(el);
       return;
     }
@@ -1308,6 +1309,88 @@ function renderSide(){
       d.innerHTML=(w.label===''?'':`<p class="label">${esc(w.label||'IMAGE')}</p>`)
         +(w.url?`<a href="${esc(w.url)}" target="_blank" rel="noopener" class="iw">${pic}</a>`:`<span class="iw">${pic}</span>`)
         +(w.text?`<p class="iw-cap">${esc(w.text).replace(/\n/g,'<br>')}</p>`:'');
+      box.appendChild(d); return;
+    }
+    if(w.t==='char' || w.t==='pair'){
+      const card=P=>{ P=P||{};
+        const its=(P.items||[]).filter(i=>i.k||i.v);
+        return `<div class="cp-card">
+          ${P.img?`<img class="cp-img" src="${P.img}" alt="">`:''}
+          ${P.name?`<b class="cp-nm">${esc(P.name)}</b>`:''}
+          ${P.sub?`<i class="cp-sub">${esc(P.sub)}</i>`:''}
+          ${its.length?`<dl class="cp-dl">${its.map(i=>`<div><dt>${esc(i.k||'')}</dt><dd>${esc(i.v||'')}</dd></div>`).join('')}</dl>`:''}
+        </div>`; };
+      const empty = w.t==='char' ? !(w.p&&(w.p.img||w.p.name)) : !((w.a&&(w.a.img||w.a.name))||(w.b&&(w.b.img||w.b.name)));
+      if(empty && !st.mine) return;
+      d.className+=' w-cp';
+      d.innerHTML = (w.label?`<p class="label">${esc(w.label)}</p>`:'')
+        + (w.t==='char' ? card(w.p)
+           : `<div class="cp-pair">${card(w.a)}<span class="cp-cn">${esc(w.cn||'♥')}</span>${card(w.b)}</div>`)
+        + (empty?'<p class="pl-empty">✎에서 인물을 채워주세요.</p>':'');
+      box.appendChild(d); return;
+    }
+    if(w.t==='cal'){
+      d.className+=' w-cal';
+      const now=new Date();
+      let [cy,cm] = w.ym ? w.ym.split('-').map(Number) : [now.getFullYear(), now.getMonth()+1];
+      const marks=w.marks||[];
+      const memoDates = w.memoDot ? new Set(st.posts.filter(p=>isMemo(p.cat)).map(p=>(p.date||'').replaceAll('.','-'))) : new Set();
+      const draw=()=>{
+        const first=new Date(cy,cm-1,1), off=first.getDay(), dim=new Date(cy,cm,0).getDate();
+        const pad2=x=>String(x).padStart(2,'0');
+        const tod=`${now.getFullYear()}-${pad2(now.getMonth()+1)}-${pad2(now.getDate())}`;
+        let cells='';
+        for(let k=0;k<off;k++) cells+='<span class="cd off"></span>';
+        for(let day=1;day<=dim;day++){
+          const ds=`${cy}-${pad2(cm)}-${pad2(day)}`;
+          const mk=marks.filter(m=>{ const d1=m.d, d2=m.d2||m.d; return d1&&ds>=d1&&ds<=d2; });
+          const single=mk.find(m=>!(m.d2&&m.d2!==m.d));
+          const range=mk.find(m=>m.d2&&m.d2!==m.d);
+          const rCls=range?(' rg'+(ds===range.d?' rs':'')+(ds===(range.d2||range.d)?' re':'')):'';
+          cells+=`<span class="cd${ds===tod?' today':''}${rCls}" ${mk.length&&mk[0].t?`title="${esc(mk[0].t)}"`:''} data-cd="${ds}">
+            <i>${day}</i>${single&&single.e?`<b class="ce">${esc(single.e)}</b>`:''}${range&&ds===range.d&&range.e?`<b class="ce">${esc(range.e)}</b>`:''}${memoDates.has(ds)?'<u class="cmemo"></u>':''}</span>`;
+        }
+        d.innerHTML=`<p class="label">${esc(w.label||'CALENDAR')}</p>
+          <div class="cal-hd"><span class="cnav" data-cn="-1">◀</span><b>${cy}. ${pad2(cm)}</b><span class="cnav" data-cn="1">▶</span></div>
+          <div class="cal-wd">${['S','M','T','W','T','F','S'].map(x=>`<span>${x}</span>`).join('')}</div>
+          <div class="cal-gr">${cells}</div>`;
+        d.querySelectorAll('[data-cn]').forEach(el=>el.onclick=()=>{ cm+=+el.dataset.cn;
+          if(cm<1){cm=12;cy--;} if(cm>12){cm=1;cy++;} draw(); });
+        if(w.memoDot) d.querySelectorAll('.cd').forEach(el=>{
+          if(el.querySelector('.cmemo')) el.onclick=()=>{
+            const ds=el.dataset.cd.replaceAll('-','.');
+            const p=st.posts.find(p2=>isMemo(p2.cat)&&p2.date===ds);
+            if(p) openFromHome(p.id); };
+        });
+      };
+      draw();
+      box.appendChild(d); return;
+    }
+    if(w.t==='habit'){
+      const hs=(w.habits||[]).filter(h=>h.n);
+      if(!hs.length && !st.mine) return;
+      d.className+=' w-habit';
+      const nd=+w.days===14?14:7;
+      const days=[]; const now2=new Date();
+      for(let k=nd-1;k>=0;k--){ const t2=new Date(now2); t2.setDate(now2.getDate()-k);
+        days.push(`${t2.getFullYear()}-${String(t2.getMonth()+1).padStart(2,'0')}-${String(t2.getDate()).padStart(2,'0')}`); }
+      const WD=['일','월','화','수','목','금','토'];
+      const fill = w.mode==='emo' ? esc(w.emo||'💛') : w.mode==='ci' ? '●' : '■';
+      d.innerHTML=`<p class="label">${esc(w.label||'HABIT')}</p>
+        <div class="hb-gr" style="grid-template-columns:auto repeat(${nd},1fr)">
+          <span></span>${days.map(ds=>`<span class="hb-d">${WD[new Date(ds+'T12:00').getDay()]}<i>${+ds.slice(8)}</i></span>`).join('')}
+          ${hs.map((h,hi)=>`<span class="hb-n">${esc(h.n)}</span>`+days.map(ds=>{
+            const on=h.m&&h.m[ds];
+            return `<span class="hb-c${on?' on':''}"${st.mine?` data-hb="${hi}" data-hd="${ds}"`:''}>${on?fill:''}</span>`; }).join('')).join('')}
+        </div>${hs.length?'':'<p class="pl-empty">✎에서 습관을 추가해주세요.</p>'}`;
+      if(st.mine) d.querySelectorAll('[data-hb]').forEach(el=>el.onclick=async()=>{
+        const h=(st.page.side[wi].habits||[])[+el.dataset.hb]; if(!h) return;
+        h.m=h.m||{}; const ds=el.dataset.hd;
+        if(h.m[ds]) delete h.m[ds]; else h.m[ds]=1;
+        try{ await updateDoc(doc(db,'pages',st.handle),{side:st.page.side}); }
+        catch(err){ msg('저장 실패 — '+err.message); return; }
+        renderSide();
+      });
       box.appendChild(d); return;
     }
     if(w.t==='chat'){
@@ -2392,7 +2475,7 @@ function renderWidList(){
     <div class="wl">
       <span class="nm">${WNAME[w.t]||w.t}${w.t==='links'?` (${(w.items||[]).length})`:''}${w.t==='banner'?` (${(w.items||[]).length})`:''}${w.float?' <span style="color:var(--pri);font-size:10px">📌 띄움</span>':''}</span>
       ${w.t!=='latest'?`<button data-f="${i}" title="컬럼에서 떼어 화면에 자유 배치 (PC 전용)"${w.float?' style="color:var(--pri)"':''}>📌</button>`:''}
-      ${['profile','quote','links','banner','dday','bgm','notice','chat','phone','img','nb','text','stamp','latest','tl','feat'].includes(w.t)?`<button data-e="${i}">✎</button>`:''}
+      ${['profile','quote','links','banner','dday','bgm','notice','chat','phone','img','nb','text','stamp','latest','tl','feat','char','pair','cal','habit'].includes(w.t)?`<button data-e="${i}">✎</button>`:''}
       <button data-u="${i}">↑</button><button data-d="${i}">↓</button><button data-x="${i}">✕</button>
     </div>`).join('') || '<p class="pl-empty">위젯이 없어요 — 아래에서 추가하세요.</p>';
   if(draft.some(w=>w.float))
@@ -2427,14 +2510,67 @@ function renderWidEdit(){
       <span style="font-size:10.5px">(기본 5)</span>
     </div>
     <label class="chk" style="font-size:11.5px"><input type="checkbox" id="we-ltpin" ${w.noPin?'':'checked'}> 📌 고정글 함께 표시 — 끄면 최신글만 나와요 (고정글은 '📌 고정글' 위젯으로 따로 둘 수 있어요)</label>
-    <div class="p-row" style="align-items:center;gap:8px;font-size:11.5px;color:var(--muted)">
+    <div class="p-row" style="align-items:center;gap:10px;flex-wrap:wrap;font-size:11.5px;color:var(--muted)">
       보여줄 카테고리
-      <select id="we-ltcat" style="width:auto;margin-bottom:0">
-        <option value="">전체 (기본)</option>
-        ${cats().filter(c=>!isG(c)).map(c=>`<option value="${esc(c)}" ${w.cat===c?'selected':''}>${esc(c)}</option>`).join('')}
-      </select>
-      <span style="font-size:10.5px">— 고르면 그 카테고리 최신글만 나와요 (고정글 자리는 전체일 때만)</span>
+      ${cats().filter(c=>!isG(c)).map(c=>{ const on=(w.cats||(w.cat?[w.cat]:[])).includes(c);
+        return `<label class="chk" style="margin:0"><input type="checkbox" data-ltcat="${esc(c)}" ${on?'checked':''}> ${esc(c)}</label>`; }).join('')}
+      <span style="font-size:10.5px;width:100%">— 아무것도 안 고르면 전체예요. 여러 개 고르면 그 카테고리들 최신글만 섞여 나와요 (고정글 자리는 전체일 때만)</span>
     </div>`;
+  const cpForm=(P,pre,ttl)=>{ P=P||{}; return `
+    <p class="p-h" style="margin-top:14px">${ttl}</p>
+    <div class="p-row" style="align-items:center;gap:8px">
+      <label class="filelab" style="font-size:11px">🖼 사진<input type="file" data-cpimg="${pre}" accept="image/*" style="display:none"></label>
+      ${P.img?`<img src="${P.img}" style="width:34px;height:34px;object-fit:cover;border-radius:8px">`:''}
+      <input data-cp="${pre}.name" value="${esc(P.name||'')}" placeholder="이름" style="flex:1;margin-bottom:0">
+    </div>
+    <input data-cp="${pre}.sub" value="${esc(P.sub||'')}" placeholder="한 줄 소개 (선택)">
+    ${(P.items||[]).map((it,ii)=>`
+      <div class="p-row" style="gap:6px">
+        <input data-cpk="${pre}.${ii}" value="${esc(it.k||'')}" placeholder="항목명" style="width:110px;flex:none;margin-bottom:0">
+        <input data-cpv="${pre}.${ii}" value="${esc(it.v||'')}" placeholder="내용" style="margin-bottom:0">
+        <button class="rmv" data-cpx="${pre}.${ii}">✕</button>
+      </div>`).join('')}
+    <button class="btn" data-cpadd="${pre}" style="font-size:11.5px">＋ 항목 추가</button>`; };
+  if(w.t==='char') html+=cpForm(w.p,'p','인물');
+  if(w.t==='pair') html+=`
+    <input id="we-cpcn" value="${esc(w.cn||'♥')}" placeholder="가운데 연결 기호 (예: ♥ × 🔗)" style="width:200px">`
+    +cpForm(w.a,'a','왼쪽 인물')+cpForm(w.b,'b','오른쪽 인물');
+  if(w.t==='cal') html+=`
+    <div class="p-row" style="align-items:center;gap:8px;font-size:11.5px;color:var(--muted)">
+      <input type="month" id="we-calym" value="${esc(w.ym||'')}" style="width:auto;margin-bottom:0">
+      <span>— 비우면 이번 달을 따라 흘러가요, 정하면 그 달에 고정</span>
+    </div>
+    <label class="chk" style="font-size:11.5px"><input type="checkbox" id="we-calmemo" ${w.memoDot?'checked':''}> 메모 연동 — 메모가 있는 날짜에 점이 찍히고, 누르면 그 메모가 열려요</label>
+    ${(w.marks||[]).map((m,mi)=>`
+      <div class="p-row" style="gap:6px;align-items:center">
+        <input type="date" data-cmd="${mi}" value="${esc(m.d||'')}" style="width:auto;margin-bottom:0">
+        <span style="font-size:11px;color:var(--muted)">~</span>
+        <input type="date" data-cmd2="${mi}" value="${esc(m.d2||'')}" title="기간 마킹이면 끝 날짜 — 하루면 비워두세요" style="width:auto;margin-bottom:0">
+        <input data-cme="${mi}" value="${esc(m.e||'')}" placeholder="이모지" style="width:64px;flex:none;margin-bottom:0">
+        <input data-cmt="${mi}" value="${esc(m.t||'')}" placeholder="라벨 (선택)" style="margin-bottom:0">
+        <button class="rmv" data-cmx="${mi}">✕</button>
+      </div>`).join('')}
+    <button class="btn" id="we-caladd" style="font-size:11.5px">＋ 날짜 마킹</button>`;
+  if(w.t==='habit') html+=`
+    <div class="p-row" style="align-items:center;gap:8px;font-size:11.5px;color:var(--muted)">
+      <select id="we-hbmode" style="width:auto;margin-bottom:0">
+        <option value="sq" ${w.mode!=='ci'&&w.mode!=='emo'?'selected':''}>채움 — ■ 네모</option>
+        <option value="ci" ${w.mode==='ci'?'selected':''}>채움 — ● 동그라미</option>
+        <option value="emo" ${w.mode==='emo'?'selected':''}>채움 — 이모지</option>
+      </select>
+      <input id="we-hbemo" value="${esc(w.emo||'💛')}" placeholder="이모지" style="width:64px;flex:none;margin-bottom:0">
+      <select id="we-hbdays" style="width:auto;margin-bottom:0">
+        <option value="7" ${+w.days!==14?'selected':''}>최근 7일</option>
+        <option value="14" ${+w.days===14?'selected':''}>최근 14일</option>
+      </select>
+    </div>
+    ${(w.habits||[]).map((h,hi)=>`
+      <div class="p-row" style="gap:6px">
+        <input data-hbn="${hi}" value="${esc(h.n||'')}" placeholder="습관 이름" style="margin-bottom:0">
+        <button class="rmv" data-hbx="${hi}">✕</button>
+      </div>`).join('')}
+    <button class="btn" id="we-hbadd" style="font-size:11.5px">＋ 습관 추가</button>
+    <p class="note" style="font-size:10.5px">칸 채우기는 홈 화면에서 직접 눌러요 — 여기선 목록만 관리합니다.</p>`;
   if(w.t==='tl') html+=`
     <input id="we-tltt" placeholder="위젯 제목 (기본: TIMELINE)" value="${esc(w.title||'')}">
     <select id="we-tlst">
@@ -2778,8 +2914,11 @@ function renderWidEdit(){
     const n=+ltn.value; if(n>0) w.n=Math.min(n,20); else delete w.n; });
   const ltp=$('#we-ltpin'); if(ltp) ltp.addEventListener('change',()=>{
     if(ltp.checked) delete w.noPin; else w.noPin=true; });
-  const ltc=$('#we-ltcat'); if(ltc) ltc.addEventListener('change',()=>{
-    if(ltc.value) w.cat=ltc.value; else delete w.cat; });
+  document.querySelectorAll('[data-ltcat]').forEach(cb=>cb.addEventListener('change',()=>{
+    const sel=[...document.querySelectorAll('[data-ltcat]:checked')].map(x=>x.dataset.ltcat);
+    delete w.cat;                                    // 구 단일 필드 정리
+    if(sel.length) w.cats=sel; else delete w.cats;
+  }));
   const qan=$('#we-qanim'); if(qan) qan.addEventListener('change',()=>{ w.anim=qan.checked; });
   const qmk=$('#we-qmark'); if(qmk) qmk.addEventListener('change',()=>{
     if(qmk.checked) delete w.noQm; else w.noQm=true; });
@@ -2948,9 +3087,11 @@ $('#wid-add').onclick=()=>{
   if(t==='latest' && draft.some(w=>w.t==='latest')){ msg('최신글 블록은 하나만 둘 수 있어요.'); return; }
   if(['search','category','dday','bgm','profile','cnt','pin'].includes(t) && draft.some(w=>w.t===t)){
     msg('이미 있는 위젯이에요.'); return; }
-  draft.push(['links','banner','nb','tl'].includes(t)?{t,items:[]}:{t});
+  draft.push(['links','banner','nb','tl'].includes(t)?{t,items:[]}
+    : t==='char'?{t,p:{items:[]}} : t==='pair'?{t,a:{items:[]},b:{items:[]},cn:'♥'}
+    : t==='cal'?{t,marks:[]} : t==='habit'?{t,habits:[]} : {t});
   editIdx=draft.length-1; renderWidList();
-  if(['profile','quote','links','banner','dday','bgm','notice','chat','phone','img','nb','text','stamp','tl','feat','latest'].includes(t)) renderWidEdit();
+  if(['profile','quote','links','banner','dday','bgm','notice','chat','phone','img','nb','text','stamp','tl','feat','latest','char','pair','cal','habit'].includes(t)) renderWidEdit();
 };
 $('#wid-save').onclick=async()=>{
   if(editIdx>=0 && draft[editIdx]) syncWid(draft[editIdx]);
