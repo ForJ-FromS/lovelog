@@ -1322,9 +1322,13 @@ function renderSide(){
         if(P.c) sv.push(`--cpc:${P.c}`);                 // 인물별 포인트색 — 비우면 테마색
         if(P.tc) sv.push(`--cpt:${P.tc}`);               // 인물별 글자색
         const stA=sv.length?` style="${sv.join(';')}"`:'';
-        const fy=P.fy==='top'?12:P.fy==='bottom'?88:(P.fy===undefined||P.fy===''?null:+P.fy);
-        const pos=(fy!==null&&!Number.isNaN(fy)&&fy!==50)?` style="object-position:50% ${fy}%"`:'';
-        const img=P.img?`<img class="cp-img" src="${P.img}" alt=""${pos}>`:'';
+        const fy0=P.fy==='top'?12:P.fy==='bottom'?88:(P.fy===undefined||P.fy===''?50:+P.fy);
+        const fy=Number.isNaN(fy0)?50:fy0;
+        const zm=(+P.zm>1&&+P.zm<=3)?+P.zm:1;
+        const ist=[];
+        if(fy!==50) ist.push(`object-position:50% ${fy}%`);
+        if(zm>1){ ist.push(`transform:scale(${zm})`); ist.push(`transform-origin:50% ${fy}%`); }
+        const img=P.img?`<span class="cp-imw"><img class="cp-img" src="${P.img}" alt=""${ist.length?` style="${ist.join(';')}"`:''}></span>`:'';
         if(stl==='file') return `<div class="cp-card"${stA}>
             <p class="cp-no"><span>FILE No.0${idx+1}</span><span>CLASSIFIED</span></p>${img}
             <div class="cp-bd">
@@ -2563,29 +2567,36 @@ function cpFocusModal(w,pre){                      // 사진 초점 — 보면�
   const P=w[pre]||{};
   if(!P.img){ msg('사진을 먼저 올려주세요.'); return; }
   const cur=P.fy==='top'?12:P.fy==='bottom'?88:(P.fy===undefined||P.fy===''?50:+P.fy);
+  const curZ=(+P.zm>1&&+P.zm<=3)?+P.zm:1;
   const ar=w.style==='file'?'4/3.4':'1/1';
   const ov=document.createElement('div');
   ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:400;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
   ov.innerHTML=`<div style="background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:16px;width:min(340px,92vw);box-shadow:0 18px 50px rgba(0,0,0,.4)">
-    <p style="margin:0 0 10px;font-size:12px;color:var(--muted)">사진 초점 — 슬라이더를 끌면 바로 보여요</p>
+    <p style="margin:0 0 10px;font-size:12px;color:var(--muted)">사진 위치·확대 — 끌면 바로 보여요</p>
     <div style="border:1px solid var(--line);border-radius:10px;overflow:hidden">
-      <img id="cpf-img" src="${P.img}" alt="" style="display:block;width:100%;aspect-ratio:${ar};object-fit:cover;object-position:50% ${cur}%">
+      <img id="cpf-img" src="${P.img}" alt="" style="display:block;width:100%;aspect-ratio:${ar};object-fit:cover;object-position:50% ${cur}%;transform:scale(${curZ});transform-origin:50% ${cur}%">
     </div>
-    <input id="cpf-r" type="range" min="0" max="100" value="${cur}" style="width:100%;margin:13px 0 11px">
+    <label style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);margin:13px 0 4px">↕ 위치
+      <input id="cpf-r" type="range" min="0" max="100" value="${cur}" style="flex:1;margin:0"></label>
+    <label style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);margin:0 0 11px">🔍 확대
+      <input id="cpf-z" type="range" min="1" max="2.5" step="0.05" value="${curZ}" style="flex:1;margin:0"></label>
     <div style="display:flex;gap:8px;justify-content:flex-end">
       <button class="rmv" id="cpf-c" style="font-size:11px">취소</button>
       <button class="btn" id="cpf-ok" style="font-size:11px">이 위치로</button>
     </div></div>`;
   document.body.appendChild(ov);
-  const img=ov.querySelector('#cpf-img'), r=ov.querySelector('#cpf-r');
-  r.oninput=()=>{ img.style.objectPosition=`50% ${r.value}%`; };
+  const img=ov.querySelector('#cpf-img'), r=ov.querySelector('#cpf-r'), z=ov.querySelector('#cpf-z');
+  const paint=()=>{ img.style.objectPosition=`50% ${r.value}%`;
+    img.style.transform=`scale(${z.value})`; img.style.transformOrigin=`50% ${r.value}%`; };
+  r.oninput=paint; z.oninput=paint;
   const close=()=>ov.remove();
   ov.onclick=e=>{ if(e.target===ov) close(); };
   ov.querySelector('#cpf-c').onclick=close;
   ov.querySelector('#cpf-ok').onclick=()=>{
     if(+r.value===50) delete P.fy; else P.fy=+r.value;
+    if(+z.value<=1) delete P.zm; else P.zm=+z.value;
     w[pre]=P; close();
-    msg('초점 기억! [위젯 구성 저장]까지 눌러야 홈에 반영돼요.');
+    msg('사진 위치 기억! [위젯 구성 저장]까지 눌러야 홈에 반영돼요.');
   };
 }
 function renderWidEdit(){

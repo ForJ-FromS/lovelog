@@ -900,7 +900,8 @@
   /* ── 캐릭터·페어 프로필 / 달력 / 해빗 (phase242) ── */
   .w-cp .cp-card{display:flex;flex-direction:column;gap:7px;padding:14px 15px;flex:1;min-width:0;
     border:1px solid var(--line);border-radius:12px;background:color-mix(in srgb, var(--ink) 4%, transparent)}
-  .w-cp .cp-img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:10px;border:1px solid var(--line)}
+  .w-cp .cp-imw{display:block;overflow:hidden;width:100%;aspect-ratio:1/1;border-radius:10px;border:1px solid var(--line);flex:none}
+  .w-cp .cp-imw .cp-img{display:block;width:100%;height:100%;object-fit:cover;border:0;border-radius:0}
   .w-cp .cp-nm{font-size:13.5px;color:var(--ink)}
   .w-cp .cp-sub{font-size:11px;color:var(--muted);font-style:normal;margin-top:-3px}
   .w-cp .cp-dl{margin:2px 0 0;display:flex;flex-direction:column;gap:4px}
@@ -917,7 +918,7 @@
   .cp-file .cp-no{display:flex;justify-content:space-between;gap:8px;font-family:'IBM Plex Mono',monospace;
     font-size:8.5px;letter-spacing:.18em;color:var(--muted);padding:9px 12px 7px;margin:0;overflow:hidden}
   .cp-file .cp-no span{white-space:nowrap}
-  .cp-file .cp-img{width:100%;aspect-ratio:4/3.4;border-radius:0;border:0;
+  .cp-file .cp-imw{width:100%;aspect-ratio:4/3.4;border-radius:0;border:0;
     border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
   .cp-file .cp-bd{padding:11px 13px 0;display:flex;flex-direction:column;gap:6px}
   .cp-file .cp-sub{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.16em;
@@ -925,7 +926,7 @@
   .cp-file .cp-dl dt{font-family:'IBM Plex Mono',monospace;font-size:9.5px;padding-top:1px}
   /* 스킨 · 컬러 프레임 */
   .cp-frame .cp-card{padding:0 0 14px;border:2px solid var(--cpc, var(--pri));border-radius:14px;overflow:hidden;gap:0}
-  .cp-frame .cp-img{width:100%;aspect-ratio:1/1;border-radius:0;border:0}
+  .cp-frame .cp-imw{width:100%;aspect-ratio:1/1;border-radius:0;border:0}
   .cp-frame .cp-bd{padding:11px 13px 0;display:flex;flex-direction:column;gap:4px}
   .cp-frame .cp-nm{color:var(--cpc, var(--pri));font-size:15.5px}
   .cp-frame .cp-pills{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}
@@ -943,7 +944,7 @@
   .cp-story .cp-card::before{content:'';position:absolute;left:0;top:13px;bottom:13px;width:3px;
     background:var(--cpc, var(--pri));border-radius:0 3px 3px 0}
   .cp-story .cp-top{display:flex;gap:11px;align-items:center}
-  .cp-story .cp-top .cp-img{width:66px;height:66px;aspect-ratio:auto;border-radius:12px;flex:none}
+  .cp-story .cp-top .cp-imw{width:66px;height:66px;aspect-ratio:auto;border-radius:12px;flex:none}
   .cp-story .cp-nm{font-size:14.5px}
   .cp-story .cp-dl{margin-top:1px;padding-top:9px;border-top:1px dashed color-mix(in srgb, var(--cpc, var(--pri)) 30%, var(--line))}
   .cp-story .cp-dl dt{font-family:'IBM Plex Mono',monospace;font-size:9.5px;padding-top:1px;
@@ -2053,6 +2054,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=240"></script>
+<script type="module" src="./app.js?v=241"></script>
 </body>
 </html>
