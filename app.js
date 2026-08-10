@@ -680,21 +680,22 @@ function pinCard(){                              // 고정글 카드 — 단독 
   pd.onclick=()=>openFromHome(pin.id);
   return pd;
 }
-function latestBlock(box, n, withPin=true){
-  if(withPin){ const pc=pinCard(); if(pc) box.appendChild(pc); }
+function latestBlock(box, n, withPin=true, cat=''){
+  if(cat && !cats().includes(cat)) cat='';           // 삭제·개명된 카테고리는 전체로 폴백(phase240)
+  if(withPin && !cat){ const pc=pinCard(); if(pc) box.appendChild(pc); }
   const d=document.createElement('div'); d.className='side sw-latest';
-  const arr=st.posts.filter(p=>!p.pinned).slice(0, +n>0?Math.min(+n,20):5);
-  d.innerHTML=`<p class="label">LATEST</p><div class="mini-rows">`+
+  const arr=st.posts.filter(p=>!p.pinned && (!cat||p.cat===cat)).slice(0, +n>0?Math.min(+n,20):5);
+  d.innerHTML=`<p class="label">LATEST${cat?' · '+esc(cat.toUpperCase()):''}</p><div class="mini-rows">`+
     (arr.length?arr.map(p2=>`<a data-lid="${p2.id}">
       <span class="dot">◈</span><span class="t">${esc(p2.title)}${p2.secret?' 🔒':''}${p2.priv?' 🔏':''}</span>
       <span class="dt">${esc((p2.date||'').slice(5))}</span></a>`).join('')
     :'<p class="pl-empty">아직 글이 없습니다.</p>')+
-    `</div>${st.page.allOff?'':'<p class="cat-add" style="display:block" id="latest-more">전체 보기 →</p>'}`;
+    `</div>${cat?`<p class="cat-add" style="display:block" id="latest-more">${esc(cat)} 전체 →</p>`:(st.page.allOff?'':'<p class="cat-add" style="display:block" id="latest-more">전체 보기 →</p>')}`;
   box.appendChild(d);
   d.querySelectorAll('[data-lid]').forEach(el=>el.onclick=()=>{
     openFromHome(el.dataset.lid); });
   const lm=d.querySelector('#latest-more');                       // allOff면 링크가 없음(phase200 널 가드)
-  if(lm) lm.onclick=()=>goBoard('recent');
+  if(lm) lm.onclick=()=>goBoard(cat||'recent');
   return d;
 }
 /* 홈 폰트 10종(phase238) — 선택된 것만 동적 로드 */
@@ -1156,7 +1157,7 @@ function renderSide(){
     }
     if(w.t==='latest'){
       if(!home) return;
-      const el=latestBlock(box, w.n, w.noPin!==true);
+      const el=latestBlock(box, w.n, w.noPin!==true, w.cat||'');
       el.dataset.wi=wi; bindDrag(el);
       return;
     }
@@ -2425,7 +2426,15 @@ function renderWidEdit(){
       <input type="number" id="we-ltn" value="${+w.n>0?+w.n:5}" min="1" max="20" style="width:80px">
       <span style="font-size:10.5px">(기본 5)</span>
     </div>
-    <label class="chk" style="font-size:11.5px"><input type="checkbox" id="we-ltpin" ${w.noPin?'':'checked'}> 📌 고정글 함께 표시 — 끄면 최신글만 나와요 (고정글은 '📌 고정글' 위젯으로 따로 둘 수 있어요)</label>`;
+    <label class="chk" style="font-size:11.5px"><input type="checkbox" id="we-ltpin" ${w.noPin?'':'checked'}> 📌 고정글 함께 표시 — 끄면 최신글만 나와요 (고정글은 '📌 고정글' 위젯으로 따로 둘 수 있어요)</label>
+    <div class="p-row" style="align-items:center;gap:8px;font-size:11.5px;color:var(--muted)">
+      보여줄 카테고리
+      <select id="we-ltcat" style="width:auto;margin-bottom:0">
+        <option value="">전체 (기본)</option>
+        ${cats().filter(c=>!isG(c)).map(c=>`<option value="${esc(c)}" ${w.cat===c?'selected':''}>${esc(c)}</option>`).join('')}
+      </select>
+      <span style="font-size:10.5px">— 고르면 그 카테고리 최신글만 나와요 (고정글 자리는 전체일 때만)</span>
+    </div>`;
   if(w.t==='tl') html+=`
     <input id="we-tltt" placeholder="위젯 제목 (기본: TIMELINE)" value="${esc(w.title||'')}">
     <select id="we-tlst">
@@ -2769,6 +2778,8 @@ function renderWidEdit(){
     const n=+ltn.value; if(n>0) w.n=Math.min(n,20); else delete w.n; });
   const ltp=$('#we-ltpin'); if(ltp) ltp.addEventListener('change',()=>{
     if(ltp.checked) delete w.noPin; else w.noPin=true; });
+  const ltc=$('#we-ltcat'); if(ltc) ltc.addEventListener('change',()=>{
+    if(ltc.value) w.cat=ltc.value; else delete w.cat; });
   const qan=$('#we-qanim'); if(qan) qan.addEventListener('change',()=>{ w.anim=qan.checked; });
   const qmk=$('#we-qmark'); if(qmk) qmk.addEventListener('change',()=>{
     if(qmk.checked) delete w.noQm; else w.noQm=true; });
