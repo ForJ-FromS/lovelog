@@ -910,6 +910,45 @@
   .w-cp .cp-pair{display:flex;align-items:stretch;gap:10px}
   .w-cp .cp-cn{align-self:center;flex:none;font-size:15px;color:var(--pri)}
   @media(max-width:720px){.w-cp .cp-pair{flex-direction:column}}
+  .w-cp .cp-nm{color:var(--cpt, var(--ink))}
+  /* 스킨 · 아카이브 파일 */
+  .cp-file .cp-card{padding:0 0 13px;border-radius:6px;overflow:hidden;position:relative;gap:0}
+  .cp-file .cp-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--cpc, var(--pri))}
+  .cp-file .cp-no{display:flex;justify-content:space-between;gap:8px;font-family:'IBM Plex Mono',monospace;
+    font-size:8.5px;letter-spacing:.18em;color:var(--muted);padding:9px 12px 7px;margin:0;overflow:hidden}
+  .cp-file .cp-no span{white-space:nowrap}
+  .cp-file .cp-img{width:100%;aspect-ratio:4/3.4;border-radius:0;border:0;
+    border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .cp-file .cp-bd{padding:11px 13px 0;display:flex;flex-direction:column;gap:6px}
+  .cp-file .cp-sub{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.16em;
+    color:var(--cpc, var(--pri));margin-top:-3px}
+  .cp-file .cp-dl dt{font-family:'IBM Plex Mono',monospace;font-size:9.5px;padding-top:1px}
+  /* 스킨 · 컬러 프레임 */
+  .cp-frame .cp-card{padding:0 0 14px;border:2px solid var(--cpc, var(--pri));border-radius:14px;overflow:hidden;gap:0}
+  .cp-frame .cp-img{width:100%;aspect-ratio:1/1;border-radius:0;border:0}
+  .cp-frame .cp-bd{padding:11px 13px 0;display:flex;flex-direction:column;gap:4px}
+  .cp-frame .cp-nm{color:var(--cpc, var(--pri));font-size:15.5px}
+  .cp-frame .cp-pills{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}
+  .cp-frame .cp-pills span{background:var(--cpc, var(--pri));color:var(--cpt, #fff);
+    font-size:10px;padding:4px 10px;border-radius:99px}
+  .cp-frame .cp-kv{margin-top:5px;font-size:10.5px;color:var(--muted)}
+  /* 스킨 · 스토리 카드 */
+  .w-cp .cp-pair.cp-col{flex-direction:column}
+  .cp-story .cp-card{position:relative;padding:13px 14px 14px 19px;border-radius:12px}
+  .cp-story .cp-card::before{content:'';position:absolute;left:0;top:13px;bottom:13px;width:3px;
+    background:var(--cpc, var(--pri));border-radius:0 3px 3px 0}
+  .cp-story .cp-top{display:flex;gap:11px;align-items:center}
+  .cp-story .cp-top .cp-img{width:58px;height:58px;aspect-ratio:auto;border-radius:10px;flex:none}
+  .cp-story .cp-top span{min-width:0}
+  .cp-story .cp-sub{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.15em;
+    color:var(--cpc, var(--pri));display:block;margin-top:1px}
+  .cp-story .cp-bio{font-size:11px;line-height:1.8;color:var(--cpt, var(--ink));opacity:.92;white-space:pre-line}
+  .cp-story .cp-hash{display:flex;flex-wrap:wrap;gap:4px 9px}
+  .cp-story .cp-hash span{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--cpc, var(--pri))}
+  .cp-story .cp-card.rev{padding:13px 19px 14px 14px}
+  .cp-story .cp-card.rev::before{left:auto;right:0;border-radius:3px 0 0 3px}
+  .cp-story .cp-card.rev .cp-top{flex-direction:row-reverse;text-align:right;justify-content:flex-start}
+  .cp-story .cp-card.rev .cp-hash{justify-content:flex-end}
   .w-cal .cal-hd{display:flex;justify-content:center;align-items:center;gap:14px;font-size:12.5px;margin:2px 0 8px;color:var(--ink)}
   .w-cal .cal-hd b{font-family:'IBM Plex Mono',monospace;letter-spacing:.08em}
   .w-cal .cnav{cursor:pointer;color:var(--muted);font-size:10px;padding:2px 6px;user-select:none}
@@ -1999,6 +2038,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=235"></script>
+<script type="module" src="./app.js?v=236"></script>
 </body>
 </html>

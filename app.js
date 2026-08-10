@@ -1312,20 +1312,51 @@ function renderSide(){
       box.appendChild(d); return;
     }
     if(w.t==='char' || w.t==='pair'){
-      const card=P=>{ P=P||{};
+      const stl=['file','frame','story'].includes(w.style)?w.style:'basic';   // 스킨(phase245)
+      const card=(P,idx,rev)=>{ P=P||{};
         const its=(P.items||[]).filter(i=>i.k||i.v);
-        return `<div class="cp-card">
-          ${P.img?`<img class="cp-img" src="${P.img}" alt="">`:''}
+        const tags=its.filter(i=>!i.k&&i.v), kvs=its.filter(i=>i.k);
+        const sv=[];
+        if(P.c) sv.push(`--cpc:${P.c}`);                 // 인물별 포인트색 — 비우면 테마색
+        if(P.tc) sv.push(`--cpt:${P.tc}`);               // 인물별 글자색
+        const stA=sv.length?` style="${sv.join(';')}"`:'';
+        const pos=P.fy==='top'?' style="object-position:50% 12%"':P.fy==='bottom'?' style="object-position:50% 88%"':'';
+        const img=P.img?`<img class="cp-img" src="${P.img}" alt=""${pos}>`:'';
+        if(stl==='file') return `<div class="cp-card"${stA}>
+            <p class="cp-no"><span>FILE No.0${idx+1}</span><span>CLASSIFIED</span></p>${img}
+            <div class="cp-bd">
+              ${P.name?`<b class="cp-nm">${esc(P.name)}</b>`:''}
+              ${P.sub?`<i class="cp-sub">${esc(P.sub)}</i>`:''}
+              ${its.length?`<dl class="cp-dl">${its.map(i=>`<div><dt>${esc(i.k||'·')}</dt><dd>${esc(i.v||'')}</dd></div>`).join('')}</dl>`:''}
+            </div></div>`;
+        if(stl==='frame') return `<div class="cp-card"${stA}>${img}
+            <div class="cp-bd">
+              ${P.name?`<b class="cp-nm">${esc(P.name)}</b>`:''}
+              ${P.sub?`<i class="cp-sub">${esc(P.sub)}</i>`:''}
+              ${tags.length?`<div class="cp-pills">${tags.map(i=>`<span>${esc(i.v)}</span>`).join('')}</div>`:''}
+              ${kvs.length?`<p class="cp-kv">${kvs.map(i=>esc(i.k)+' '+esc(i.v)).join(' · ')}</p>`:''}
+            </div></div>`;
+        if(stl==='story') return `<div class="cp-card${rev?' rev':''}"${stA}>
+            <div class="cp-top">${img}<span>
+              ${P.name?`<b class="cp-nm">${esc(P.name)}</b>`:''}
+              ${P.sub?`<i class="cp-sub">${esc(P.sub)}</i>`:''}</span></div>
+            ${P.bio?`<p class="cp-bio">${esc(P.bio)}</p>`:''}
+            ${tags.length?`<div class="cp-hash">${tags.map(i=>`<span>#${esc(i.v)}</span>`).join('')}</div>`:''}
+            ${kvs.length?`<dl class="cp-dl">${kvs.map(i=>`<div><dt>${esc(i.k)}</dt><dd>${esc(i.v||'')}</dd></div>`).join('')}</dl>`:''}
+          </div>`;
+        return `<div class="cp-card"${stA}>${img}
           ${P.name?`<b class="cp-nm">${esc(P.name)}</b>`:''}
           ${P.sub?`<i class="cp-sub">${esc(P.sub)}</i>`:''}
           ${its.length?`<dl class="cp-dl">${its.map(i=>`<div><dt>${esc(i.k||'')}</dt><dd>${esc(i.v||'')}</dd></div>`).join('')}</dl>`:''}
         </div>`; };
       const empty = w.t==='char' ? !(w.p&&(w.p.img||w.p.name)) : !((w.a&&(w.a.img||w.a.name))||(w.b&&(w.b.img||w.b.name)));
       if(empty && !st.mine) return;
-      d.className+=' w-cp';
+      d.className+=' w-cp cp-'+stl;
       d.innerHTML = (w.label?`<p class="label">${esc(w.label)}</p>`:'')
-        + (w.t==='char' ? card(w.p)
-           : `<div class="cp-pair">${card(w.a)}<span class="cp-cn">${esc(w.cn||'♥')}</span>${card(w.b)}</div>`)
+        + (w.t==='char' ? card(w.p,0)
+           : stl==='story'
+             ? `<div class="cp-pair cp-col">${card(w.a,0)}${card(w.b,1,true)}</div>`
+             : `<div class="cp-pair">${card(w.a,0)}${w.cn?`<span class="cp-cn">${esc(w.cn)}</span>`:''}${card(w.b,1)}</div>`)
         + (empty?'<p class="pl-empty">✎에서 인물을 채워주세요.</p>':'');
       box.appendChild(d); return;
     }
@@ -2549,20 +2580,39 @@ function renderWidEdit(){
     <div class="p-row" style="align-items:center;gap:8px">
       <label class="filelab" style="font-size:11px">🖼 사진<input type="file" data-cpimg="${pre}" accept="image/*" style="display:none"></label>
       ${P.img?`<img src="${P.img}" style="width:34px;height:34px;object-fit:cover;border-radius:8px">`:''}
-      <input data-cp="${pre}.name" value="${esc(P.name||'')}" placeholder="이름" style="flex:1;margin-bottom:0">
+      <select data-cpsel="${pre}.fy" style="width:auto;margin-bottom:0;font-size:11px">
+        <option value="" ${!P.fy?'selected':''}>사진 초점 — 중앙</option>
+        <option value="top" ${P.fy==='top'?'selected':''}>사진 초점 — 위쪽</option>
+        <option value="bottom" ${P.fy==='bottom'?'selected':''}>사진 초점 — 아래쪽</option>
+      </select>
+      <input data-cp="${pre}.name" value="${esc(P.name||'')}" placeholder="이름 (예: A)" style="flex:1;margin-bottom:0">
     </div>
-    <input data-cp="${pre}.sub" value="${esc(P.sub||'')}" placeholder="한 줄 소개 (선택)">
+    <div class="p-row" style="align-items:center;gap:7px;font-size:11px;color:var(--muted)">
+      포인트색 <input type="color" data-cpco="${pre}.c" value="${P.c||'#8899aa'}" style="width:32px;flex:none;padding:2px;height:27px;margin-bottom:0">
+      글자색 <input type="color" data-cpco="${pre}.tc" value="${P.tc||'#8899aa'}" style="width:32px;flex:none;padding:2px;height:27px;margin-bottom:0">
+      <button class="rmv" data-cpcl="${pre}" style="font-size:10px">색 기본으로</button>
+      <span style="font-size:10px">— 안 정하면 테마색을 따라가요</span>
+    </div>
+    <input data-cp="${pre}.sub" value="${esc(P.sub||'')}" placeholder="한 줄 소개 (선택 — 예: 소속 · 직함)">
+    <textarea data-cp="${pre}.bio" rows="3" placeholder="소개문 (선택 — '스토리 카드' 스킨에서 크게 보여요)" style="font-size:12px">${esc(P.bio||'')}</textarea>
     ${(P.items||[]).map((it,ii)=>`
       <div class="p-row" style="gap:6px">
-        <input data-cpk="${pre}.${ii}" value="${esc(it.k||'')}" placeholder="항목명" style="width:110px;flex:none;margin-bottom:0">
-        <input data-cpv="${pre}.${ii}" value="${esc(it.v||'')}" placeholder="내용" style="margin-bottom:0">
+        <input data-cpk="${pre}.${ii}" value="${esc(it.k||'')}" placeholder="항목명 (예: 키)" style="width:110px;flex:none;margin-bottom:0">
+        <input data-cpv="${pre}.${ii}" value="${esc(it.v||'')}" placeholder="내용 — 항목명을 비우면 태그로 나와요" style="margin-bottom:0">
         <button class="rmv" data-cpx="${pre}.${ii}">✕</button>
       </div>`).join('')}
     <button class="btn" data-cpadd="${pre}" style="font-size:11.5px">＋ 항목 추가</button>`; };
+  if(w.t==='char'||w.t==='pair') html+=`
+    <select id="we-cpstyle">
+      <option value="" ${!w.style?'selected':''}>디자인 — 기본 (담백 카드)</option>
+      <option value="file" ${w.style==='file'?'selected':''}>디자인 — 아카이브 파일 (기밀 문서)</option>
+      <option value="frame" ${w.style==='frame'?'selected':''}>디자인 — 컬러 프레임 (인물색 테두리 · 태그 알약)</option>
+      <option value="story" ${w.style==='story'?'selected':''}>디자인 — 스토리 카드 (소개문 · 해시태그${w.t==='pair'?' · 위아래 마주 보기':''})</option>
+    </select>`;
   if(w.t==='char') html+=cpForm(w.p,'p','인물');
   if(w.t==='pair') html+=`
-    <input id="we-cpcn" value="${esc(w.cn||'♥')}" placeholder="가운데 연결 기호 (예: ♥ × 🔗)" style="width:200px">`
-    +cpForm(w.a,'a','왼쪽 인물')+cpForm(w.b,'b','오른쪽 인물');
+    <input id="we-cpcn" value="${esc(w.cn||'')}" placeholder="가운데 연결 기호 (선택 — 비우면 없음)" style="width:230px">`
+    +cpForm(w.a,'a','왼쪽(위) 인물')+cpForm(w.b,'b','오른쪽(아래) 인물');
   if(w.t==='cal') html+=`
     <div class="p-row" style="align-items:center;gap:8px;font-size:11.5px;color:var(--muted)">
       <select id="we-calview" style="width:auto;margin-bottom:0">
@@ -2995,7 +3045,7 @@ function renderWidEdit(){
   /* ── 캐릭터/페어·달력·해빗 폼 바인딩(phase243 — 폼만 있고 저장 연결이 없던 것 시공) ── */
   document.querySelectorAll('[data-cp]').forEach(inp=>inp.addEventListener('input',()=>{
     const [pre,f]=inp.dataset.cp.split('.'); w[pre]=w[pre]||{};
-    if(inp.value.trim()) w[pre][f]=inp.value.trim(); else delete w[pre][f]; }));
+    if(inp.value.trim()) w[pre][f]=inp.value; else delete w[pre][f]; }));   // 원문 보존(소개문 개행)
   document.querySelectorAll('[data-cpk],[data-cpv]').forEach(inp=>inp.addEventListener('input',()=>{
     const key=inp.dataset.cpk||inp.dataset.cpv, [pre,ii]=key.split('.');
     const P=w[pre]=w[pre]||{}; P.items=P.items||[];
@@ -3010,7 +3060,17 @@ function renderWidEdit(){
     try{ const u=await upFile(f,900,.88,120); const pre=inp.dataset.cpimg;
       w[pre]=w[pre]||{}; w[pre].img=u; renderWidEdit(); msg('사진 넣었어요!'); }
     catch(err){ msg('업로드 실패 — '+err.message); } }));
-  const cpcn=$('#we-cpcn'); if(cpcn) cpcn.addEventListener('input',()=>{ w.cn=cpcn.value.trim()||'♥'; });
+  const cpcn=$('#we-cpcn'); if(cpcn) cpcn.addEventListener('input',()=>{
+    if(cpcn.value.trim()) w.cn=cpcn.value.trim(); else delete w.cn; });   // 기본 커넥터 없음(phase245 — 하트 강제 제거)
+  const cpst=$('#we-cpstyle'); if(cpst) cpst.addEventListener('change',()=>{
+    if(cpst.value) w.style=cpst.value; else delete w.style; });
+  document.querySelectorAll('[data-cpsel]').forEach(sel=>sel.addEventListener('change',()=>{
+    const [pre,f]=sel.dataset.cpsel.split('.'); w[pre]=w[pre]||{};
+    if(sel.value) w[pre][f]=sel.value; else delete w[pre][f]; }));
+  document.querySelectorAll('[data-cpco]').forEach(inp=>inp.addEventListener('input',()=>{
+    const [pre,f]=inp.dataset.cpco.split('.'); w[pre]=w[pre]||{}; w[pre][f]=inp.value; }));
+  document.querySelectorAll('[data-cpcl]').forEach(bx=>bx.onclick=()=>{
+    const pre=bx.dataset.cpcl; if(w[pre]){ delete w[pre].c; delete w[pre].tc; } renderWidEdit(); });
   const cvw=$('#we-calview'); if(cvw) cvw.addEventListener('change',()=>{
     if(cvw.value==='m') delete w.view; else w.view=cvw.value; });
   const cym=$('#we-calym'); if(cym) cym.addEventListener('change',()=>{
