@@ -2559,6 +2559,35 @@ function renderWidList(){
     renderWidList();
   });
 }
+function cpFocusModal(w,pre){                      // 사진 초점 — 보면서 조정하는 팝업(phase249)
+  const P=w[pre]||{};
+  if(!P.img){ msg('사진을 먼저 올려주세요.'); return; }
+  const cur=P.fy==='top'?12:P.fy==='bottom'?88:(P.fy===undefined||P.fy===''?50:+P.fy);
+  const ar=w.style==='file'?'4/3.4':'1/1';
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:400;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
+  ov.innerHTML=`<div style="background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:16px;width:min(340px,92vw);box-shadow:0 18px 50px rgba(0,0,0,.4)">
+    <p style="margin:0 0 10px;font-size:12px;color:var(--muted)">사진 초점 — 슬라이더를 끌면 바로 보여요</p>
+    <div style="border:1px solid var(--line);border-radius:10px;overflow:hidden">
+      <img id="cpf-img" src="${P.img}" alt="" style="display:block;width:100%;aspect-ratio:${ar};object-fit:cover;object-position:50% ${cur}%">
+    </div>
+    <input id="cpf-r" type="range" min="0" max="100" value="${cur}" style="width:100%;margin:13px 0 11px">
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="rmv" id="cpf-c" style="font-size:11px">취소</button>
+      <button class="btn" id="cpf-ok" style="font-size:11px">이 위치로</button>
+    </div></div>`;
+  document.body.appendChild(ov);
+  const img=ov.querySelector('#cpf-img'), r=ov.querySelector('#cpf-r');
+  r.oninput=()=>{ img.style.objectPosition=`50% ${r.value}%`; };
+  const close=()=>ov.remove();
+  ov.onclick=e=>{ if(e.target===ov) close(); };
+  ov.querySelector('#cpf-c').onclick=close;
+  ov.querySelector('#cpf-ok').onclick=()=>{
+    if(+r.value===50) delete P.fy; else P.fy=+r.value;
+    w[pre]=P; close();
+    msg('초점 기억! [위젯 구성 저장]까지 눌러야 홈에 반영돼요.');
+  };
+}
 function renderWidEdit(){
   const w=draft[editIdx]; if(!w){ $('#wid-edit').innerHTML=''; return; }
   let html=`<p class="p-h">${WNAME[w.t]} 편집</p>`;
@@ -2587,10 +2616,7 @@ function renderWidEdit(){
     <div class="p-row" style="align-items:center;gap:8px">
       <label class="filelab" style="font-size:11px">🖼 사진<input type="file" data-cpimg="${pre}" accept="image/*" style="display:none"></label>
       ${P.img?`<img src="${P.img}" style="width:34px;height:34px;object-fit:cover;border-radius:8px">`:''}
-      <label style="display:flex;align-items:center;gap:5px;font-size:10.5px;color:var(--muted);flex:none">
-        초점 ↕ <input type="range" data-cpfy="${pre}" min="0" max="100"
-          value="${P.fy==='top'?12:P.fy==='bottom'?88:(P.fy??50)}" style="width:86px;margin:0;padding:0">
-      </label>
+      <button class="rmv" data-cpfoc="${pre}" style="font-size:10.5px;flex:none" title="사진이 크게 뜨고, 슬라이더로 보면서 초점을 맞춰요">초점 조정 ↕</button>
       <input data-cp="${pre}.name" value="${esc(P.name||'')}" placeholder="이름 (예: A)" style="flex:1;margin-bottom:0">
     </div>
     <div class="p-row" style="align-items:center;gap:7px;font-size:11px;color:var(--muted)">
@@ -3089,9 +3115,7 @@ function renderWidEdit(){
     const [pre,f]=inp.dataset.cpco.split('.'); w[pre]=w[pre]||{}; w[pre][f]=inp.value; }));
   document.querySelectorAll('[data-cpcl]').forEach(bx=>bx.onclick=()=>{
     const pre=bx.dataset.cpcl; if(w[pre]){ delete w[pre].c; delete w[pre].tc; } renderWidEdit(); });
-  document.querySelectorAll('[data-cpfy]').forEach(inp=>inp.addEventListener('input',()=>{
-    const pre=inp.dataset.cpfy; w[pre]=w[pre]||{};
-    if(+inp.value===50) delete w[pre].fy; else w[pre].fy=+inp.value; }));
+  document.querySelectorAll('[data-cpfoc]').forEach(bx=>bx.onclick=()=>cpFocusModal(w, bx.dataset.cpfoc));
   const CPTPL={
     basic:['나이','키','생일','직업','좋아하는 것','싫어하는 것'],
     senti:['코드네임','등급','소속','능력','키','나이'],
