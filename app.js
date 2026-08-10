@@ -662,6 +662,11 @@ function sideCfg(){
   return s.map(w=>({col:DEFCOL[w.t]||'r', ...w}));
 }
 /* 홈 중앙 붙박이: 고정글 + 최신글 */
+const openFromHome=id=>{                          // ALL이 꺼진 홈은 그 글의 카테고리 게시판으로(phase237)
+  const p=st.posts.find(x=>x.id===id);
+  goBoard(st.page.allOff && p ? p.cat : 'recent');
+  openPost(id,true);
+};
 function pinCard(){                              // 고정글 카드 — 단독 위젯·최신글 동거 겸용(phase236)
   const pin=st.posts.find(p=>p.pinned); if(!pin) return null;
   const pd=document.createElement('a'); pd.className='pin';
@@ -669,7 +674,7 @@ function pinCard(){                              // 고정글 카드 — 단독 
     <p class="t">${esc(pin.title)}${pin.secret?' 🔒':''}${pin.priv?' 🔏':''}</p>
     ${pin.excerpt?`<p class="ex">${esc(pin.excerpt)}</p>`:''}
     <p class="meta">${esc(pin.cat)} · ${esc(pin.date)}</p>`;
-  pd.onclick=()=>{ goBoard('recent'); openPost(pin.id,true); };
+  pd.onclick=()=>openFromHome(pin.id);
   return pd;
 }
 function latestBlock(box, n, withPin=true){
@@ -684,7 +689,7 @@ function latestBlock(box, n, withPin=true){
     `</div>${st.page.allOff?'':'<p class="cat-add" style="display:block" id="latest-more">전체 보기 →</p>'}`;
   box.appendChild(d);
   d.querySelectorAll('[data-lid]').forEach(el=>el.onclick=()=>{
-    goBoard('recent'); openPost(el.dataset.lid,true); });
+    openFromHome(el.dataset.lid); });
   const lm=d.querySelector('#latest-more');                       // allOff면 링크가 없음(phase200 널 가드)
   if(lm) lm.onclick=()=>goBoard('recent');
   return d;
