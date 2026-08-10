@@ -1331,6 +1331,7 @@ function renderSide(){
               ${P.name?`<b class="cp-nm">${esc(P.name)}</b>`:''}
               ${P.sub?`<i class="cp-sub">${esc(P.sub)}</i>`:''}
               ${its.length?`<dl class="cp-dl">${its.map(i=>`<div><dt>${esc(i.k||'·')}</dt><dd>${esc(i.v||'')}</dd></div>`).join('')}</dl>`:''}
+              ${P.bio?`<p class="cp-bio">${esc(P.bio)}</p>`:''}
             </div></div>`;
         if(stl==='frame') return `<div class="cp-card"${stA}>${img}
             <div class="cp-bd">
@@ -1338,6 +1339,7 @@ function renderSide(){
               ${P.sub?`<i class="cp-sub">${esc(P.sub)}</i>`:''}
               ${tgl.length?`<div class="cp-pills">${tgl.map(t=>`<span>${esc(t)}</span>`).join('')}</div>`:''}
               ${kvs.length?`<dl class="cp-dl">${kvs.map(i=>`<div><dt>${esc(i.k)}</dt><dd>${esc(i.v||'')}</dd></div>`).join('')}</dl>`:''}
+              ${P.bio?`<p class="cp-bio">${esc(P.bio)}</p>`:''}
             </div></div>`;
         if(stl==='story') return `<div class="cp-card${rev?' rev':''}"${stA}>
             <div class="cp-top">${img}<span>
@@ -1351,6 +1353,7 @@ function renderSide(){
           ${P.name?`<b class="cp-nm">${esc(P.name)}</b>`:''}
           ${P.sub?`<i class="cp-sub">${esc(P.sub)}</i>`:''}
           ${its.length?`<dl class="cp-dl">${its.map(i=>`<div><dt>${esc(i.k||'')}</dt><dd>${esc(i.v||'')}</dd></div>`).join('')}</dl>`:''}
+          ${P.bio?`<p class="cp-bio">${esc(P.bio)}</p>`:''}
         </div>`; };
       const empty = w.t==='char' ? !(w.p&&(w.p.img||w.p.name)) : !((w.a&&(w.a.img||w.a.name))||(w.b&&(w.b.img||w.b.name)));
       if(empty && !st.mine) return;
@@ -2598,7 +2601,7 @@ function renderWidEdit(){
     </div>
     <input data-cp="${pre}.sub" value="${esc(P.sub||'')}" placeholder="한 줄 소개 (선택 — 예: 소속 · 직함)">
     <input data-cp="${pre}.tags" value="${esc(P.tags||'')}" placeholder="태그 (쉼표로 — 컬러 프레임 알약 · 스토리 해시태그로 나와요)">
-    <textarea data-cp="${pre}.bio" rows="3" placeholder="소개문 (선택 — '스토리 카드' 스킨에서 크게 보여요)" style="font-size:12px">${esc(P.bio||'')}</textarea>
+    <textarea data-cp="${pre}.bio" rows="3" placeholder="소개문 (선택 — 카드에 문단으로 나와요)" style="font-size:12px">${esc(P.bio||'')}</textarea>
     ${(P.items||[]).map((it,ii)=>`
       <div class="p-row" style="gap:6px">
         <input data-cpk="${pre}.${ii}" value="${esc(it.k||'')}" placeholder="항목명 (예: 키)" style="width:110px;flex:none;margin-bottom:0">

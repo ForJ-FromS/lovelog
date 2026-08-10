@@ -934,21 +934,33 @@
   .cp-frame .cp-kv{margin-top:5px;font-size:10.5px;color:var(--muted)}
   /* 스킨 · 스토리 카드 */
   .w-cp .cp-pair.cp-col{flex-direction:column}
-  .cp-story .cp-card{position:relative;padding:13px 14px 14px 19px;border-radius:12px}
+  .cp-story .cp-card{position:relative;padding:14px 15px 15px 20px;border-radius:12px;
+    display:flex;flex-direction:column;gap:8px;
+    background:linear-gradient(90deg, color-mix(in srgb, var(--cpc, var(--pri)) 8%, transparent), transparent 42%),
+      color-mix(in srgb, var(--ink) 4%, transparent)}
+  .cp-story .cp-card.rev{background:linear-gradient(270deg, color-mix(in srgb, var(--cpc, var(--pri)) 8%, transparent), transparent 42%),
+      color-mix(in srgb, var(--ink) 4%, transparent)}
   .cp-story .cp-card::before{content:'';position:absolute;left:0;top:13px;bottom:13px;width:3px;
     background:var(--cpc, var(--pri));border-radius:0 3px 3px 0}
   .cp-story .cp-top{display:flex;gap:11px;align-items:center}
-  .cp-story .cp-top .cp-img{width:58px;height:58px;aspect-ratio:auto;border-radius:10px;flex:none}
+  .cp-story .cp-top .cp-img{width:66px;height:66px;aspect-ratio:auto;border-radius:12px;flex:none}
+  .cp-story .cp-nm{font-size:14.5px}
+  .cp-story .cp-dl{margin-top:1px;padding-top:9px;border-top:1px dashed color-mix(in srgb, var(--cpc, var(--pri)) 30%, var(--line))}
+  .cp-story .cp-dl dt{font-family:'IBM Plex Mono',monospace;font-size:9.5px;padding-top:1px;
+    color:color-mix(in srgb, var(--cpc, var(--pri)) 55%, var(--muted))}
   .cp-story .cp-top span{min-width:0}
   .cp-story .cp-sub{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.15em;
     color:var(--cpc, var(--pri));display:block;margin-top:1px}
-  .cp-story .cp-bio{font-size:11px;line-height:1.8;color:var(--cpt, var(--ink));opacity:.92;white-space:pre-line}
+  .w-cp .cp-bio{font-size:11px;line-height:1.8;color:var(--cpt, var(--ink));opacity:.92;white-space:pre-line;margin:2px 0 0}
   .cp-story .cp-hash{display:flex;flex-wrap:wrap;gap:4px 9px}
   .cp-story .cp-hash span{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--cpc, var(--pri))}
   .cp-story .cp-card.rev{padding:13px 19px 14px 14px}
   .cp-story .cp-card.rev::before{left:auto;right:0;border-radius:3px 0 0 3px}
   .cp-story .cp-card.rev .cp-top{flex-direction:row-reverse;text-align:right;justify-content:flex-start}
   .cp-story .cp-card.rev .cp-hash{justify-content:flex-end}
+  .cp-story .cp-card.rev .cp-bio{text-align:right}
+  .cp-story .cp-card.rev .cp-dl div{flex-direction:row-reverse;justify-content:flex-start;text-align:right}
+  .cp-story .cp-card.rev .cp-dl dt{text-align:left}
   .w-cp .cp-rel{margin-top:10px;padding:9px 13px;text-align:center;font-size:11px;line-height:1.7;
     color:var(--ink);opacity:.88;border:1px dashed color-mix(in srgb, var(--pri) 40%, var(--line));
     border-radius:10px;white-space:pre-line}
@@ -2041,6 +2053,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=238"></script>
+<script type="module" src="./app.js?v=239"></script>
 </body>
 </html>
