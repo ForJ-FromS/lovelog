@@ -487,7 +487,10 @@ async function enterPage(){
   document.body.classList.toggle('stk-hide-m', !!p.stkHideM);
   document.documentElement.style.setProperty('--lbIcon',
     p.labelIcon===undefined ? '"◈ "' : (p.labelIcon ? JSON.stringify(p.labelIcon+' ') : '""'));
-  document.body.classList.toggle('font-serif', p.font==='serif');
+  const fk=FONTS[p.font]?p.font:'sans';
+  ensureFont(fk);
+  document.documentElement.style.setProperty('--uFam', FONTS[fk].fam);
+  document.body.classList.toggle('font-serif', fk==='serif');
   document.title = p.name ? p.name : 'LOVELOG';
   let fl=document.getElementById('favlink');
   if(p.fav){ if(!fl){ fl=document.createElement('link'); fl.rel='icon'; fl.id='favlink'; document.head.appendChild(fl); } fl.href=p.fav; }
@@ -693,6 +696,43 @@ function latestBlock(box, n, withPin=true){
   const lm=d.querySelector('#latest-more');                       // allOff면 링크가 없음(phase200 널 가드)
   if(lm) lm.onclick=()=>goBoard('recent');
   return d;
+}
+/* 홈 폰트 10종(phase238) — 선택된 것만 동적 로드 */
+const FONTS={
+  sans:{label:'고딕 — Noto Sans KR (기본)', fam:"'Noto Sans KR',sans-serif"},
+  serif:{label:'명조 — Noto Serif KR', fam:"'Noto Serif KR',serif"},
+  pretendard:{label:'프리텐다드 — 산뜻한 고딕', fam:"'Pretendard Variable',Pretendard,'Noto Sans KR',sans-serif",
+    css:'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css'},
+  suit:{label:'수트 SUIT — 둥글고 단정한 고딕', fam:"'SUIT Variable','Noto Sans KR',sans-serif",
+    css:'https://cdn.jsdelivr.net/gh/sun-typeface/SUIT@2/fonts/variable/woff2/SUIT-Variable.css'},
+  gowundodum:{label:'고운돋움 — 동글동글 담백', fam:"'Gowun Dodum','Noto Sans KR',sans-serif",
+    css:'https://fonts.googleapis.com/css2?family=Gowun+Dodum&display=swap'},
+  gowunbatang:{label:'고운바탕 — 부드러운 명조', fam:"'Gowun Batang','Noto Serif KR',serif",
+    css:'https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap'},
+  maru:{label:'마루 부리 — 네이버 명조', fam:"'MaruBuri','Noto Serif KR',serif",
+    face:[{f:'MaruBuri',u:'https://hangeul.pstatic.net/hangeul_static/webfont/MaruBuri/MaruBuri-Regular.woff2',w:400},
+          {f:'MaruBuri',u:'https://hangeul.pstatic.net/hangeul_static/webfont/MaruBuri/MaruBuri-Bold.woff2',w:700}]},
+  ridi:{label:'리디바탕 — 전자책 명조', fam:"'RIDIBatang','Noto Serif KR',serif",
+    face:[{f:'RIDIBatang',u:'https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_twelve@1.1/RIDIBatang.woff',w:400}]},
+  nanumpen:{label:'나눔손글씨 펜 — 손글씨', fam:"'Nanum Pen Script','Noto Sans KR',cursive",
+    css:'https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&display=swap'},
+  neodgm:{label:'둥근모꼴 — 레트로 픽셀', fam:"'NeoDunggeunmo','Noto Sans KR',sans-serif",
+    css:'https://cdn.jsdelivr.net/npm/neodgm-webfont@1.530/neodgm/style.css'},
+  galmuri:{label:'갈무리 — 도트 픽셀', fam:"'Galmuri11','Noto Sans KR',sans-serif",
+    css:'https://cdn.jsdelivr.net/npm/galmuri/dist/galmuri.css'},
+};
+function ensureFont(k){
+  const f=FONTS[k]; if(!f||(!f.css&&!f.face)) return;
+  if(document.querySelector(`[data-font="${k}"]`)) return;
+  if(f.css){
+    const l=document.createElement('link');
+    l.rel='stylesheet'; l.href=f.css; l.dataset.font=k;
+    document.head.appendChild(l);
+  }else{
+    const s=document.createElement('style'); s.dataset.font=k;
+    s.textContent=f.face.map(x=>`@font-face{font-family:'${x.f}';src:url('${x.u}') format('${x.u.endsWith('.woff2')?'woff2':'woff'}');font-weight:${x.w};font-display:swap;}`).join('');
+    document.head.appendChild(s);
+  }
 }
 const isVid=u=>/\.(mp4|webm|mov)(\?|$)/i.test(u||'')||/video%2F|video\//i.test(u||'');
 function setGateCover(url){                          // 대문 배경 — 사진이면 background, 영상이면 <video>
@@ -3824,7 +3864,14 @@ function fillSettings(){
   $('#s-enter').value=p.enterText||'';
   egateNew=null; renderEgate();
   titleVal=null; $('#s-title').value=p.titleColor||'#eeeeee';
-  $('#s-font').value=p.font||'sans'; $('#s-css').value=p.customCss||'';
+  const sf=$('#s-font');
+  if(sf && !sf.dataset.full){
+    sf.innerHTML=Object.entries(FONTS).map(([k,f])=>`<option value="${k}">${f.label}</option>`).join('');
+    sf.dataset.full='1';
+    sf.onchange=()=>{ ensureFont(sf.value);                       // 저장 전 미리보기
+      document.documentElement.style.setProperty('--uFam', FONTS[sf.value].fam); };
+  }
+  sf.value=FONTS[p.font]?p.font:'sans'; $('#s-css').value=p.customCss||'';
   favNew=null; curNew=null;
   bgNew=null;
 }
