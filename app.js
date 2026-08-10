@@ -716,8 +716,8 @@ const FONTS={
     face:[{f:'RIDIBatang',u:'https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_twelve@1.1/RIDIBatang.woff',w:400}]},
   nanumpen:{label:'나눔손글씨 펜 — 손글씨', fam:"'Nanum Pen Script','Noto Sans KR',cursive",
     css:'https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&display=swap'},
-  neodgm:{label:'둥근모꼴 — 레트로 픽셀', fam:"'NeoDunggeunmo','Noto Sans KR',sans-serif",
-    css:'https://cdn.jsdelivr.net/npm/neodgm-webfont@1.530/neodgm/style.css'},
+  neodgm:{label:'둥근모꼴 — 레트로 픽셀', fam:"'Neo둥근모','Noto Sans KR',sans-serif",
+    css:'https://cdn.jsdelivr.net/npm/@kfonts/neodgm@0.5.0/index.css'},   /* 검증 완료: npm 실물 tarball의 index.css=font-family 'Neo둥근모'(phase239 — 구 주소는 미존재 패키지) */
   galmuri:{label:'갈무리 — 도트 픽셀', fam:"'Galmuri11','Noto Sans KR',sans-serif",
     css:'https://cdn.jsdelivr.net/npm/galmuri/dist/galmuri.css'},
 };
