@@ -1332,36 +1332,64 @@ function renderSide(){
     if(w.t==='cal'){
       d.className+=' w-cal';
       const now=new Date();
+      const view = w.view==='w'||w.view==='d' ? w.view : 'm';   // 먼슬리/위클리/데일리(phase243)
       let [cy,cm] = w.ym ? w.ym.split('-').map(Number) : [now.getFullYear(), now.getMonth()+1];
+      let cur = w.ym ? new Date(cy,cm-1,1) : new Date(now.getFullYear(),now.getMonth(),now.getDate());
       const marks=w.marks||[];
       const memoDates = w.memoDot ? new Set(st.posts.filter(p=>isMemo(p.cat)).map(p=>(p.date||'').replaceAll('.','-'))) : new Set();
-      const draw=()=>{
-        const first=new Date(cy,cm-1,1), off=first.getDay(), dim=new Date(cy,cm,0).getDate();
-        const pad2=x=>String(x).padStart(2,'0');
-        const tod=`${now.getFullYear()}-${pad2(now.getMonth()+1)}-${pad2(now.getDate())}`;
-        let cells='';
-        for(let k=0;k<off;k++) cells+='<span class="cd off"></span>';
-        for(let day=1;day<=dim;day++){
-          const ds=`${cy}-${pad2(cm)}-${pad2(day)}`;
-          const mk=marks.filter(m=>{ const d1=m.d, d2=m.d2||m.d; return d1&&ds>=d1&&ds<=d2; });
-          const single=mk.find(m=>!(m.d2&&m.d2!==m.d));
-          const range=mk.find(m=>m.d2&&m.d2!==m.d);
-          const rCls=range?(' rg'+(ds===range.d?' rs':'')+(ds===(range.d2||range.d)?' re':'')):'';
-          cells+=`<span class="cd${ds===tod?' today':''}${rCls}" ${mk.length&&mk[0].t?`title="${esc(mk[0].t)}"`:''} data-cd="${ds}">
-            <i>${day}</i>${single&&single.e?`<b class="ce">${esc(single.e)}</b>`:''}${range&&ds===range.d&&range.e?`<b class="ce">${esc(range.e)}</b>`:''}${memoDates.has(ds)?'<u class="cmemo"></u>':''}</span>`;
-        }
-        d.innerHTML=`<p class="label">${esc(w.label||'CALENDAR')}</p>
-          <div class="cal-hd"><span class="cnav" data-cn="-1">◀</span><b>${cy}. ${pad2(cm)}</b><span class="cnav" data-cn="1">▶</span></div>
-          <div class="cal-wd">${['S','M','T','W','T','F','S'].map(x=>`<span>${x}</span>`).join('')}</div>
-          <div class="cal-gr">${cells}</div>`;
-        d.querySelectorAll('[data-cn]').forEach(el=>el.onclick=()=>{ cm+=+el.dataset.cn;
-          if(cm<1){cm=12;cy--;} if(cm>12){cm=1;cy++;} draw(); });
+      const pad2=x=>String(x).padStart(2,'0');
+      const tod=`${now.getFullYear()}-${pad2(now.getMonth()+1)}-${pad2(now.getDate())}`;
+      const dsOf=t2=>`${t2.getFullYear()}-${pad2(t2.getMonth()+1)}-${pad2(t2.getDate())}`;
+      const openMemoOf=ds=>{ const dd=ds.replaceAll('-','.');
+        const p=st.posts.find(p2=>isMemo(p2.cat)&&p2.date===dd); if(p) openFromHome(p.id); };
+      const cell=ds=>{
+        const mk=marks.filter(m=>{ const d1=m.d, d2=m.d2||m.d; return d1&&ds>=d1&&ds<=d2; });
+        const single=mk.find(m=>!(m.d2&&m.d2!==m.d));
+        const range=mk.find(m=>m.d2&&m.d2!==m.d);
+        const rCls=range?(' rg'+(ds===range.d?' rs':'')+(ds===(range.d2||range.d)?' re':'')):'';
+        return `<span class="cd${ds===tod?' today':''}${rCls}" ${mk.length&&mk[0].t?`title="${esc(mk[0].t)}"`:''} data-cd="${ds}">
+          <i>${+ds.slice(8)}</i>${single&&single.e?`<b class="ce">${esc(single.e)}</b>`:''}${range&&ds===range.d&&range.e?`<b class="ce">${esc(range.e)}</b>`:''}${memoDates.has(ds)?'<u class="cmemo"></u>':''}</span>`;
+      };
+      const WD7=['S','M','T','W','T','F','S'];
+      let nav=()=>{};
+      const after=()=>{
+        d.querySelectorAll('[data-cn]').forEach(el=>el.onclick=()=>{ nav(+el.dataset.cn); draw(); });
         if(w.memoDot) d.querySelectorAll('.cd').forEach(el=>{
-          if(el.querySelector('.cmemo')) el.onclick=()=>{
-            const ds=el.dataset.cd.replaceAll('-','.');
-            const p=st.posts.find(p2=>isMemo(p2.cat)&&p2.date===ds);
-            if(p) openFromHome(p.id); };
-        });
+          if(el.querySelector('.cmemo')) el.onclick=()=>openMemoOf(el.dataset.cd); });
+      };
+      const draw=()=>{
+        if(view==='m'){
+          const first=new Date(cy,cm-1,1), off=first.getDay(), dim=new Date(cy,cm,0).getDate();
+          let cells='';
+          for(let k=0;k<off;k++) cells+='<span class="cd off"></span>';
+          for(let day=1;day<=dim;day++) cells+=cell(`${cy}-${pad2(cm)}-${pad2(day)}`);
+          d.innerHTML=`<p class="label">${esc(w.label||'CALENDAR')}</p>
+            <div class="cal-hd"><span class="cnav" data-cn="-1">◀</span><b>${cy}. ${pad2(cm)}</b><span class="cnav" data-cn="1">▶</span></div>
+            <div class="cal-wd">${WD7.map(x=>`<span>${x}</span>`).join('')}</div>
+            <div class="cal-gr">${cells}</div>`;
+          nav=dir=>{ cm+=dir; if(cm<1){cm=12;cy--;} if(cm>12){cm=1;cy++;} };
+        }else if(view==='w'){
+          const base=new Date(cur); base.setDate(cur.getDate()-cur.getDay());
+          const days=[...Array(7)].map((_,k)=>{ const t2=new Date(base); t2.setDate(base.getDate()+k); return dsOf(t2); });
+          d.innerHTML=`<p class="label">${esc(w.label||'CALENDAR')}</p>
+            <div class="cal-hd"><span class="cnav" data-cn="-1">◀</span><b>${days[0].slice(5).replace('-','.')} ~ ${days[6].slice(5).replace('-','.')}</b><span class="cnav" data-cn="1">▶</span></div>
+            <div class="cal-wd">${WD7.map(x=>`<span>${x}</span>`).join('')}</div>
+            <div class="cal-gr">${days.map(cell).join('')}</div>`;
+          nav=dir=>cur.setDate(cur.getDate()+dir*7);
+        }else{
+          const ds=dsOf(cur);
+          const mk=marks.filter(m=>{ const d1=m.d, d2=m.d2||m.d; return d1&&ds>=d1&&ds<=d2; });
+          const wdn=['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'][cur.getDay()];
+          d.innerHTML=`<p class="label">${esc(w.label||'CALENDAR')}</p>
+            <div class="cal-hd"><span class="cnav" data-cn="-1">◀</span><b>${cur.getFullYear()}. ${pad2(cur.getMonth()+1)}</b><span class="cnav" data-cn="1">▶</span></div>
+            <div class="cal-day">
+              <b class="cdd${ds===tod?' now':''}">${+ds.slice(8)}</b><i class="cdw">${wdn}</i>
+              ${mk.length?`<div class="cdl">${mk.map(m=>`<span>${m.e?esc(m.e)+' ':''}${esc(m.t||'')}</span>`).join('')}</div>`:''}
+              ${memoDates.has(ds)?`<span class="cd" data-cd="${ds}" style="min-height:0;cursor:pointer"><u class="cmemo" style="position:static;transform:none"></u><em class="cml">메모 열기</em></span>`:''}
+            </div>`;
+          nav=dir=>cur.setDate(cur.getDate()+dir);
+        }
+        after();
       };
       draw();
       box.appendChild(d); return;
@@ -2537,6 +2565,11 @@ function renderWidEdit(){
     +cpForm(w.a,'a','왼쪽 인물')+cpForm(w.b,'b','오른쪽 인물');
   if(w.t==='cal') html+=`
     <div class="p-row" style="align-items:center;gap:8px;font-size:11.5px;color:var(--muted)">
+      <select id="we-calview" style="width:auto;margin-bottom:0">
+        <option value="m" ${!w.view||w.view==='m'?'selected':''}>먼슬리 (월간)</option>
+        <option value="w" ${w.view==='w'?'selected':''}>위클리 (한 주 한 줄)</option>
+        <option value="d" ${w.view==='d'?'selected':''}>데일리 (하루 크게)</option>
+      </select>
       <input type="month" id="we-calym" value="${esc(w.ym||'')}" style="width:auto;margin-bottom:0">
       <span>— 비우면 이번 달을 따라 흘러가요, 정하면 그 달에 고정</span>
     </div>
@@ -2959,6 +2992,48 @@ function renderWidEdit(){
     if(phloop.checked) w.loop=true; else delete w.loop; });
   const phfd=$('#we-phfold'); if(phfd) phfd.addEventListener('change',()=>{
     if(phfd.checked) w.fold=true; else delete w.fold; });
+  /* ── 캐릭터/페어·달력·해빗 폼 바인딩(phase243 — 폼만 있고 저장 연결이 없던 것 시공) ── */
+  document.querySelectorAll('[data-cp]').forEach(inp=>inp.addEventListener('input',()=>{
+    const [pre,f]=inp.dataset.cp.split('.'); w[pre]=w[pre]||{};
+    if(inp.value.trim()) w[pre][f]=inp.value.trim(); else delete w[pre][f]; }));
+  document.querySelectorAll('[data-cpk],[data-cpv]').forEach(inp=>inp.addEventListener('input',()=>{
+    const key=inp.dataset.cpk||inp.dataset.cpv, [pre,ii]=key.split('.');
+    const P=w[pre]=w[pre]||{}; P.items=P.items||[];
+    const it=P.items[+ii]=P.items[+ii]||{};
+    it[inp.dataset.cpk!==undefined?'k':'v']=inp.value; }));
+  document.querySelectorAll('[data-cpx]').forEach(bx=>bx.onclick=()=>{
+    const [pre,ii]=bx.dataset.cpx.split('.'); ((w[pre]||{}).items||[]).splice(+ii,1); renderWidEdit(); });
+  document.querySelectorAll('[data-cpadd]').forEach(bx=>bx.onclick=()=>{
+    const pre=bx.dataset.cpadd; w[pre]=w[pre]||{}; (w[pre].items=w[pre].items||[]).push({}); renderWidEdit(); });
+  document.querySelectorAll('[data-cpimg]').forEach(inp=>inp.addEventListener('change',async e=>{
+    const f=e.target.files[0]; if(!f) return; msg('사진 올리는 중...');
+    try{ const u=await upFile(f,900,.88,120); const pre=inp.dataset.cpimg;
+      w[pre]=w[pre]||{}; w[pre].img=u; renderWidEdit(); msg('사진 넣었어요!'); }
+    catch(err){ msg('업로드 실패 — '+err.message); } }));
+  const cpcn=$('#we-cpcn'); if(cpcn) cpcn.addEventListener('input',()=>{ w.cn=cpcn.value.trim()||'♥'; });
+  const cvw=$('#we-calview'); if(cvw) cvw.addEventListener('change',()=>{
+    if(cvw.value==='m') delete w.view; else w.view=cvw.value; });
+  const cym=$('#we-calym'); if(cym) cym.addEventListener('change',()=>{
+    if(cym.value) w.ym=cym.value; else delete w.ym; });
+  const cmm=$('#we-calmemo'); if(cmm) cmm.addEventListener('change',()=>{
+    if(cmm.checked) w.memoDot=true; else delete w.memoDot; });
+  const bindMk=(sel,f)=>document.querySelectorAll(sel).forEach(inp=>inp.addEventListener('input',()=>{
+    const mi=+(inp.dataset.cmd??inp.dataset.cmd2??inp.dataset.cme??inp.dataset.cmt);
+    const M=(w.marks=w.marks||[])[mi]=(w.marks[mi]||{});
+    if(inp.value) M[f]=inp.value; else delete M[f]; }));
+  bindMk('[data-cmd]','d'); bindMk('[data-cmd2]','d2'); bindMk('[data-cme]','e'); bindMk('[data-cmt]','t');
+  document.querySelectorAll('[data-cmx]').forEach(bx=>bx.onclick=()=>{ (w.marks||[]).splice(+bx.dataset.cmx,1); renderWidEdit(); });
+  const cad=$('#we-caladd'); if(cad) cad.onclick=()=>{ (w.marks=w.marks||[]).push({}); renderWidEdit(); };
+  const hbm=$('#we-hbmode'); if(hbm) hbm.addEventListener('change',()=>{
+    if(hbm.value==='sq') delete w.mode; else w.mode=hbm.value; });
+  const hbe=$('#we-hbemo'); if(hbe) hbe.addEventListener('input',()=>{ w.emo=hbe.value.trim()||'💛'; });
+  const hbd=$('#we-hbdays'); if(hbd) hbd.addEventListener('change',()=>{
+    if(+hbd.value===14) w.days=14; else delete w.days; });
+  document.querySelectorAll('[data-hbn]').forEach(inp=>inp.addEventListener('input',()=>{
+    const H=(w.habits=w.habits||[])[+inp.dataset.hbn]=(w.habits[+inp.dataset.hbn]||{});
+    H.n=inp.value; }));
+  document.querySelectorAll('[data-hbx]').forEach(bx=>bx.onclick=()=>{ (w.habits||[]).splice(+bx.dataset.hbx,1); renderWidEdit(); });
+  const hba=$('#we-hbadd'); if(hba) hba.onclick=()=>{ (w.habits=w.habits||[]).push({n:''}); renderWidEdit(); };
   const tltt=$('#we-tltt'); if(tltt) tltt.addEventListener('input',()=>{
     if(tltt.value.trim()) w.title=tltt.value; else delete w.title; });
   const tlst=$('#we-tlst'); if(tlst) tlst.addEventListener('change',()=>{
