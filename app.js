@@ -4405,6 +4405,7 @@ async function saveSettings(){
       deleteDoc(doc(db,'pages',st.handle,'imgs',r)).catch(()=>{});
     st.page={...st.page,...data};
     await resolveImgs(st.page);
+    initPet(); petImgNew=null;                                   // 펫 즉시 산책(phase254b) — 새로고침 없이 반영
     gateClear=false; renderGateState();
     if(data.gate==='') sessionStorage.removeItem('gate_'+st.handle);
     msg('저장 완료!');

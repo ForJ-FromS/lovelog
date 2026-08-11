@@ -2010,19 +2010,15 @@
         <option value="serif">명조 — Noto Serif KR</option>
       </select>
     </div>
-    <p class="p-h">클릭 이펙트 · 픽셀펫</p>
-    <div class="p-row" style="align-items:center;gap:8px">
-      <input id="s-clickfx" placeholder="클릭 이펙트 이모지 (예: ♥ ✨ 🫧 — 비우면 꺼져요)" style="flex:1;margin-bottom:0">
-      <input id="s-pet" placeholder="픽셀펫 이모지 (예: 🐈 — 비우면 없어요)" style="width:210px;flex:none;margin-bottom:0">
-      <label class="filelab" style="font-size:11px;flex:none">🖼 펫 이미지<input type="file" id="s-petimg" accept="image/*" style="display:none"></label>
-      <button class="rmv" id="s-petimg-clear" style="font-size:10px;flex:none">이미지 지우기</button>
-    </div>
-    <p class="note" style="margin-top:-4px">클릭할 때마다 이모지가 퐁 — 여러 개 쓰면 랜덤으로 나와요. 펫은 화면 아래를 어슬렁거리고, 쓰다듬으면(클릭) 폴짝 뛰어요.</p>
     <p class="p-h">마우스 커서</p>
     <div class="p-row">
       <label class="filelab">커서 이미지 <input type="file" id="s-cur" accept="image/*"></label>
       <button class="rmv" id="s-cur-clear" style="font-size:11px">기본 커서로</button>
       <span class="note">투명 배경 PNG · 32~64px 권장</span>
+    </div>
+    <div class="p-row" style="align-items:center;gap:8px">
+      <input id="s-clickfx" placeholder="💥 클릭 이펙트 이모지 (예: ♥ ✨ 🫧 — 여러 개면 랜덤, 비우면 꺼져요)" style="flex:1;margin-bottom:0">
+      <span class="note" style="flex:none">화면 누르면 퐁</span>
     </div>
     <p class="p-h">커스텀 CSS — 아는 사람만 만지세요</p>
     <div class="p-row" style="align-items:center">
@@ -2070,6 +2066,15 @@
     <div class="p-row"><label class="filelab">스티커 추가 (투명 PNG·움짤 GIF 가능) <input type="file" id="stk-file" accept="image/*"></label></div>
     <div id="stk-list"></div>
     <p class="note">추가하면 홈 상단에 나타나요 — <b>홈에서 스티커를 드래그해서</b> 원하는 자리에 놓으면 자동 저장됩니다.</p>
+    <p class="p-h">🐾 픽셀펫 — 화면 아래를 어슬렁거리는 친구</p>
+    <div class="p-row" style="align-items:center;gap:8px">
+      <input id="s-pet" placeholder="이모지 (예: 🐈 — 비우면 없어요)" style="flex:1;margin-bottom:0">
+      <label class="filelab" style="font-size:11px;flex:none">🖼 직접 그린 펫 올리기<input type="file" id="s-petimg" accept="image/*" style="display:none"></label>
+      <button class="rmv" id="s-petimg-clear" style="font-size:10px;flex:none">이미지 지우기</button>
+    </div>
+    <p class="note" style="margin-top:-4px">쓰다듬으면(클릭) 폴짝 뛰어요. 직접 올린 그림이 이모지보다 우선 — 투명 배경 PNG 권장.</p>
+    <p class="note" style="margin-top:-4px">펫은 입력 후 <b>[설정 저장]</b>을 눌러야 적용돼요. (스티커는 지금처럼 자동 저장)</p>
+    <button class="go s-go" style="margin-top:14px">설정 저장</button>
   </div>
 
   </div>
@@ -2077,6 +2082,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=245"></script>
+<script type="module" src="./app.js?v=247"></script>
 </body>
 </html>
