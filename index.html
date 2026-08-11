@@ -905,12 +905,18 @@
     0%{opacity:0;transform:translate(-50%,-50%) scale(.4)}
     18%{opacity:1}
     100%{opacity:0;transform:translate(calc(-50% + var(--dx,0px)), calc(-50% + var(--dy,-40px))) scale(1.05) rotate(var(--rot,0deg))}}
-  #luv-pet{position:fixed;bottom:6px;z-index:120;font-size:26px;line-height:1;cursor:pointer;
+  .luv-pet{position:fixed;bottom:6px;z-index:120;font-size:26px;line-height:1;cursor:pointer;
     user-select:none;filter:drop-shadow(0 2px 2px rgba(0,0,0,.25))}
-  #luv-pet img{display:block;height:38px;width:auto;image-rendering:pixelated;pointer-events:none}
-  #luv-pet.walk{animation:petBob .5s ease-in-out infinite}
+  .luv-pet img{display:block;height:38px;width:auto;image-rendering:pixelated;pointer-events:none}
+  .luv-pet.walk{animation:petBob .5s ease-in-out infinite}
   @keyframes petBob{0%,100%{margin-bottom:0}50%{margin-bottom:3px}}
-  #luv-pet.hop{animation:petHop .45s ease-out}
+  #s-petimg-list{display:flex;gap:7px;flex-wrap:wrap;margin:2px 0 6px}
+  #s-petimg-list .petthumb{position:relative;display:inline-flex}
+  #s-petimg-list .petthumb img{width:34px;height:34px;object-fit:contain;border:1px solid var(--line);
+    border-radius:8px;image-rendering:pixelated;background:color-mix(in srgb, var(--ink) 5%, transparent)}
+  #s-petimg-list .petthumb .rmv{position:absolute;top:-6px;right:-6px;font-size:9px;cursor:pointer;
+    padding:1px 4px;border-radius:99px}
+  .luv-pet.hop{animation:petHop .45s ease-out}
   @keyframes petHop{0%{margin-bottom:0}40%{margin-bottom:22px}100%{margin-bottom:0}}
   /* ── 캐릭터·페어 프로필 / 달력 / 해빗 (phase242) ── */
   .w-cp .cp-card{display:flex;flex-direction:column;gap:7px;padding:14px 15px;flex:1;min-width:0;
@@ -2068,11 +2074,12 @@
     <p class="note">추가하면 홈 상단에 나타나요 — <b>홈에서 스티커를 드래그해서</b> 원하는 자리에 놓으면 자동 저장됩니다.</p>
     <p class="p-h">🐾 픽셀펫 — 화면 아래를 어슬렁거리는 친구</p>
     <div class="p-row" style="align-items:center;gap:8px">
-      <input id="s-pet" placeholder="이모지 (예: 🐈 — 비우면 없어요)" style="flex:1;margin-bottom:0">
-      <label class="filelab" style="font-size:11px;flex:none">🖼 직접 그린 펫 올리기<input type="file" id="s-petimg" accept="image/*" style="display:none"></label>
-      <button class="rmv" id="s-petimg-clear" style="font-size:10px;flex:none">이미지 지우기</button>
+      <input id="s-pet" placeholder="이모지 (예: 🐈🐈‍⬛ — 여러 개면 여러 마리, 비우면 없어요)" style="flex:1;margin-bottom:0">
+      <label class="filelab" style="font-size:11px;flex:none">🖼 펫 추가 (그림 올리기)<input type="file" id="s-petimg" accept="image/*" style="display:none"></label>
+      <button class="rmv" id="s-petimg-clear" style="font-size:10px;flex:none">그림 전부 지우기</button>
     </div>
-    <p class="note" style="margin-top:-4px">쓰다듬으면(클릭) 폴짝 뛰어요. 직접 올린 그림이 이모지보다 우선 — 투명 배경 PNG 권장.</p>
+    <div id="s-petimg-list"></div>
+    <p class="note" style="margin-top:-4px">여러 마리 돼요! 그림은 4마리까지, 이모지도 여러 개 쓰면 각각 나와요 (예: 🐈🐈‍⬛). 쓰다듬으면(클릭) 폴짝 — 투명 배경 PNG 권장.</p>
     <p class="note" style="margin-top:-4px">펫은 입력 후 <b>[설정 저장]</b>을 눌러야 적용돼요. (스티커는 지금처럼 자동 저장)</p>
     <button class="go s-go" style="margin-top:14px">설정 저장</button>
   </div>
@@ -2082,6 +2089,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=247"></script>
+<script type="module" src="./app.js?v=248"></script>
 </body>
 </html>

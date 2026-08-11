@@ -2595,33 +2595,38 @@ document.addEventListener('pointerdown', e=>{
   if(e.target.closest('#panel,#wid-panel,button,input,textarea,select,a')) return;   // 편집·조작 요소는 제외
   spawnFx(e.clientX, e.clientY, fx);
 });
-let petTimer=null;
+let petTimers=[];
+function petList(){                                            // 저장된 펫 전원(구 단일 petImg 하위호환)
+  const imgs=(st.page&&st.page.petImgs)||((st.page&&st.page.petImg)?[st.page.petImg]:[]);
+  const emos=[...String((st.page&&st.page.pet)||'')].filter(s=>s.trim());
+  return [...imgs.map(u=>({img:u})), ...emos.map(e=>({emo:e}))].slice(0,6);   // 최대 6마리
+}
 function initPet(){
-  const old=document.getElementById('luv-pet'); if(old) old.remove();
-  if(petTimer){ clearTimeout(petTimer); petTimer=null; }
-  const emo=st.page&&st.page.pet, pim=st.page&&st.page.petImg;
-  if(!emo && !pim) return;
-  const p=document.createElement('div'); p.id='luv-pet';
-  if(pim) p.innerHTML=`<img src="${pim}" alt="">`;               // 직접 올린 그림이 이모지보다 우선
-  else p.textContent=[...String(emo)].find(s=>s.trim())||'🐈';
-  let x=12+Math.random()*60;
-  p.style.left=x+'vw';
-  document.body.appendChild(p);
-  const wander=()=>{
-    const nx=6+Math.random()*84;
-    const dur=Math.min(9, Math.max(2.5, Math.abs(nx-x)/9));
-    p.style.transition=`left ${dur}s linear`;
-    p.classList.add('walk');
-    p.style.transform=`scaleX(${nx>x?-1:1})`;                 // 진행 방향으로 몸 돌리기
-    p.style.left=nx+'vw'; x=nx;
-    petTimer=setTimeout(()=>{ p.classList.remove('walk');
-      petTimer=setTimeout(wander, 1500+Math.random()*4500); }, dur*1000);
-  };
-  p.onclick=ev=>{ ev.stopPropagation();
-    p.classList.remove('hop'); void p.offsetWidth; p.classList.add('hop');
-    setTimeout(()=>p.classList.remove('hop'), 500);           // 점프 후 걷기 애니 복귀
-    spawnFx(ev.clientX, ev.clientY-14, '♥'); };
-  petTimer=setTimeout(wander, 1200);
+  document.querySelectorAll('.luv-pet').forEach(el=>el.remove());
+  petTimers.forEach(clearTimeout); petTimers=[];
+  petList().forEach(o=>{
+    const p=document.createElement('div'); p.className='luv-pet';
+    if(o.img) p.innerHTML=`<img src="${o.img}" alt="">`;
+    else p.textContent=o.emo;
+    let x=8+Math.random()*76;
+    p.style.left=x+'vw';
+    document.body.appendChild(p);
+    const wander=()=>{
+      const nx=6+Math.random()*84;
+      const dur=Math.min(9, Math.max(2.5, Math.abs(nx-x)/9));
+      p.style.transition=`left ${dur}s linear`;
+      p.classList.add('walk');
+      p.style.transform=`scaleX(${nx>x?-1:1})`;               // 진행 방향으로 몸 돌리기
+      p.style.left=nx+'vw'; x=nx;
+      petTimers.push(setTimeout(()=>{ p.classList.remove('walk');
+        petTimers.push(setTimeout(wander, 1500+Math.random()*4500)); }, dur*1000));
+    };
+    p.onclick=ev=>{ ev.stopPropagation();
+      p.classList.remove('hop'); void p.offsetWidth; p.classList.add('hop');
+      setTimeout(()=>p.classList.remove('hop'), 500);
+      spawnFx(ev.clientX, ev.clientY-14, '♥'); };
+    petTimers.push(setTimeout(wander, 600+Math.random()*1800));   // 마리마다 엇박 출발
+  });
 }
 function cpFocusModal(w,pre){                      // 사진 초점 — 보면서 조정하는 팝업(phase249)
   const P=w[pre]||{};
@@ -3879,14 +3884,25 @@ $('#s-cur').addEventListener('change',async e=>{
   msg('커서 준비 완료 — [설정 저장]을 누르면 적용돼요.');
 });
 $('#s-cur-clear').onclick=()=>{ curNew=''; msg('기본 커서로 — [설정 저장]으로 확정돼요.'); };
-let petImgNew=null;                                              // null=변경 없음 / ''=지움 / URL=새 이미지 (phase254)
+let petImgsNew=null;                                             // null=변경 없음 / 배열=새 목록 (phase257)
+function curPetImgs(){ return petImgsNew ?? ((st.page.petImgs)||((st.page.petImg)?[st.page.petImg]:[])); }
+function renderPetImgList(){
+  const box=$('#s-petimg-list'); if(!box) return;
+  box.innerHTML=curPetImgs().map((u,i)=>`<span class="petthumb"><img src="${u}"><b class="rmv" data-petx="${i}">✕</b></span>`).join('');
+  box.querySelectorAll('[data-petx]').forEach(bx=>bx.onclick=()=>{
+    petImgsNew=curPetImgs().filter((_,i)=>i!==+bx.dataset.petx);
+    renderPetImgList(); msg('한 마리 뺐어요 — [설정 저장]으로 확정.'); });
+}
 const spi=$('#s-petimg'); if(spi) spi.addEventListener('change',async e=>{
   const f=e.target.files[0]; if(!f) return;
+  if(curPetImgs().length>=4){ msg('펫 이미지는 4마리까지예요.'); e.target.value=''; return; }
   msg('펫 이미지 준비 중...');
-  petImgNew=await upFile(f,160,.92,20); e.target.value='';
-  msg('펫 준비 완료 — [설정 저장]을 누르면 산책 시작해요.');
+  petImgsNew=[...curPetImgs(), await upFile(f,160,.92,20)]; e.target.value='';
+  renderPetImgList();
+  msg('펫 추가! [설정 저장]을 누르면 산책 시작해요.');
 });
-const spc=$('#s-petimg-clear'); if(spc) spc.onclick=()=>{ petImgNew=''; msg('펫 이미지 지움 — 이모지 칸이 있으면 이모지로 나와요. [설정 저장]으로 확정.'); };
+const spc=$('#s-petimg-clear'); if(spc) spc.onclick=()=>{ petImgsNew=[]; renderPetImgList();
+  msg('펫 이미지 전부 지움 — 이모지 칸이 있으면 이모지로 나와요. [설정 저장]으로 확정.'); };
 $('#s-css-clear').onclick=()=>{ $('#s-css').value=''; msg('CSS 비움 — [설정 저장]으로 확정돼요.'); };
 
 /* ── 컨셉 CSS 프리셋 모음 ── */
@@ -4266,6 +4282,7 @@ function fillSettings(){
   const smp=$('#s-mpinmax'); if(smp) smp.value=String(mpinMax());
   const scf=$('#s-clickfx'); if(scf) scf.value=st.page.clickFx||'';
   const spt=$('#s-pet'); if(spt) spt.value=st.page.pet||'';
+  petImgsNew=null; renderPetImgList();
   const smh=$('#s-memoh'); if(smh) smh.value=st.page.memoH||'m';
   const smt=$('#s-memott'); if(smt) smt.checked=!!st.page.memoNoTt;
   const slt=$('#s-listtc');
@@ -4389,7 +4406,8 @@ async function saveSettings(){
       customCss: $('#s-css').value,
       fav: favNew ?? st.page.fav ?? '',
       curImg: curNew ?? st.page.curImg ?? '',
-      petImg: petImgNew ?? st.page.petImg ?? '',
+      petImgs: petImgsNew ?? ((st.page.petImgs)||((st.page.petImg)?[st.page.petImg]:[])),
+      petImg: '',
       updatedAt:serverTimestamp()
     };
     if(gateIn) data.gate=await sha256(gateIn);
@@ -4405,7 +4423,7 @@ async function saveSettings(){
       deleteDoc(doc(db,'pages',st.handle,'imgs',r)).catch(()=>{});
     st.page={...st.page,...data};
     await resolveImgs(st.page);
-    initPet(); petImgNew=null;                                   // 펫 즉시 산책(phase254b) — 새로고침 없이 반영
+    initPet(); petImgsNew=null; renderPetImgList();              // 펫 즉시 산책(phase254b) — 새로고침 없이 반영
     gateClear=false; renderGateState();
     if(data.gate==='') sessionStorage.removeItem('gate_'+st.handle);
     msg('저장 완료!');
