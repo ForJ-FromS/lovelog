@@ -17,7 +17,11 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const VIEWS=['view-setup','view-loading','view-login','view-signup','view-gate','view-page'];
 const CLEAN = !location.hostname.endsWith('github.io');   // 커스텀 도메인이면 깔끔 주소
-const urlFor=(h,p)=> CLEAN ? '/'+h+(p?'/'+p:'') : './?u='+h+(p?'&p='+p:'');
+const SUB=(()=>{ const q=location.hostname.toLowerCase().split('.');            // jeste.luvlog.me → 'jeste' (phase252)
+  return q.length===3 && q[1]==='luvlog' && q[2]==='me' && q[0]!=='www' ? q[0] : null; })();
+const urlFor=(h,p)=>{
+  if(SUB) return h===SUB ? '/'+(p||'') : 'https://luvlog.me/'+h+(p?'/'+p:'');   // 자기 홈은 루트, 남의 홈은 본 주소로
+  return CLEAN ? '/'+h+(p?'/'+p:'') : './?u='+h+(p?'&p='+p:''); };
 const show = id => VIEWS.forEach(v=>$('#'+v).classList.toggle('hidden',v!==id));
 const enc=new TextEncoder(), dec=new TextDecoder();
 
@@ -387,7 +391,8 @@ async function loadPage(handle){
   // 딥링크 글ID를 주소 정리 '전에' 확보 (정리하면서 쿼리가 지워지므로)
   let pm0=new URLSearchParams(location.search).get('p');
   if(!pm0){ const seg=location.pathname.split('/').filter(Boolean);
-    if(seg[0]===handle && seg[1]) pm0=seg[1]; }
+    if(seg[0]===handle && seg[1]) pm0=seg[1];
+    else if(SUB && seg[0] && seg[0]!==handle) pm0=seg[0]; }              // jeste.luvlog.me/{글ID}
   st.deepPost=pm0||null;
   // 첫 진입 시 주소를 깔끔 경로로 정리 (luvlog.me/?u=jeste → luvlog.me/jeste)
   if(CLEAN){
@@ -1077,7 +1082,8 @@ const nbHost=u=>{ try{ return new URL(u).hostname.replace(/^www\./,''); }catch(e
 function ownHandle(raw){
   try{
     const u=new URL(raw);
-    const host=u.hostname.replace(/^www\./,'');
+    const host=u.hostname.replace(/^www\./,'').toLowerCase();
+    if(/^[a-z0-9-]+\.luvlog\.me$/.test(host) && host!=='www.luvlog.me') return host.split('.')[0];   // 서브도메인 주소(phase252)
     if(host===location.hostname.replace(/^www\./,'') || host==='luvlog.me'){
       const q=u.searchParams.get('u'); if(q) return q.toLowerCase();
       const seg=u.pathname.split('/').filter(Boolean).filter(s=>s!=='lovelog');
@@ -4858,7 +4864,7 @@ $('#s-del').onclick=async()=>{
 };
 onAuthStateChanged(auth,async user=>{
   st.me=user;
-  const viewing=new URLSearchParams(location.search).get('u');
+  const viewing=new URLSearchParams(location.search).get('u') || SUB;
   if(user){ const u=await getDoc(doc(db,'users',user.uid));
     st.myHandle=u.exists()?u.data().handle:null; }
   else st.myHandle=null;
