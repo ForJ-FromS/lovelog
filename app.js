@@ -722,6 +722,8 @@ const FONTS={
     css:'https://cdn.jsdelivr.net/npm/@kfonts/neodgm@0.5.0/index.css'},   /* 검증 완료: npm 실물 tarball의 index.css=font-family 'Neo둥근모'(phase239 — 구 주소는 미존재 패키지) */
   galmuri:{label:'갈무리 — 도트 픽셀', fam:"'Galmuri11','Noto Sans KR',sans-serif",
     css:'https://cdn.jsdelivr.net/npm/galmuri/dist/galmuri.css'},
+  paperlogy:{label:'페이퍼로지 — 둥글고 단정한', fam:"'Paperlogy','Noto Sans KR',sans-serif",   /* 검증: fonts-archive gh raw 200 · family Paperlogy · 웨이트 100~900 (phase251) */
+    css:'https://cdn.jsdelivr.net/gh/fonts-archive/Paperlogy/subsets/Paperlogy-dynamic-subset.css'},
 };
 function ensureFont(k){
   const f=FONTS[k]; if(!f||(!f.css&&!f.face)) return;
