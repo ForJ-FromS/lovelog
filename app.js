@@ -405,6 +405,7 @@ async function loadPage(handle){
   await resolveImgs(st.page);
   st.mine = st.me && st.page.owner===st.me.uid;
   applyColor(st.page.hue ?? 222, st.page.sat, st.page.lum);
+  initPet();
   // 입장 대문: 방문 시 1회(세션) + 비번 홈은 비번 입력
   const needPw = st.page.gate && !st.mine
     && sessionStorage.getItem('gate_'+handle)!==st.page.gate;
@@ -2571,6 +2572,57 @@ function renderWidList(){
     renderWidList();
   });
 }
+/* ── 클릭 이펙트 · 픽셀펫 (phase253) ── */
+function spawnFx(x,y,chars){
+  const pool=[...String(chars)].filter(s=>s.trim());
+  if(!pool.length) return;
+  const n=2+Math.floor(Math.random()*2);
+  for(let k=0;k<n;k++){
+    const s=document.createElement('span'); s.className='cfx';
+    s.textContent=pool[Math.floor(Math.random()*pool.length)];
+    const ang=Math.random()*Math.PI*2, dist=22+Math.random()*26;
+    s.style.left=x+'px'; s.style.top=y+'px';
+    s.style.setProperty('--dx', Math.cos(ang)*dist+'px');
+    s.style.setProperty('--dy', (Math.sin(ang)*dist-30)+'px');
+    s.style.setProperty('--rot', (Math.random()*70-35)+'deg');
+    document.body.appendChild(s);
+    setTimeout(()=>s.remove(), 750);
+  }
+}
+document.addEventListener('pointerdown', e=>{
+  const fx=st.page&&st.page.clickFx;
+  if(!fx) return;
+  if(e.target.closest('#panel,#wid-panel,button,input,textarea,select,a')) return;   // 편집·조작 요소는 제외
+  spawnFx(e.clientX, e.clientY, fx);
+});
+let petTimer=null;
+function initPet(){
+  const old=document.getElementById('luv-pet'); if(old) old.remove();
+  if(petTimer){ clearTimeout(petTimer); petTimer=null; }
+  const emo=st.page&&st.page.pet, pim=st.page&&st.page.petImg;
+  if(!emo && !pim) return;
+  const p=document.createElement('div'); p.id='luv-pet';
+  if(pim) p.innerHTML=`<img src="${pim}" alt="">`;               // 직접 올린 그림이 이모지보다 우선
+  else p.textContent=[...String(emo)].find(s=>s.trim())||'🐈';
+  let x=12+Math.random()*60;
+  p.style.left=x+'vw';
+  document.body.appendChild(p);
+  const wander=()=>{
+    const nx=6+Math.random()*84;
+    const dur=Math.min(9, Math.max(2.5, Math.abs(nx-x)/9));
+    p.style.transition=`left ${dur}s linear`;
+    p.classList.add('walk');
+    p.style.transform=`scaleX(${nx>x?-1:1})`;                 // 진행 방향으로 몸 돌리기
+    p.style.left=nx+'vw'; x=nx;
+    petTimer=setTimeout(()=>{ p.classList.remove('walk');
+      petTimer=setTimeout(wander, 1500+Math.random()*4500); }, dur*1000);
+  };
+  p.onclick=ev=>{ ev.stopPropagation();
+    p.classList.remove('hop'); void p.offsetWidth; p.classList.add('hop');
+    setTimeout(()=>p.classList.remove('hop'), 500);           // 점프 후 걷기 애니 복귀
+    spawnFx(ev.clientX, ev.clientY-14, '♥'); };
+  petTimer=setTimeout(wander, 1200);
+}
 function cpFocusModal(w,pre){                      // 사진 초점 — 보면서 조정하는 팝업(phase249)
   const P=w[pre]||{};
   if(!P.img){ msg('사진을 먼저 올려주세요.'); return; }
@@ -3827,6 +3879,14 @@ $('#s-cur').addEventListener('change',async e=>{
   msg('커서 준비 완료 — [설정 저장]을 누르면 적용돼요.');
 });
 $('#s-cur-clear').onclick=()=>{ curNew=''; msg('기본 커서로 — [설정 저장]으로 확정돼요.'); };
+let petImgNew=null;                                              // null=변경 없음 / ''=지움 / URL=새 이미지 (phase254)
+const spi=$('#s-petimg'); if(spi) spi.addEventListener('change',async e=>{
+  const f=e.target.files[0]; if(!f) return;
+  msg('펫 이미지 준비 중...');
+  petImgNew=await upFile(f,160,.92,20); e.target.value='';
+  msg('펫 준비 완료 — [설정 저장]을 누르면 산책 시작해요.');
+});
+const spc=$('#s-petimg-clear'); if(spc) spc.onclick=()=>{ petImgNew=''; msg('펫 이미지 지움 — 이모지 칸이 있으면 이모지로 나와요. [설정 저장]으로 확정.'); };
 $('#s-css-clear').onclick=()=>{ $('#s-css').value=''; msg('CSS 비움 — [설정 저장]으로 확정돼요.'); };
 
 /* ── 컨셉 CSS 프리셋 모음 ── */
@@ -4204,6 +4264,8 @@ function fillSettings(){
   $('#s-galcols').value=String(galCols());
   const smc=$('#s-memocols'); if(smc) smc.value=String(memoCols());
   const smp=$('#s-mpinmax'); if(smp) smp.value=String(mpinMax());
+  const scf=$('#s-clickfx'); if(scf) scf.value=st.page.clickFx||'';
+  const spt=$('#s-pet'); if(spt) spt.value=st.page.pet||'';
   const smh=$('#s-memoh'); if(smh) smh.value=st.page.memoH||'m';
   const smt=$('#s-memott'); if(smt) smt.checked=!!st.page.memoNoTt;
   const slt=$('#s-listtc');
@@ -4301,6 +4363,8 @@ async function saveSettings(){
       mpinMax: +($('#s-mpinmax')?.value)||3,
       memoH: $('#s-memoh')?.value||'m',
       memoNoTt: !!$('#s-memott')?.checked,
+      clickFx: ($('#s-clickfx')?.value||'').trim(),
+      pet: ($('#s-pet')?.value||'').trim(),
       listTc: ($('#s-listtc')?.dataset.on ? $('#s-listtc').value : ''),
       homeStyle: $('#s-homestyle').value,
       theme: $('#s-theme').value,
@@ -4325,6 +4389,7 @@ async function saveSettings(){
       customCss: $('#s-css').value,
       fav: favNew ?? st.page.fav ?? '',
       curImg: curNew ?? st.page.curImg ?? '',
+      petImg: petImgNew ?? st.page.petImg ?? '',
       updatedAt:serverTimestamp()
     };
     if(gateIn) data.gate=await sha256(gateIn);
