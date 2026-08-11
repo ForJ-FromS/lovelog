@@ -2144,7 +2144,9 @@ async function openPost(id, fromHome=false){
   if(p.secret){
     const pw=await askPw('🔒 비밀글'); if(pw===null||pw==='') return;
     try{ body=await decTxt(pw,p.enc); }catch(e){ msg('비밀번호가 맞지 않아요.'); return; }
-  } else body=p.body;
+    st.curRaw = null;
+    if(p.encRaw){ try{ st.curRaw = await decTxt(pw, p.encRaw); }catch(e){} }   // 원문(수정용)도 같이 복호(phase258)
+  } else { body=p.body; st.curRaw=null; }
   st.cur=p; st.curBody=body;
   $('#pv-meta').textContent=p.cat+' · '+p.date+(p.secret?' · SECRET':'')+(p.priv?' · 🔏 비공개':'');
   /* ── 공감 ♥ ── */
@@ -3558,9 +3560,12 @@ function startEditPost(){
   const wde=$('#w-date'); if(wde&&p.date) wde.value=p.date.replaceAll('.','-');
   if(!p.secret && typeof p.raw==='string' && p.raw!==''){
     $('#w-body').value=p.raw; $('#w-html').checked=!!p.html;
+  }else if(p.secret && typeof st.curRaw==='string'){
+    $('#w-body').value=st.curRaw; $('#w-html').checked=!!p.html;   // 암호화 보관 원문 그대로(phase258)
   }else{
     const src = p.secret ? (st.curBody||'') : (p.body||'');
-    $('#w-body').value = htmlToText(src); $('#w-html').checked=false;
+    $('#w-body').value = p.html ? src : htmlToText(src);           // HTML 글은 역변환하지 않음 — 코드 변형 방지
+    $('#w-html').checked = !!p.html;                               // 모드 승계 — 수정만 해도 풀리던 구멍 봉쇄
   }
   wImgs = Array.isArray(p.imgs) ? p.imgs.slice() : []; renderWImgs();
   $('#w-pin').checked=!!p.pinned;
@@ -3583,6 +3588,18 @@ $('#w-cancel').onclick=()=>{
   if(pid) openPost(pid,true);                      // 원래 글로 복귀 — "글이 사라졌다" 착시 방지(phase221)
   msg(pid?'수정을 취소했어요 — 글은 원래대로 그대로예요.':'작성을 취소했어요.');
 };
+const whf=$('#w-htmlfile'); if(whf) whf.addEventListener('change',e=>{   // 로그 파일 통째 업로드(phase258)
+  const f=e.target.files[0]; if(!f) return;
+  const rd=new FileReader();
+  rd.onload=()=>{
+    const ta=$('#w-body');
+    ta.value = (ta.value.trim()? ta.value+'\n':'') + rd.result;
+    $('#w-html').checked=true;
+    if(!$('#w-title').value.trim()) $('#w-title').value=f.name.replace(/\.html?$/i,'');
+    msg('파일을 본문에 넣고 HTML 모드를 켰어요 — 미리 보고 발행하세요.');
+  };
+  rd.readAsText(f); e.target.value='';
+});
 $('#w-go').onclick=async()=>{
   const title=$('#w-title').value.trim(), cat=$('#w-cat').value,
         secret=$('#w-secret').checked, pw=$('#w-pw').value, pin=$('#w-pin').checked,
@@ -3606,8 +3623,9 @@ $('#w-go').onclick=async()=>{
       mpin: editPost ? !!(st.posts.find(p2=>p2.id===editPost)?.mpin) : false,
       excerpt: secret?'':(asHtml?raw.replace(/<[^>]+>/g,' '):raw.replace(/\*\*|__|~~|==|\*/g,'')).replace(/\s+/g,' ').trim().slice(0,70),
       html: asHtml, imgs: wImgs.slice() };
-    if(!secret) data.raw = raw;          // 원문 보관(수정 시 그대로 열기)
-    else data.raw = '';                  // 비밀글은 원문을 남기지 않음
+    if(!secret){ data.raw = raw; data.encRaw=''; }        // 원문 보관(수정 시 그대로 열기)
+    else { data.raw = '';                                  // 비밀글은 평문 원문을 남기지 않고
+           data.encRaw = await encTxt(pw, raw); }          // 암호화한 원문을 보관 — 수정해도 HTML 모드·코드 무손실(phase258)
     if(secret) data.enc=await encTxt(pw,html); else data.body=html;
     if(JSON.stringify(data).length>980000){ msg('이 글의 본문 이미지가 너무 많아요 — 사진 수를 줄여주세요. (꾸미기 용량과는 별개예요)'); return; }
     if(pin) await Promise.all(st.posts.filter(p=>p.pinned).map(p=>
@@ -3621,7 +3639,7 @@ $('#w-go').onclick=async()=>{
           ? (old.ts || dateNoon(old.date||data.date))   // 승계 — ts 없던 옛 글도 '지금'이 아니라 제 날짜 자리로(phase235)
           : data.ts,
         editedAt: serverTimestamp()};
-      if(!secret) upd.enc='';
+      if(!secret){ upd.enc=''; upd.encRaw=''; }
       await setDoc(doc(db,'pages',st.handle,'posts',editPost), upd);
       const pid=editPost;
       clearWriteForm();
@@ -4789,7 +4807,7 @@ $('#s-exp-json').onclick=()=>{
 };
 
 /* ---------- 복원 (백업에서 불러오기, phase208) ---------- */
-const POST_KEYS=['title','cat','date','ts','secret','pinned','cmtOff','priv','excerpt','html','imgs','raw','enc','body','feat','mpin'];
+const POST_KEYS=['title','cat','date','ts','secret','pinned','cmtOff','priv','excerpt','html','imgs','raw','enc','body','feat','mpin','encRaw'];
 let bkData=null;
 $('#bk-file')?.addEventListener('change', async e=>{
   bkData=null; $('#bk-scope').hidden=true;
