@@ -1933,7 +1933,7 @@ function renderList(){
     const items = all.slice(((st.pg||1)-1)*gper, (st.pg||1)*gper);
     $('#rows').innerHTML = items.length
       ? `<div class="gal-grid">`+items.map(g=>
-          `<a data-gg="${g.id}"><img src="${g.img}" alt="" draggable="false">${g.priv?'<i class="gpriv">🔏</i>':''}${st.mine?
+          `<a data-gg="${g.id}"><img src="${g.img}" alt="" draggable="false"${(g.fy!=null&&g.fy!==''&&+g.fy!==50)?` style="object-position:50% ${+g.fy}%"`:''}>${g.priv?'<i class="gpriv">🔏</i>':''}${st.mine?
             `<i class="gdel" data-gx="${g.id}">✕</i><i class="gedit" data-ge="${g.id}" title="제목·카테고리·사진 수정">✎</i><i class="gpin${galPins().includes(g.id)?' on':''}" data-gp="${g.id}" title="대문 갤러리에 고정">★</i>`:''}</a>`).join('')+`</div>`
         +(st.mine?`<p class="note" style="margin-top:10px">★를 누르면 대문(홈) 갤러리에 걸려요 — 카테고리 탭에서 '대문: ★로 고른 사진'을 선택해야 적용돼요.</p>`:'')
       : '<p class="pl-empty">아직 이미지가 없습니다.</p>';
@@ -2046,11 +2046,10 @@ function renderGal(all){
   galShown=arr;
   const pins=galPins();
   $('#gal').innerHTML = arr.length?arr.map(g=>
-    `<a data-g="${g.id}"><img src="${g.img}" alt="" draggable="false"${(g.fy!=null&&g.fy!==''&&+g.fy!==50)?` style="object-position:50% ${+g.fy}%"`:''}>${g.priv?'<i class="gpriv">🔏</i>':''}${st.mine?`<i class="gdel" data-gx="${g.id}">✕</i><i class="gfoc" data-gf="${g.id}" title="썸네일 위치 조정">↕</i>`:''}</a>`).join('')
+    `<a data-g="${g.id}"><img src="${g.img}" alt="" draggable="false"${(g.fy!=null&&g.fy!==''&&+g.fy!==50)?` style="object-position:50% ${+g.fy}%"`:''}>${g.priv?'<i class="gpriv">🔏</i>':''}${st.mine?`<i class="gdel" data-gx="${g.id}">✕</i>`:''}</a>`).join('')
     :'<p class="pl-empty">아직 이미지가 없습니다.</p>';
   document.querySelectorAll('#gal a').forEach(a=>a.onclick=e=>{
     if(e.target.dataset.gx){ e.stopPropagation(); delGal(e.target.dataset.gx); return; }
-    if(e.target.dataset.gf){ e.stopPropagation(); galFocus(e.target.dataset.gf); return; }   // 썸네일 초점(phase259)
     if(e.target.dataset.gp){ e.stopPropagation(); togglePin(e.target.dataset.gp); return; }
     const g=st.gallery.find(x=>x.id===a.dataset.g);
     if(g){ lbOpen(galShown||st.gallery, g.id); }
@@ -2068,15 +2067,13 @@ $('#gb-go').onclick=async()=>{
   st.guest=gb.docs.map(d=>({id:d.id,...d.data()})); renderGuest();
 };
 $('#gb-login-btn').onclick=()=>signInWithPopup(auth,new GoogleAuthProvider()).catch(()=>{});
-function galFocus(id){                                        // 갤러리 썸네일 초점 팝업(phase259)
-  const g=st.gallery.find(x=>x.id===id); if(!g) return;
-  const cur=(g.fy!=null&&g.fy!=='')?+g.fy:50;
+function galFocusUI(imgSrc, cur, onOk){                       // 썸네일 초점 팝업 코어(phase259c)
   const ov=document.createElement('div');
   ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:400;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
   ov.innerHTML=`<div style="background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:16px;width:min(340px,92vw);box-shadow:0 18px 50px rgba(0,0,0,.4)">
     <p style="margin:0 0 10px;font-size:12px;color:var(--muted)">썸네일 위치 — 슬라이더를 끌면 바로 보여요 (원본은 그대로예요)</p>
     <div style="border:1px solid var(--line);border-radius:10px;overflow:hidden">
-      <img id="gf-img" src="${g.img}" alt="" style="display:block;width:100%;aspect-ratio:4/3;object-fit:cover;object-position:50% ${cur}%">
+      <img id="gf-img" src="${imgSrc}" alt="" style="display:block;width:100%;aspect-ratio:4/3;object-fit:cover;object-position:50% ${cur}%">
     </div>
     <input id="gf-r" type="range" min="0" max="100" value="${cur}" style="width:100%;margin:13px 0 11px">
     <div style="display:flex;gap:8px;justify-content:flex-end">
@@ -2089,16 +2086,18 @@ function galFocus(id){                                        // 갤러리 썸�
   const close=()=>ov.remove();
   ov.onclick=e=>{ if(e.target===ov) close(); };
   ov.querySelector('#gf-c').onclick=close;
-  ov.querySelector('#gf-ok').onclick=async()=>{
-    const v=+r.value;
-    try{
-      if(v===50) await updateDoc(doc(db,'pages',st.handle,'gallery',id), {fy:deleteField()});
-      else await updateDoc(doc(db,'pages',st.handle,'gallery',id), {fy:v});
-      g.fy = (v===50? undefined : v);
-      close(); renderGal(document.querySelector('#gal .gfoc')&&st.cat==='__gal'); renderGal();
-      msg('썸네일 위치를 저장했어요.');
-    }catch(e){ msg('저장에 실패했어요 — 잠시 후 다시.'); }
-  };
+  ov.querySelector('#gf-ok').onclick=()=>{ close(); onOk(+r.value); };
+}
+async function galFocusSave(id, v){                           // 기존 항목 즉시 저장
+  const g=st.gallery.find(x=>x.id===id); if(!g) return;
+  try{
+    if(v===50) await updateDoc(doc(db,'pages',st.handle,'gallery',id), {fy:deleteField()});
+    else await updateDoc(doc(db,'pages',st.handle,'gallery',id), {fy:v});
+    g.fy = (v===50? undefined : v);
+    renderGal();
+    if(st.cat==='__gal'||isG(st.cat)) renderList();
+    msg('썸네일 위치를 저장했어요.');
+  }catch(e){ msg('저장에 실패했어요 — 잠시 후 다시.'); }
 }
 async function delGal(id){
   const g=st.gallery.find(x=>x.id===id); if(!g) return;
@@ -3709,16 +3708,32 @@ function startEditGal(id){
   openPanel('write'); switchTab('galup');
 }
 function clearGalForm(){
-  editGal=null; $('#g-title').value=''; $('#g-file').value=''; $('#g-priv').checked=false;
+  editGal=null; galFyNew=null;
+  $('#g-title').value=''; $('#g-file').value=''; $('#g-priv').checked=false;
   $('#g-go').textContent='업로드'; $('#g-edit-note').classList.add('hidden');
 }
+let galFyNew=null;                                            // 업로드 전 썸네일 위치(phase259c)
+$('#g-focus').onclick=()=>{
+  const f=$('#g-file').files[0];
+  if(editGal && !f){                                          // 수정 모드(사진 교체 안 함) — 기존 사진으로 즉시 저장
+    const g=st.gallery.find(x=>x.id===editGal); if(!g) return;
+    galFocusUI(g.img, (g.fy!=null&&g.fy!=='')?+g.fy:50, v=>galFocusSave(editGal, v));
+    return;
+  }
+  if(!f){ msg('사진을 먼저 골라주세요.'); return; }
+  const rd=new FileReader();
+  rd.onload=()=>galFocusUI(rd.result, galFyNew??50, v=>{ galFyNew=v;
+    msg(v===50?'가운데로 둘게요.':'위치 기억! 업로드하면 그대로 적용돼요.'); });
+  rd.readAsDataURL(f);
+};
 $('#g-cancel').onclick=()=>{ clearGalForm(); msg('수정을 취소했어요.'); };
 $('#g-go').onclick=async()=>{
   if(editGal){
     try{
       const f=$('#g-file').files[0];
       const upd={title:$('#g-title').value.trim(), cat:$('#g-cat').value||'', priv:$('#g-priv').checked};
-      if(f){ msg('이미지 교체 중...'); upd.img=await upFile(f,1900,.9,220); }
+      if(f){ msg('이미지 교체 중...'); upd.img=await upFile(f,1900,.9,220);
+        if(galFyNew!=null) upd.fy = (galFyNew===50? deleteField() : galFyNew); }
       await updateDoc(doc(db,'pages',st.handle,'gallery',editGal),upd);
       clearGalForm(); await loadContent(); renderGal();
       if(st.cat==='__gal'||isG(st.cat)) renderList();
@@ -3731,8 +3746,10 @@ $('#g-go').onclick=async()=>{
   try{
     const img=await upFile(f,1900,.9,220);
     if(img.length>900000){ msg('이미지가 너무 커요 — 더 작은 사진으로 시도해 주세요.'); return; }
-    await addDoc(collection(db,'pages',st.handle,'gallery'),
-      {img,title:$('#g-title').value.trim(),cat:$('#g-cat').value||'',priv:$('#g-priv').checked,ts:serverTimestamp()});
+    const gdata={img,title:$('#g-title').value.trim(),cat:$('#g-cat').value||'',priv:$('#g-priv').checked,ts:serverTimestamp()};
+    if(galFyNew!=null && galFyNew!==50) gdata.fy=galFyNew;
+    await addDoc(collection(db,'pages',st.handle,'gallery'), gdata);
+    galFyNew=null;
     await loadContent(); renderGal(); $('#g-title').value=''; $('#g-file').value='';
     msg('업로드 완료!');
   }catch(e){ msg('오류: '+e.message); }

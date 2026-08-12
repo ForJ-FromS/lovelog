@@ -494,9 +494,6 @@
     body.reading #home-grid{grid-template-columns:1fr !important}
     body.reading .cols, body.reading #home-grid{max-width:860px;margin-left:auto;margin-right:auto}
   }
-  #gal a .gfoc{position:absolute;left:6px;top:6px;font-size:12px;line-height:1;padding:3px 6px;
-    border-radius:7px;background:rgba(0,0,0,.5);color:#fff;cursor:pointer;opacity:0;transition:opacity .15s}
-  #gal a:hover .gfoc{opacity:.9}
   #gal a{position:relative;aspect-ratio:4/3;border-radius:9px;overflow:hidden;
     border:1px solid var(--line);display:block;cursor:pointer;background:var(--card2);
     transition:border-color .15s}
@@ -1662,6 +1659,7 @@
     <label class="chk" title="나만 볼 수 있는 사진 — 수정에서 체크를 풀면 공개돼요"><input type="checkbox" id="g-priv"> 🔏 비공개 (나만 보기)</label>
     <input id="g-title" placeholder="이미지 제목 (선택)">
     <label class="filelab">이미지 선택 <input type="file" id="g-file" accept="image/*"></label>
+    <button class="rmv" id="g-focus" style="font-size:11px" title="썸네일에 보일 위치를 미리 보면서 정해요">↕ 썸네일 위치</button>
     <p class="note hidden" id="g-edit-note" style="color:var(--pri)"></p>
     <div class="p-row" style="margin-top:10px"><button class="go" id="g-go" style="flex:1">업로드</button>
       <button class="rmv" id="g-cancel" style="font-size:12px">수정 취소</button></div>
@@ -2101,6 +2099,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=250"></script>
+<script type="module" src="./app.js?v=252"></script>
 </body>
 </html>
