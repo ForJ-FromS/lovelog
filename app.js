@@ -403,6 +403,9 @@ async function loadPage(handle){
   const snap=await getDoc(doc(db,'pages',handle));
   if(!snap.exists()){ show('view-page');
     $('#pg-name').textContent='없는 페이지예요'; $('#pg-sub').textContent='@'+handle; return; }
+  if(snap.data().unlisted && !(st.me && snap.data().owner===st.me.uid)){   // 🕶 홈 비공개(phase264) — 존재 자체를 숨김
+    show('view-page');
+    $('#pg-name').textContent='없는 페이지예요'; $('#pg-sub').textContent='@'+handle; return; }
   st.page=snap.data(); st._mutual=undefined;
   await resolveImgs(st.page);
   st.mine = st.me && st.page.owner===st.me.uid;
@@ -4374,6 +4377,7 @@ function fillSettings(){
   const smc=$('#s-memocols'); if(smc) smc.value=String(memoCols());
   const smp=$('#s-mpinmax'); if(smp) smp.value=String(mpinMax());
   const scf=$('#s-clickfx'); if(scf) scf.value=st.page.clickFx||'';
+  const sul=$('#s-unlisted'); if(sul) sul.checked=!!st.page.unlisted;
   const spt=$('#s-pet'); if(spt) spt.value=st.page.pet||'';
   const spz=$('#s-petsz'); if(spz){ spz.value=petSzVal();
     const pv=$('#s-petsz-v'); const paint=()=>{ if(pv) pv.textContent=Math.round(spz.value*100)+'%';
@@ -4483,6 +4487,7 @@ async function saveSettings(){
       memoH: $('#s-memoh')?.value||'m',
       memoNoTt: !!$('#s-memott')?.checked,
       clickFx: ($('#s-clickfx')?.value||'').trim(),
+      unlisted: !!$('#s-unlisted')?.checked,
       pet: ($('#s-pet')?.value||'').trim(),
       petSz: (()=>{ const n=+($('#s-petsz')?.value)||1; return Math.abs(n-1)<0.01?'':n; })(),
       listTc: ($('#s-listtc')?.dataset.on ? $('#s-listtc').value : ''),
