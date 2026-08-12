@@ -2643,6 +2643,11 @@ document.addEventListener('pointerdown', e=>{
   spawnFx(e.clientX, e.clientY, fx);
 });
 let petTimers=[];
+function petSzVal(){                                            // 저장값 → 배율(구 4단 문자열 하위호환)
+  const v=st.page&&st.page.petSz;
+  if(v==='s') return .75; if(v==='l') return 1.45; if(v==='xl') return 1.9;
+  const n=+v; return (n>=0.6&&n<=2.5)?n:1;
+}
 function petList(){                                            // 저장된 펫 전원(구 단일 petImg 하위호환)
   const imgs=(st.page&&st.page.petImgs)||((st.page&&st.page.petImg)?[st.page.petImg]:[]);
   const emos=[...String((st.page&&st.page.pet)||'')].filter(s=>s.trim());
@@ -2651,7 +2656,7 @@ function petList(){                                            // 저장된 펫 
 function initPet(){
   document.querySelectorAll('.luv-pet').forEach(el=>el.remove());
   petTimers.forEach(clearTimeout); petTimers=[];
-  const SZ={s:.75,l:1.45,xl:1.9}[st.page.petSz]||1;             // 펫 크기(phase260)
+  const SZ=petSzVal();                                          // 펫 크기(phase260b — 자유 배율)
   petList().forEach(o=>{
     const p=document.createElement('div'); p.className='luv-pet';
     p.style.setProperty('--psz', SZ);
@@ -4368,7 +4373,15 @@ function fillSettings(){
   const smp=$('#s-mpinmax'); if(smp) smp.value=String(mpinMax());
   const scf=$('#s-clickfx'); if(scf) scf.value=st.page.clickFx||'';
   const spt=$('#s-pet'); if(spt) spt.value=st.page.pet||'';
-  const spz=$('#s-petsz'); if(spz) spz.value=st.page.petSz||'';
+  const spz=$('#s-petsz'); if(spz){ spz.value=petSzVal();
+    const pv=$('#s-petsz-v'); const paint=()=>{ if(pv) pv.textContent=Math.round(spz.value*100)+'%';
+      document.querySelectorAll('.luv-pet').forEach(el=>el.style.setProperty('--psz', spz.value)); };
+    paint();
+    spz.oninput=paint;                                          // 끌면 화면의 펫이 실시간으로
+    const dn=$('#s-petsz-dn'), up=$('#s-petsz-up');
+    if(dn) dn.onclick=()=>{ spz.value=Math.max(0.6, +spz.value-0.15).toFixed(2); paint(); };
+    if(up) up.onclick=()=>{ spz.value=Math.min(2.5, +spz.value+0.15).toFixed(2); paint(); };
+  }
   petImgsNew=null; renderPetImgList();
   const smh=$('#s-memoh'); if(smh) smh.value=st.page.memoH||'m';
   const smt=$('#s-memott'); if(smt) smt.checked=!!st.page.memoNoTt;
@@ -4469,7 +4482,7 @@ async function saveSettings(){
       memoNoTt: !!$('#s-memott')?.checked,
       clickFx: ($('#s-clickfx')?.value||'').trim(),
       pet: ($('#s-pet')?.value||'').trim(),
-      petSz: $('#s-petsz')?.value||'',
+      petSz: (()=>{ const n=+($('#s-petsz')?.value)||1; return Math.abs(n-1)<0.01?'':n; })(),
       listTc: ($('#s-listtc')?.dataset.on ? $('#s-listtc').value : ''),
       homeStyle: $('#s-homestyle').value,
       theme: $('#s-theme').value,
