@@ -907,11 +907,24 @@
   body:has(#view-gate:not(.hidden)) .luv-pet,
   body:has(#view-gate:not(.hidden)) #wfl-layer,
   body:has(#view-gate:not(.hidden)) #ph-dock{display:none !important}
-  .post p.al-c, .memo-body p.al-c{text-align:center}
-  .post p.al-r, .memo-body p.al-r{text-align:right}
-  .post p.al-j, .memo-body p.al-j{text-align:justify}
-  .post p.ind, .memo-body p.ind{padding-left:1.5em}
-  .post hr{border:0;border-top:1px solid var(--line);margin:18px 8%}
+  #pv-body p.al-c{text-align:center}
+  #pv-body p.al-r{text-align:right}
+  #pv-body p.al-j{text-align:justify}
+  #pv-body p.ind{padding-left:1.5em}
+  #pv-body hr{border:0;border-top:1px solid var(--line);margin:18px 8%}
+  #pv-body hr.hr-b{border-top:3px solid color-mix(in srgb, var(--ink) 55%, var(--line));margin:20px 22%}
+  #pv-body hr.hr-dot{border-top:2px dotted var(--muted)}
+  #pv-body hr.hr-zz{border:0;height:6px;margin:20px 26%;opacity:.8;background:
+    repeating-linear-gradient(45deg, transparent 0 4px, var(--muted) 4px 5.6px)}
+  #pv-body hr.hr-dia{border:0;text-align:center;margin:16px 0;height:auto}
+  #pv-body hr.hr-dia::after{content:'◆ ◆ ◆';font-size:9px;color:var(--pri);letter-spacing:6px}
+  #pv-body ul,#pv-body ol{margin:0 0 1em;padding-left:1.6em;line-height:1.95}
+  #pv-body li{margin:2px 0}
+  .fmt-wrap{position:relative;display:inline-flex}
+  .fmt-pop{position:absolute;top:110%;left:0;z-index:60;display:none;flex-direction:column;gap:3px;
+    background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:6px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+  .fmt-wrap.open .fmt-pop{display:flex}
+  .fmt-pop button{min-width:88px;height:26px;text-align:left;padding:0 9px;white-space:nowrap}
   .p-big{font-size:13px;font-weight:700;letter-spacing:.05em;color:var(--ink);
     margin:20px 0 8px;padding-top:16px;border-top:1px solid var(--line)}
   .p-grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px 10px;margin-bottom:12px}
@@ -1586,11 +1599,24 @@
       <button type="button" data-fmt="s" title="취소선 — ~~글자~~"><s>S</s></button>
       <button type="button" data-fmt="h" title="형광펜 — ==글자==">H</button>
       <span style="width:1px;background:var(--line);margin:2px 1px"></span>
-      <button type="button" data-fmt="ac" title="가운데 정렬 (문단)">≡</button>
-      <button type="button" data-fmt="ar" title="오른쪽 정렬 (문단)">⇥</button>
-      <button type="button" data-fmt="aj" title="양쪽 정렬 (문단)">☰</button>
-      <button type="button" data-fmt="ai" title="들여쓰기 (문단)">⇒</button>
-      <button type="button" data-fmt="hr" title="구분선 넣기">―</button>
+      <span class="fmt-wrap"><button type="button" data-fmtmenu title="문단 정렬">☰▾</button>
+        <span class="fmt-pop">
+          <button type="button" data-fmt="al">⬅ 왼쪽 (기본)</button>
+          <button type="button" data-fmt="ac">↔ 가운데</button>
+          <button type="button" data-fmt="ar">➡ 오른쪽</button>
+          <button type="button" data-fmt="aj">☰ 양쪽 맞춤</button>
+          <button type="button" data-fmt="ai">⇒ 들여쓰기</button>
+        </span></span>
+      <span class="fmt-wrap"><button type="button" data-fmtmenu title="구분선 넣기">―▾</button>
+        <span class="fmt-pop">
+          <button type="button" data-hr="---">─── 가는 선</button>
+          <button type="button" data-hr="===">━━━ 굵은 선</button>
+          <button type="button" data-hr="...">┈┈┈ 점선</button>
+          <button type="button" data-hr="~~~">〰〰 지그재그</button>
+          <button type="button" data-hr="***">◆ ◆ ◆ 장식</button>
+        </span></span>
+      <button type="button" data-fmt="ol" title="순서 목록 — 1. 2. 3.">1.≡</button>
+      <button type="button" data-fmt="ul" title="점 목록 — •">•≡</button>
       <select data-fmtsz title="글자 크기" style="width:52px;margin:0;padding:2px 4px;font-size:11px">
         <option value="">A↕</option>
         <option value="12">12</option><option value="14">14</option><option value="16">16</option>
@@ -1667,11 +1693,24 @@
       <button type="button" data-fmt="s" title="취소선 — ~~글자~~"><s>S</s></button>
       <button type="button" data-fmt="h" title="형광펜 — ==글자==">H</button>
       <span style="width:1px;background:var(--line);margin:2px 1px"></span>
-      <button type="button" data-fmt="ac" title="가운데 정렬 (문단)">≡</button>
-      <button type="button" data-fmt="ar" title="오른쪽 정렬 (문단)">⇥</button>
-      <button type="button" data-fmt="aj" title="양쪽 정렬 (문단)">☰</button>
-      <button type="button" data-fmt="ai" title="들여쓰기 (문단)">⇒</button>
-      <button type="button" data-fmt="hr" title="구분선 넣기">―</button>
+      <span class="fmt-wrap"><button type="button" data-fmtmenu title="문단 정렬">☰▾</button>
+        <span class="fmt-pop">
+          <button type="button" data-fmt="al">⬅ 왼쪽 (기본)</button>
+          <button type="button" data-fmt="ac">↔ 가운데</button>
+          <button type="button" data-fmt="ar">➡ 오른쪽</button>
+          <button type="button" data-fmt="aj">☰ 양쪽 맞춤</button>
+          <button type="button" data-fmt="ai">⇒ 들여쓰기</button>
+        </span></span>
+      <span class="fmt-wrap"><button type="button" data-fmtmenu title="구분선 넣기">―▾</button>
+        <span class="fmt-pop">
+          <button type="button" data-hr="---">─── 가는 선</button>
+          <button type="button" data-hr="===">━━━ 굵은 선</button>
+          <button type="button" data-hr="...">┈┈┈ 점선</button>
+          <button type="button" data-hr="~~~">〰〰 지그재그</button>
+          <button type="button" data-hr="***">◆ ◆ ◆ 장식</button>
+        </span></span>
+      <button type="button" data-fmt="ol" title="순서 목록 — 1. 2. 3.">1.≡</button>
+      <button type="button" data-fmt="ul" title="점 목록 — •">•≡</button>
       <select data-fmtsz title="글자 크기" style="width:52px;margin:0;padding:2px 4px;font-size:11px">
         <option value="">A↕</option>
         <option value="12">12</option><option value="14">14</option><option value="16">16</option>
@@ -2146,6 +2185,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=264"></script>
+<script type="module" src="./app.js?v=265"></script>
 </body>
 </html>

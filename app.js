@@ -211,7 +211,16 @@ const inlineFmt=s=>s
   .replace(/\{\{(#(?:[0-9a-fA-F]{3}){1,2}):([^}]+)\}\}/g,'<span style="color:$1">$2</span>');   /* {{#f00:빨강}} */
 const bodyHTML=t=>t.split(/\n{2,}/).map(p=>{
   const raw0=p.trim();
-  if(/^(-{3,}|―{3,}|={3,})$/.test(raw0)) return '<hr>';               /* --- 단독 문단 = 구분선(phase265) */
+  if(/^(-{3,}|―{3,})$/.test(raw0)) return '<hr>';                     /* 구분선 5종(phase266) */
+  if(/^={3,}$/.test(raw0)) return '<hr class="hr-b">';
+  if(/^\.{3,}$/.test(raw0)) return '<hr class="hr-dot">';
+  if(/^~{3,}$/.test(raw0)) return '<hr class="hr-zz">';
+  if(/^\*{3,}$/.test(raw0)) return '<hr class="hr-dia">';
+  const lines=raw0.split('\n');
+  if(lines.length && lines.every(l=>/^\d+[.)]\s/.test(l)))            /* 전 줄이 1. 이면 순서 목록 */
+    return '<ol>'+lines.map(l=>'<li>'+inlineFmt(esc(l.replace(/^\d+[.)]\s/,'')))+'</li>').join('')+'</ol>';
+  if(lines.length && lines.every(l=>/^[-•]\s/.test(l)))               /* 전 줄이 - 또는 • 면 점 목록 */
+    return '<ul>'+lines.map(l=>'<li>'+inlineFmt(esc(l.replace(/^[-•]\s/,'')))+'</li>').join('')+'</ul>';
   let cls='', body=p;
   const m=body.match(/^@([crji])\s/);
   if(m){ cls={c:' class="al-c"',r:' class="al-r"',j:' class="al-j"',i:' class="ind"'}[m[1]];
@@ -1980,7 +1989,8 @@ function renderList(){
     renderPager(all.length, mper);
     const items=all.slice(((st.pg||1)-1)*mper, (st.pg||1)*mper);
     const strip=s=>String(s||'').replace(/\[사진\d+\]/g,'').replace(/\*\*|__|~~|==|\*/g,'')
-      .replace(/^@[crji]\s/gm,'').replace(/\{\{[^:}]{1,8}:/g,'').replace(/\}\}/g,'').replace(/^(-{3,}|―{3,}|={3,})$/gm,'');
+      .replace(/^@[crji]\s/gm,'').replace(/\{\{[^:}]{1,8}:/g,'').replace(/\}\}/g,'')
+      .replace(/^(-{3,}|―{3,}|={3,}|\.{3,}|~{3,}|\*{3,})$/gm,'').replace(/^(\d+[.)]|[-•])\s/gm,'');
     $('#rows').innerHTML = items.length
       ? `<div class="memo-grid">`+items.map(p=>{ const th=p.secret?'':postThumb(p); return `
           <a class="memo-card${th?' has-mth':''}" data-id="${p.id}">
@@ -3597,24 +3607,62 @@ function wrapRaw(open, close, taId){                           // 임의 마커�
   ta.selectionStart=s+open.length; ta.selectionEnd=s+open.length+sel.length;
   ta.scrollTop=st0;
 }
+function listMark(pre, taId){                                  // 문단 각 줄을 목록으로 토글(phase266)
+  const ta=$(taId||'#w-body'); if(!ta) return;
+  const st0=ta.scrollTop, v=ta.value, s=ta.selectionStart;
+  const ps=v.lastIndexOf('\n\n', Math.max(0,s-1));
+  const at=ps<0?0:ps+2;
+  let pe=v.indexOf('\n\n', at); if(pe<0) pe=v.length;
+  const seg=v.slice(at,pe), lines=seg.split('\n');
+  const isNum=pre==='1. ';
+  const on=lines.every(l=>isNum?/^\d+[.)]\s/.test(l):/^[-•]\s/.test(l));
+  const nl=lines.map((l,i)=>{
+    const bare=l.replace(/^(\d+[.)]|[-•])\s/,'');
+    return on? bare : (isNum? (i+1)+'. '+bare : '- '+bare);
+  }).join('\n');
+  ta.value=v.slice(0,at)+nl+v.slice(pe); ta.focus();
+  ta.selectionStart=ta.selectionEnd=at; ta.scrollTop=st0;
+}
 function bindFmtBar(barSel, taId){
   document.querySelectorAll(barSel+' [data-fmt]').forEach(b=>{
     const map={b:['**','b'], i:['*','i'], u:['__','u'], s:['~~','s'], h:['==','mark']};
     b.onclick=()=>{
       const f=b.dataset.fmt;
       if(map[f]){ const [mk,tag]=map[f]; wrapSel(mk,tag,taId); return; }
-      if(f==='ac') lineMark('@c ',taId);
+      if(f==='al'){ ['@c ','@r ','@j ','@i '].forEach(()=>{});          // 왼쪽 = 마커 제거
+        const ta=$(taId||'#w-body'); if(!ta) return;
+        const st0=ta.scrollTop, v=ta.value, s=ta.selectionStart;
+        const ps=v.lastIndexOf('\n\n', Math.max(0,s-1)); const at=ps<0?0:ps+2;
+        const cur=v.slice(at).match(/^@[crji]\s/);
+        if(cur){ ta.value=v.slice(0,at)+v.slice(at+cur[0].length); ta.selectionStart=ta.selectionEnd=at; }
+        ta.focus(); ta.scrollTop=st0; }
+      else if(f==='ac') lineMark('@c ',taId);
       else if(f==='ar') lineMark('@r ',taId);
       else if(f==='aj') lineMark('@j ',taId);
       else if(f==='ai') lineMark('@i ',taId);
-      else if(f==='hr') insertSnip('\n\n---\n\n',taId);
+      else if(f==='ol') listMark('1. ',taId);
+      else if(f==='ul') listMark('- ',taId);
+      const w=b.closest('.fmt-wrap'); if(w) w.classList.remove('open');
     };
+  });
+  document.querySelectorAll(barSel+' [data-hr]').forEach(b=>b.onclick=()=>{
+    insertSnip('\n\n'+b.dataset.hr+'\n\n',taId);
+    const w=b.closest('.fmt-wrap'); if(w) w.classList.remove('open');
+  });
+  document.querySelectorAll(barSel+' [data-fmtmenu]').forEach(b=>b.onclick=e=>{
+    e.preventDefault();
+    const w=b.closest('.fmt-wrap');
+    document.querySelectorAll('.fmt-wrap.open').forEach(x=>{ if(x!==w) x.classList.remove('open'); });
+    w.classList.toggle('open');
   });
   const sz=document.querySelector(barSel+' [data-fmtsz]');
   if(sz) sz.addEventListener('change',()=>{ if(sz.value){ wrapRaw('{{'+sz.value+':','}}',taId); sz.value=''; } });
   const co=document.querySelector(barSel+' [data-fmtco]');
   if(co) co.addEventListener('change',()=>{ wrapRaw('{{'+co.value+':','}}',taId); });
 }
+document.addEventListener('pointerdown',e=>{                    // 바깥 클릭 시 서식 메뉴 닫기
+  if(!e.target.closest('.fmt-wrap')) document.querySelectorAll('.fmt-wrap.open').forEach(x=>x.classList.remove('open'));
+});
 bindFmtBar('#w-fmt');
 bindFmtBar('#mm-fmt','#mm-body');
 let wImgs=[];
@@ -3736,7 +3784,8 @@ $('#w-go').onclick=async()=>{
       feat: $('#w-feat').checked,
       mpin: editPost ? !!(st.posts.find(p2=>p2.id===editPost)?.mpin) : false,
       excerpt: secret?'':(asHtml?raw.replace(/<[^>]+>/g,' '):raw.replace(/\*\*|__|~~|==|\*/g,'')
-        .replace(/^@[crji]\s/gm,'').replace(/\{\{[^:}]{1,8}:/g,'').replace(/\}\}/g,'').replace(/^(-{3,}|―{3,}|={3,})$/gm,'')).replace(/\s+/g,' ').trim().slice(0,70),
+        .replace(/^@[crji]\s/gm,'').replace(/\{\{[^:}]{1,8}:/g,'').replace(/\}\}/g,'')
+        .replace(/^(-{3,}|―{3,}|={3,}|\.{3,}|~{3,}|\*{3,})$/gm,'').replace(/^(\d+[.)]|[-•])\s/gm,'')).replace(/\s+/g,' ').trim().slice(0,70),
       html: asHtml, imgs: wImgs.slice() };
     if(!secret){ data.raw = raw; data.encRaw=''; }        // 원문 보관(수정 시 그대로 열기)
     else { data.raw = '';                                  // 비밀글은 평문 원문을 남기지 않고
