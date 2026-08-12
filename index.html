@@ -487,10 +487,12 @@
   .strip-sec{margin-top:24px}
   #gal{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
   @media(max-width:620px){#gal{grid-template-columns:repeat(2,1fr)}}
-  #gal a.strip-add{display:flex;align-items:center;justify-content:center;
+  #gal .strip-add{display:none;position:relative;aspect-ratio:4/3;border-radius:9px;
+    align-items:center;justify-content:center;
     border:1.5px dashed var(--line);background:transparent;color:var(--muted);
     font-size:26px;font-weight:300;cursor:pointer;transition:.15s}
-  #gal a.strip-add:hover{color:var(--pri);border-color:var(--pri)}
+  body.editmode #gal .strip-add{display:flex}   /* ⠿ 편집 모드에서만(phase268b) */
+  #gal .strip-add:hover{color:var(--pri);border-color:var(--pri)}
   #gal a{position:relative;aspect-ratio:4/3;border-radius:9px;overflow:hidden;
     border:1px solid var(--line);display:block;cursor:pointer;background:var(--card2);
     transition:border-color .15s}
@@ -2189,6 +2191,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=267"></script>
+<script type="module" src="./app.js?v=268"></script>
 </body>
 </html>

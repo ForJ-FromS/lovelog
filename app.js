@@ -2081,7 +2081,7 @@ function renderGal(all){
   galShown=arr;
   const pins=galPins();
   const addCard = (!all && st.mine)
-    ? `<a class="strip-add" id="strip-add" title="여기서 바로 사진 추가 — 대문 기준에 맞춰 올라가요">＋<input type="file" id="strip-file" accept="image/*" style="display:none"></a>`
+    ? `<label class="strip-add" title="여기서 바로 사진 추가 — 대문 기준에 맞춰 올라가요">＋<input type="file" id="strip-file" accept="image/*" style="display:none"></label>`
     : '';
   $('#gal').innerHTML = (arr.length?arr.map(g=>
     `<a data-g="${g.id}"><img src="${g.img}" alt="" draggable="false"${galPos(g)}>${g.priv?'<i class="gpriv">🔏</i>':''}${st.mine?`<i class="gdel" data-gx="${g.id}">✕</i>`:''}</a>`).join('')
@@ -2092,9 +2092,7 @@ function renderGal(all){
     const g=st.gallery.find(x=>x.id===a.dataset.g);
     if(g){ lbOpen(galShown||st.gallery, g.id); }
   });
-  const sa=$('#strip-add');                                      // ＋ 카드 — 스트립에서 바로 추가(phase268)
-  if(sa) sa.onclick=e=>{ e.preventDefault(); $('#strip-file').click(); };
-  const sf=$('#strip-file');
+  const sf=$('#strip-file');                                     // ＋ 카드(label) — 네이티브 파일창(phase268b)
   if(sf) sf.onchange=async e=>{
     const f=e.target.files[0]; if(!f) return;
     try{
