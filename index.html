@@ -905,6 +905,12 @@
   .memo-card .mf i{font-family:'IBM Plex Mono',monospace;font-style:normal;letter-spacing:.08em}
   .memo-card:hover .mf span{color:var(--pri)}
   @media(max-width:720px){.memo-grid{grid-template-columns:1fr 1fr}}   /* 폰은 항상 2열 */
+  .p-big{font-size:13px;font-weight:700;letter-spacing:.05em;color:var(--ink);
+    margin:20px 0 8px;padding-top:16px;border-top:1px solid var(--line)}
+  .p-grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px 10px;margin-bottom:12px}
+  .p-grid2>select{width:100%;margin-bottom:0}
+  .p-grid2 .sp2{grid-column:1/-1}
+  @media (max-width:560px){ .p-grid2{grid-template-columns:1fr} }
   /* ── 클릭 이펙트 · 픽셀펫 (phase253) ── */
   .cfx{position:fixed;z-index:390;pointer-events:none;font-size:15px;line-height:1;
     transform:translate(-50%,-50%);animation:cfxPop .72s ease-out forwards}
@@ -1902,17 +1908,8 @@
   </div>
 
   <div class="pane hidden" data-pane="theme">
-    <p class="p-h">테마 프리셋 — 분위기를 통째로 갈아입어요</p>
-    <div class="p-row">
-      <select id="s-theme">
-        <option value="default">LOVELOG 기본</option>
-        <option value="win98">레트로 창 — Windows 98풍</option>
-        <option value="vhs">비디오 테이프 — VHS 레코딩</option>
-      </select>
-    </div>
-    <p class="note">프리셋 위에 색·배경·투명화가 함께 적용돼요. (레트로 창은 고유 회색 팔레트 사용)</p>
-    <p class="p-h">레이아웃</p>
-    <div class="p-row">
+    <p class="p-big" style="border-top:0;padding-top:0;margin-top:0">📐 레이아웃 — 배치와 구조</p>
+    <div class="p-grid2">
       <select id="s-headmode">
         <option value="wide">헤더 — 가로 (상단 와이드)</option>
         <option value="side">헤더 — 세로 (사이드 프로필형)</option>
@@ -1922,8 +1919,6 @@
         <option value="left">사이드바 — 왼쪽</option>
         <option value="both">사이드바 — 양쪽</option>
       </select>
-    </div>
-    <div class="p-row">
       <select id="s-homestyle">
         <option value="grid">홈 — 위젯 그리드형 (지금 구조)</option>
         <option value="blog">홈 — 클래식 블로그형 (글 목록이 메인)</option>
@@ -1933,9 +1928,9 @@
         <option value="widget">카테고리 — 사이드 위젯</option>
       </select>
       <select id="s-catshape">
-        <option value="list">카테고리 모양 — 기본 (사이드는 원래 목록, 상단은 알약)</option>
-        <option value="pill">카테고리 모양 — 알약 (사이드에서도 활성 알약)</option>
-        <option value="text">카테고리 모양 — 글씨만 (담백하게)</option>
+        <option value="list">카테고리 모양 — 기본</option>
+        <option value="pill">카테고리 모양 — 알약</option>
+        <option value="text">카테고리 모양 — 글씨만</option>
         <option value="box">카테고리 모양 — 네모</option>
       </select>
       <select id="s-galcols">
@@ -1949,26 +1944,37 @@
         <option value="3" selected>메모 — 한 줄에 3장 (기본)</option>
         <option value="4">메모 — 한 줄에 4장 (촘촘)</option>
       </select>
-      <select id="s-mpinmax">
+      <select id="s-memoh">
+        <option value="s">메모 카드 — 짧게 (4줄)</option>
+        <option value="m" selected>메모 카드 — 보통 (7줄, 기본)</option>
+        <option value="l">메모 카드 — 길게 (11줄)</option>
+      </select>
+      <select id="s-mpinmax" class="sp2">
         <option value="1">메모 고정 — 최대 1개</option>
         <option value="2">메모 고정 — 최대 2개</option>
         <option value="3" selected>메모 고정 — 최대 3개 (기본)</option>
         <option value="4">메모 고정 — 최대 4개</option>
         <option value="6">메모 고정 — 최대 6개</option>
       </select>
-      <select id="s-memoh">
-        <option value="s">메모 카드 — 짧게 (미리보기 4줄)</option>
-        <option value="m" selected>메모 카드 — 보통 (7줄, 기본)</option>
-        <option value="l">메모 카드 — 길게 (11줄)</option>
-      </select>
-      <label class="chk" style="font-size:11.5px"><input type="checkbox" id="s-memott"> 메모 카드 제목 숨기기 (본문만 보여요 — 작성 팝업에서도 제목 칸이 사라져요)</label>
-      <div class="p-row" style="align-items:center;gap:8px;font-size:11.5px;color:var(--muted)">
+      <label class="chk sp2"><input type="checkbox" id="s-memott"> 메모 카드 제목 숨기기 (본문만 — 작성 팝업에서도 제목 칸이 사라져요)</label>
+      <label class="chk sp2"><input type="checkbox" id="s-postwide"> 📖 글 화면 넓게 — PC에서 글을 열면 위젯을 숨기고 본문을 넓게</label>
+      <div class="sp2" style="display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--muted)">
         글 목록 제목 색
-        <input type="color" id="s-listtc" style="width:38px;flex:none;padding:2px;height:30px">
+        <input type="color" id="s-listtc" style="width:38px;flex:none;padding:2px;height:30px;margin-bottom:0">
         <button class="rmv" id="s-listtc-x" style="font-size:10px">기본으로</button>
-        <span style="font-size:10px">— 게시판 목록의 제목 글씨에 적용돼요</span>
+        <span style="font-size:10px">— 게시판 목록의 제목 글씨</span>
       </div>
     </div>
+    <p class="p-big">🎨 테마 — 색과 무드</p>
+    <p class="p-h">테마 프리셋 — 분위기를 통째로 갈아입어요</p>
+    <div class="p-row">
+      <select id="s-theme">
+        <option value="default">LOVELOG 기본</option>
+        <option value="win98">레트로 창 — Windows 98풍</option>
+        <option value="vhs">비디오 테이프 — VHS 레코딩</option>
+      </select>
+    </div>
+    <p class="note">프리셋 위에 색·배경·투명화가 함께 적용돼요. (레트로 창은 고유 회색 팔레트 사용)</p>
     <p class="p-h">테마</p>
     <div class="p-row chks">
       <label class="chk"><input type="checkbox" id="s-light"> 밝은 테마</label>
@@ -2035,7 +2041,6 @@
       <input id="s-clickfx" placeholder="💥 클릭 이펙트 이모지 (예: ♥ ✨ 🫧 — 여러 개면 랜덤, 비우면 꺼져요)" style="flex:1;margin-bottom:0">
       <span class="note" style="flex:none">화면 누르면 퐁</span>
     </div>
-    <label class="chk" style="margin-top:2px"><input type="checkbox" id="s-postwide"> 📖 글 화면 넓게 — PC에서 글을 열면 위젯을 숨기고 본문을 넓게 보여줘요</label>
     <p class="p-h">커스텀 CSS — 아는 사람만 만지세요</p>
     <div class="p-row" style="align-items:center">
       <select id="s-csspre" style="flex:1;margin-bottom:0">
@@ -2099,6 +2104,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=253"></script>
+<script type="module" src="./app.js?v=254"></script>
 </body>
 </html>
