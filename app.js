@@ -411,6 +411,7 @@ async function loadPage(handle){
   st.mine = st.me && st.page.owner===st.me.uid;
   applyColor(st.page.hue ?? 222, st.page.sat, st.page.lum);
   initPet();
+  setTimeout(checkInqReply, 1800);
   // 입장 대문: 방문 시 1회(세션) + 비번 홈은 비번 입력
   const needPw = st.page.gate && !st.mine
     && sessionStorage.getItem('gate_'+handle)!==st.page.gate;
@@ -4773,12 +4774,21 @@ $('#inq-send').onclick=async()=>{
     renderMyInq();
   }catch(e){ inqMsg('전송 실패 — '+e.message); }
 };
+async function checkInqReply(){                               // 💌 문의 답장 도착 알림(phase264)
+  if(!st.me || window.__inqChecked) return; window.__inqChecked=true;
+  try{
+    const qs=await getDocs(query(collection(db,'inquiries'),where('by','==',st.me.uid)));
+    const un=qs.docs.filter(d=>d.data().reply && !localStorage.getItem('lv-inqseen-'+d.id));
+    if(un.length) msg(`💌 문의 답장 ${un.length}건이 도착해 있어요 — 설정의 문의함에서 확인해 주세요!`);
+  }catch(e){}
+}
 async function renderMyInq(){
   const box=$('#inq-list'); if(!box||!st.me) return;
   try{
     const qs=await getDocs(query(collection(db,'inquiries'),where('by','==',st.me.uid)));
     const rows=qs.docs.map(d=>({id:d.id,...d.data()}))
       .sort((a,b)=>(b.at?.seconds||0)-(a.at?.seconds||0)).slice(0,10);
+    rows.forEach(r=>{ if(r.reply) localStorage.setItem('lv-inqseen-'+r.id,'1'); });   // 확인 처리(phase264)
     box.innerHTML = rows.map(r=>`
       <div class="inq-card">
         <div class="im">${inqDate(r.at)} · ${r.status==='done'?'✓ 답변 완료':'접수됨'}</div>
