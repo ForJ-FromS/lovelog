@@ -205,8 +205,19 @@ const inlineFmt=s=>s
   .replace(/\*([^\n*]+)\*/g,'<i>$1</i>')             /* 기울임만 한 줄 한정 — 별표 단독 오탐 방지 */
   .replace(/__([^_]+)__/g,'<u>$1</u>')
   .replace(/~~([^~]+)~~/g,'<s>$1</s>')
-  .replace(/==([^=]+)==/g,'<mark>$1</mark>');
-const bodyHTML=t=>t.split(/\n{2,}/).map(p=>'<p>'+inlineFmt(esc(p)).replace(/\n/g,'<br>')+'</p>').join('');
+  .replace(/==([^=]+)==/g,'<mark>$1</mark>')
+  .replace(/\{\{(\d{2}):([^}]+)\}\}/g,(m,n,x)=>{ n=Math.min(44,Math.max(10,+n));   /* {{18:크게}} 글자 크기(phase265) */
+    return `<span style="font-size:${n}px">${x}</span>`; })
+  .replace(/\{\{(#(?:[0-9a-fA-F]{3}){1,2}):([^}]+)\}\}/g,'<span style="color:$1">$2</span>');   /* {{#f00:빨강}} */
+const bodyHTML=t=>t.split(/\n{2,}/).map(p=>{
+  const raw0=p.trim();
+  if(/^(-{3,}|―{3,}|={3,})$/.test(raw0)) return '<hr>';               /* --- 단독 문단 = 구분선(phase265) */
+  let cls='', body=p;
+  const m=body.match(/^@([crji])\s/);
+  if(m){ cls={c:' class="al-c"',r:' class="al-r"',j:' class="al-j"',i:' class="ind"'}[m[1]];
+    body=body.slice(m[0].length); }                                    /* @c 가운데 @r 오른쪽 @j 양쪽 @i 들여쓰기 */
+  return `<p${cls||''}>`+inlineFmt(esc(body)).replace(/\n/g,'<br>')+'</p>';
+}).join('');
 const htmlToText=h=>String(h||'')
   .replace(/<br\s*\/?>/gi,'\n')
   .replace(/<\/p>\s*<p[^>]*>/gi,'\n\n')
@@ -505,8 +516,11 @@ async function enterPage(){
   document.body.classList.toggle('font-serif', fk==='serif');
   document.title = p.name ? p.name : 'LOVELOG';
   let fl=document.getElementById('favlink');
-  if(p.fav){ if(!fl){ fl=document.createElement('link'); fl.rel='icon'; fl.id='favlink'; document.head.appendChild(fl); } fl.href=p.fav; }
+  if(p.fav){ if(!fl){ fl=document.createElement('link'); fl.rel='icon'; fl.sizes='any'; fl.id='favlink'; document.head.appendChild(fl); } fl.href=p.fav; }
   else if(fl) fl.remove();
+  let ftl=document.getElementById('favlink-t');                 // 모바일·홈화면용(phase265)
+  if(p.fav){ if(!ftl){ ftl=document.createElement('link'); ftl.rel='apple-touch-icon'; ftl.id='favlink-t'; document.head.appendChild(ftl); } ftl.href=p.fav; }
+  else if(ftl) ftl.remove();
   let ucss=document.getElementById('user-css');
   if(!ucss){ ucss=document.createElement('style'); ucss.id='user-css'; document.head.appendChild(ucss); }
   const noCss = /[?&]nocss=1/.test(location.search);      // 안전 모드 — 커스텀 CSS 끄고 열기
@@ -1965,7 +1979,8 @@ function renderList(){
     const mper=memoCols()*4;
     renderPager(all.length, mper);
     const items=all.slice(((st.pg||1)-1)*mper, (st.pg||1)*mper);
-    const strip=s=>String(s||'').replace(/\[사진\d+\]/g,'').replace(/\*\*|__|~~|==|\*/g,'');
+    const strip=s=>String(s||'').replace(/\[사진\d+\]/g,'').replace(/\*\*|__|~~|==|\*/g,'')
+      .replace(/^@[crji]\s/gm,'').replace(/\{\{[^:}]{1,8}:/g,'').replace(/\}\}/g,'').replace(/^(-{3,}|―{3,}|={3,})$/gm,'');
     $('#rows').innerHTML = items.length
       ? `<div class="memo-grid">`+items.map(p=>{ const th=p.secret?'':postThumb(p); return `
           <a class="memo-card${th?' has-mth':''}" data-id="${p.id}">
@@ -3553,14 +3568,55 @@ function wrapSel(mk, tag, taId){
   ta.focus(); ta.setSelectionRange(s+o.length, s+o.length+sel.length);
   ta.scrollTop=sc;
 }
-document.querySelectorAll('#w-fmt [data-fmt]').forEach(b=>{
-  const map={b:['**','b'], i:['*','i'], u:['__','u'], s:['~~','s'], h:['==','mark']};
-  b.onclick=()=>{ const [mk,tag]=map[b.dataset.fmt]; wrapSel(mk,tag); };
-});
-document.querySelectorAll('#mm-fmt [data-fmt]').forEach(b=>{
-  const map={b:['**','b'], i:['*','i'], u:['__','u'], s:['~~','s'], h:['==','mark']};
-  b.onclick=()=>{ const [mk,tag]=map[b.dataset.fmt]; wrapSel(mk,tag,'#mm-body'); };
-});
+function lineMark(mk, taId){                                   // 문단 앞 마커 토글(phase265)
+  const ta=$(taId||'#w-body'); if(!ta) return;
+  const st0=ta.scrollTop, v=ta.value;
+  let s=ta.selectionStart;
+  const ps=v.lastIndexOf('\n\n', Math.max(0,s-1));
+  const at=ps<0?0:ps+2;                                        // 커서가 속한 문단의 시작
+  const cur=v.slice(at).match(/^@([crji])\s/);
+  let nv, delta;
+  if(cur && '@'+mk[1]===cur[0].trim()){ nv=v.slice(0,at)+v.slice(at+cur[0].length); delta=-cur[0].length; }
+  else if(cur){ nv=v.slice(0,at)+mk+v.slice(at+cur[0].length); delta=0; }
+  else { nv=v.slice(0,at)+mk+v.slice(at); delta=mk.length; }
+  ta.value=nv; ta.focus();
+  ta.selectionStart=ta.selectionEnd=Math.max(at, s+delta);
+  ta.scrollTop=st0;
+}
+function insertSnip(txt, taId){                                // 커서 위치에 삽입(구분선 등)
+  const ta=$(taId||'#w-body'); if(!ta) return;
+  const st0=ta.scrollTop, s=ta.selectionStart, e=ta.selectionEnd, v=ta.value;
+  ta.value=v.slice(0,s)+txt+v.slice(e); ta.focus();
+  ta.selectionStart=ta.selectionEnd=s+txt.length; ta.scrollTop=st0;
+}
+function wrapRaw(open, close, taId){                           // 임의 마커로 선택 감싸기(크기·색)
+  const ta=$(taId||'#w-body'); if(!ta) return;
+  const st0=ta.scrollTop, s=ta.selectionStart, e=ta.selectionEnd, v=ta.value;
+  const sel=v.slice(s,e)||'글자';
+  ta.value=v.slice(0,s)+open+sel+close+v.slice(e); ta.focus();
+  ta.selectionStart=s+open.length; ta.selectionEnd=s+open.length+sel.length;
+  ta.scrollTop=st0;
+}
+function bindFmtBar(barSel, taId){
+  document.querySelectorAll(barSel+' [data-fmt]').forEach(b=>{
+    const map={b:['**','b'], i:['*','i'], u:['__','u'], s:['~~','s'], h:['==','mark']};
+    b.onclick=()=>{
+      const f=b.dataset.fmt;
+      if(map[f]){ const [mk,tag]=map[f]; wrapSel(mk,tag,taId); return; }
+      if(f==='ac') lineMark('@c ',taId);
+      else if(f==='ar') lineMark('@r ',taId);
+      else if(f==='aj') lineMark('@j ',taId);
+      else if(f==='ai') lineMark('@i ',taId);
+      else if(f==='hr') insertSnip('\n\n---\n\n',taId);
+    };
+  });
+  const sz=document.querySelector(barSel+' [data-fmtsz]');
+  if(sz) sz.addEventListener('change',()=>{ if(sz.value){ wrapRaw('{{'+sz.value+':','}}',taId); sz.value=''; } });
+  const co=document.querySelector(barSel+' [data-fmtco]');
+  if(co) co.addEventListener('change',()=>{ wrapRaw('{{'+co.value+':','}}',taId); });
+}
+bindFmtBar('#w-fmt');
+bindFmtBar('#mm-fmt','#mm-body');
 let wImgs=[];
 function insertWTag(n){
   const ta=$('#w-body'), tk=`\n[사진${n}]\n`,
@@ -3679,7 +3735,8 @@ $('#w-go').onclick=async()=>{
       priv: $('#w-priv').checked,
       feat: $('#w-feat').checked,
       mpin: editPost ? !!(st.posts.find(p2=>p2.id===editPost)?.mpin) : false,
-      excerpt: secret?'':(asHtml?raw.replace(/<[^>]+>/g,' '):raw.replace(/\*\*|__|~~|==|\*/g,'')).replace(/\s+/g,' ').trim().slice(0,70),
+      excerpt: secret?'':(asHtml?raw.replace(/<[^>]+>/g,' '):raw.replace(/\*\*|__|~~|==|\*/g,'')
+        .replace(/^@[crji]\s/gm,'').replace(/\{\{[^:}]{1,8}:/g,'').replace(/\}\}/g,'').replace(/^(-{3,}|―{3,}|={3,})$/gm,'')).replace(/\s+/g,' ').trim().slice(0,70),
       html: asHtml, imgs: wImgs.slice() };
     if(!secret){ data.raw = raw; data.encRaw=''; }        // 원문 보관(수정 시 그대로 열기)
     else { data.raw = '';                                  // 비밀글은 평문 원문을 남기지 않고
