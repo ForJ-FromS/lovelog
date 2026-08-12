@@ -23,6 +23,7 @@ const urlFor=(h,p)=>{
   if(SUB) return h===SUB ? '/'+(p||'') : 'https://luvlog.me/'+h+(p?'/'+p:'');   // 자기 홈은 루트, 남의 홈은 본 주소로
   return CLEAN ? '/'+h+(p?'/'+p:'') : './?u='+h+(p?'&p='+p:''); };
 const show = id => { document.body.classList.remove('reading');
+  document.body.dataset.view = id;                              // 홈 부유물(펫·스티커·단말기) 표시 게이트(phase261)
   VIEWS.forEach(v=>$('#'+v).classList.toggle('hidden',v!==id)); };
 const enc=new TextEncoder(), dec=new TextDecoder();
 
@@ -2639,6 +2640,7 @@ function spawnFx(x,y,chars){
 document.addEventListener('pointerdown', e=>{
   const fx=st.page&&st.page.clickFx;
   if(!fx) return;
+  if(document.body.dataset.view!=='view-page') return;          // 홈 계열 화면에서만(phase261)
   if(e.target.closest('#panel,#wid-panel,button,input,textarea,select,a')) return;   // 편집·조작 요소는 제외
   spawnFx(e.clientX, e.clientY, fx);
 });

@@ -898,6 +898,14 @@
   .memo-card .mf i{font-family:'IBM Plex Mono',monospace;font-style:normal;letter-spacing:.08em}
   .memo-card:hover .mf span{color:var(--pri)}
   @media(max-width:720px){.memo-grid{grid-template-columns:1fr 1fr}}   /* 폰은 항상 2열 */
+  /* 홈 부유물은 홈 화면(view-page)에서만 — 로그인·대문·게이트에선 숨김(phase261) */
+  body:not([data-view="view-page"]) .luv-pet,
+  body:not([data-view="view-page"]) #wfl-layer,
+  body:not([data-view="view-page"]) #ph-dock,
+  body:not([data-view="view-page"]) #bgm-dock{display:none !important}
+  body:has(#view-gate:not(.hidden)) .luv-pet,
+  body:has(#view-gate:not(.hidden)) #wfl-layer,
+  body:has(#view-gate:not(.hidden)) #ph-dock{display:none !important}
   .p-big{font-size:13px;font-weight:700;letter-spacing:.05em;color:var(--ink);
     margin:20px 0 8px;padding-top:16px;border-top:1px solid var(--line)}
   .p-grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px 10px;margin-bottom:12px}
@@ -2105,6 +2113,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=258"></script>
+<script type="module" src="./app.js?v=259"></script>
 </body>
 </html>
