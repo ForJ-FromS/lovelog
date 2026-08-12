@@ -2193,7 +2193,6 @@ async function openPost(id, fromHome=false){
     if(p.encRaw){ try{ st.curRaw = await decTxt(pw, p.encRaw); }catch(e){} }   // 원문(수정용)도 같이 복호(phase258)
   } else { body=p.body; st.curRaw=null; }
   st.cur=p; st.curBody=body;
-  if(st.page.postWide) document.body.classList.add('reading');   // 글 화면 넓게(phase259)
   $('#pv-meta').textContent=p.cat+' · '+p.date+(p.secret?' · SECRET':'')+(p.priv?' · 🔏 비공개':'');
   /* ── 공감 ♥ ── */
   (async()=>{
@@ -4366,7 +4365,6 @@ function fillSettings(){
   const smc=$('#s-memocols'); if(smc) smc.value=String(memoCols());
   const smp=$('#s-mpinmax'); if(smp) smp.value=String(mpinMax());
   const scf=$('#s-clickfx'); if(scf) scf.value=st.page.clickFx||'';
-  const spw=$('#s-postwide'); if(spw) spw.checked=!!st.page.postWide;
   const spt=$('#s-pet'); if(spt) spt.value=st.page.pet||'';
   petImgsNew=null; renderPetImgList();
   const smh=$('#s-memoh'); if(smh) smh.value=st.page.memoH||'m';
@@ -4467,7 +4465,6 @@ async function saveSettings(){
       memoH: $('#s-memoh')?.value||'m',
       memoNoTt: !!$('#s-memott')?.checked,
       clickFx: ($('#s-clickfx')?.value||'').trim(),
-      postWide: !!$('#s-postwide')?.checked,
       pet: ($('#s-pet')?.value||'').trim(),
       listTc: ($('#s-listtc')?.dataset.on ? $('#s-listtc').value : ''),
       homeStyle: $('#s-homestyle').value,
