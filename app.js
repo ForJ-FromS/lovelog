@@ -2651,8 +2651,10 @@ function petList(){                                            // 저장된 펫 
 function initPet(){
   document.querySelectorAll('.luv-pet').forEach(el=>el.remove());
   petTimers.forEach(clearTimeout); petTimers=[];
+  const SZ={s:.75,l:1.45,xl:1.9}[st.page.petSz]||1;             // 펫 크기(phase260)
   petList().forEach(o=>{
     const p=document.createElement('div'); p.className='luv-pet';
+    p.style.setProperty('--psz', SZ);
     if(o.img) p.innerHTML=`<img src="${o.img}" alt="">`;
     else p.textContent=o.emo;
     let x=8+Math.random()*76;
@@ -4366,6 +4368,7 @@ function fillSettings(){
   const smp=$('#s-mpinmax'); if(smp) smp.value=String(mpinMax());
   const scf=$('#s-clickfx'); if(scf) scf.value=st.page.clickFx||'';
   const spt=$('#s-pet'); if(spt) spt.value=st.page.pet||'';
+  const spz=$('#s-petsz'); if(spz) spz.value=st.page.petSz||'';
   petImgsNew=null; renderPetImgList();
   const smh=$('#s-memoh'); if(smh) smh.value=st.page.memoH||'m';
   const smt=$('#s-memott'); if(smt) smt.checked=!!st.page.memoNoTt;
@@ -4466,6 +4469,7 @@ async function saveSettings(){
       memoNoTt: !!$('#s-memott')?.checked,
       clickFx: ($('#s-clickfx')?.value||'').trim(),
       pet: ($('#s-pet')?.value||'').trim(),
+      petSz: $('#s-petsz')?.value||'',
       listTc: ($('#s-listtc')?.dataset.on ? $('#s-listtc').value : ''),
       homeStyle: $('#s-homestyle').value,
       theme: $('#s-theme').value,
