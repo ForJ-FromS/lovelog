@@ -487,6 +487,16 @@
   .strip-sec{margin-top:24px}
   #gal{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
   @media(max-width:620px){#gal{grid-template-columns:repeat(2,1fr)}}
+  @media (min-width:721px){
+    body.reading .side{display:none !important}
+    body.reading #ph-dock{display:none !important}
+    body.reading .cols, body.reading.side-left .cols, body.reading.side-both .cols,
+    body.reading #home-grid{grid-template-columns:1fr !important}
+    body.reading .cols, body.reading #home-grid{max-width:860px;margin-left:auto;margin-right:auto}
+  }
+  #gal a .gfoc{position:absolute;left:6px;top:6px;font-size:12px;line-height:1;padding:3px 6px;
+    border-radius:7px;background:rgba(0,0,0,.5);color:#fff;cursor:pointer;opacity:0;transition:opacity .15s}
+  #gal a:hover .gfoc{opacity:.9}
   #gal a{position:relative;aspect-ratio:4/3;border-radius:9px;overflow:hidden;
     border:1px solid var(--line);display:block;cursor:pointer;background:var(--card2);
     transition:border-color .15s}
@@ -2027,6 +2037,7 @@
       <input id="s-clickfx" placeholder="💥 클릭 이펙트 이모지 (예: ♥ ✨ 🫧 — 여러 개면 랜덤, 비우면 꺼져요)" style="flex:1;margin-bottom:0">
       <span class="note" style="flex:none">화면 누르면 퐁</span>
     </div>
+    <label class="chk" style="margin-top:2px"><input type="checkbox" id="s-postwide"> 📖 글 화면 넓게 — PC에서 글을 열면 위젯을 숨기고 본문을 넓게 보여줘요</label>
     <p class="p-h">커스텀 CSS — 아는 사람만 만지세요</p>
     <div class="p-row" style="align-items:center">
       <select id="s-csspre" style="flex:1;margin-bottom:0">
@@ -2090,6 +2101,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=249"></script>
+<script type="module" src="./app.js?v=250"></script>
 </body>
 </html>

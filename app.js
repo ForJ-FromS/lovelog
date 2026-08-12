@@ -6,7 +6,7 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut }
   from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-import { getFirestore, doc, getDoc, setDoc, updateDoc, runTransaction, serverTimestamp,
+import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteField, runTransaction, serverTimestamp,
   collection, query, orderBy, where, limit, getDocs, addDoc, deleteDoc }
   from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 import { getStorage, ref as sref, uploadBytes, getDownloadURL }
@@ -22,7 +22,8 @@ const SUB=(()=>{ const q=location.hostname.toLowerCase().split('.');            
 const urlFor=(h,p)=>{
   if(SUB) return h===SUB ? '/'+(p||'') : 'https://luvlog.me/'+h+(p?'/'+p:'');   // 자기 홈은 루트, 남의 홈은 본 주소로
   return CLEAN ? '/'+h+(p?'/'+p:'') : './?u='+h+(p?'&p='+p:''); };
-const show = id => VIEWS.forEach(v=>$('#'+v).classList.toggle('hidden',v!==id));
+const show = id => { document.body.classList.remove('reading');
+  VIEWS.forEach(v=>$('#'+v).classList.toggle('hidden',v!==id)); };
 const enc=new TextEncoder(), dec=new TextDecoder();
 
 if(!firebaseConfig.apiKey || firebaseConfig.apiKey.includes('여기에')){ show('view-setup'); throw new Error('cfg'); }
@@ -2045,10 +2046,11 @@ function renderGal(all){
   galShown=arr;
   const pins=galPins();
   $('#gal').innerHTML = arr.length?arr.map(g=>
-    `<a data-g="${g.id}"><img src="${g.img}" alt="" draggable="false">${g.priv?'<i class="gpriv">🔏</i>':''}${st.mine?`<i class="gdel" data-gx="${g.id}">✕</i>`:''}</a>`).join('')
+    `<a data-g="${g.id}"><img src="${g.img}" alt="" draggable="false"${(g.fy!=null&&g.fy!==''&&+g.fy!==50)?` style="object-position:50% ${+g.fy}%"`:''}>${g.priv?'<i class="gpriv">🔏</i>':''}${st.mine?`<i class="gdel" data-gx="${g.id}">✕</i><i class="gfoc" data-gf="${g.id}" title="썸네일 위치 조정">↕</i>`:''}</a>`).join('')
     :'<p class="pl-empty">아직 이미지가 없습니다.</p>';
   document.querySelectorAll('#gal a').forEach(a=>a.onclick=e=>{
     if(e.target.dataset.gx){ e.stopPropagation(); delGal(e.target.dataset.gx); return; }
+    if(e.target.dataset.gf){ e.stopPropagation(); galFocus(e.target.dataset.gf); return; }   // 썸네일 초점(phase259)
     if(e.target.dataset.gp){ e.stopPropagation(); togglePin(e.target.dataset.gp); return; }
     const g=st.gallery.find(x=>x.id===a.dataset.g);
     if(g){ lbOpen(galShown||st.gallery, g.id); }
@@ -2066,6 +2068,38 @@ $('#gb-go').onclick=async()=>{
   st.guest=gb.docs.map(d=>({id:d.id,...d.data()})); renderGuest();
 };
 $('#gb-login-btn').onclick=()=>signInWithPopup(auth,new GoogleAuthProvider()).catch(()=>{});
+function galFocus(id){                                        // 갤러리 썸네일 초점 팝업(phase259)
+  const g=st.gallery.find(x=>x.id===id); if(!g) return;
+  const cur=(g.fy!=null&&g.fy!=='')?+g.fy:50;
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:400;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px)';
+  ov.innerHTML=`<div style="background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:16px;width:min(340px,92vw);box-shadow:0 18px 50px rgba(0,0,0,.4)">
+    <p style="margin:0 0 10px;font-size:12px;color:var(--muted)">썸네일 위치 — 슬라이더를 끌면 바로 보여요 (원본은 그대로예요)</p>
+    <div style="border:1px solid var(--line);border-radius:10px;overflow:hidden">
+      <img id="gf-img" src="${g.img}" alt="" style="display:block;width:100%;aspect-ratio:4/3;object-fit:cover;object-position:50% ${cur}%">
+    </div>
+    <input id="gf-r" type="range" min="0" max="100" value="${cur}" style="width:100%;margin:13px 0 11px">
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="rmv" id="gf-c" style="font-size:11px">취소</button>
+      <button class="btn" id="gf-ok" style="font-size:11px">이 위치로</button>
+    </div></div>`;
+  document.body.appendChild(ov);
+  const img=ov.querySelector('#gf-img'), r=ov.querySelector('#gf-r');
+  r.oninput=()=>{ img.style.objectPosition=`50% ${r.value}%`; };
+  const close=()=>ov.remove();
+  ov.onclick=e=>{ if(e.target===ov) close(); };
+  ov.querySelector('#gf-c').onclick=close;
+  ov.querySelector('#gf-ok').onclick=async()=>{
+    const v=+r.value;
+    try{
+      if(v===50) await updateDoc(doc(db,'pages',st.handle,'gallery',id), {fy:deleteField()});
+      else await updateDoc(doc(db,'pages',st.handle,'gallery',id), {fy:v});
+      g.fy = (v===50? undefined : v);
+      close(); renderGal(document.querySelector('#gal .gfoc')&&st.cat==='__gal'); renderGal();
+      msg('썸네일 위치를 저장했어요.');
+    }catch(e){ msg('저장에 실패했어요 — 잠시 후 다시.'); }
+  };
+}
 async function delGal(id){
   const g=st.gallery.find(x=>x.id===id); if(!g) return;
   if(!confirm('이 이미지를 삭제할까요?'+(g.title?`\n(${g.title})`:''))) return;
@@ -2104,6 +2138,7 @@ document.addEventListener('contextmenu',e=>{
 
 /* ---------- 글 읽기 ---------- */
 function backToList(){
+  document.body.classList.remove('reading');
   if(st.backHome){ st.backHome=false; goHome(); return; }   // 홈에서 연 글 → 홈으로 복귀
   document.body.classList.remove('reading','in-post');
   $('#post-view').classList.add('hidden');
@@ -2148,6 +2183,7 @@ async function openPost(id, fromHome=false){
     if(p.encRaw){ try{ st.curRaw = await decTxt(pw, p.encRaw); }catch(e){} }   // 원문(수정용)도 같이 복호(phase258)
   } else { body=p.body; st.curRaw=null; }
   st.cur=p; st.curBody=body;
+  if(st.page.postWide) document.body.classList.add('reading');   // 글 화면 넓게(phase259)
   $('#pv-meta').textContent=p.cat+' · '+p.date+(p.secret?' · SECRET':'')+(p.priv?' · 🔏 비공개':'');
   /* ── 공감 ♥ ── */
   (async()=>{
@@ -4299,6 +4335,7 @@ function fillSettings(){
   const smc=$('#s-memocols'); if(smc) smc.value=String(memoCols());
   const smp=$('#s-mpinmax'); if(smp) smp.value=String(mpinMax());
   const scf=$('#s-clickfx'); if(scf) scf.value=st.page.clickFx||'';
+  const spw=$('#s-postwide'); if(spw) spw.checked=!!st.page.postWide;
   const spt=$('#s-pet'); if(spt) spt.value=st.page.pet||'';
   petImgsNew=null; renderPetImgList();
   const smh=$('#s-memoh'); if(smh) smh.value=st.page.memoH||'m';
@@ -4399,6 +4436,7 @@ async function saveSettings(){
       memoH: $('#s-memoh')?.value||'m',
       memoNoTt: !!$('#s-memott')?.checked,
       clickFx: ($('#s-clickfx')?.value||'').trim(),
+      postWide: !!$('#s-postwide')?.checked,
       pet: ($('#s-pet')?.value||'').trim(),
       listTc: ($('#s-listtc')?.dataset.on ? $('#s-listtc').value : ''),
       homeStyle: $('#s-homestyle').value,
