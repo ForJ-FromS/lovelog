@@ -202,7 +202,7 @@ const today=()=>{ const d=new Date();
 /* 다이어리 서식 — **굵게** *기울임* __밑줄__ ~~취소선~~ ==형광== */
 const inlineFmt=s=>s
   .replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>')          /* 줄바꿈에 걸친 굵게 허용(phase211) */
-  .replace(/\*([^\n*]+)\*/g,'<i>$1</i>')             /* 기울임만 한 줄 한정 — 별표 단독 오탐 방지 */
+  .replace(/\*([^*]+)\*/g,'<i>$1</i>')               /* 기울임도 줄바꿈 허용(phase267 — 문단 경계는 자연 차단) */
   .replace(/__([^_]+)__/g,'<u>$1</u>')
   .replace(/~~([^~]+)~~/g,'<s>$1</s>')
   .replace(/==([^=]+)==/g,'<mark>$1</mark>')
@@ -882,6 +882,7 @@ const DEFCOL={search:'l',category:'l',profile:'l',latest:'c',tl:'r',feat:'r',quo
   dday:'r',bgm:'r',links:'r',banner:'r',text:'c',cnt:'l',char:'r',pair:'c',cal:'r',habit:'r'};
 const homeStyle=()=>st.page?.homeStyle||'grid';
 const galOn=()=>st.page?.galOn!==false;
+const galTabOn=()=>st.page?.galTabOn!==false;                  // 알약(탭)만 별도 on/off(phase267) — 스트립과 독립
 const stripOn=()=>st.page?.stripOn!==false;
 function goHome(){
   if(homeStyle()==='blog'){ goBoard('recent'); return; }
@@ -917,7 +918,7 @@ function renderCatbar(){
     ? `<a data-c="${esc(key)}" class="pillimg ${on?'on':''}"><img src="${ci[key]}" alt="${esc(label)}" draggable="false"></a>`
     : `<a data-c="${esc(key)}" class="${on?'on':''}">${esc(label)}</a>`;
   bar.innerHTML = pill('home',homeNm(),homeOn)+
-    navSeq().map(t=> t==='__gal' ? (galOn()?pill('__gal',galNm(),st.cat==='__gal'):'')
+    navSeq().map(t=> t==='__gal' ? (galOn()&&galTabOn()?pill('__gal',galNm(),st.cat==='__gal'):'')
       : t==='__gb' ? (st.page.gbOff?'' : pill('__gb',gbNm(),st.cat==='__gb'))
       : pill(t,t.toUpperCase(),st.cat===t)).join('')+
     (homeStyle()==='blog'||st.page.allOff?'':pill('recent','ALL',st.cat==='recent'));
@@ -1222,7 +1223,7 @@ function renderSide(){
         cats().map(c=>`<li><a data-c="${esc(c)}" class="${st.cat===c?'on':''}">
           <span>${esc(c)}</span>
           <span class="n">${cnt(c)}</span></a></li>`).join('')+
-        (galOn()?`<li><a data-c="__gal" class="${st.cat==='__gal'?'on':''}"><span>${esc(galNm())}</span><span class="n">${st.gallery.length}</span></a></li>`:'')+
+        (galOn()&&galTabOn()?`<li><a data-c="__gal" class="${st.cat==='__gal'?'on':''}"><span>${esc(galNm())}</span><span class="n">${st.gallery.length}</span></a></li>`:'')+
         (st.page.gbOff?'':`<li><a data-c="__gb" class="${st.cat==='__gb'?'on':''}"><span>${esc(gbNm())}</span><span class="n">${st.guest.length}</span></a></li>`)+
         (st.page.allOff?'</ul>':`<li><a data-c="recent" class="${st.cat==='recent'?'on':''}"><span>전체</span><span class="n">${st.posts.length}</span></a></li></ul>`);
       box.appendChild(d);
@@ -2079,15 +2080,40 @@ function renderGal(all){
   const arr = all ? base : base.slice(0,4);
   galShown=arr;
   const pins=galPins();
-  $('#gal').innerHTML = arr.length?arr.map(g=>
+  const addCard = (!all && st.mine)
+    ? `<a class="strip-add" id="strip-add" title="여기서 바로 사진 추가 — 대문 기준에 맞춰 올라가요">＋<input type="file" id="strip-file" accept="image/*" style="display:none"></a>`
+    : '';
+  $('#gal').innerHTML = (arr.length?arr.map(g=>
     `<a data-g="${g.id}"><img src="${g.img}" alt="" draggable="false"${galPos(g)}>${g.priv?'<i class="gpriv">🔏</i>':''}${st.mine?`<i class="gdel" data-gx="${g.id}">✕</i>`:''}</a>`).join('')
-    :'<p class="pl-empty">아직 이미지가 없습니다.</p>';
-  document.querySelectorAll('#gal a').forEach(a=>a.onclick=e=>{
+    :(st.mine?'':'<p class="pl-empty">아직 이미지가 없습니다.</p>')) + addCard;
+  document.querySelectorAll('#gal a[data-g]').forEach(a=>a.onclick=e=>{
     if(e.target.dataset.gx){ e.stopPropagation(); delGal(e.target.dataset.gx); return; }
     if(e.target.dataset.gp){ e.stopPropagation(); togglePin(e.target.dataset.gp); return; }
     const g=st.gallery.find(x=>x.id===a.dataset.g);
     if(g){ lbOpen(galShown||st.gallery, g.id); }
   });
+  const sa=$('#strip-add');                                      // ＋ 카드 — 스트립에서 바로 추가(phase268)
+  if(sa) sa.onclick=e=>{ e.preventDefault(); $('#strip-file').click(); };
+  const sf=$('#strip-file');
+  if(sf) sf.onchange=async e=>{
+    const f=e.target.files[0]; if(!f) return;
+    try{
+      msg('사진 올리는 중...');
+      const img=await upFile(f,1900,.9,220);
+      const src0=st.page?.stripSrc||'recent';
+      const gdata={img,title:'',cat:(src0!=='recent'&&src0!=='pick')?src0:'',priv:false,ts:serverTimestamp()};
+      const ref=await addDoc(collection(db,'pages',st.handle,'gallery'), gdata);
+      st.gallery.unshift({id:ref.id,...gdata,ts:{seconds:Date.now()/1000}});
+      if(src0==='pick'){                                          // ★ 기준이면 자동 고정
+        const cur=[...galPins()]; cur.unshift(ref.id);
+        st.page.stripPin=cur;
+        await updateDoc(doc(db,'pages',st.handle),{stripPin:cur});
+      }
+      renderGal();
+      msg(src0==='pick'?'올렸어요 — ★ 대문에 바로 고정했어요!':'올렸어요 — 대문에 반영됐어요!');
+    }catch(err){ msg('업로드 실패: '+err.message); }
+    e.target.value='';
+  };
 }
 $('#gb-home').onclick=goHome;
 $('#gb-go').onclick=async()=>{
@@ -2536,7 +2562,8 @@ function renderCatFix(){
     row('__gal',esc(galNm()),
       `<input data-cn="__gal" value="${esc(st.page.galName||'')}" placeholder="GALLERY" title="게시판 이름 바꾸기 — 비우면 GALLERY" style="width:104px;margin-bottom:0;font-size:11.5px">`+
       `<button class="btn" id="gal-toggle" style="font-size:11px">${galOn()?'숨기기 (알약·하단 갤러리 제거)':'표시하기'}</button>`+
-      (galOn()?`<button class="btn" id="strip-toggle" style="font-size:11px">${stripOn()?'하단 스트립 끄기':'하단 스트립 켜기'}</button>
+      (galOn()?`<button class="btn" id="galtab-toggle" style="font-size:11px">${galTabOn()?'알약(탭)만 숨기기':'알약(탭) 보이기'}</button>
+        <button class="btn" id="strip-toggle" style="font-size:11px">${stripOn()?'하단 스트립 끄기':'하단 스트립 켜기'}</button>
         <select id="strip-src" style="font-size:11px;width:auto;margin:0 0 0 6px">
           <option value="recent" ${(st.page.stripSrc||'recent')==='recent'?'selected':''}>대문: 최신 사진</option>
           <option value="pick" ${st.page.stripSrc==='pick'?'selected':''}>대문: ★로 고른 사진</option>
@@ -2582,6 +2609,14 @@ function renderCatFix(){
     document.querySelector('.strip-sec').classList.toggle('hidden', !(next&&stripOn()));
     if(!next && (st.cat==='__gal')) goHome();
     renderCatbar(); renderSide(); renderCatFix();
+  };
+  const gtb=$('#galtab-toggle'); if(gtb) gtb.onclick=async()=>{
+    const next=!galTabOn();
+    await updateDoc(doc(db,'pages',st.handle),{galTabOn:next});
+    st.page.galTabOn=next;
+    if(!next && st.cat==='__gal') goHome();
+    renderCatbar(); renderSide(); renderCatFix();
+    msg(next?'갤러리 알약(탭)을 다시 보여요.':'알약(탭)만 숨겼어요 — 하단 스트립·갤러리는 그대로예요.');
   };
   const ss=$('#strip-src'); if(ss) ss.onchange=async()=>{
     st.page.stripSrc=ss.value;
