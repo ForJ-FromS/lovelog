@@ -3727,7 +3727,7 @@ bindFmtBar('#w-fmt');
       : bodyHTML(ta.value||'') || '<p class="pl-empty">아직 쓴 내용이 없어요.</p>';
     const ov=document.createElement('div');
     ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:400;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px);padding:20px';
-    ov.innerHTML=`<div style="background:var(--bg);border:1px solid var(--line);border-radius:14px;width:min(720px,94vw);max-height:84vh;display:flex;flex-direction:column;box-shadow:0 18px 50px rgba(0,0,0,.4)">
+    ov.innerHTML=`<div style="background:var(--bg);border:1px solid var(--line);border-radius:14px;width:min(1120px,95vw);max-height:88vh;display:flex;flex-direction:column;box-shadow:0 18px 50px rgba(0,0,0,.4)">
       <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid var(--line)">
         <b style="font-size:13px">미리보기</b>
         <button class="rmv" id="wpv-x" style="font-size:11px">닫기</button>
