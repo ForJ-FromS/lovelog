@@ -276,6 +276,18 @@ const cleanHTML=h=>h
   .replace(/<script[\s\S]*?<\/script\s*>/gi,'')
   .replace(/\son\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi,'')
   .replace(/javascript:/gi,'');
+/* HTML 글의 '태그 바깥 텍스트' 줄바꿈 살리기(phase280):
+   본문 첫 블록 태그 이전(머리말)·마지막 '>' 이후(맺음말)의 개행만 <br>로 —
+   태그 내부·CSS는 일절 안 건드림. <br> 뒤 개행은 이중 줄바꿈 방지로 보존. */
+const htmlNl=t=>{
+  const nl=x=>x.replace(/(<br\s*\/?>)?\r?\n/gi,(m,br)=>br?br+'\n':'<br>\n');
+  const i=t.search(/<(?:!doctype|html|head|style|link|script|div|section|article|table|main|center|iframe|figure|ul|ol|blockquote|p|img|h[1-6])\b/i);
+  if(i<0) return nl(t);                       // 블록 태그가 아예 없으면 전체 변환
+  let lead=nl(t.slice(0,i)), rest=t.slice(i);
+  const g=rest.lastIndexOf('>');
+  if(g>-1 && g<rest.length-1) rest=rest.slice(0,g+1)+nl(rest.slice(g+1));
+  return lead+rest;
+};
 const htmlText=h=>{ const d2=document.createElement('div');
   d2.innerHTML=String(h).replace(/<br\s*\/?>/gi,'\n').replace(/<\/p>/gi,'\n\n');
   return d2.textContent.replace(/\n{3,}/g,'\n\n').trim(); };
@@ -2335,6 +2347,7 @@ async function openPost(id, fromHome=false){
   }
   $('#pv-title').textContent=p.title;
   const pvb=$('#pv-body');
+  if(st.cur && st.cur.html) body=htmlNl(body);   // HTML 위·아래에 쓴 일반 텍스트의 줄바꿈 살리기(phase280)
   /* 격리 액자는 '화면을 붙잡는' 로그에만 — 그 외 HTML 글은 홈 커스텀 CSS가 닿게 기존 경로(phase275) */
   const needsFrame = p2=>{
     if(!/<style/i.test(p2)) return false;
@@ -2419,11 +2432,15 @@ async function loadComments(pid){
   }catch(e){ $('#cmt-list').innerHTML='<p class="pl-empty">댓글을 불러올 수 없어요.</p>'; }
 }
 $('#cmt-go').onclick=async()=>{
-  const t=$('#cmt-text').value.trim(); if(!t||!st.me||!st.cur) return;
-  await addDoc(collection(db,'pages',st.handle,'posts',st.cur.id,'comments'),
-    {uid:st.me.uid, name:st.myHandle||st.me.displayName||'guest',
-     home:st.myHandle||'', text:t, ts:serverTimestamp()});
-  $('#cmt-text').value=''; loadComments(st.cur.id);
+  const t=$('#cmt-text').value.trim();
+  if(!st.me){ msg('댓글은 로그인하고 남겨주세요.'); return; }
+  if(!t||!st.cur) return;
+  try{
+    await addDoc(collection(db,'pages',st.handle,'posts',st.cur.id,'comments'),
+      {uid:st.me.uid, name:st.myHandle||st.me.displayName||'guest',
+       home:st.myHandle||'', text:t, ts:serverTimestamp()});
+    $('#cmt-text').value=''; loadComments(st.cur.id);
+  }catch(e){ msg('댓글 저장 실패 — '+e.message); }   // 규칙 거부 등 침묵 금지(phase120 교훈)
 };
 $('#cmt-login-btn').onclick=()=>signInWithPopup(auth,new GoogleAuthProvider()).catch(()=>{});
 $('#pv-copy').onclick=()=>{
