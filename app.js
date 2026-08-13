@@ -2295,7 +2295,22 @@ async function openPost(id, fromHome=false){
     };
   }
   $('#pv-title').textContent=p.title;
-  $('#pv-body').innerHTML=scopePostCSS(body);
+  const pvb=$('#pv-body');
+  if(st.cur && st.cur.html){                                    // HTML 글 = 격리 액자 렌더(phase271) — 로그 CSS↔홈 CSS 완전 분리
+    pvb.innerHTML='';
+    const fr=document.createElement('iframe');
+    fr.setAttribute('sandbox','allow-same-origin');             // 스크립트 실행 불가(발행 시 cleanHTML과 이중 안전)
+    fr.style.cssText='width:100%;border:0;display:block;min-height:220px;height:72vh;border-radius:10px';
+    pvb.appendChild(fr);
+    const doc=fr.contentDocument;
+    doc.open();
+    doc.write('<!doctype html><html><head><meta charset="utf-8"><base target="_blank"><style>html,body{margin:0;background:transparent}</style></head><body>'+cleanHTML(body)+'</body></html>');
+    doc.close();
+    const fit=()=>{ try{ const h=doc.documentElement.scrollHeight;
+      if(h>fr.clientHeight) fr.style.height=(h+12)+'px'; }catch(e){} };   // 전체 나열형 로그는 통높이로 확장
+    fr.onload=fit; setTimeout(fit,150); setTimeout(fit,900);
+  }
+  else pvb.innerHTML=scopePostCSS(body);
   $('#pv-del').classList.toggle('hidden',!st.mine);
   $('#pv-edit').classList.toggle('hidden',!st.mine);
   $('#list-view').classList.add('hidden');
