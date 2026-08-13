@@ -211,6 +211,10 @@ const inlineFmt=s=>s
   .replace(/\{\{(#(?:[0-9a-fA-F]{3}){1,2}):([^}]+)\}\}/g,'<span style="color:$1">$2</span>');   /* {{#f00:빨강}} */
 const bodyHTML=t=>t.split(/\n{2,}/).map(p=>{
   const raw0=p.trim();
+  const yt=raw0.match(/^https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?\S*v=|youtu\.be\/)([\w-]{11})\S*$/);
+  if(yt) return `<div class="yt-wrap"><iframe src="https://www.youtube.com/embed/${yt[1]}" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`;   /* 유튜브 단독 줄 = 재생 카드(phase269) */
+  if(/^https?:\/\/\S+$/.test(raw0))
+    return `<p class="al-c"><a class="ext-link" href="${esc(raw0)}" target="_blank" rel="noopener">🔗 ${esc(raw0.replace(/^https?:\/\//,'').slice(0,44))}${raw0.length>52?'…':''}</a></p>`;   /* 단독 URL = 링크 알약 */
   if(/^(-{3,}|―{3,})$/.test(raw0)) return '<hr>';                     /* 구분선 5종(phase266) */
   if(/^={3,}$/.test(raw0)) return '<hr class="hr-b">';
   if(/^\.{3,}$/.test(raw0)) return '<hr class="hr-dot">';
@@ -3615,6 +3619,22 @@ function lineMark(mk, taId){                                   // 문단 앞 마
   const ta=$(taId||'#w-body'); if(!ta) return;
   const st0=ta.scrollTop, v=ta.value;
   let s=ta.selectionStart;
+  const e=ta.selectionEnd;
+  if(e>s && v.slice(s,e).includes('\n\n')){                    // 여러 문단 선택 = 일괄 적용(phase269)
+    const starts=[];
+    let p=v.lastIndexOf('\n\n', Math.max(0,s-1)); starts.push(p<0?0:p+2);
+    let i=v.indexOf('\n\n', starts[0]);
+    while(i>=0 && i<e){ const nx=i+2; if(v.slice(nx,nx+1)!=='') starts.push(nx); i=v.indexOf('\n\n', nx); }
+    let nv=v;
+    for(let k=starts.length-1;k>=0;k--){                         // 뒤에서부터(오프셋 보존)
+      const at=starts[k];
+      const cur=nv.slice(at).match(/^@([crji])\s/);
+      if(cur) nv=nv.slice(0,at)+nv.slice(at+cur[0].length);
+      if(!mk.includes('\u0000')) nv=nv.slice(0,at)+mk+nv.slice(at);
+    }
+    ta.value=nv; ta.focus(); ta.scrollTop=st0;
+    return;
+  }
   const ps=v.lastIndexOf('\n\n', Math.max(0,s-1));
   const at=ps<0?0:ps+2;                                        // 커서가 속한 문단의 시작
   const cur=v.slice(at).match(/^@([crji])\s/);
@@ -3697,6 +3717,16 @@ document.addEventListener('pointerdown',e=>{                    // 바깥 클릭
   if(!e.target.closest('.fmt-wrap')) document.querySelectorAll('.fmt-wrap.open').forEach(x=>x.classList.remove('open'));
 });
 bindFmtBar('#w-fmt');
+(()=>{                                                          // 👁 실시간 미리보기(phase269)
+  const btn=$('#w-prevtoggle'), box=$('#w-prev'), ta=$('#w-body');
+  if(!btn||!box||!ta) return;
+  let on=false, tm=null;
+  const paint=()=>{ box.innerHTML = $('#w-html').checked
+      ? '<p class="pl-empty">HTML 모드는 미리보기를 지원하지 않아요 — 발행 후 확인해 주세요.</p>'
+      : bodyHTML(ta.value||''); };
+  btn.onclick=()=>{ on=!on; box.classList.toggle('hidden',!on); btn.classList.toggle('on',on); if(on) paint(); };
+  ta.addEventListener('input',()=>{ if(!on) return; clearTimeout(tm); tm=setTimeout(paint,250); });
+})();
 bindFmtBar('#mm-fmt','#mm-body');
 let wImgs=[];
 function insertWTag(n){

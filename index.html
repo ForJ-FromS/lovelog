@@ -913,19 +913,25 @@
   body:has(#view-gate:not(.hidden)) .luv-pet,
   body:has(#view-gate:not(.hidden)) #wfl-layer,
   body:has(#view-gate:not(.hidden)) #ph-dock{display:none !important}
-  #pv-body p.al-c{text-align:center}
-  #pv-body p.al-r{text-align:right}
-  #pv-body p.al-j{text-align:justify}
-  #pv-body p.ind{padding-left:1.5em}
-  #pv-body hr{border:0;border-top:1px solid var(--line);margin:18px 8%}
-  #pv-body hr.hr-b{border-top:3px solid color-mix(in srgb, var(--ink) 55%, var(--line));margin:20px 22%}
-  #pv-body hr.hr-dot{border-top:2px dotted var(--muted)}
-  #pv-body hr.hr-zz{border:0;height:6px;margin:20px 26%;opacity:.8;background:
+  .yt-wrap{aspect-ratio:16/9;border-radius:10px;overflow:hidden;margin:10px 0}
+  .yt-wrap iframe{width:100%;height:100%;border:0;display:block}
+  .ext-link{display:inline-block;padding:7px 14px;border:1px solid var(--line);border-radius:999px;
+    font-size:12.5px;text-decoration:none;color:var(--pri)}
+  .ext-link:hover{border-color:var(--pri)}
+  #w-prevtoggle.on{color:var(--pri);border-color:var(--pri)}
+  #pv-body p.al-c, #w-prev p.al-c{text-align:center}
+  #pv-body p.al-r, #w-prev p.al-r{text-align:right}
+  #pv-body p.al-j, #w-prev p.al-j{text-align:justify}
+  #pv-body p.ind, #w-prev p.ind{padding-left:1.5em}
+  #pv-body hr, #w-prev hr{border:0;border-top:1px solid var(--line);margin:18px 8%}
+  #pv-body hr.hr-b, #w-prev hr.hr-b{border-top:3px solid color-mix(in srgb, var(--ink) 55%, var(--line));margin:20px 22%}
+  #pv-body hr.hr-dot, #w-prev hr.hr-dot{border-top:2px dotted var(--muted)}
+  #pv-body hr.hr-zz, #w-prev hr.hr-zz{border:0;height:6px;margin:20px 26%;opacity:.8;background:
     repeating-linear-gradient(45deg, transparent 0 4px, var(--muted) 4px 5.6px)}
-  #pv-body hr.hr-dia{border:0;text-align:center;margin:16px 0;height:auto}
-  #pv-body hr.hr-dia::after{content:'◆ ◆ ◆';font-size:9px;color:var(--pri);letter-spacing:6px}
-  #pv-body ul,#pv-body ol{margin:0 0 1em;padding-left:1.6em;line-height:1.95}
-  #pv-body li{margin:2px 0}
+  #pv-body hr.hr-dia, #w-prev hr.hr-dia{border:0;text-align:center;margin:16px 0;height:auto}
+  #pv-body hr.hr-dia::after, #w-prev hr.hr-dia::after{content:'◆ ◆ ◆';font-size:9px;color:var(--pri);letter-spacing:6px}
+  #pv-body ul,#pv-body ol, #w-prev ol{margin:0 0 1em;padding-left:1.6em;line-height:1.95}
+  #pv-body li, #w-prev li{margin:2px 0}
   .fmt-wrap{position:relative;display:inline-flex}
   .fmt-pop{position:absolute;top:110%;left:0;z-index:60;display:none;flex-direction:column;gap:3px;
     background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:6px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
@@ -1725,8 +1731,10 @@
       </select>
       <input type="color" data-fmtco title="글자 색" value="#e691a9" style="width:30px;height:26px;padding:1px;margin:0">
       <span class="note" style="align-self:center;margin-left:4px">글자를 드래그로 고르고 누르세요</span>
+      <button type="button" id="w-prevtoggle" title="쓰면서 결과를 바로 봐요">👁 미리보기</button>
     </div>
     <textarea id="w-body" placeholder="본문 — **굵게** *기울임* __밑줄__ ~~취소선~~ ==형광== 도 돼요"></textarea>
+    <div id="w-prev" class="post hidden" style="border:1px dashed var(--line);border-radius:10px;padding:12px 14px;margin:6px 0;max-height:300px;overflow:auto"></div>
     <div class="p-row">
       <label class="filelab">🖼 본문에 이미지 넣기 <input type="file" id="w-img" accept="image/*"></label>
       <span class="note" id="w-img-note">첨부하면 커서 위치에 [사진N]이 자동으로 들어가요. 아래 사진을 누르면 원하는 자리에 또 넣을 수 있어요.</span>
@@ -2191,6 +2199,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=268"></script>
+<script type="module" src="./app.js?v=269"></script>
 </body>
 </html>
