@@ -746,6 +746,7 @@
   body.reading #wfl-layer{display:none}
   @media(max-width:960px){#wfl-layer{display:none}}         /* 폰·태블릿은 원래 자리(컬럼)로 복귀 */
   @media(max-width:720px){body.stk-hide-m #stk-layer{display:none}}
+  body.stk-home.in-board #stk-layer{display:none}   /* 스티커 홈 전용(phase284) — in-board 판정은 위젯 '홈에서만'과 동일 */
   #stk-layer{transition:opacity .35s}
   body.in-post #stk-layer{opacity:0;pointer-events:none}  /* 글 읽는 동안은 스티커 숨김 */
   .w-text .tx-x{margin:0;font-size:12.5px;line-height:1.85;color:var(--body)}
@@ -2126,6 +2127,7 @@
     <div class="p-row chks">
       <label class="chk"><input type="checkbox" id="s-stkoff" checked> 스티커 표시</label>
       <label class="chk"><input type="checkbox" id="s-stkm"> 모바일에서 스티커 숨기기</label>
+      <label class="chk"><input type="checkbox" id="s-stkhome"> 홈 화면에서만 스티커 보이기 — 카테고리·글 목록에선 숨겨져요</label>
     </div>
     <div class="p-row" style="align-items:center">
       <span style="font-size:12px;color:var(--muted)">위젯 제목 기호</span>
@@ -2239,6 +2241,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=289"></script>
+<script type="module" src="./app.js?v=290"></script>
 </body>
 </html>

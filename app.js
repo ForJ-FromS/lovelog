@@ -349,6 +349,8 @@ function renderStkList(){
       ? '<p class="note" style="color:hsl(42 70% 65%)">⚠ 지금 <b>스티커 표시</b>가 꺼져 있어 홈에 하나도 안 보여요 — 테마·레이아웃 탭에서 켜세요.</p>'
     : st.page.stkHideM
       ? '<p class="note" style="color:hsl(42 70% 65%)">⚠ <b>모바일에서 스티커 숨기기</b>가 켜져 있어요 — 폰에서는 안 보여요.</p>'
+    : st.page.stkHome
+      ? '<p class="note">🏠 <b>홈 화면에서만 스티커 보이기</b>가 켜져 있어요 — 카테고리·글 목록에선 숨겨집니다.</p>'
     : '';
   box.innerHTML = warn + (arr.length?
     `<p class="note" style="margin:0 0 4px">겹칠 때는 <b>목록 위쪽 스티커가 위에</b> 보여요 — ▲▼로 순서를 바꿔요.</p>`
@@ -543,6 +545,7 @@ async function enterPage(){
   if(bgmPlaying() && bgmHandle!==st.handle) bgmStop();
   document.body.classList.toggle('no-dots', p.dots===false);
   document.body.classList.toggle('stk-hide-m', !!p.stkHideM);
+  document.body.classList.toggle('stk-home', !!p.stkHome);   // 스티커 홈 전용(phase284)
   document.documentElement.style.setProperty('--lbIcon',
     p.labelIcon===undefined ? '"◈ "' : (p.labelIcon ? JSON.stringify(p.labelIcon+' ') : '""'));
   const fk=FONTS[p.font]?p.font:'sans';
@@ -4742,7 +4745,7 @@ function fillSettings(){
   $('#s-homestyle').value=homeStyle();
   $('#s-theme').value=p.theme||'default';
   renderStkList();
-  $('#s-dim').value=p.bgDim??78; $('#s-dots').checked=p.dots!==false; $('#s-protect').checked=p.protectImg!==false; $('#s-stkm').checked=!!p.stkHideM; $('#s-stkoff').checked=p.stkOff!==true; $('#s-fx').value=p.fx ?? (p.sparkle?'sparkle':''); $('#s-fxc').value=p.fxC||'#ffb3c8'; fxCVal=null; $('#s-postpage').checked=!!p.postPage;
+  $('#s-dim').value=p.bgDim??78; $('#s-dots').checked=p.dots!==false; $('#s-protect').checked=p.protectImg!==false; $('#s-stkm').checked=!!p.stkHideM; $('#s-stkhome').checked=!!p.stkHome; $('#s-stkoff').checked=p.stkOff!==true; $('#s-fx').value=p.fx ?? (p.sparkle?'sparkle':''); $('#s-fxc').value=p.fxC||'#ffb3c8'; fxCVal=null; $('#s-postpage').checked=!!p.postPage;
   $('#s-gatebtn').value=p.gateBtn||''; $('#s-listed').checked=!!p.listed; cardNew=null; bnrNew=null; renderCard(); renderBnr(); $('#s-lbicon').value=p.labelIcon??'◈'; gateColVal=null;
   $('#s-gatecolor').value=p.gateColor||'#ffffff';
   $('#del-h').textContent=st.handle||'—'; $('#s-del-confirm').value=''; delMsg('');
@@ -4840,6 +4843,7 @@ async function saveSettings(){
       dots: $('#s-dots').checked,
       protectImg: $('#s-protect').checked,
       stkHideM: $('#s-stkm').checked,
+      stkHome: $('#s-stkhome').checked,
       stkOff: !$('#s-stkoff').checked,
       fx: $('#s-fx').value,
       fxC: fxCVal ?? st.page.fxC ?? '',
@@ -4888,7 +4892,7 @@ const RESET={
     bgImg:'',bgRef:'',bgDim:78,titleColor:'',font:'sans',customCss:'',curImg:'',
     sparkle:false,fx:'',fxC:'',labelIcon:'◈',postPage:false,priColor:''},
   widget:{side:[],ddays:[],bgm:{url:'',title:''}},
-  sticker:{stickers:[],stkOff:false,stkHideM:false},
+  sticker:{stickers:[],stkOff:false,stkHideM:false,stkHome:false},
   layout:{homeStyle:'grid',headMode:'wide',headH:380,headFit:'cover',headGrad:'dark',headText:true,sidePos:'right',catStyle:'bar',catShape:'list',
     galOn:true,stripOn:true},
   media:{heroImgs:[],heroImg:'',enterImg:'',enterRef:'',enterText:'',
