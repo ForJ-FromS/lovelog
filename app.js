@@ -209,7 +209,16 @@ const inlineFmt=s=>s
   .replace(/\{\{(\d{2}):([^}]+)\}\}/g,(m,n,x)=>{ n=Math.min(44,Math.max(10,+n));   /* {{18:크게}} 글자 크기(phase265) */
     return `<span style="font-size:${n}px">${x}</span>`; })
   .replace(/\{\{(#(?:[0-9a-fA-F]{3}){1,2}):([^}]+)\}\}/g,'<span style="color:$1">$2</span>');   /* {{#f00:빨강}} */
-const bodyHTML=t=>t.split(/\n{2,}/).map(p=>{
+const spanFix=t=>{                                             // 문단 넘는 **·__·~~·== 쌍 재분배(phase269d)
+  [['\\*\\*','**'],['__','__'],['~~','~~'],['==','==']].forEach(([re,mk])=>{
+    t=t.replace(new RegExp(re+'([\\s\\S]*?)'+re,'g'), (m,inner)=>
+      inner.includes('\n\n')
+        ? inner.split(/\n{2,}/).map(seg=>seg.trim()?mk+seg+mk:seg).join('\n\n')
+        : m);
+  });
+  return t;
+};
+const bodyHTML=t=>spanFix(t).split(/\n{2,}/).map(p=>{
   const raw0=p.trim();
   const yt=raw0.match(/^https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?\S*v=|youtu\.be\/)([\w-]{11})\S*$/);
   if(yt) return `<div class="yt-wrap"><iframe src="https://www.youtube.com/embed/${yt[1]}" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`;   /* 유튜브 단독 줄 = 재생 카드(phase269) */
@@ -226,9 +235,9 @@ const bodyHTML=t=>t.split(/\n{2,}/).map(p=>{
   if(lines.length && lines.every(l=>/^[-•]\s/.test(l)))               /* 전 줄이 - 또는 • 면 점 목록 */
     return '<ul>'+lines.map(l=>'<li>'+inlineFmt(esc(l.replace(/^[-•]\s/,'')))+'</li>').join('')+'</ul>';
   let cls='', body=p;
-  const m=body.match(/^@([crji])\s/);
-  if(m){ cls={c:' class="al-c"',r:' class="al-r"',j:' class="al-j"',i:' class="ind"'}[m[1]];
-    body=body.slice(m[0].length); }                                    /* @c 가운데 @r 오른쪽 @j 양쪽 @i 들여쓰기 */
+  const m=body.match(/^((?:\*\*|__|~~|==)*)@([crji])\s/);
+  if(m){ cls={c:' class="al-c"',r:' class="al-r"',j:' class="al-j"',i:' class="ind"'}[m[2]];
+    body=m[1]+body.slice(m[0].length); }                       /* **@c 글** 도 인식(phase269d) */                                    /* @c 가운데 @r 오른쪽 @j 양쪽 @i 들여쓰기 */
   return `<p${cls||''}>`+inlineFmt(esc(body)).replace(/\n/g,'<br>')+'</p>';
 }).join('');
 const htmlToText=h=>String(h||'')
@@ -3726,18 +3735,21 @@ bindFmtBar('#w-fmt');
       ? '<p class="pl-empty">HTML 모드는 미리보기를 지원하지 않아요 — 발행 후 확인해 주세요.</p>'
       : bodyHTML(ta.value||'') || '<p class="pl-empty">아직 쓴 내용이 없어요.</p>';
     const ov=document.createElement('div');
-    ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:400;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px);padding:20px';
-    ov.innerHTML=`<div style="background:var(--bg);border:1px solid var(--line);border-radius:14px;width:min(1120px,95vw);max-height:88vh;display:flex;flex-direction:column;box-shadow:0 18px 50px rgba(0,0,0,.4)">
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid var(--line)">
-        <b style="font-size:13px">미리보기</b>
-        <button class="rmv" id="wpv-x" style="font-size:11px">닫기</button>
+    ov.style.cssText='position:fixed;inset:0;background:var(--bg);z-index:400;overflow:auto';
+    ov.innerHTML=`
+      <div style="position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;padding:12px 22px;background:var(--bg);border-bottom:1px solid var(--line)">
+        <b style="font-size:13px;color:var(--muted);letter-spacing:.08em">미리보기</b>
+        <button class="rmv" id="wpv-x" style="font-size:11px">닫기 ✕</button>
       </div>
-      <div id="w-prev" class="post" style="padding:16px 20px;overflow:auto"></div>
-    </div>`;
+      <article style="max-width:1000px;margin:0 auto;padding:34px 26px 80px">
+        <h1 style="font-size:24px;margin:0 0 22px">${esc($('#w-title').value||'(제목 없음)')}</h1>
+        <div id="w-prev" class="post" style="font-size:14.5px;line-height:2"></div>
+      </article>`;
     document.body.appendChild(ov);
     ov.querySelector('#w-prev').innerHTML=html;
-    const close=()=>ov.remove();
-    ov.onclick=e=>{ if(e.target===ov) close(); };
+    const close=()=>{ ov.remove(); document.removeEventListener('keydown',esc1); };
+    const esc1=e=>{ if(e.key==='Escape') close(); };
+    document.addEventListener('keydown',esc1);
     ov.querySelector('#wpv-x').onclick=close;
   };
 })();
