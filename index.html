@@ -238,6 +238,7 @@
   body.light .mini-rows a{border-bottom-color:hsl(var(--h) calc(25% * var(--sf,1)) 88%)}
   @media(max-width:720px){.cols{grid-template-columns:1fr!important}  /* 사이드 왼쪽·블로그형도 모바일 1열 강제 */
     body.in-board .side{display:none}  /* 모바일 게시판 = 읽기 모드: 홈 위젯 전부 숨김(phase195) */
+    body.in-board #gb-form{display:block}  /* 방명록 작성 폼은 .side 옷만 빌린 것 — 숨김 제외(phase270) */
     body.in-board #ph-dock{display:none}}
 
   .sec-head{display:flex;justify-content:space-between;align-items:baseline;
@@ -2199,6 +2200,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=273"></script>
+<script type="module" src="./app.js?v=274"></script>
 </body>
 </html>
