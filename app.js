@@ -1258,10 +1258,13 @@ function renderSide(){
       box.appendChild(d); return;
     }
     if(w.t==='bgm'){
-      const trks=(w.tracks||[]).filter(t=>t&&String(t.url||'').trim());                    // 곡 목록(phase274)
+      /* 대표곡(홈 공용) + 곡 목록을 한 줄로 — 대표곡이 1번(phase276) */
+      const trks=[];
+      if(String(p.bgm?.url||'').trim()) trks.push({url:p.bgm.url, title:p.bgm.title||''});
+      if(String(w.url||'').trim()) trks.push({url:w.url, title:w.title||''});               // 구 위젯 전용 값 호환
+      (w.tracks||[]).forEach(t=>{ if(t&&String(t.url||'').trim()) trks.push(t); });
       const tcur=trks.length?Math.min(bgmTrk[wi]||0, trks.length-1):0;
-      const bsrc = trks.length ? {url:trks[tcur].url, title:trks[tcur].title||''}
-        : (w.url && w.url.trim()) ? {url:w.url, title:w.title||''} : (p.bgm||{});           // 목록 > 위젯 전용 > 홈 공용
+      const bsrc = trks.length ? {url:trks[tcur].url, title:trks[tcur].title||''} : {};
       const vid=ytId(bsrc.url), list=ytList(bsrc.url);
       if(!vid && !list){
         if(st.mine){ d.innerHTML=`<p class="label">BGM</p><p style="font-size:11px;color:var(--muted)">✦ 꾸미기 → 위젯 → BGM ✎에 유튜브 영상/플레이리스트 링크를 넣으세요</p>`; box.appendChild(d); }
@@ -1317,13 +1320,24 @@ function renderSide(){
             <span class="bgm-btn2">▶</span>
           </div><div class="bgm-fr"></div>`;
       }
-      const srcOf=u=>{ const v=ytId(u), l=ytList(u);
-        return l ? `https://www.youtube.com/embed/videoseries?list=${l}&autoplay=1`
-                 : `https://www.youtube.com/embed/${v}?autoplay=1&loop=1&playlist=${v}`; };
+      /* 한 곡=반복 / 여러 곡=그 곡부터 이어 재생(phase277) */
+      const srcFrom=si=>{
+        const t0=trks[si]||{};
+        const l0=ytList(t0.url);
+        if(l0) return `https://www.youtube.com/embed/videoseries?list=${l0}&autoplay=1`;   // 재생목록 링크는 유튜브에 위임
+        const ids=trks.map(t=>ytId(t.url)).filter(Boolean);
+        if(ids.length<=1){ const v0=ytId(t0.url)||ids[0];
+          return `https://www.youtube.com/embed/${v0}?autoplay=1&loop=1&playlist=${v0}`; }  // 한 곡 = 반복
+        const myId=ytId(t0.url);
+        const at=Math.max(0, ids.indexOf(myId));
+        const order=[...ids.slice(at), ...ids.slice(0,at)];                                 // 누른 곡부터, 끝나면 처음으로 순환
+        return `https://www.youtube.com/embed/${order[0]}?autoplay=1&loop=1&playlist=${order.join(',')}`;
+      };
+      const srcOf=u=>srcFrom(Math.max(0, trks.findIndex(t=>t.url===u)));
       if(trks.length>1){                                          // 곡 목록 UI(phase274)
         const tl=document.createElement('div'); tl.className='bgm-trk';
         tl.innerHTML=trks.map((t,i)=>{
-          const playing=bgmPlaying()&&bgmCur===srcOf(t.url);
+          const playing=bgmPlaying()&&bgmCur===srcFrom(i);
           return `<button data-tk="${i}" class="${i===tcur?'sel':''}${playing?' pl':''}">
             <span class="n">${playing?'♪':(i+1)}</span><span class="t">${esc(t.title||('트랙 '+(i+1)))}</span></button>`;
         }).join('');
@@ -1331,14 +1345,14 @@ function renderSide(){
         tl.querySelectorAll('[data-tk]').forEach(b2=>b2.onclick=e=>{
           e.stopPropagation();
           const i=+b2.dataset.tk; bgmTrk[wi]=i;
-          const s2=srcOf(trks[i].url);
+          const s2=srcFrom(i);
           if(bgmPlaying()&&bgmCur===s2) bgmStop(); else bgmStart(s2);
           renderSide(); });
       }
       box.appendChild(d);
-      const src = list
-        ? `https://www.youtube.com/embed/videoseries?list=${list}&autoplay=1`
-        : `https://www.youtube.com/embed/${vid}?autoplay=1&loop=1&playlist=${vid}`;
+      const src = trks.length ? srcFrom(tcur)
+        : (list ? `https://www.youtube.com/embed/videoseries?list=${list}&autoplay=1`
+                : `https://www.youtube.com/embed/${vid}?autoplay=1&loop=1&playlist=${vid}`);
       const btn=d.querySelector('.bgm-btn2');
       const on=bgmPlaying()&&bgmCur===src;
       btn.textContent=on?'❚❚':'▶'; d.classList.toggle('playing',on);
@@ -3074,12 +3088,10 @@ function renderWidEdit(){
     <button class="btn" id="we-ddadd" style="font-size:12px">+ 디데이 추가</button>
     <p class="note">첫 번째 디데이는 대문에도 표시돼요. 사진을 넣으면 이미지 카드가 됩니다.</p>`;
   if(w.t==='bgm') html+=`
-    <input id="we-burl" placeholder="유튜브 링크 https://youtu.be/... (영상 또는 플레이리스트)" value="${esc(pdraft.bgm.url)}">
+    <p class="p-h" style="margin-top:0">1번 곡 (대표곡)</p>
+    <input id="we-burl" placeholder="유튜브 링크 https://youtu.be/... (영상 또는 재생목록)" value="${esc(pdraft.bgm.url)}">
     <input id="we-btitle" placeholder="곡 제목 (선택)" value="${esc(pdraft.bgm.title)}">
-    <p class="note" style="margin:-2px 0 6px">위 두 칸은 <b>홈 공용</b>이에요. 이 위젯만 다른 곡을 틀려면 아래에 따로 넣으세요 — BGM 위젯을 여러 개 두고 곡을 각각 지정할 수 있어요.</p>
-    <input id="we-bwurl" placeholder="이 위젯 전용 링크 (비우면 위 공용 곡)" value="${esc(w.url||'')}">
-    <input id="we-bwtitle" placeholder="이 위젯 전용 곡 제목 (선택)" value="${esc(w.title||'')}">
-    <p class="p-h" style="margin-top:12px">🎵 곡 목록 — 이 위젯 하나에 여러 곡 (2곡 이상이면 목록이 나와요)</p>`
+    <p class="p-h" style="margin-top:12px">🎵 2번 곡부터 — 아래에 추가하면 대표곡과 함께 목록으로 나와요</p>`
     + (w.tracks||[]).map((t,i)=>`
       <div class="p-row">
         <input data-bt="${i}" placeholder="곡 제목" value="${esc(t.title||'')}" style="width:132px">
@@ -3539,10 +3551,6 @@ function renderWidEdit(){
   const bgrst=$('#we-bgrst'); if(bgrst) bgrst.onclick=()=>{
     delete w.bg; delete w.tc; delete w.ac; renderWidEdit(); msg('색을 디자인 기본으로 되돌렸어요.'); };
   const bt=$('#we-btitle'); if(bt) bt.addEventListener('input',()=>{ pdraft.bgm.title=bt.value.trim(); });
-  const bwu=$('#we-bwurl'); if(bwu) bwu.addEventListener('input',()=>{ const v=bwu.value.trim();
-    if(v) w.url=v; else delete w.url; });                       // 위젯 전용 곡(phase273)
-  const bwt=$('#we-bwtitle'); if(bwt) bwt.addEventListener('input',()=>{ const v=bwt.value.trim();
-    if(v) w.title=v; else delete w.title; });
   const btadd=$('#we-btadd'); if(btadd) btadd.onclick=()=>{ w.tracks=w.tracks||[];
     w.tracks.push({title:'',url:''}); renderWidEdit(); };                      // 곡 추가(phase274)
   $('#wid-edit').querySelectorAll('[data-bt]').forEach(i=>i.addEventListener('input',()=>{
