@@ -826,7 +826,7 @@ function fillStamps(){
   }
 }
 async function loadStamps(){
-  if(!sideCfg().some(w=>w.t==='stamp')){ console.log('[lovelog] stamps: 위젯 없음, 로드 생략'); return; }
+  if(!sideCfg().some(w=>w.t==='stamp'&&!w.hid)){ console.log('[lovelog] stamps: 위젯 없음, 로드 생략'); return; }
   try{
     const sn=await getDoc(doc(db,'pages',st.handle,'stats','stamps'));
     console.log('[lovelog] stamps 로드:', 'handle='+st.handle, 'exists='+sn.exists(), sn.data());
@@ -857,7 +857,7 @@ async function hitStamp(k,btn){
   }catch(e){ console.warn('[lovelog] 발도장 실패:', e.code||e.message, e); msg('발도장 실패 — '+(e.code||e.message)); }
 }
 async function bumpCounter(){
-  if(!sideCfg().some(w=>w.t==='cnt')) return;
+  if(!sideCfg().some(w=>w.t==='cnt'&&!w.hid)) return;
   const ref=doc(db,'pages',st.handle,'stats','counter');
   const t=today(), key='lvcnt-'+st.handle+'-'+t;
   let c={};
@@ -1189,6 +1189,7 @@ function renderSide(){
   let seq = sideCfg().map((w,wi)=>({w,wi}));
   if(home && isM) seq=seq.sort((A,B)=>mOrd(A.w,A.wi)-mOrd(B.w,B.wi));
   seq.forEach(({w,wi})=>{
+    if(w.hid) return;                                          // 👁 잠시 끈 위젯 — 설정은 그대로 보관(phase272)
     const pos = p.sidePos==='left'?'l' : p.sidePos==='both'?'b' : 'r';
     let box = (home && isM) ? hC
       : home
@@ -2036,7 +2037,7 @@ function renderList(){
   const PER=12;
   renderPager(rest.length, PER);
   const shown=rest.slice(((st.pg||1)-1)*PER, (st.pg||1)*PER);
-  const canFt = st.mine && sideCfg().some(w2=>w2.t==='feat');   // ★ 대표글 위젯을 둔 주인에게만 토글 노출
+  const canFt = st.mine && sideCfg().some(w2=>w2.t==='feat'&&!w2.hid);   // ★ 대표글 위젯을 둔 주인에게만 토글 노출
   const rowHTML=p=>{ const t=postThumb(p); return `
     <li class="row ${t?'has-th':''}" data-id="${p.id}">
       <span class="d">${esc((p.date||'').slice(5))}</span>
@@ -2689,8 +2690,9 @@ function fillWidgets(){
 }
 function renderWidList(){
   $('#wid-list').innerHTML = draft.map((w,i)=>`
-    <div class="wl">
-      <span class="nm">${WNAME[w.t]||w.t}${w.t==='links'?` (${(w.items||[]).length})`:''}${w.t==='banner'?` (${(w.items||[]).length})`:''}${w.float?' <span style="color:var(--pri);font-size:10px">📌 띄움</span>':''}</span>
+    <div class="wl${w.hid?' off':''}">
+      <span class="nm">${WNAME[w.t]||w.t}${w.t==='links'?` (${(w.items||[]).length})`:''}${w.t==='banner'?` (${(w.items||[]).length})`:''}${w.float?' <span style="color:var(--pri);font-size:10px">📌 띄움</span>':''}${w.hid?' <span style="color:var(--muted);font-size:10px">· 꺼둠</span>':''}</span>
+      <button class="wsw${w.hid?'':' on'}" data-h="${i}" title="${w.hid?'홈에 다시 보이기':'홈에서 잠시 끄기 (설정은 그대로 보관돼요)'}">${w.hid?'OFF':'ON'}</button>
       ${w.t!=='latest'?`<button data-f="${i}" title="컬럼에서 떼어 화면에 자유 배치 (PC 전용)"${w.float?' style="color:var(--pri)"':''}>📌</button>`:''}
       ${['profile','quote','links','banner','dday','bgm','notice','chat','phone','img','nb','text','stamp','latest','tl','feat','char','pair','cal','habit'].includes(w.t)?`<button data-e="${i}">✎</button>`:''}
       <button data-u="${i}">↑</button><button data-d="${i}">↓</button><button data-x="${i}">✕</button>
@@ -2700,6 +2702,9 @@ function renderWidList(){
       '<p class="note">📌 띄운 위젯은 넓은 PC 화면에서만 떠 있어요 — 저장 후 홈의 ⠿ 편집 모드에서 드래그로 옮길 수 있고, 폰·좁은 창에서는 원래 자리로 돌아갑니다.</p>');
   $('#wid-list').querySelectorAll('button').forEach(b=>b.onclick=()=>{
     const {e,u,d,x,f}=b.dataset;
+    if(b.dataset.h!==undefined){ const w=draft[+b.dataset.h];
+      if(w.hid) delete w.hid; else w.hid=true;                 // 👁 끄기/켜기(phase272)
+      renderWidList(); return; }
     if(f!==undefined){ const w=draft[+f]; w.float=!w.float;
       if(w.float){ if(w.fx==null) w.fx=62; if(w.fy==null) w.fy=160; }
       renderWidList(); return; }
