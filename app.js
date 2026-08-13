@@ -527,6 +527,7 @@ async function enterPage(){
   document.body.classList.toggle('side-both', p.sidePos==='both');
   document.documentElement.style.setProperty('--dim', (p.bgDim??78)/100);
   document.body.classList.toggle('glass', !!p.glass);
+  document.body.classList.toggle('headclear', !!p.headClear);   // 헤더 배경 투명(phase278)
   if(bgmPlaying() && bgmHandle!==st.handle) bgmStop();
   document.body.classList.toggle('no-dots', p.dots===false);
   document.body.classList.toggle('stk-hide-m', !!p.stkHideM);
@@ -4651,6 +4652,7 @@ function fillSettings(){
   $('#s-mut-title').value=(p.mutualMemo&&p.mutualMemo.title)||''; $('#s-mut-text').value=(p.mutualMemo&&p.mutualMemo.text)||'';
   $('#s-gate').value=''; gateClear=false; renderGateState(); priVal=null; $('#s-pri').value=p.priColor||'#9db4ff'; $('#s-color').value=hslToHex(p.hue??222, p.sat??60, p.lum??62);
   $('#s-headmode').value=p.headMode||'wide'; $('#s-headh').value=p.headH||380; $('#s-headfit').value=p.headFit||'cover';
+  const shc=$('#s-headclear'); if(shc) shc.checked=!!p.headClear;
   $('#s-headgrad').value=p.headGrad||'dark'; $('#s-headtext').checked=p.headText!==false; $('#s-headh-v').textContent=(p.headH||380)+'px';
   $('#s-sidepos').value=p.sidePos||'right';
   hhSliderSync();
@@ -4757,6 +4759,7 @@ async function saveSettings(){
       sat: hexToHsl($('#s-color').value)[1],
       lum: hexToHsl($('#s-color').value)[2],
       headMode: $('#s-headmode').value,
+      headClear: !!$('#s-headclear')?.checked,
       headH: parseInt($('#s-headh').value)||380,
       headFit: $('#s-headfit').value,
       headGrad: $('#s-headgrad').value,
