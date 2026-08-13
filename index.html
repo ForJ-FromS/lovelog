@@ -152,6 +152,7 @@
   #panel.big #p-msg{position:absolute;left:242px;bottom:12px}
   #panel.big .wl{padding:14px 12px;font-size:14.5px;gap:8px}
   #panel.big .wl button{padding:8px 13px;font-size:13px;border-radius:8px}
+  #panel.big .wl .wst{font-size:12.5px;padding:8px 6px;width:104px;border-radius:8px}
   #panel.big #wid-edit .p-h{font-size:14.5px}
   #panel.big .pane input:not([type=file]):not([type=checkbox]):not([type=color]):not([type=range]),
   #panel.big .pane select,#panel.big .pane textarea{font-size:14px;padding:12px 14px}
@@ -945,15 +946,17 @@
   .wl .wsw{font-size:10px;font-weight:700;letter-spacing:.06em;min-width:34px;
     color:var(--muted);border-color:var(--line)}
   .wl .wsw.on{color:var(--pri);border-color:color-mix(in srgb, var(--pri) 55%, transparent)}
-  .wl.off .nm .t{opacity:.45;text-decoration:line-through}   /* 취소선은 이름에만 — 뱃지는 멀쩡히(phase283) */
+  .wl.off .nm .t{opacity:.45;text-decoration:line-through}   /* 취소선은 이름에만(phase283) */
   .wl.off{opacity:.9}
-  .wl .nm{display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0}
-  .wl .wbdg{font-size:9px;padding:1px 7px;border-radius:20px;border:1px solid var(--line);color:var(--muted);flex:none;text-decoration:none}
-  .wl .wbdg.pri{color:var(--pri);border-color:color-mix(in srgb, var(--pri) 45%, transparent)}
+  .wl .nm{display:flex;align-items:center;gap:6px;min-width:0}          /* 줄바꿈 금지 — 긴 이름은 말줄임(283b) */
+  .wl .nm .t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+  .wl .wbdg{font-size:10px;padding:1px 6px;border-radius:20px;border:1px solid var(--line);flex:none;text-decoration:none;
+    color:var(--pri);border-color:color-mix(in srgb, var(--pri) 45%, transparent)}
   .wl .wst{border:1px solid var(--line);background:var(--card2);color:var(--muted);border-radius:6px;
-    font-size:10.5px;padding:3px 4px;cursor:pointer;flex:none;max-width:86px}
+    font-size:11px;padding:4px 4px;cursor:pointer;flex:none;width:88px}   /* '홈에서만'까지 안 잘리는 고정 폭 */
   .wl .wst.st-home{color:var(--pri);border-color:color-mix(in srgb, var(--pri) 45%, transparent)}
   .wl .wst.st-all{color:var(--ink)}
+  .wl .wl-ph{visibility:hidden}  /* ✎ 자리채움(disabled 버튼) — 버튼과 동일 박스로 열·높이 정렬(283b) */
   #w-fmt button, #mm-fmt button{white-space:nowrap}
   #w-prevtoggle.on{color:var(--pri);border-color:var(--pri)}
   #pv-body p.al-c, #w-prev p.al-c{text-align:center}
@@ -2236,6 +2239,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=288"></script>
+<script type="module" src="./app.js?v=289"></script>
 </body>
 </html>

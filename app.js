@@ -2767,14 +2767,14 @@ function renderWidList(){
   const wSt=w=>w.hid?'off':w.home?'home':'all';       // 표시 상태 3태(phase283 — A안 셀렉트 통합)
   $('#wid-list').innerHTML = draft.map((w,i)=>`
     <div class="wl${w.hid?' off':''}">
-      <span class="nm"><span class="t">${WNAME[w.t]||w.t}${w.t==='links'?` (${(w.items||[]).length})`:''}${w.t==='banner'?` (${(w.items||[]).length})`:''}</span>${w.float?'<span class="wbdg pri">📌 띄움</span>':''}${w.home&&!w.hid?'<span class="wbdg pri">🏠 홈만</span>':''}${w.hid?'<span class="wbdg">꺼둠</span>':''}</span>
+      <span class="nm"><span class="t">${WNAME[w.t]||w.t}${w.t==='links'?` (${(w.items||[]).length})`:''}${w.t==='banner'?` (${(w.items||[]).length})`:''}</span>${w.float?'<span class="wbdg pri">📌</span>':''}</span>
       <select class="wst st-${wSt(w)}" data-st="${i}" title="이 위젯을 어디에 보여줄지">
         <option value="all" ${wSt(w)==='all'?'selected':''}>모든 화면</option>
         <option value="home" ${wSt(w)==='home'?'selected':''}>홈에서만</option>
         <option value="off" ${wSt(w)==='off'?'selected':''}>꺼두기</option>
       </select>
       ${w.t!=='latest'?`<button data-f="${i}" title="컬럼에서 떼어 화면에 자유 배치 (PC 전용)"${w.float?' style="color:var(--pri)"':''}>📌</button>`:''}
-      ${['profile','quote','links','banner','dday','bgm','notice','chat','phone','img','nb','text','stamp','latest','tl','feat','char','pair','cal','habit'].includes(w.t)?`<button data-e="${i}">✎</button>`:''}
+      ${['profile','quote','links','banner','dday','bgm','notice','chat','phone','img','nb','text','stamp','latest','tl','feat','char','pair','cal','habit'].includes(w.t)?`<button data-e="${i}">✎</button>`:'<button class="wl-ph" disabled>✎</button>'}
       <button data-u="${i}">↑</button><button data-d="${i}">↓</button><button data-x="${i}">✕</button>
     </div>`).join('') || '<p class="pl-empty">위젯이 없어요 — 아래에서 추가하세요.</p>';
   if(draft.some(w=>w.home&&!w.hid))
