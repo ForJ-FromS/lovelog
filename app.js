@@ -3717,15 +3717,29 @@ document.addEventListener('pointerdown',e=>{                    // 바깥 클릭
   if(!e.target.closest('.fmt-wrap')) document.querySelectorAll('.fmt-wrap.open').forEach(x=>x.classList.remove('open'));
 });
 bindFmtBar('#w-fmt');
-(()=>{                                                          // 👁 실시간 미리보기(phase269)
-  const btn=$('#w-prevtoggle'), box=$('#w-prev'), ta=$('#w-body');
-  if(!btn||!box||!ta) return;
-  let on=false, tm=null;
-  const paint=()=>{ box.innerHTML = $('#w-html').checked
+(()=>{                                                          // 미리보기 팝업(phase269c — 보고 닫고 수정)
+  const btn=$('#w-prevtoggle');
+  if(!btn) return;
+  btn.onclick=()=>{
+    const ta=$('#w-body');
+    const html = $('#w-html').checked
       ? '<p class="pl-empty">HTML 모드는 미리보기를 지원하지 않아요 — 발행 후 확인해 주세요.</p>'
-      : bodyHTML(ta.value||''); };
-  btn.onclick=()=>{ on=!on; box.classList.toggle('hidden',!on); btn.classList.toggle('on',on); if(on) paint(); };
-  ta.addEventListener('input',()=>{ if(!on) return; clearTimeout(tm); tm=setTimeout(paint,250); });
+      : bodyHTML(ta.value||'') || '<p class="pl-empty">아직 쓴 내용이 없어요.</p>';
+    const ov=document.createElement('div');
+    ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:400;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px);padding:20px';
+    ov.innerHTML=`<div style="background:var(--bg);border:1px solid var(--line);border-radius:14px;width:min(720px,94vw);max-height:84vh;display:flex;flex-direction:column;box-shadow:0 18px 50px rgba(0,0,0,.4)">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid var(--line)">
+        <b style="font-size:13px">미리보기</b>
+        <button class="rmv" id="wpv-x" style="font-size:11px">닫기</button>
+      </div>
+      <div id="w-prev" class="post" style="padding:16px 20px;overflow:auto"></div>
+    </div>`;
+    document.body.appendChild(ov);
+    ov.querySelector('#w-prev').innerHTML=html;
+    const close=()=>ov.remove();
+    ov.onclick=e=>{ if(e.target===ov) close(); };
+    ov.querySelector('#wpv-x').onclick=close;
+  };
 })();
 bindFmtBar('#mm-fmt','#mm-body');
 let wImgs=[];
