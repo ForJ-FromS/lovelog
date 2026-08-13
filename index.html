@@ -2124,11 +2124,6 @@
       <input type="color" id="s-fxc" value="#ffb3c8" style="width:38px;padding:0" title="커서 효과 색 — 자유롭게 골라요">
       <button class="rmv" id="s-fxc-x" style="font-size:11px">테마색</button>
     </div>
-    <div class="p-row chks">
-      <label class="chk"><input type="checkbox" id="s-stkoff" checked> 스티커 표시</label>
-      <label class="chk"><input type="checkbox" id="s-stkm"> 모바일에서 스티커 숨기기</label>
-      <label class="chk"><input type="checkbox" id="s-stkhome"> 홈 화면에서만 스티커 보이기 — 카테고리·글 목록에선 숨겨져요</label>
-    </div>
     <div class="p-row" style="align-items:center">
       <span style="font-size:12px;color:var(--muted)">위젯 제목 기호</span>
       <input id="s-lbicon" maxlength="3" placeholder="◈" style="width:70px;text-align:center">
@@ -2214,6 +2209,12 @@
   <div class="pane hidden" data-pane="stk">
     <p class="p-h">스티커 — 홈 위에 자유롭게 붙이는 그림</p>
     <div class="p-row"><label class="filelab">스티커 추가 (투명 PNG·움짤 GIF 가능) <input type="file" id="stk-file" accept="image/*"></label></div>
+    <div class="p-row" style="flex-direction:column;align-items:flex-start;gap:7px;margin:2px 0 8px">
+      <label class="chk"><input type="checkbox" id="s-stkoff" checked> 스티커 표시</label>
+      <label class="chk"><input type="checkbox" id="s-stkm"> 모바일에서 스티커 숨기기</label>
+      <label class="chk"><input type="checkbox" id="s-stkhome"> 홈 화면에서만 스티커 보이기 — 카테고리·글 목록에선 숨겨져요</label>
+    </div>
+    <p class="note" style="margin-top:-4px">위 체크는 바꾸는 즉시 저장돼요.</p>
     <div id="stk-list"></div>
     <p class="note">추가하면 홈 상단에 나타나요 — <b>홈에서 스티커를 드래그해서</b> 원하는 자리에 놓으면 자동 저장됩니다.</p>
     <p class="p-h">🐾 픽셀펫 — 화면 아래를 어슬렁거리는 친구</p>
@@ -2241,6 +2242,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=290"></script>
+<script type="module" src="./app.js?v=291"></script>
 </body>
 </html>

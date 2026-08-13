@@ -341,12 +341,22 @@ function renderStickers(){
     });
   });
 }
+const stkOptSave=async patch=>{                        // 스티커 표시 옵션 즉시 저장(phase284b — 스티커 탭 관례)
+  Object.assign(st.page,patch);
+  try{ await updateDoc(doc(db,'pages',st.handle),patch); }
+  catch(e){ msg('⚠ 설정 저장 실패 — 새로고침하면 되돌아가요. ('+e.message+')'); }
+  renderStkList(); };
+$('#s-stkoff')?.addEventListener('change',e=>{ stkOptSave({stkOff:!e.target.checked}); renderStickers(); });
+$('#s-stkm')?.addEventListener('change',e=>{ stkOptSave({stkHideM:e.target.checked});
+  document.body.classList.toggle('stk-hide-m',e.target.checked); });
+$('#s-stkhome')?.addEventListener('change',e=>{ stkOptSave({stkHome:e.target.checked});
+  document.body.classList.toggle('stk-home',e.target.checked); });
 function renderStkList(){
   const box=$('#stk-list'); if(!box) return;
   const arr=st.page.stickers||[];
   const warn =
     st.page.stkOff===true
-      ? '<p class="note" style="color:hsl(42 70% 65%)">⚠ 지금 <b>스티커 표시</b>가 꺼져 있어 홈에 하나도 안 보여요 — 테마·레이아웃 탭에서 켜세요.</p>'
+      ? '<p class="note" style="color:hsl(42 70% 65%)">⚠ 지금 <b>스티커 표시</b>가 꺼져 있어 홈에 하나도 안 보여요 — 바로 위 체크에서 켜세요.</p>'
     : st.page.stkHideM
       ? '<p class="note" style="color:hsl(42 70% 65%)">⚠ <b>모바일에서 스티커 숨기기</b>가 켜져 있어요 — 폰에서는 안 보여요.</p>'
     : st.page.stkHome
@@ -4842,9 +4852,6 @@ async function saveSettings(){
       bgDim: parseInt($('#s-dim').value)||78,
       dots: $('#s-dots').checked,
       protectImg: $('#s-protect').checked,
-      stkHideM: $('#s-stkm').checked,
-      stkHome: $('#s-stkhome').checked,
-      stkOff: !$('#s-stkoff').checked,
       fx: $('#s-fx').value,
       fxC: fxCVal ?? st.page.fxC ?? '',
       sparkle: $('#s-fx').value==='sparkle',
