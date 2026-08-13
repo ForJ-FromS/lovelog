@@ -1160,6 +1160,7 @@ function bgmStop(){ bgmCur=''; bgmHandle='';
   $('#bgm-dock-fr').innerHTML=''; $('#bgm-dock').classList.add('hidden'); }
 $('#bgm-dock-x').onclick=()=>{ bgmStop(); renderSide(); };
 function renderWidgets(){ renderSide(); }
+const bgmTrk={};                                                 // 위젯별 현재 트랙(세션)(phase274)
 function renderSide(){
   const p=st.page;
   const home = st.cat==='home';
@@ -1257,7 +1258,11 @@ function renderSide(){
       box.appendChild(d); return;
     }
     if(w.t==='bgm'){
-      const vid=ytId(p.bgm?.url), list=ytList(p.bgm?.url);
+      const trks=(w.tracks||[]).filter(t=>t&&String(t.url||'').trim());                    // 곡 목록(phase274)
+      const tcur=trks.length?Math.min(bgmTrk[wi]||0, trks.length-1):0;
+      const bsrc = trks.length ? {url:trks[tcur].url, title:trks[tcur].title||''}
+        : (w.url && w.url.trim()) ? {url:w.url, title:w.title||''} : (p.bgm||{});           // 목록 > 위젯 전용 > 홈 공용
+      const vid=ytId(bsrc.url), list=ytList(bsrc.url);
       if(!vid && !list){
         if(st.mine){ d.innerHTML=`<p class="label">BGM</p><p style="font-size:11px;color:var(--muted)">✦ 꾸미기 → 위젯 → BGM ✎에 유튜브 영상/플레이리스트 링크를 넣으세요</p>`; box.appendChild(d); }
         return;
@@ -1266,7 +1271,7 @@ function renderSide(){
         ? `<img src="https://img.youtube.com/vi/${vid}/hqdefault.jpg" alt="">`
         : `<span class="mus">♪</span>`;
       const bst=w.style||'';                        // ''기본 | cst 카세트 | lp LP | tun 튜너
-      const btit=esc(p.bgm.title|| (list?'플레이리스트':'배경음악'));
+      const btit=esc(bsrc.title|| (list?'플레이리스트':'배경음악'));
       {const lum=hx=>{ try{ const n=parseInt(hx.slice(1),16);
         return (((n>>16)&255)*.299+((n>>8)&255)*.587+(n&255)*.114)/255; }catch(e){ return .2; } };
       const sv=[];
@@ -1311,6 +1316,24 @@ function renderSide(){
               <span class="bgm-eq"><i></i><i></i><i></i><i></i><i></i></span></span>
             <span class="bgm-btn2">▶</span>
           </div><div class="bgm-fr"></div>`;
+      }
+      const srcOf=u=>{ const v=ytId(u), l=ytList(u);
+        return l ? `https://www.youtube.com/embed/videoseries?list=${l}&autoplay=1`
+                 : `https://www.youtube.com/embed/${v}?autoplay=1&loop=1&playlist=${v}`; };
+      if(trks.length>1){                                          // 곡 목록 UI(phase274)
+        const tl=document.createElement('div'); tl.className='bgm-trk';
+        tl.innerHTML=trks.map((t,i)=>{
+          const playing=bgmPlaying()&&bgmCur===srcOf(t.url);
+          return `<button data-tk="${i}" class="${i===tcur?'sel':''}${playing?' pl':''}">
+            <span class="n">${playing?'♪':(i+1)}</span><span class="t">${esc(t.title||('트랙 '+(i+1)))}</span></button>`;
+        }).join('');
+        d.appendChild(tl);
+        tl.querySelectorAll('[data-tk]').forEach(b2=>b2.onclick=e=>{
+          e.stopPropagation();
+          const i=+b2.dataset.tk; bgmTrk[wi]=i;
+          const s2=srcOf(trks[i].url);
+          if(bgmPlaying()&&bgmCur===s2) bgmStop(); else bgmStart(s2);
+          renderSide(); });
       }
       box.appendChild(d);
       const src = list
@@ -2297,7 +2320,15 @@ async function openPost(id, fromHome=false){
   }
   $('#pv-title').textContent=p.title;
   const pvb=$('#pv-body');
-  if(st.cur && st.cur.html){                                    // HTML 글 = 격리 액자 렌더(phase271) — 로그 CSS↔홈 CSS 완전 분리
+  /* 격리 액자는 '화면을 붙잡는' 로그에만 — 그 외 HTML 글은 홈 커스텀 CSS가 닿게 기존 경로(phase275) */
+  const needsFrame = p2=>{
+    if(!/<style/i.test(p2)) return false;
+    return /(^|[{;\s,])(?:html|body)\s*[,{]/i.test(p2)
+        || /(?:height|min-height)\s*:\s*\d+\s*vh/i.test(p2)
+        || /overflow\s*:\s*hidden/i.test(p2)
+        || /position\s*:\s*fixed/i.test(p2);
+  };
+  if(st.cur && st.cur.html && needsFrame(body)){                // HTML 글 격리 액자(phase271→275 조건부)
     pvb.innerHTML='';
     const fr=document.createElement('iframe');
     fr.setAttribute('sandbox','allow-same-origin');             // 스크립트 실행 불가(발행 시 cleanHTML과 이중 안전)
@@ -2305,7 +2336,13 @@ async function openPost(id, fromHome=false){
     pvb.appendChild(fr);
     const doc=fr.contentDocument;
     doc.open();
-    doc.write('<!doctype html><html><head><meta charset="utf-8"><base target="_blank"><style>html,body{margin:0;background:transparent}</style></head><body>'+cleanHTML(body)+'</body></html>');
+    const inheritVars = (()=>{ try{ const cs=getComputedStyle(document.body);
+      return ['--pri','--ink','--muted','--line','--bg','--card','--card2','--body']
+        .map(v=>v+':'+cs.getPropertyValue(v)).join(';'); }catch(e){ return ''; } })();
+    doc.write('<!doctype html><html><head><meta charset="utf-8"><base target="_blank">'
+      +'<style>html,body{margin:0;background:transparent;'+inheritVars+'}</style>'
+      +'<style>'+(st.page.customCss||'')+'</style>'                 // 홈 커스텀 CSS도 액자 안까지(phase275)
+      +'</head><body>'+cleanHTML(body)+'</body></html>');
     doc.close();
     const fit=()=>{ try{ const h=doc.documentElement.scrollHeight;
       if(h>fr.clientHeight) fr.style.height=(h+12)+'px'; }catch(e){} };   // 전체 나열형 로그는 통높이로 확장
@@ -3037,8 +3074,20 @@ function renderWidEdit(){
     <button class="btn" id="we-ddadd" style="font-size:12px">+ 디데이 추가</button>
     <p class="note">첫 번째 디데이는 대문에도 표시돼요. 사진을 넣으면 이미지 카드가 됩니다.</p>`;
   if(w.t==='bgm') html+=`
-    <input id="we-burl" placeholder="유튜브 링크 https://youtu.be/..." value="${esc(pdraft.bgm.url)}">
+    <input id="we-burl" placeholder="유튜브 링크 https://youtu.be/... (영상 또는 플레이리스트)" value="${esc(pdraft.bgm.url)}">
     <input id="we-btitle" placeholder="곡 제목 (선택)" value="${esc(pdraft.bgm.title)}">
+    <p class="note" style="margin:-2px 0 6px">위 두 칸은 <b>홈 공용</b>이에요. 이 위젯만 다른 곡을 틀려면 아래에 따로 넣으세요 — BGM 위젯을 여러 개 두고 곡을 각각 지정할 수 있어요.</p>
+    <input id="we-bwurl" placeholder="이 위젯 전용 링크 (비우면 위 공용 곡)" value="${esc(w.url||'')}">
+    <input id="we-bwtitle" placeholder="이 위젯 전용 곡 제목 (선택)" value="${esc(w.title||'')}">
+    <p class="p-h" style="margin-top:12px">🎵 곡 목록 — 이 위젯 하나에 여러 곡 (2곡 이상이면 목록이 나와요)</p>`
+    + (w.tracks||[]).map((t,i)=>`
+      <div class="p-row">
+        <input data-bt="${i}" placeholder="곡 제목" value="${esc(t.title||'')}" style="width:132px">
+        <input data-bu="${i}" placeholder="유튜브 링크 (영상/플레이리스트)" value="${esc(t.url||'')}">
+        <button class="rmv" data-bx="${i}" style="flex:none;font-size:11px">✕</button>
+      </div>`).join('')
+    + `<button class="btn" id="we-btadd" style="font-size:12px">+ 곡 추가</button>`;
+  if(w.t==='bgm') html+=`
     <div class="p-row" style="align-items:center">
       <select id="we-bgst" style="flex:1">
         <option value="" ${!w.style?'selected':''}>기본 (앨범아트 + 이퀄라이저)</option>
@@ -3490,6 +3539,18 @@ function renderWidEdit(){
   const bgrst=$('#we-bgrst'); if(bgrst) bgrst.onclick=()=>{
     delete w.bg; delete w.tc; delete w.ac; renderWidEdit(); msg('색을 디자인 기본으로 되돌렸어요.'); };
   const bt=$('#we-btitle'); if(bt) bt.addEventListener('input',()=>{ pdraft.bgm.title=bt.value.trim(); });
+  const bwu=$('#we-bwurl'); if(bwu) bwu.addEventListener('input',()=>{ const v=bwu.value.trim();
+    if(v) w.url=v; else delete w.url; });                       // 위젯 전용 곡(phase273)
+  const bwt=$('#we-bwtitle'); if(bwt) bwt.addEventListener('input',()=>{ const v=bwt.value.trim();
+    if(v) w.title=v; else delete w.title; });
+  const btadd=$('#we-btadd'); if(btadd) btadd.onclick=()=>{ w.tracks=w.tracks||[];
+    w.tracks.push({title:'',url:''}); renderWidEdit(); };                      // 곡 추가(phase274)
+  $('#wid-edit').querySelectorAll('[data-bt]').forEach(i=>i.addEventListener('input',()=>{
+    w.tracks[i.dataset.bt].title=i.value; }));
+  $('#wid-edit').querySelectorAll('[data-bu]').forEach(i=>i.addEventListener('input',()=>{
+    w.tracks[i.dataset.bu].url=i.value.trim(); }));
+  $('#wid-edit').querySelectorAll('[data-bx]').forEach(b2=>b2.onclick=()=>{
+    w.tracks.splice(+b2.dataset.bx,1); renderWidEdit(); });
   $('#wid-edit').querySelectorAll('[data-ll]').forEach(i=>i.addEventListener('input',()=>{ w.items[i.dataset.ll].label=i.value; }));
   $('#wid-edit').querySelectorAll('[data-lu]').forEach(i=>i.addEventListener('input',()=>{ w.items[i.dataset.lu].url=i.value.trim(); }));
   $('#wid-edit').querySelectorAll('[data-bu]').forEach(i=>i.addEventListener('input',()=>{ w.items[i.dataset.bu].url=i.value.trim(); }));
@@ -3505,8 +3566,8 @@ function syncWid(w){
 $('#wid-add').onclick=()=>{
   const t=$('#wid-type').value;
   if(t==='latest' && draft.some(w=>w.t==='latest')){ msg('최신글 블록은 하나만 둘 수 있어요.'); return; }
-  if(['search','category','dday','bgm','profile','cnt','pin'].includes(t) && draft.some(w=>w.t===t)){
-    msg('이미 있는 위젯이에요.'); return; }
+  if(['search','category','dday','profile','cnt','pin'].includes(t) && draft.some(w=>w.t===t)){
+    msg('이미 있는 위젯이에요.'); return; }                     // bgm은 복수 허용(phase273 — 위젯별 곡 지정)
   draft.push(['links','banner','nb','tl'].includes(t)?{t,items:[]}
     : t==='char'?{t,p:{items:[]}} : t==='pair'?{t,a:{items:[]},b:{items:[]}}
     : t==='cal'?{t,marks:[]} : t==='habit'?{t,habits:[]} : {t});
