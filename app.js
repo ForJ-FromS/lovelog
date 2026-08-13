@@ -1283,9 +1283,12 @@ function renderSide(){
         if(st.mine){ d.innerHTML=`<p class="label">BGM</p><p style="font-size:11px;color:var(--muted)">✦ 꾸미기 → 위젯 → BGM ✎에 유튜브 영상/플레이리스트 링크를 넣으세요</p>`; box.appendChild(d); }
         return;
       }
-      const cover = vid
-        ? `<img src="https://img.youtube.com/vi/${vid}/hqdefault.jpg" alt="">`
-        : `<span class="mus">♪</span>`;
+      const ccov=(trks[tcur]&&trks[tcur].cov)||w.cov||'';   // 커버 우선순위: 곡별 > 위젯 > 유튜브(phase279/281)
+      const cover = ccov
+        ? `<img src="${ccov}" alt="">`
+        : vid
+          ? `<img src="https://img.youtube.com/vi/${vid}/hqdefault.jpg" alt="">`
+          : `<span class="mus">♪</span>`;
       const bst=w.style||'';                        // ''기본 | cst 카세트 | lp LP | tun 튜너
       const btit=esc(bsrc.title|| (list?'플레이리스트':'배경음악'));
       {const lum=hx=>{ try{ const n=parseInt(hx.slice(1),16);
@@ -1301,7 +1304,7 @@ function renderSide(){
         d.innerHTML=`<p class="label">NOW PLAYING</p>
           <div class="cst-body">
             <span class="cst-scr s1"></span><span class="cst-scr s2"></span><span class="cst-scr s3"></span><span class="cst-scr s4"></span>
-            <div class="cst-lbl"><span>${esc(w.sub||'SIDE A')}</span><b>${btit}</b></div>
+            <div class="cst-lbl${ccov?' has-cv':''}">${ccov?`<img class="bcv" src="${ccov}" alt=""><i class="cst-lt"><span>${esc(w.sub||'SIDE A')}</span><b>${btit}</b></i>`:`<span>${esc(w.sub||'SIDE A')}</span><b>${btit}</b>`}</div>
             <div class="cst-win"><span class="cst-reel"></span><span class="cst-reel rr"></span></div>
             <div class="cst-foot"><span>STEREO · TAPE</span><span class="bgm-btn2">▶</span></div>
           </div><div class="bgm-fr"></div>`;
@@ -1320,6 +1323,7 @@ function renderSide(){
             <div class="tun-band"><i></i></div>
             <div class="tun-nums"><span>88</span><span>90</span><span>92</span><span>96</span><span>102</span><span>108</span></div>
             <div class="tun-row">
+              ${ccov?`<img class="bcv tun-cv" src="${ccov}" alt="">`:''}
               <span class="tun-meta"><b>${btit}</b><span>${esc(w.sub||'FM 88.1 · STEREO')}</span></span>
               <span class="bgm-btn2">▶</span>
             </div>
@@ -3106,7 +3110,13 @@ function renderWidEdit(){
     <button class="btn" id="we-ddadd" style="font-size:12px">+ 디데이 추가</button>
     <p class="note">첫 번째 디데이는 대문에도 표시돼요. 사진을 넣으면 이미지 카드가 됩니다.</p>`;
   if(w.t==='bgm') html+=`
-    <p class="p-h" style="margin-top:0">1번 곡 (대표곡)</p>
+    <div class="p-row" style="align-items:center;margin-bottom:6px">
+      <label class="filelab" style="font-size:11px">🖼 커버 이미지 ${w.cov?'(있음)':''} <input type="file" id="we-bcov" accept="image/*"></label>
+      ${w.cov?`<img src="${w.cov}" style="width:34px;height:34px;object-fit:cover;border-radius:6px;flex:none" alt="">`:''}
+      ${w.cov?`<button class="rmv" id="we-bcovx" style="flex:none;font-size:10px">제거</button>`:''}
+    </div>
+    <p class="note" style="margin-top:-2px">유튜브 썸네일 대신 쓸 앨범아트예요. 곡별 커버(아래 🖼)가 있으면 그 곡에선 그게 우선.</p>
+    <p class="p-h" style="margin-top:8px">1번 곡 (대표곡)</p>
     <input id="we-burl" placeholder="유튜브 링크 https://youtu.be/... (영상 또는 재생목록)" value="${esc(pdraft.bgm.url)}">
     <input id="we-btitle" placeholder="곡 제목 (선택)" value="${esc(pdraft.bgm.title)}">
     <p class="p-h" style="margin-top:12px">🎵 2번 곡부터 — 아래에 추가하면 대표곡과 함께 목록으로 나와요</p>`
@@ -3114,6 +3124,8 @@ function renderWidEdit(){
       <div class="p-row">
         <input data-bt="${i}" placeholder="곡 제목" value="${esc(t.title||'')}" style="width:132px">
         <input data-bu="${i}" placeholder="유튜브 링크 (영상/플레이리스트)" value="${esc(t.url||'')}">
+        <label class="filelab" style="flex:none;font-size:11px" title="이 곡 전용 커버">🖼${t.cov?'✓':''} <input type="file" data-btcv="${i}" accept="image/*"></label>
+        ${t.cov?`<button class="rmv" data-btcx="${i}" style="flex:none;font-size:10px" title="곡 커버 제거">✕🖼</button>`:''}
         <button class="rmv" data-bx="${i}" style="flex:none;font-size:11px">✕</button>
       </div>`).join('')
     + `<button class="btn" id="we-btadd" style="font-size:12px">+ 곡 추가</button>`;
@@ -3571,6 +3583,17 @@ function renderWidEdit(){
   const bt=$('#we-btitle'); if(bt) bt.addEventListener('input',()=>{ pdraft.bgm.title=bt.value.trim(); });
   const btadd=$('#we-btadd'); if(btadd) btadd.onclick=()=>{ w.tracks=w.tracks||[];
     w.tracks.push({title:'',url:''}); renderWidEdit(); };                      // 곡 추가(phase274)
+  const bcov=$('#we-bcov'); if(bcov) bcov.addEventListener('change',async()=>{  // 위젯 커버(phase279/281)
+    const f=bcov.files[0]; if(!f) return;
+    try{ w.cov=await upFile(f,600,.9,60); renderWidEdit(); msg('커버 이미지를 올렸어요.'); }
+    catch(e){ msg('커버 업로드 실패 — '+e.message); } });
+  const bcovx=$('#we-bcovx'); if(bcovx) bcovx.onclick=()=>{ delete w.cov; renderWidEdit(); };
+  $('#wid-edit').querySelectorAll('[data-btcv]').forEach(inp=>inp.addEventListener('change',async()=>{
+    const f=inp.files[0]; if(!f) return;                                       // 곡별 커버(phase279/281)
+    try{ w.tracks[inp.dataset.btcv].cov=await upFile(f,600,.9,60); renderWidEdit(); msg('곡 커버를 올렸어요.'); }
+    catch(e){ msg('커버 업로드 실패 — '+e.message); } }));
+  $('#wid-edit').querySelectorAll('[data-btcx]').forEach(b2=>b2.onclick=()=>{
+    delete w.tracks[b2.dataset.btcx].cov; renderWidEdit(); });
   $('#wid-edit').querySelectorAll('[data-bt]').forEach(i=>i.addEventListener('input',()=>{
     w.tracks[i.dataset.bt].title=i.value; }));
   $('#wid-edit').querySelectorAll('[data-bu]').forEach(i=>i.addEventListener('input',()=>{

@@ -787,6 +787,12 @@
   .cst-lbl{background:#e8e6df;color:#26241f;border-radius:4px;padding:7px 10px 6px;margin-bottom:9px}
   .cst-lbl b{display:block;font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .cst-lbl span{font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.2em;color:#8a8578}
+  /* BGM 직접 커버(phase279/281) — 카세트·튜너 표시용 */
+  .cst-lbl.has-cv{display:flex;align-items:center;gap:8px}
+  .cst-lbl .bcv{width:30px;height:30px;border-radius:4px;object-fit:cover;flex:none;border:1px solid rgba(0,0,0,.12)}
+  .cst-lbl .cst-lt{display:block;min-width:0;font-style:normal}
+  .tun-cv{width:34px;height:34px;border-radius:6px;object-fit:cover;flex:none;border:1px solid var(--line)}
+  .tun-row .tun-cv+.tun-meta{flex:1}
   .cst-win{background:rgba(0,0,0,.5);border:1px solid var(--line);border-radius:6px;height:52px;
     display:flex;align-items:center;justify-content:space-between;padding:0 26px;position:relative;overflow:hidden}
   .cst-win::before{content:'';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
@@ -2223,6 +2229,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=285"></script>
+<script type="module" src="./app.js?v=286"></script>
 </body>
 </html>
