@@ -1202,8 +1202,10 @@ function renderSide(){
   const mOrd=(w,i)=>w.mo ?? (({c:0,l:1,r:2}[w.col||'r']||2)*100+i);
   let seq = sideCfg().map((w,wi)=>({w,wi}));
   if(home && isM) seq=seq.sort((A,B)=>mOrd(A.w,A.wi)-mOrd(B.w,B.wi));
+  const homeView = home || (homeStyle()==='blog' && st.cat==='recent');   // 블로그형은 첫 화면(recent)이 홈(phase282)
   seq.forEach(({w,wi})=>{
     if(w.hid) return;                                          // 👁 잠시 끈 위젯 — 설정은 그대로 보관(phase272)
+    if(w.home && !homeView) return;                            // 🏠 홈에서만 표시 — 카테고리·게시판에선 숨김(phase282)
     const pos = p.sidePos==='left'?'l' : p.sidePos==='both'?'b' : 'r';
     let box = (home && isM) ? hC
       : home
@@ -2762,22 +2764,28 @@ function fillWidgets(){
   editIdx=-1; renderWidList(); $('#wid-edit').innerHTML='';
 }
 function renderWidList(){
+  const wSt=w=>w.hid?'off':w.home?'home':'all';       // 표시 상태 3태(phase283 — A안 셀렉트 통합)
   $('#wid-list').innerHTML = draft.map((w,i)=>`
     <div class="wl${w.hid?' off':''}">
-      <span class="nm">${WNAME[w.t]||w.t}${w.t==='links'?` (${(w.items||[]).length})`:''}${w.t==='banner'?` (${(w.items||[]).length})`:''}${w.float?' <span style="color:var(--pri);font-size:10px">📌 띄움</span>':''}${w.hid?' <span style="color:var(--muted);font-size:10px">· 꺼둠</span>':''}</span>
-      <button class="wsw${w.hid?'':' on'}" data-h="${i}" title="${w.hid?'홈에 다시 보이기':'홈에서 잠시 끄기 (설정은 그대로 보관돼요)'}">${w.hid?'OFF':'ON'}</button>
+      <span class="nm"><span class="t">${WNAME[w.t]||w.t}${w.t==='links'?` (${(w.items||[]).length})`:''}${w.t==='banner'?` (${(w.items||[]).length})`:''}</span>${w.float?'<span class="wbdg pri">📌 띄움</span>':''}${w.home&&!w.hid?'<span class="wbdg pri">🏠 홈만</span>':''}${w.hid?'<span class="wbdg">꺼둠</span>':''}</span>
+      <select class="wst st-${wSt(w)}" data-st="${i}" title="이 위젯을 어디에 보여줄지">
+        <option value="all" ${wSt(w)==='all'?'selected':''}>모든 화면</option>
+        <option value="home" ${wSt(w)==='home'?'selected':''}>홈에서만</option>
+        <option value="off" ${wSt(w)==='off'?'selected':''}>꺼두기</option>
+      </select>
       ${w.t!=='latest'?`<button data-f="${i}" title="컬럼에서 떼어 화면에 자유 배치 (PC 전용)"${w.float?' style="color:var(--pri)"':''}>📌</button>`:''}
       ${['profile','quote','links','banner','dday','bgm','notice','chat','phone','img','nb','text','stamp','latest','tl','feat','char','pair','cal','habit'].includes(w.t)?`<button data-e="${i}">✎</button>`:''}
       <button data-u="${i}">↑</button><button data-d="${i}">↓</button><button data-x="${i}">✕</button>
     </div>`).join('') || '<p class="pl-empty">위젯이 없어요 — 아래에서 추가하세요.</p>';
+  if(draft.some(w=>w.home&&!w.hid))
+    $('#wid-list').insertAdjacentHTML('beforeend',
+      '<p class="note">🏠 \'홈에서만\'인 위젯은 카테고리·글 목록으로 이동하면 숨겨졌다가 홈으로 돌아오면 다시 나타납니다. \'꺼두기\'는 설정을 보관한 채 잠시 감춰요.</p>');
   if(draft.some(w=>w.float))
     $('#wid-list').insertAdjacentHTML('beforeend',
       '<p class="note">📌 띄운 위젯은 넓은 PC 화면에서만 떠 있어요 — 저장 후 홈의 ⠿ 편집 모드에서 드래그로 옮길 수 있고, 폰·좁은 창에서는 원래 자리로 돌아갑니다.</p>');
   $('#wid-list').querySelectorAll('button').forEach(b=>b.onclick=()=>{
     const {e,u,d,x,f}=b.dataset;
-    if(b.dataset.h!==undefined){ const w=draft[+b.dataset.h];
-      if(w.hid) delete w.hid; else w.hid=true;                 // 👁 끄기/켜기(phase272)
-      renderWidList(); return; }
+
     if(f!==undefined){ const w=draft[+f]; w.float=!w.float;
       if(w.float){ if(w.fx==null) w.fx=62; if(w.fy==null) w.fy=160; }
       renderWidList(); return; }
@@ -2785,6 +2793,13 @@ function renderWidList(){
     if(u!==undefined && +u>0){ const i=+u; [draft[i-1],draft[i]]=[draft[i],draft[i-1]]; }
     if(d!==undefined && +d<draft.length-1){ const i=+d; [draft[i+1],draft[i]]=[draft[i],draft[i+1]]; }
     if(x!==undefined){ draft.splice(+x,1); editIdx=-1; $('#wid-edit').innerHTML=''; }
+    renderWidList();
+  });
+  $('#wid-list').querySelectorAll('[data-st]').forEach(sl=>sl.onchange=()=>{
+    const w=draft[+sl.dataset.st], v=sl.value;                 // 표시 셀렉트(phase283): 배타 3태
+    delete w.hid; delete w.home;                               //  — 저장 필드는 기존 hid/home 그대로(렌더 필터 호환)
+    if(v==='home') w.home=true;
+    if(v==='off') w.hid=true;
     renderWidList();
   });
 }
