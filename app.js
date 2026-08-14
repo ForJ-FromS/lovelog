@@ -208,7 +208,8 @@ const inlineFmt=s=>s
   .replace(/==([^=]+)==/g,'<mark>$1</mark>')
   .replace(/\{\{(\d{2}):([^}]+)\}\}/g,(m,n,x)=>{ n=Math.min(44,Math.max(10,+n));   /* {{18:크게}} 글자 크기(phase265) */
     return `<span style="font-size:${n}px">${x}</span>`; })
-  .replace(/\{\{(#(?:[0-9a-fA-F]{3}){1,2}):([^}]+)\}\}/g,'<span style="color:$1">$2</span>');   /* {{#f00:빨강}} */
+  .replace(/\{\{(#(?:[0-9a-fA-F]{3}){1,2}):([^}]+)\}\}/g,'<span style="color:$1">$2</span>')   /* {{#f00:빨강}} */
+  .replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)/g,'<a class="ext-link" href="$2" target="_blank" rel="noopener">$1</a>');   /* [글자](주소) 링크(phase286) */
 const spanFix=t=>{                                             // 문단 넘는 **·__·~~·== 쌍 재분배(phase269d)
   [['\\*\\*','**'],['__','__'],['~~','~~'],['==','==']].forEach(([re,mk])=>{
     t=t.replace(new RegExp(re+'([\\s\\S]*?)'+re,'g'), (m,inner)=>
@@ -218,7 +219,7 @@ const spanFix=t=>{                                             // 문단 넘는 
   });
   return t;
 };
-const bodyHTML=t=>spanFix(t).split(/\n{2,}/).map(p=>{
+const bodyCore=t=>t.split(/\n{2,}/).map(p=>{
   const raw0=p.trim();
   const yt=raw0.match(/^https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?\S*v=|youtu\.be\/)([\w-]{11})\S*$/);
   if(yt) return `<div class="yt-wrap"><iframe src="https://www.youtube.com/embed/${yt[1]}" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`;   /* 유튜브 단독 줄 = 재생 카드(phase269) */
@@ -234,12 +235,26 @@ const bodyHTML=t=>spanFix(t).split(/\n{2,}/).map(p=>{
     return '<ol>'+lines.map(l=>'<li>'+inlineFmt(esc(l.replace(/^\d+[.)]\s/,'')))+'</li>').join('')+'</ol>';
   if(lines.length && lines.every(l=>/^[-•]\s/.test(l)))               /* 전 줄이 - 또는 • 면 점 목록 */
     return '<ul>'+lines.map(l=>'<li>'+inlineFmt(esc(l.replace(/^[-•]\s/,'')))+'</li>').join('')+'</ul>';
+  if(lines.length && lines.every(l=>/^>\s?/.test(l)))                 /* 전 줄이 > 면 인용 상자(phase286) */
+    return '<blockquote>'+lines.map(l=>inlineFmt(esc(l.replace(/^>\s?/,'')))).join('<br>')+'</blockquote>';
   let cls='', body=p;
   const m=body.match(/^((?:\*\*|__|~~|==)*)@([crji])\s/);
   if(m){ cls={c:' class="al-c"',r:' class="al-r"',j:' class="al-j"',i:' class="ind"'}[m[2]];
     body=m[1]+body.slice(m[0].length); }                       /* **@c 글** 도 인식(phase269d) */                                    /* @c 가운데 @r 오른쪽 @j 양쪽 @i 들여쓰기 */
   return `<p${cls||''}>`+inlineFmt(esc(body)).replace(/\n/g,'<br>')+'</p>';
 }).join('');
+/* [접기:제목] ~ [/접기] — 눌러서 펼치는 접은 글(phase285). 문단 분해 전에 블록을 뽑아 재귀 처리 */
+const bodyHTML=t=>{
+  t=spanFix(t);
+  const folds=[];
+  t=t.replace(/^\[접기(?::([^\]\n]*))?\]\s*\n([\s\S]*?)\n?\[\/접기\]\s*$/gm,(m,tt,inner)=>{
+    folds.push({tt:(tt||'').trim(),inner}); return '\n\n\u0001FOLD'+(folds.length-1)+'\u0001\n\n'; });
+  let html=bodyCore(t);
+  html=html.replace(/<p[^>]*>\u0001FOLD(\d+)\u0001<\/p>|\u0001FOLD(\d+)\u0001/g,(m,a,b)=>{
+    const f=folds[+(a??b)];
+    return `<details class="fold"><summary>${inlineFmt(esc(f.tt||'펼쳐 보기'))}</summary><div class="fold-in">${bodyCore(f.inner)}</div></details>`; });
+  return html;
+};
 const htmlToText=h=>String(h||'')
   .replace(/<br\s*\/?>/gi,'\n')
   .replace(/<\/p>\s*<p[^>]*>/gi,'\n\n')
@@ -3860,6 +3875,31 @@ function bindFmtBar(barSel, taId){
       else if(f==='ar') lineMark('@r ',taId);
       else if(f==='aj') lineMark('@j ',taId);
       else if(f==='ai') lineMark('@i ',taId);
+      else if(f==='quote'){                                          // 인용 상자 토글(phase286)
+        const ta=$(taId||'#w-body'); if(!ta) return;
+        const st0=ta.scrollTop, v=ta.value, s2=ta.selectionStart;
+        const ps=v.lastIndexOf('\n\n', Math.max(0,s2-1)); const at=ps<0?0:ps+2;
+        let pe=v.indexOf('\n\n', at); if(pe<0) pe=v.length;
+        const seg=v.slice(at,pe), lns=seg.split('\n');
+        const on=lns.every(l=>/^>\s?/.test(l));
+        const nl=lns.map(l=>on? l.replace(/^>\s?/,'') : '> '+l).join('\n');
+        ta.value=v.slice(0,at)+nl+v.slice(pe); ta.focus(); ta.scrollTop=st0; }
+      else if(f==='link'){                                           // 링크 걸기(phase286)
+        const ta=$(taId||'#w-body'); if(!ta) return;
+        const st0=ta.scrollTop, s2=ta.selectionStart, e2=ta.selectionEnd, v=ta.value;
+        const sel=v.slice(s2,e2)||'글자';
+        const url='https://';
+        ta.value=v.slice(0,s2)+'['+sel+']('+url+')'+v.slice(e2); ta.focus();
+        const up=s2+1+sel.length+2;                                  // 주소 자리에 커서
+        ta.setSelectionRange(up,up+url.length); ta.scrollTop=st0; }
+      else if(f==='fold'){                                           // 접은 글(phase285)
+        const ta=$(taId||'#w-body'); if(!ta) return;
+        const st0=ta.scrollTop, s2=ta.selectionStart, e2=ta.selectionEnd, v=ta.value;
+        const sel=v.slice(s2,e2);
+        const blk='\n\n[접기:제목]\n'+(sel||'접어둘 내용')+'\n[/접기]\n\n';
+        ta.value=v.slice(0,s2)+blk+v.slice(e2); ta.focus();
+        const tp=s2+2+'[접기:'.length;                                 // '제목'을 선택해 바로 고치게
+        ta.setSelectionRange(tp,tp+2); ta.scrollTop=st0; }
       else if(f==='ol') listMark('1. ',taId);
       else if(f==='ul') listMark('- ',taId);
       const w=b.closest('.fmt-wrap'); if(w) w.classList.remove('open');
@@ -4030,7 +4070,12 @@ $('#w-go').onclick=async()=>{
       priv: $('#w-priv').checked,
       feat: $('#w-feat').checked,
       mpin: editPost ? !!(st.posts.find(p2=>p2.id===editPost)?.mpin) : false,
-      excerpt: secret?'':(asHtml?raw.replace(/<[^>]+>/g,' '):raw.replace(/\*\*|__|~~|==|\*/g,'')
+      excerpt: secret?'':(asHtml?raw.replace(/<[^>]+>/g,' '):raw
+        .replace(/^\[접기[^\]\n]*\]\s*\n[\s\S]*?\[\/접기\]\s*$/gm,'')   /* 접은 내용은 발췌에서 제외(phase285) */
+        .replace(/^\[\/?접기[^\]\n]*\]\s*$/gm,'')
+        .replace(/^>\s?/gm,'')
+        .replace(/\[([^\]\n]+)\]\(https?:\/\/[^\s)]+\)/g,'$1')
+        .replace(/\*\*|__|~~|==|\*/g,'')
         .replace(/^@[crji]\s/gm,'').replace(/\{\{[^:}]{1,8}:/g,'').replace(/\}\}/g,'')
         .replace(/^(-{3,}|―{3,}|={3,}|\.{3,}|~{3,}|\*{3,})$/gm,'').replace(/^(\d+[.)]|[-•])\s/gm,'')).replace(/\s+/g,' ').trim().slice(0,70),
       html: asHtml, imgs: wImgs.slice() };
