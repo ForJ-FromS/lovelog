@@ -659,10 +659,11 @@ async function enterPage(){
 async function loadContent(){
   /* 컬렉션별 격리: 예전엔 Promise.all이라 셋 중 하나만 규칙 오류가 나도
      글·갤러리·방명록이 통째로 빈 홈이 됐음(비로그인만 막히는 규칙 실수 때 특히) */
-  const [ps,gs,gb]=await Promise.allSettled([
+  const [ps,gs,gb,ab]=await Promise.allSettled([
     getDocs(query(collection(db,'pages',st.handle,'posts'),orderBy('ts','desc'))),
     getDocs(query(collection(db,'pages',st.handle,'gallery'),orderBy('ts','desc'))),
-    getDocs(query(collection(db,'pages',st.handle,'guest'),orderBy('ts','desc')))
+    getDocs(query(collection(db,'pages',st.handle,'guest'),orderBy('ts','desc'))),
+    getDocs(query(collection(db,'pages',st.handle,'albums'),orderBy('ts','desc')))
   ]);
   const take=(r,name)=>{
     if(r.status==='fulfilled') return r.value.docs.map(d=>({id:d.id,...d.data()}));
@@ -678,6 +679,8 @@ async function loadContent(){
   if(!st.mine) st.posts=st.posts.filter(p=>!p.priv);   // 비공개 글은 주인에게만 존재
   st.gallery=take(gs,'gallery');
   if(!st.mine) st.gallery=st.gallery.filter(g=>!g.priv);   // 비공개 사진은 주인에게만
+  st.albums=take(ab,'albums');
+  if(!st.mine) st.albums=st.albums.filter(a=>!a.priv);     // 비공개 묶음도 주인에게만(phase288)
   st.guest=take(gb,'guest');
 }
 
@@ -732,6 +735,8 @@ function bindFloatDrag(el, wi){
 function cats(){ return st.page.cats||['archive','ooc']; }
 function gcats(){ return st.page.gcats||[]; }
 const isG=c=>gcats().includes(c);
+function acats(){ return st.page.acats||[]; }               // 사진첩(묶음) 카테고리(phase288)
+const isA=c=>acats().includes(c);
 function mcats(){ return st.page.mcats||[]; }
 const isMemo=c=>mcats().includes(c);
 function navSeq(){                                   // 상단 탭 순서(카테고리+갤러리+방명록, phase217)
@@ -1947,6 +1952,7 @@ function updateBoardWrite(){
   if(!ok) return;
   b.onclick=()=>{
     if(isMemo(st.cat)){ openMemoModal(st.cat); return; }   // 🗒 메모형은 팝업 작성(phase216)
+    if(isA(st.cat)){ openAlbumModal(null, st.cat); return; }   // 📚 사진첩은 묶음 팝업(phase288)
     clearWriteForm();
     refreshWriteCats(); refreshGalCats(); openPanel('write');
     if(c==='__gal' || isG(c)){ switchTab('galup'); if(isG(c)) $('#g-cat').value=c; }
@@ -2055,19 +2061,21 @@ function renderList(){
     $('#list-view').classList.add('hidden'); renderGuest(); return; }
   $('#guest-view').classList.add('hidden');
   $('#list-view').classList.remove('hidden');
+  if(st.cat!=='recent' && st.cat!=='home' && isA(st.cat)){ renderAlbumBoard(); return; }   // 📚 사진첩(phase288)
   if(st.cat==='__gal' || (st.cat!=='recent' && st.cat!=='home' && isG(st.cat))){
     $('#v-label').textContent = st.cat==='__gal' ? galNm() : st.cat.toUpperCase();
     $('#pin-slot').innerHTML='';
-    const all = st.cat==='__gal' ? st.gallery : st.gallery.filter(g=>g.cat===st.cat);
+    const inMain = g=>!(st.page.galSplit && g.cat && isG(g.cat));      // 분리 시 사진 카테고리 소속은 메인 제외(phase287)
+    const all = st.cat==='__gal' ? st.gallery.filter(inMain) : st.gallery.filter(g=>g.cat===st.cat);
     const gper = galCols()*5;
     renderPager(all.length, gper);
     const items = all.slice(((st.pg||1)-1)*gper, (st.pg||1)*gper);
-    $('#rows').innerHTML = items.length
+    $('#rows').innerHTML = (items.length
       ? `<div class="gal-grid">`+items.map(g=>
           `<a data-gg="${g.id}"><img src="${g.img}" alt="" draggable="false"${galPos(g)}>${g.priv?'<i class="gpriv">🔏</i>':''}${st.mine?
             `<i class="gdel" data-gx="${g.id}">✕</i><i class="gedit" data-ge="${g.id}" title="제목·카테고리·사진 수정">✎</i><i class="gpin${galPins().includes(g.id)?' on':''}" data-gp="${g.id}" title="대문 갤러리에 고정">★</i>`:''}</a>`).join('')+`</div>`
         +(st.mine?`<p class="note" style="margin-top:10px">★를 누르면 대문(홈) 갤러리에 걸려요 — 카테고리 탭에서 '대문: ★로 고른 사진'을 선택해야 적용돼요.</p>`:'')
-      : '<p class="pl-empty">아직 이미지가 없습니다.</p>';
+      : '<p class="pl-empty">아직 이미지가 없습니다.</p>');
     $('#more-btn').style.display='none';
     document.querySelectorAll('[data-gg]').forEach(el=>el.onclick=e=>{
       if(e.target.dataset.gx){ e.stopPropagation(); delGal(e.target.dataset.gx); return; }
@@ -2270,6 +2278,138 @@ async function delGal(id){
   renderGal(); if(st.cat==='__gal'||isG(st.cat)) renderList(); renderSide();
 }
 $('#gal-more').onclick=()=>goBoard('__gal');
+/* ---------- 📚 사진첩(묶음) — phase288 ---------- */
+const AB_VIEWS={vert:'세로로 쭉 (웹툰식)', sq:'정사각형 그리드', tile:'타일 (2열)', slide:'슬라이드 (한 장씩)'};
+function albumsOf(c){ return (st.albums||[]).filter(a=>a.cat===c); }
+function renderAlbumBoard(){
+  $('#v-label').textContent = st.cat.toUpperCase();
+  $('#pin-slot').innerHTML=''; $('#more-btn').style.display='none'; renderPager(0,1);
+  const list=albumsOf(st.cat);
+  const open=st.albumOpen && list.find(a=>a.id===st.albumOpen);
+  if(open){ renderAlbumView(open); return; }
+  st.abIdx=0;
+  $('#rows').innerHTML =
+    (st.mine?`<p style="margin:0 0 12px"><button class="btn" id="ab-new" style="font-size:12px">＋ 새 묶음</button></p>`:'')+
+    (list.length
+      ? `<div class="ab-cards">`+list.map(a=>
+          `<a class="ab-card" data-ab="${a.id}">
+            <span class="ab-cov">${a.imgs?.[0]?`<img src="${a.imgs[0]}" alt="" draggable="false">`:'<i class="ab-emp">📚</i>'}</span>
+            <span class="ab-tt">${a.priv?'🔏 ':''}${esc(a.title||'(제목 없음)')}</span>
+            <span class="ab-n">${(a.imgs||[]).length}장</span>
+          </a>`).join('')+`</div>`
+      : `<p class="pl-empty">아직 묶음이 없습니다.${st.mine?' ＋ 새 묶음으로 사진 뭉치를 올려보세요.':''}</p>`);
+  const nb=$('#ab-new'); if(nb) nb.onclick=()=>openAlbumModal(null, st.cat);
+  document.querySelectorAll('[data-ab]').forEach(el=>el.onclick=()=>{
+    st.albumOpen=el.dataset.ab; st.abIdx=0; renderAlbumBoard(); window.scrollTo({top:0}); });
+}
+function renderAlbumView(a){
+  const imgs=a.imgs||[];
+  const lb=i=>lbOpen(imgs.map((u,k)=>({id:'ab'+k, img:u})), 'ab'+i);
+  let body='';
+  const v=a.view||'vert';
+  if(v==='slide'){
+    const i=Math.min(st.abIdx||0, Math.max(0,imgs.length-1));
+    body=imgs.length?`
+      <div class="ab-slide">
+        <button class="ab-sbtn" id="ab-sp" ${i<=0?'disabled':''}>‹</button>
+        <img src="${imgs[i]}" data-abi="${i}" alt="" draggable="false">
+        <button class="ab-sbtn" id="ab-sn" ${i>=imgs.length-1?'disabled':''}>›</button>
+      </div><p class="ab-sn2">${i+1} / ${imgs.length}</p>`:'';
+  } else {
+    const cls=v==='sq'?'ab-grid sq':v==='tile'?'ab-grid t2':'ab-vert';
+    body=`<div class="${cls}">`+imgs.map((u,i)=>`<img src="${u}" data-abi="${i}" alt="" draggable="false" loading="lazy">`).join('')+`</div>`;
+  }
+  $('#rows').innerHTML=`
+    <p class="ab-head">
+      <button class="btn" id="ab-back" style="font-size:12px">‹ 목록</button>
+      <b class="ab-vt">${a.priv?'🔏 ':''}${esc(a.title||'(제목 없음)')}</b>
+      <span class="ab-vn">${imgs.length}장</span>
+      ${st.mine?`<button class="rmv" id="ab-edit" style="font-size:11px">✎ 편집</button><button class="rmv" id="ab-del" style="font-size:11px">✕ 삭제</button>`:''}
+    </p>`+(body||'<p class="pl-empty">사진이 없습니다.</p>');
+  $('#ab-back').onclick=()=>{ st.albumOpen=null; renderAlbumBoard(); };
+  const ed=$('#ab-edit'); if(ed) ed.onclick=()=>openAlbumModal(a.id, a.cat);
+  const dl=$('#ab-del'); if(dl) dl.onclick=async()=>{
+    if(!confirm(`'${a.title||'(제목 없음)'}' 묶음을 삭제할까요? 사진 ${imgs.length}장이 함께 지워져요.`)) return;
+    try{ await deleteDoc(doc(db,'pages',st.handle,'albums',a.id)); }
+    catch(e){ msg('삭제 실패 — '+e.message); return; }
+    st.albums=st.albums.filter(x=>x.id!==a.id); st.albumOpen=null; renderAlbumBoard(); msg('묶음 삭제!'); };
+  const sp=$('#ab-sp'); if(sp) sp.onclick=()=>{ st.abIdx=Math.max(0,(st.abIdx||0)-1); renderAlbumBoard(); };
+  const sn=$('#ab-sn'); if(sn) sn.onclick=()=>{ st.abIdx=Math.min(imgs.length-1,(st.abIdx||0)+1); renderAlbumBoard(); };
+  document.querySelectorAll('#rows [data-abi]').forEach(im=>im.onclick=()=>lb(+im.dataset.abi));
+}
+let abDraft=null;                                       // {id, title, cat, view, priv, imgs[]}
+function openAlbumModal(id, cat){
+  const src=id ? (st.albums||[]).find(a=>a.id===id) : null;
+  abDraft={ id: id||null, title: src?.title||'', cat: src?.cat||cat||acats()[0]||'',
+            view: src?.view||'vert', priv: !!src?.priv, imgs: [...(src?.imgs||[])] };
+  let ov=$('#ab-modal');
+  if(!ov){ ov=document.createElement('div'); ov.id='ab-modal'; document.body.appendChild(ov); }
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:420;display:flex;align-items:center;justify-content:center;padding:18px';
+  renderAlbumModal();
+}
+function renderAlbumModal(){
+  const ov=$('#ab-modal'); if(!ov||!abDraft) return;
+  ov.innerHTML=`
+   <div class="ab-mbox">
+    <p class="p-h" style="margin-top:0">${abDraft.id?'묶음 편집':'새 묶음'}</p>
+    <input id="abm-title" placeholder="묶음 제목" value="${esc(abDraft.title)}" style="width:100%">
+    <div class="p-row" style="margin-top:6px">
+      <select id="abm-cat" style="width:auto">${acats().map(c=>`<option ${c===abDraft.cat?'selected':''}>${esc(c)}</option>`).join('')}</select>
+      <select id="abm-view" style="width:auto">${Object.entries(AB_VIEWS).map(([k,l])=>`<option value="${k}" ${k===abDraft.view?'selected':''}>${l}</option>`).join('')}</select>
+      <label class="chk" style="margin:0;font-size:11px"><input type="checkbox" id="abm-priv" ${abDraft.priv?'checked':''}> 🔏 비공개</label>
+    </div>
+    <div class="p-row" style="margin-top:8px">
+      <label class="filelab" style="font-size:11px">＋ 사진 추가 (여러 장 선택 가능) <input type="file" id="abm-file" accept="image/*" multiple></label>
+      <span class="note" style="margin:0">${abDraft.imgs.length}장</span>
+    </div>
+    <div class="ab-mstrip">${abDraft.imgs.map((u,i)=>`
+      <span class="ab-mth"><img src="${u}" alt="">
+        <i data-abx="${i}" title="빼기">✕</i>
+        <i data-abl="${i}" class="mv" title="앞으로" ${i===0?'style="opacity:.25;pointer-events:none"':''}>◀</i>
+        <i data-abr="${i}" class="mv r" title="뒤로" ${i===abDraft.imgs.length-1?'style="opacity:.25;pointer-events:none"':''}>▶</i>
+      </span>`).join('')}</div>
+    <div class="p-row" style="justify-content:flex-end;margin-top:10px">
+      <button class="btn" id="abm-x">닫기</button>
+      <button class="btn" id="abm-go" style="font-weight:700">${abDraft.id?'저장':'발행'}</button>
+    </div>
+   </div>`;
+  $('#abm-title').oninput=e=>abDraft.title=e.target.value;
+  $('#abm-cat').onchange=e=>abDraft.cat=e.target.value;
+  $('#abm-view').onchange=e=>abDraft.view=e.target.value;
+  $('#abm-priv').onchange=e=>abDraft.priv=e.target.checked;
+  ov.onclick=e=>{ if(e.target===ov) closeAlbumModal(); };
+  $('#abm-x').onclick=closeAlbumModal;
+  $('#abm-file').addEventListener('change',async e=>{
+    const fs=[...e.target.files]; if(!fs.length) return;
+    for(let i=0;i<fs.length;i++){
+      msg(`사진 올리는 중… ${i+1} / ${fs.length}`);
+      try{ abDraft.imgs.push(await upFile(fs[i],1800,.88,200)); }
+      catch(err){ msg('업로드 실패 — '+err.message); break; }
+    }
+    renderAlbumModal(); msg('사진 '+abDraft.imgs.length+'장 준비됐어요.');
+  });
+  ov.querySelectorAll('[data-abx]').forEach(b=>b.onclick=()=>{ abDraft.imgs.splice(+b.dataset.abx,1); renderAlbumModal(); });
+  ov.querySelectorAll('[data-abl]').forEach(b=>b.onclick=()=>{ const i=+b.dataset.abl;
+    [abDraft.imgs[i-1],abDraft.imgs[i]]=[abDraft.imgs[i],abDraft.imgs[i-1]]; renderAlbumModal(); });
+  ov.querySelectorAll('[data-abr]').forEach(b=>b.onclick=()=>{ const i=+b.dataset.abr;
+    [abDraft.imgs[i+1],abDraft.imgs[i]]=[abDraft.imgs[i],abDraft.imgs[i+1]]; renderAlbumModal(); });
+  $('#abm-go').onclick=async()=>{
+    if(!abDraft.cat){ msg('사진첩 카테고리가 없어요 — 카테고리 탭에서 타입을 [사진첩]으로 만들어 주세요.'); return; }
+    const data={ title:abDraft.title.trim(), cat:abDraft.cat, view:abDraft.view,
+                 priv:abDraft.priv, imgs:abDraft.imgs };
+    try{
+      if(abDraft.id){ await updateDoc(doc(db,'pages',st.handle,'albums',abDraft.id), data);
+        const t=st.albums.find(x=>x.id===abDraft.id); Object.assign(t,data); }
+      else{ data.ts=serverTimestamp();
+        const ref=await addDoc(collection(db,'pages',st.handle,'albums'), data);
+        st.albums.unshift({id:ref.id, ...data}); }
+    }catch(e){ msg((abDraft.id?'저장':'발행')+' 실패 — '+e.message); return; }
+    closeAlbumModal(); if(isA(st.cat)) renderAlbumBoard();
+    msg(abDraft.id?'묶음 저장!':'묶음 발행!');
+  };
+}
+function closeAlbumModal(){ const ov=$('#ab-modal'); if(ov) ov.remove(); abDraft=null; }
+
 let lbList=[], lbIdx=0;
 function lbOpen(list, id){
   lbList=list; lbIdx=Math.max(0, list.findIndex(x=>x.id===id));
@@ -2592,8 +2732,9 @@ function renderCatMgr(){
     <div class="p-row">
       <input data-ci="${i}" value="${esc(c)}">
       <select data-ct="${i}" style="width:auto;margin-bottom:0">
-        <option value="post" ${!isG(c)&&!isMemo(c)?'selected':''}>글</option>
-        <option value="gallery" ${isG(c)?'selected':''}>사진</option>
+        <option value="post" ${!isG(c)&&!isMemo(c)&&!isA(c)?'selected':''}>글</option>
+        <option value="gallery" ${isG(c)?'selected':''}>사진 (낱장 그리드)</option>
+        <option value="album" ${isA(c)?'selected':''}>사진첩 (제목 있는 묶음)</option>
         <option value="memo" ${isMemo(c)?'selected':''}>메모 (카드 모아보기)</option>
       </select>
       <button class="btn" data-cs="${i}" style="font-size:12px">저장</button>
@@ -2618,14 +2759,15 @@ function renderCatMgr(){
   box.querySelectorAll('[data-ndn]').forEach(b=>b.onclick=()=>moveNav(+b.dataset.ndn, 1));
   box.querySelectorAll('[data-ct]').forEach(s=>s.onchange=async()=>{
     const name=cats()[+s.dataset.ct];
-    let g=[...gcats()], m=[...mcats()];
-    if(s.value==='gallery'){ if(!g.includes(name)) g.push(name); m=m.filter(x=>x!==name); }
-    else if(s.value==='memo'){ if(!m.includes(name)) m.push(name); g=g.filter(x=>x!==name); }
-    else{ g=g.filter(x=>x!==name); m=m.filter(x=>x!==name); }
-    try{ await updateDoc(doc(db,'pages',st.handle),{gcats:g, mcats:m}); }
+    let g=[...gcats()], m=[...mcats()], a=[...acats()];
+    if(s.value==='gallery'){ if(!g.includes(name)) g.push(name); m=m.filter(x=>x!==name); a=a.filter(x=>x!==name); }
+    else if(s.value==='memo'){ if(!m.includes(name)) m.push(name); g=g.filter(x=>x!==name); a=a.filter(x=>x!==name); }
+    else if(s.value==='album'){ if(!a.includes(name)) a.push(name); g=g.filter(x=>x!==name); m=m.filter(x=>x!==name); }
+    else{ g=g.filter(x=>x!==name); m=m.filter(x=>x!==name); a=a.filter(x=>x!==name); }
+    try{ await updateDoc(doc(db,'pages',st.handle),{gcats:g, mcats:m, acats:a}); }
     catch(e){ msg('저장 실패 — '+e.message); renderCatMgr(); return; }
-    st.page.gcats=g; st.page.mcats=m; refreshWriteCats(); refreshGalCats(); renderSide(); renderCatbar();
-    msg(`'${name}' → ${s.value==='gallery'?'사진':s.value==='memo'?'메모':'글'} 카테고리로 변경!`);
+    st.page.gcats=g; st.page.mcats=m; st.page.acats=a; refreshWriteCats(); refreshGalCats(); renderSide(); renderCatbar();
+    msg(`'${name}' → ${s.value==='gallery'?'사진':s.value==='album'?'사진첩':s.value==='memo'?'메모':'글'} 카테고리로 변경!`);
   });
   box.querySelectorAll('[data-cs]').forEach(b=>b.onclick=async()=>{
     const i=+b.dataset.cs, oldName=cats()[i],
@@ -2640,14 +2782,19 @@ function renderCatMgr(){
       if(isG(oldName)){
         const g=gcats().map(x=>x===oldName?nv:x);
         const m2=mcats().map(x=>x===oldName?nv:x);
+        const a2=acats().map(x=>x===oldName?nv:x);
         const ns=navSeq().map(x=>x===oldName?nv:x);
-        await updateDoc(doc(db,'pages',st.handle),{gcats:g, mcats:m2, navSeq:ns});
-        st.page.gcats=g; st.page.mcats=m2; st.page.navSeq=ns;
+        await updateDoc(doc(db,'pages',st.handle),{gcats:g, mcats:m2, acats:a2, navSeq:ns});
+        st.page.gcats=g; st.page.mcats=m2; st.page.acats=a2; st.page.navSeq=ns;
       }
       const moves=st.posts.filter(p=>p.cat===oldName);
       await Promise.all(moves.map(p=>
         updateDoc(doc(db,'pages',st.handle,'posts',p.id),{cat:nv})));
       moves.forEach(p=>p.cat=nv);
+      const amoves=(st.albums||[]).filter(a3=>a3.cat===oldName);
+      await Promise.all(amoves.map(a3=>
+        updateDoc(doc(db,'pages',st.handle,'albums',a3.id),{cat:nv})));
+      amoves.forEach(a3=>a3.cat=nv);
       const gmoves=st.gallery.filter(g2=>g2.cat===oldName);
       await Promise.all(gmoves.map(g2=>
         updateDoc(doc(db,'pages',st.handle,'gallery',g2.id),{cat:nv})));
@@ -2698,7 +2845,8 @@ function renderCatFix(){
           <option value="recent" ${(st.page.stripSrc||'recent')==='recent'?'selected':''}>대문: 최신 사진</option>
           <option value="pick" ${st.page.stripSrc==='pick'?'selected':''}>대문: ★로 고른 사진</option>
           ${gcats().map(c=>`<option value="${esc(c)}" ${st.page.stripSrc===c?'selected':''}>대문: ${esc(c)} 카테고리</option>`).join('')}
-        </select>`:''))+
+        </select>
+        <label class="chk" style="margin:6px 0 0 6px;font-size:11px" title="켜면 사진 카테고리에 넣은 사진이 GALLERY 메인 그리드에는 안 나와요 — 각 카테고리 탭·폴더에서만 보여요"><input type="checkbox" id="gal-split" ${st.page.galSplit?'checked':''}> 사진 카테고리는 메인에서 빼기</label>`:''))+
     row('__gb',esc(gbNm()),
       `<input data-cn="__gb" value="${esc(st.page.gbName||'')}" placeholder="GUESTBOOK" title="게시판 이름 바꾸기 — 비우면 GUESTBOOK" style="width:104px;margin-bottom:0;font-size:11.5px">
        <label class="chk" style="margin:0 0 0 6px;font-size:11px" title="켜면 방명록 탭이 숨겨지고 아무도 남길 수 없어요 — 기존 글은 지워지지 않아요"><input type="checkbox" data-gboff ${st.page.gbOff?'checked':''}> 끄기</label>`)+
@@ -2748,6 +2896,11 @@ function renderCatFix(){
     renderCatbar(); renderSide(); renderCatFix();
     msg(next?'갤러리 알약(탭)을 다시 보여요.':'알약(탭)만 숨겼어요 — 하단 스트립·갤러리는 그대로예요.');
   };
+  const gs=$('#gal-split'); if(gs) gs.onchange=async()=>{              // 메인 분리(phase287)
+    try{ await updateDoc(doc(db,'pages',st.handle),{galSplit:gs.checked}); }
+    catch(e){ msg('저장 실패 — '+e.message); gs.checked=!gs.checked; return; }
+    st.page.galSplit=gs.checked; if(st.cat==='__gal') renderList();
+    msg(gs.checked?'사진 카테고리 사진을 메인에서 뺐어요 — 각 탭·폴더에서 보여요.':'메인에 전체 사진을 보여요.'); };
   const ss=$('#strip-src'); if(ss) ss.onchange=async()=>{
     st.page.stripSrc=ss.value;
     try{ await updateDoc(doc(db,'pages',st.handle),{stripSrc:ss.value});
@@ -5291,7 +5444,7 @@ function buildBackup(withDeco, withPosts){
   const data={ exported:new Date().toISOString(), service:'lovelog', handle:st.handle,
     home:{ name:st.page.name||'', sub:st.page.sub||'' } };
   if(withDeco) data.deco=decoSnap();
-  if(withPosts){ data.posts=st.posts; data.gallery=st.gallery; data.guest=st.guest; }
+  if(withPosts){ data.posts=st.posts; data.gallery=st.gallery; data.guest=st.guest; data.albums=st.albums||[]; }
   return data;
 }
 $('#s-exp-json').onclick=()=>{
@@ -5385,7 +5538,14 @@ $('#bk-restore')?.addEventListener('click', async ()=>{
         if(d3.ts && typeof d3.ts==='object' && d3.ts.seconds) d3.ts=new Date(d3.ts.seconds*1000);
         await setDoc(doc(db,'pages',st.handle,'gallery',g.id), d3, {merge:true});
       }
-      msg(`글 ${posts.length}편 · 사진 ${gal.length}장 복원 완료!`);
+      const abs2=Array.isArray(bkData.albums)?bkData.albums.filter(a=>a&&a.id):[];   // 📚 묶음 복원+사진 이사(phase288b)
+      for(const a of abs2){
+        let d4={...a}; delete d4.id;
+        if(cross) d4=JSON.parse(await migStr(JSON.stringify(d4)));   // imgs 배열 URL도 migStr가 일괄 이사
+        if(d4.ts && typeof d4.ts==='object' && d4.ts.seconds) d4.ts=new Date(d4.ts.seconds*1000);
+        await setDoc(doc(db,'pages',st.handle,'albums',a.id), d4, {merge:true});
+      }
+      msg(`글 ${posts.length}편 · 사진 ${gal.length}장${abs2.length?` · 묶음 ${abs2.length}개`:''} 복원 완료!`);
     }
     alert('복원이 끝났어요!'+(migOk?` 사진 ${migOk}장을 새 홈으로 복사했어요.`:'')+(migFail?` (${migFail}장은 복사하지 못해 원 주소를 유지했어요)`:'')+' 화면을 새로 불러옵니다.');
     location.reload();
@@ -5451,6 +5611,7 @@ $('#s-del').onclick=async()=>{
       await wipeCol(['pages',h,'posts',p.id,'comments']);
     await wipeCol(['pages',h,'posts']);
     await wipeCol(['pages',h,'gallery']);
+    await wipeCol(['pages',h,'albums']);
     await wipeCol(['pages',h,'guest']);
     await wipeCol(['pages',h,'imgs']);
     await wipeCol(['pages',h,'stats']);

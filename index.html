@@ -966,6 +966,34 @@
   .post details.fold[open]>summary::before{transform:rotate(90deg)}
   .post details.fold[open]>summary{border-bottom:1px dashed var(--line);color:var(--ink)}
   .post details.fold .fold-in{padding:4px 16px 12px}
+  /* 📚 사진첩(묶음) — phase288 */
+  .ab-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+  .ab-card{display:flex;flex-direction:column;gap:6px;cursor:pointer;border:1px solid var(--line);border-radius:12px;
+    padding:8px;background:color-mix(in srgb, var(--card) 60%, transparent);transition:border-color .15s}
+  .ab-card:hover{border-color:var(--pri)}
+  .ab-cov{display:flex;align-items:center;justify-content:center;aspect-ratio:4/3;border-radius:8px;overflow:hidden;background:color-mix(in srgb, var(--line) 40%, transparent)}
+  .ab-cov img{width:100%;height:100%;object-fit:cover}
+  .ab-emp{font-style:normal;font-size:26px;opacity:.6}
+  .ab-tt{font-size:12.5px;font-weight:700;line-height:1.35;word-break:keep-all}
+  .ab-n{font-size:10.5px;color:var(--muted);margin-top:-3px}
+  .ab-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 14px}
+  .ab-head .ab-vt{font-size:15px} .ab-head .ab-vn{font-size:11px;color:var(--muted)}
+  .ab-vert{display:flex;flex-direction:column;gap:6px} .ab-vert img{width:100%;border-radius:8px;cursor:zoom-in}
+  .ab-grid{display:grid;gap:8px} .ab-grid img{width:100%;border-radius:8px;cursor:zoom-in}
+  .ab-grid.sq{grid-template-columns:repeat(3,1fr)} .ab-grid.sq img{aspect-ratio:1/1;object-fit:cover}
+  .ab-grid.t2{grid-template-columns:repeat(2,1fr)}
+  @media(max-width:720px){.ab-grid.sq{grid-template-columns:repeat(2,1fr)}}
+  .ab-slide{display:flex;align-items:center;gap:10px}
+  .ab-slide img{flex:1;min-width:0;border-radius:10px;cursor:zoom-in}
+  .ab-sbtn{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:9px;padding:10px 12px;cursor:pointer;flex:none}
+  .ab-sbtn:disabled{opacity:.3} .ab-sn2{text-align:center;font-size:11px;color:var(--muted);margin-top:8px}
+  .ab-mbox{background:var(--bg);border:1px solid var(--line);border-radius:16px;padding:18px;width:min(560px,94vw);max-height:88vh;overflow:auto}
+  .ab-mstrip{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .ab-mth{position:relative;width:76px;height:76px;border-radius:8px;overflow:hidden;border:1px solid var(--line)}
+  .ab-mth img{width:100%;height:100%;object-fit:cover}
+  .ab-mth i{position:absolute;top:2px;right:2px;font-style:normal;font-size:10px;background:rgba(0,0,0,.55);color:#fff;
+    border-radius:6px;padding:2px 5px;cursor:pointer}
+  .ab-mth i.mv{top:auto;bottom:2px;right:auto;left:2px} .ab-mth i.mv.r{left:auto;right:2px}
   .post blockquote{margin:14px 0;padding:8px 16px;border-left:3px solid var(--pri);
     background:color-mix(in srgb, var(--card) 55%, transparent);border-radius:0 9px 9px 0;color:var(--muted)}  /* ✎ 자리채움(disabled 버튼) — 버튼과 동일 박스로 열·높이 정렬(283b) */
   #w-fmt button, #mm-fmt button{white-space:nowrap}
@@ -2258,6 +2286,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=293"></script>
+<script type="module" src="./app.js?v=296"></script>
 </body>
 </html>
