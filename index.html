@@ -1001,9 +1001,10 @@
   .btg:hover{border-color:var(--pri);color:var(--ink)}
   .btg.on{color:var(--pri);border-color:color-mix(in srgb, var(--pri) 55%, transparent);
     background:color-mix(in srgb, var(--pri) 10%, transparent)}
-  .row .rtg{flex:none;font-size:9.5px;color:var(--muted);border:1px solid var(--line);border-radius:20px;padding:1px 7px}
-  @media(max-width:720px){.row .rtg{display:none}}
   .pv-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:20px;padding-top:14px;border-top:1px dashed var(--line)}
+  .row .cw{display:flex;gap:5px;align-items:center;justify-content:flex-end;min-width:0}   /* 태그+카테고리 한 셀 — 그리드 4열 유지(292c) */
+  .row .rtg{flex:none;font-size:9.5px;line-height:1.3;color:var(--muted);border:1px solid var(--line);border-radius:20px;padding:1px 7px;white-space:nowrap}
+  @media(max-width:720px){.row .rtg{display:none}}
   .wtagbox{display:flex;gap:6px;flex-wrap:wrap;align-items:center;border:1px solid var(--line);border-radius:10px;
     padding:7px 10px;margin-top:8px;font-size:12px}
   .wtagbox input{flex:1;min-width:150px;background:none;border:none;outline:none;color:var(--ink);font-size:12px;margin:0;padding:2px}
@@ -2165,6 +2166,7 @@
       </select>
       <label class="chk sp2"><input type="checkbox" id="s-memott"> 메모 카드 제목 숨기기 (본문만 — 작성 팝업에서도 제목 칸이 사라져요)</label>
       <label class="chk sp2"><input type="checkbox" id="s-postpage"> 📖 글 전용 페이지 보기 — 글을 읽을 때 위젯·카테고리 바를 접고 본문만 넓게</label>
+      <label class="chk sp2"><input type="checkbox" id="s-rowtag" checked> 🏷 글 목록 줄에 태그 알약 표시 — 카테고리 알약 옆에 첫 태그가 함께 보여요</label>
       <div class="sp2" style="display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--muted)">
         글 목록 제목 색
         <input type="color" id="s-listtc" style="width:38px;flex:none;padding:2px;height:30px;margin-bottom:0">
@@ -2320,6 +2322,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=303"></script>
+<script type="module" src="./app.js?v=305"></script>
 </body>
 </html>

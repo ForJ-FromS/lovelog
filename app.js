@@ -2148,8 +2148,9 @@ function renderList(){
     <li class="row ${t?'has-th':''}" data-id="${p.id}">
       <span class="d">${esc((p.date||'').slice(5))}</span>
       <span class="t">${esc(p.title)} ${p.secret?'<span class="k">🔒</span>':''}${p.priv?'<span class="k" title="비공개 — 나만 보여요">🔏</span>':''}${canFt?`<button class="ft-star${p.feat?' on':''}" data-ft="${p.id}" title="★ 대표글 위젯에 전시 (다시 누르면 해제)">${p.feat?'★':'☆'}</button>`:''}</span>
-      ${(p.tags&&p.tags[0])?`<span class="rtg">${esc(p.tags[0])}${p.tags.length>1?' +'+(p.tags.length-1):''}</span>`:''}
-      <span class="c">${esc(p.cat)}</span>
+      ${(st.page.rowTag!==false && p.tags&&p.tags[0])
+        ?`<span class="cw"><span class="rtg">${esc(p.tags[0])}${p.tags.length>1?' +'+(p.tags.length-1):''}</span><span class="c">${esc(p.cat)}</span></span>`
+        :`<span class="c">${esc(p.cat)}</span>`}
       <span class="k"></span>${t?`<img class="th" src="${t}" alt="" draggable="false">`:''}</li>`; };
   $('#rows').innerHTML = shown.length?shown.map(rowHTML).join('')
     :'<p class="pl-empty">아직 글이 없습니다.</p>';
@@ -5038,7 +5039,7 @@ function fillSettings(){
   $('#s-homestyle').value=homeStyle();
   $('#s-theme').value=p.theme||'default';
   renderStkList();
-  $('#s-dim').value=p.bgDim??78; $('#s-dots').checked=p.dots!==false; $('#s-protect').checked=p.protectImg!==false; $('#s-stkm').checked=!!p.stkHideM; $('#s-stkhome').checked=!!p.stkHome; $('#s-stkoff').checked=p.stkOff!==true; $('#s-fx').value=p.fx ?? (p.sparkle?'sparkle':''); $('#s-fxc').value=p.fxC||'#ffb3c8'; fxCVal=null; $('#s-postpage').checked=!!p.postPage;
+  $('#s-dim').value=p.bgDim??78; $('#s-dots').checked=p.dots!==false; $('#s-protect').checked=p.protectImg!==false; $('#s-stkm').checked=!!p.stkHideM; $('#s-stkhome').checked=!!p.stkHome; $('#s-stkoff').checked=p.stkOff!==true; $('#s-fx').value=p.fx ?? (p.sparkle?'sparkle':''); $('#s-fxc').value=p.fxC||'#ffb3c8'; fxCVal=null; $('#s-postpage').checked=!!p.postPage; $('#s-rowtag').checked=p.rowTag!==false;
   $('#s-gatebtn').value=p.gateBtn||''; $('#s-listed').checked=!!p.listed; cardNew=null; bnrNew=null; renderCard(); renderBnr(); $('#s-lbicon').value=p.labelIcon??'◈'; gateColVal=null;
   $('#s-gatecolor').value=p.gateColor||'#ffffff';
   $('#del-h').textContent=st.handle||'—'; $('#s-del-confirm').value=''; delMsg('');
@@ -5139,6 +5140,7 @@ async function saveSettings(){
       fxC: fxCVal ?? st.page.fxC ?? '',
       sparkle: $('#s-fx').value==='sparkle',
       postPage: $('#s-postpage').checked,
+      rowTag: $('#s-rowtag').checked,
       gateBtn: $('#s-gatebtn').value.trim(),
       listed: $('#s-listed').checked,
       cardImg: cardNew ?? st.page.cardImg ?? '',
