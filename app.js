@@ -454,7 +454,7 @@ function renderSeal(){
   }
   const a=$('#seal-auth');
   if(st.me){ a.textContent='OUT'; a.onclick=()=>signOut(auth); }
-  else if(st.handle){ a.textContent='IN'; a.onclick=()=>signInWithPopup(auth,new GoogleAuthProvider()).catch(()=>{}); }
+  else if(st.handle){ a.textContent='IN'; a.onclick=doLogin; }
   else a.textContent='';
 }
 
@@ -501,7 +501,7 @@ async function loadPage(handle){
     $('#view-gate').classList.toggle('nograd', st.page.gateGrad===false);
     $('#gate-pw-wrap').classList.toggle('hidden', !needPw);
     $('#gate-login').classList.toggle('hidden', !!st.me);
-    $('#gate-login').onclick=()=>signInWithPopup(auth,new GoogleAuthProvider()).catch(()=>{});
+    $('#gate-login').onclick=doLogin;
     show('view-gate');
     $('#gate-go').onclick = async ()=>{
       if(needPw){
@@ -2246,7 +2246,17 @@ $('#gb-go').onclick=async()=>{
   const gb=await getDocs(query(collection(db,'pages',st.handle,'guest'),orderBy('ts','desc')));
   st.guest=gb.docs.map(d=>({id:d.id,...d.data()})); renderGuest();
 };
-$('#gb-login-btn').onclick=()=>signInWithPopup(auth,new GoogleAuthProvider()).catch(()=>{});
+function doLogin(){                                            // 구글 로그인 공용(phase294b) — 침묵 실패 금지
+  const ua=navigator.userAgent||'';
+  const inApp=/KAKAOTALK|Instagram|FBAN|FBAV|FB_IAB|Twitter|Line\/|NAVER|DaumApps|; wv\)/i.test(ua);
+  if(inApp) msg('앱 속 브라우저에서는 구글 로그인이 막힐 수 있어요 — 주소를 복사해 사파리·크롬에서 열어주세요.');
+  signInWithPopup(auth,new GoogleAuthProvider()).catch(e=>{
+    if(e.code==='auth/popup-closed-by-user'||e.code==='auth/cancelled-popup-request') return;
+    if(e.code==='auth/popup-blocked'){ msg('팝업이 차단됐어요 — 브라우저 설정에서 이 사이트의 팝업을 허용해 주세요.'); return; }
+    msg('로그인이 안 됐어요'+(inApp?' — 앱 속 브라우저 제한일 수 있어요. 사파리·크롬으로 열어주세요.':' — '+(e.code||e.message)));
+  });
+}
+$('#gb-login-btn').onclick=doLogin;
 function galFocusUI(imgSrc, cur, onOk){                       // 썸네일 초점 팝업 — 2축(phase259d)
   const cx=cur.x??50, cy=cur.y??50;
   const ov=document.createElement('div');
@@ -2660,7 +2670,7 @@ $('#cmt-go').onclick=async()=>{
     $('#cmt-text').value=''; loadComments(st.cur.id);
   }catch(e){ msg('댓글 저장 실패 — '+e.message); }   // 규칙 거부 등 침묵 금지(phase120 교훈)
 };
-$('#cmt-login-btn').onclick=()=>signInWithPopup(auth,new GoogleAuthProvider()).catch(()=>{});
+$('#cmt-login-btn').onclick=doLogin;
 $('#pv-copy').onclick=()=>{
   const url=location.origin+urlFor(st.handle, st.cur?.id||'');
   (navigator.clipboard?navigator.clipboard.writeText(url).then(()=>alert('링크를 복사했어요!\n'+url))
@@ -5326,7 +5336,7 @@ async function signup(){
     history.replaceState(null,'',urlFor(handle)); loadPage(handle);
   }catch(e){ err.textContent=e.message; }
 }
-$('#btn-login').onclick=()=>signInWithPopup(auth,new GoogleAuthProvider()).catch(()=>{});
+$('#btn-login').onclick=doLogin;
 $('#btn-signup').onclick=signup;
 
 /* ---------- 시작 ---------- */
