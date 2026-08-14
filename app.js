@@ -2790,7 +2790,10 @@ function renderCatMgr(){
       <label class="filelab" style="font-size:11px">🖼 이미지 추가<input type="file" data-cimg="${esc(c)}" accept="image/*" style="display:none"></label>
       ${(st.page.catImgs||{})[c]?`<button class="rmv" data-cimgx="${esc(c)}" style="font-size:10px">이미지 제거</button>`:''}
       <button class="rmv" data-cd="${i}">✕</button>
-    </div>`; }).join('') || '<p class="pl-empty">카테고리가 없어요.</p>';
+    </div>${(!isG(c)&&!isA(c)&&!isMemo(c))?`
+    <div class="ctag-row">🏷 ${((st.page.catTags||{})[c]||[]).map((t2,ti)=>`<span class="wtg">${esc(t2)}<i data-ctx="${i}:${ti}" title="빼기">✕</i></span>`).join('')}
+      <input data-cti="${i}" placeholder="이 카테고리에서 자주 쓸 태그 — 쉼표/엔터로 추가" style="flex:1;min-width:150px;margin:0;font-size:11px">
+    </div>`:''}`; }).join('') || '<p class="pl-empty">카테고리가 없어요.</p>';
   renderCatFix();
   const moveNav=async(ni,d)=>{                    // 탭 순서 바꾸기 — 카테고리·갤러리·방명록 공용(phase217)
     const s=[...navSeq()], j=ni+d;
@@ -2827,6 +2830,30 @@ function renderCatMgr(){
     st.page.abListView=m2; if(st.cat===name) renderList();
     msg(`'${name}' 목록을 ${s2.value==='list'?'제목만':'표지 카드'}(으)로 보여요.`);
   });
+  const ctSave=async m2=>{                                     // 🏷 카테고리 프리셋 태그 즉시 저장(phase293)
+    try{ await updateDoc(doc(db,'pages',st.handle),{catTags:m2}); }
+    catch(e){ msg('저장 실패 — '+e.message); renderCatMgr(); return false; }
+    st.page.catTags=m2; return true; };
+  box.querySelectorAll('[data-cti]').forEach(inp=>{
+    const commit=async()=>{
+      const v=inp.value.trim().replace(/,+$/,''); if(!v) return;
+      const name=cats()[+inp.dataset.cti];
+      const m2={...(st.page.catTags||{})}; const arr=[...(m2[name]||[])];
+      if(!arr.includes(v)&&arr.length<20){ arr.push(v); m2[name]=arr;
+        if(await ctSave(m2)) renderCatMgr(); }
+      else inp.value='';
+    };
+    inp.addEventListener('keydown',e2=>{ if(e2.isComposing) return;
+      if(e2.key==='Enter'||e2.key===','){ e2.preventDefault(); commit(); } });
+    inp.addEventListener('blur',()=>{ if(inp.value.trim()) commit(); });
+  });
+  box.querySelectorAll('[data-ctx]').forEach(b2=>b2.onclick=async()=>{
+    const [ci2,ti]=b2.dataset.ctx.split(':').map(Number);
+    const name=cats()[ci2];
+    const m2={...(st.page.catTags||{})}; const arr=[...(m2[name]||[])];
+    arr.splice(ti,1); if(arr.length) m2[name]=arr; else delete m2[name];
+    if(await ctSave(m2)) renderCatMgr();
+  });
   box.querySelectorAll('[data-cs]').forEach(b=>b.onclick=async()=>{
     const i=+b.dataset.cs, oldName=cats()[i],
           nv=box.querySelector(`[data-ci="${i}"]`).value.trim();
@@ -2843,9 +2870,11 @@ function renderCatMgr(){
         const a2=acats().map(x=>x===oldName?nv:x);
         const alv={...(st.page.abListView||{})};
         if(alv[oldName]!==undefined){ alv[nv]=alv[oldName]; delete alv[oldName]; }
+        const ctg={...(st.page.catTags||{})};
+        if(ctg[oldName]!==undefined){ ctg[nv]=ctg[oldName]; delete ctg[oldName]; }
         const ns=navSeq().map(x=>x===oldName?nv:x);
-        await updateDoc(doc(db,'pages',st.handle),{gcats:g, mcats:m2, acats:a2, navSeq:ns, abListView:alv});
-        st.page.gcats=g; st.page.mcats=m2; st.page.acats=a2; st.page.navSeq=ns; st.page.abListView=alv;
+        await updateDoc(doc(db,'pages',st.handle),{gcats:g, mcats:m2, acats:a2, navSeq:ns, abListView:alv, catTags:ctg});
+        st.page.gcats=g; st.page.mcats=m2; st.page.acats=a2; st.page.navSeq=ns; st.page.abListView=alv; st.page.catTags=ctg;
       }
       const moves=st.posts.filter(p=>p.cat===oldName);
       await Promise.all(moves.map(p=>
@@ -4147,6 +4176,16 @@ function renderWTags(){
   });
   box.querySelectorAll('[data-wtx]').forEach(b2=>b2.onclick=()=>{ wTags.splice(+b2.dataset.wtx,1); renderWTags(); });
   const dl=$('#w-tagdl'); if(dl) dl.innerHTML=allTags().filter(t=>!wTags.includes(t)).map(t=>`<option value="${esc(t)}">`).join('');
+  const pre=$('#w-tagpre');                                    // 🏷 카테고리 프리셋 선택 줄(phase293)
+  if(pre){
+    const cat=$('#w-cat')?.value||'';
+    const cand=((st.page.catTags||{})[cat]||[]).filter(t=>!wTags.includes(t));
+    pre.innerHTML = cand.length
+      ? '<span class="pre-l">이 카테고리 태그:</span>'+cand.map(t=>`<span class="btg" data-wtp="${esc(t)}">＋ ${esc(t)}</span>`).join('')
+      : '';
+    pre.querySelectorAll('[data-wtp]').forEach(b5=>b5.onclick=()=>{
+      if(wTags.length<12) wTags.push(b5.dataset.wtp); renderWTags(); });
+  }
 }
 (()=>{
   const inp=$('#w-tagin'); if(!inp) return;
@@ -4158,6 +4197,7 @@ function renderWTags(){
   });
   inp.addEventListener('change',()=>{ if(inp.value.trim()) commit(); });   // datalist 선택 확정
   inp.addEventListener('blur',()=>{ if(inp.value.trim()) commit(); });
+  const wc=$('#w-cat'); if(wc) wc.addEventListener('change',renderWTags);  // 카테고리 바꾸면 프리셋 줄 갱신(phase293)
 })();
 bindFmtBar('#w-fmt');
 (()=>{                                                          // 미리보기 팝업(phase269c — 보고 닫고 수정)
