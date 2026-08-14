@@ -2069,8 +2069,7 @@ function renderList(){
   if(st.cat==='__gal' || (st.cat!=='recent' && st.cat!=='home' && isG(st.cat))){
     $('#v-label').textContent = st.cat==='__gal' ? galNm() : st.cat.toUpperCase();
     $('#pin-slot').innerHTML='';
-    const inMain = g=>!(st.page.galSplit && g.cat && isG(g.cat));      // 분리 시 사진 카테고리 소속은 메인 제외(phase287)
-    const all = st.cat==='__gal' ? st.gallery.filter(inMain) : st.gallery.filter(g=>g.cat===st.cat);
+    const all = st.cat==='__gal' ? st.gallery : st.gallery.filter(g=>g.cat===st.cat);
     const gper = galCols()*5;
     renderPager(all.length, gper);
     const items = all.slice(((st.pg||1)-1)*gper, (st.pg||1)*gper);
@@ -2285,6 +2284,11 @@ $('#gal-more').onclick=()=>goBoard('__gal');
 /* ---------- 📚 사진첩(묶음) — phase288 ---------- */
 const AB_VIEWS={vert:'세로로 쭉 (웹툰식)', sq:'정사각형 그리드', tile:'타일 (2열)', slide:'슬라이드 (한 장씩)'};
 function albumsOf(c){ return (st.albums||[]).filter(a=>a.cat===c); }
+function abDate(a){                                          // 'YYYY.MM.DD' — date 없는 옛 폴더는 ts에서(phase289b)
+  if(a.date) return a.date;
+  try{ const d=a.ts?.toDate?a.ts.toDate():(a.ts?new Date(a.ts.seconds?a.ts.seconds*1000:a.ts):null);
+    return d?d.getFullYear()+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+String(d.getDate()).padStart(2,'0'):''; }
+  catch(e){ return ''; } }
 function renderAlbumBoard(){
   $('#v-label').textContent = st.cat.toUpperCase();
   $('#pin-slot').innerHTML=''; $('#more-btn').style.display='none'; renderPager(0,1);
@@ -2297,12 +2301,12 @@ function renderAlbumBoard(){
     (list.length
       ? asList
         ? `<div class="ab-rows">`+list.map(a=>
-            `<a class="ab-row" data-ab="${a.id}"><span class="ab-rt">${a.priv?'🔏 ':''}${esc(a.title||'(제목 없음)')}</span><span class="ab-rn">${(a.imgs||[]).length}장</span></a>`).join('')+`</div>`
+            `<a class="ab-row" data-ab="${a.id}"><span class="ab-rd">${esc(abDate(a).slice(5))}</span><span class="ab-rt">${a.priv?'🔏 ':''}${esc(a.title||'(제목 없음)')}</span><span class="ab-rn">${(a.imgs||[]).length}장</span></a>`).join('')+`</div>`
         : `<div class="ab-cards">`+list.map(a=>
           `<a class="ab-card" data-ab="${a.id}">
             <span class="ab-cov">${a.imgs?.[0]?`<img src="${a.imgs[0]}" alt="" draggable="false">`:'<i class="ab-emp">📚</i>'}</span>
             <span class="ab-tt">${a.priv?'🔏 ':''}${esc(a.title||'(제목 없음)')}</span>
-            <span class="ab-n">${(a.imgs||[]).length}장</span>
+            <span class="ab-n">${(a.imgs||[]).length}장${abDate(a)?' · '+esc(abDate(a).slice(5)):''}</span>
           </a>`).join('')+`</div>`
       : `<p class="pl-empty">아직 폴더가 없습니다.${st.mine?' 오른쪽 위 ＋ ADD로 사진 뭉치를 올려보세요.':''}</p>`);
   document.querySelectorAll('[data-ab]').forEach(el=>el.onclick=()=>{
@@ -2329,7 +2333,7 @@ function renderAlbumView(a){
     <p class="ab-head">
       <button class="btn" id="ab-back" style="font-size:12px">‹ 목록</button>
       <b class="ab-vt">${a.priv?'🔏 ':''}${esc(a.title||'(제목 없음)')}</b>
-      <span class="ab-vn">${imgs.length}장</span>
+      <span class="ab-vn">${imgs.length}장${abDate(a)?' · '+esc(abDate(a)):''}</span>
       ${st.mine?`<button class="rmv" id="ab-edit" style="font-size:11px">✎ 편집</button><button class="rmv" id="ab-del" style="font-size:11px">✕ 삭제</button>`:''}
     </p>`+(body||'<p class="pl-empty">사진이 없습니다.</p>');
   $('#ab-back').onclick=()=>{ st.albumOpen=null; renderAlbumBoard(); };
@@ -2347,7 +2351,8 @@ let abDraft=null;                                       // {id, title, cat, view
 function openAlbumModal(id, cat){
   const src=id ? (st.albums||[]).find(a=>a.id===id) : null;
   abDraft={ id: id||null, title: src?.title||'', cat: src?.cat||cat||acats()[0]||'',
-            view: src?.view||'vert', priv: !!src?.priv, imgs: [...(src?.imgs||[])] };
+            view: src?.view||'vert', priv: !!src?.priv, imgs: [...(src?.imgs||[])],
+            date: src?abDate(src):today(), origDate: src?abDate(src):'' };
   let ov=$('#ab-modal');
   if(!ov){ ov=document.createElement('div'); ov.id='ab-modal'; ov.className='memo-modal'; document.body.appendChild(ov); }
   ov.style.zIndex='420';                                        // 메모 팝업 문법 차용(phase288d) — 스타일은 .memo-modal이 담당
@@ -2367,6 +2372,7 @@ function renderAlbumModal(){
       ${acats().length>1?`<select id="abm-cat" style="width:auto;margin:0">${acats().map(c=>`<option ${c===abDraft.cat?'selected':''}>${esc(c)}</option>`).join('')}</select>`:''}
       <select id="abm-view" style="width:auto;margin:0">${Object.entries(AB_VIEWS).map(([k,l])=>`<option value="${k}" ${k===abDraft.view?'selected':''}>${l}</option>`).join('')}</select>
       <label class="chk" style="margin:0;font-size:11px"><input type="checkbox" id="abm-priv" ${abDraft.priv?'checked':''}> 🔏 비공개</label>
+      <input type="date" id="abm-date" value="${esc((abDraft.date||'').replaceAll('.','-'))}" style="width:auto;margin:0" title="폴더 날짜 — 옛 기록을 옮길 때 그 날짜로. 목록도 그 자리에 정렬돼요">
       <span class="note" style="margin:0 0 0 auto">${abDraft.imgs.length}장</span>
     </div>
     <div class="ab-mgrid">
@@ -2386,6 +2392,7 @@ function renderAlbumModal(){
   const acset=$('#abm-cat'); if(acset) acset.onchange=e=>{ abDraft.cat=e.target.value; renderAlbumModal(); };
   $('#abm-view').onchange=e=>abDraft.view=e.target.value;
   $('#abm-priv').onchange=e=>abDraft.priv=e.target.checked;
+  $('#abm-date').onchange=e=>abDraft.date=(e.target.value||'').replaceAll('-','.');
   ov.onclick=e=>{ if(e.target===ov) closeAlbumModal(); };
   $('#abm-x').onclick=closeAlbumModal;
   $('#abm-file').addEventListener('change',async e=>{
@@ -2404,12 +2411,16 @@ function renderAlbumModal(){
     [abDraft.imgs[i+1],abDraft.imgs[i]]=[abDraft.imgs[i],abDraft.imgs[i+1]]; renderAlbumModal(); });
   $('#abm-go').onclick=async()=>{
     if(!abDraft.cat){ msg('사진첩 카테고리가 없어요 — 카테고리 탭에서 타입을 [사진첩]으로 만들어 주세요.'); return; }
+    const dDot=abDraft.date||today();
+    const tsOf=d=>d===today()?serverTimestamp():new Date(+d.slice(0,4), +d.slice(5,7)-1, +d.slice(8,10), 12, 0, 0);
     const data={ title:abDraft.title.trim(), cat:abDraft.cat, view:abDraft.view,
-                 priv:abDraft.priv, imgs:abDraft.imgs };
+                 priv:abDraft.priv, imgs:abDraft.imgs, date:dDot };
     try{
-      if(abDraft.id){ await updateDoc(doc(db,'pages',st.handle,'albums',abDraft.id), data);
+      if(abDraft.id){
+        if(dDot!==abDraft.origDate) data.ts=tsOf(dDot);        // 날짜를 바꾼 경우에만 자리 이동(phase233 교훈)
+        await updateDoc(doc(db,'pages',st.handle,'albums',abDraft.id), data);
         const t=st.albums.find(x=>x.id===abDraft.id); Object.assign(t,data); }
-      else{ data.ts=serverTimestamp();
+      else{ data.ts=tsOf(dDot);
         const ref=await addDoc(collection(db,'pages',st.handle,'albums'), data);
         st.albums.unshift({id:ref.id, ...data}); }
     }catch(e){ msg((abDraft.id?'저장':'발행')+' 실패 — '+e.message); return; }
@@ -2868,7 +2879,7 @@ function renderCatFix(){
           <option value="nopill" ${galOn()&&!galTabOn()?'selected':''}>알약(탭)만 숨기기</option>
           <option value="hide" ${!galOn()?'selected':''}>탭 숨기기</option>
         </select>`+
-      (galOn()?`<label class="chk" style="margin:0 0 0 6px;font-size:11px" title="켜면 사진 카테고리에 넣은 사진이 GALLERY 메인 그리드에는 안 나와요 — 각 카테고리 탭·폴더에서만 보여요"><input type="checkbox" id="gal-split" ${st.page.galSplit?'checked':''}> 사진 카테고리는 메인에서 빼기</label>`:''))+
+      '')+
     `<div class="p-row" style="align-items:center">
       <span style="flex:1;font-size:12px;color:var(--muted)">▤ 대문 하단 스트립
         <i style="font-style:normal;font-size:10px;opacity:.8">— 갤러리 탭과 상관없이 따로 켜고 끌 수 있어요</i></span>
@@ -2931,11 +2942,6 @@ function renderCatFix(){
     document.querySelector('.strip-sec').classList.toggle('hidden', !stripShow());
     msg(stn.checked?'대문 하단 스트립을 켰어요.':'대문 하단 스트립을 껐어요.');
   };
-  const gs=$('#gal-split'); if(gs) gs.onchange=async()=>{              // 메인 분리(phase287)
-    try{ await updateDoc(doc(db,'pages',st.handle),{galSplit:gs.checked}); }
-    catch(e){ msg('저장 실패 — '+e.message); gs.checked=!gs.checked; return; }
-    st.page.galSplit=gs.checked; if(st.cat==='__gal') renderList();
-    msg(gs.checked?'사진 카테고리 사진을 메인에서 뺐어요 — 각 탭·폴더에서 보여요.':'메인에 전체 사진을 보여요.'); };
   const ss=$('#strip-src'); if(ss) ss.onchange=async()=>{
     st.page.stripSrc=ss.value;
     try{ await updateDoc(doc(db,'pages',st.handle),{stripSrc:ss.value});
