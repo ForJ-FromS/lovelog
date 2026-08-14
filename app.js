@@ -2792,6 +2792,7 @@ function renderCatMgr(){
     try{ await updateDoc(doc(db,'pages',st.handle),{gcats:g, mcats:m, acats:a}); }
     catch(e){ msg('저장 실패 — '+e.message); renderCatMgr(); return; }
     st.page.gcats=g; st.page.mcats=m; st.page.acats=a; refreshWriteCats(); refreshGalCats(); renderSide(); renderCatbar();
+    renderCatMgr();                                            // 행 재렌더 — 사진첩 전환 시 [표지 카드/제목만] 셀렉트 즉시 등장(phase291b)
     msg(`'${name}' → ${s.value==='gallery'?'사진':s.value==='album'?'사진첩':s.value==='memo'?'메모':'글'} 카테고리로 변경!`);
   });
   box.querySelectorAll('[data-alv]').forEach(s2=>s2.onchange=async()=>{     // 사진첩 목록 모양(phase288d) — 즉시 저장
