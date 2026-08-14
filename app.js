@@ -650,7 +650,7 @@ async function enterPage(){
   bumpCounter(); loadStamps();
   if(homeStyle()==='blog'){ st.cat='recent'; applyView(); }
   else { st.cat='home'; applyView(); }
-  document.querySelector('.strip-sec').classList.toggle('hidden', !(galOn()&&stripOn()));
+  document.querySelector('.strip-sec').classList.toggle('hidden', !stripShow());
   renderWidgets(); renderCatbar(); renderList(); renderGal(); renderStickers();
   // 딥링크 — loadPage에서 보관해둔 글ID를 1회 소비
   const pm=st.deepPost; st.deepPost=null;
@@ -943,6 +943,9 @@ const homeStyle=()=>st.page?.homeStyle||'grid';
 const galOn=()=>st.page?.galOn!==false;
 const galTabOn=()=>st.page?.galTabOn!==false;                  // 알약(탭)만 별도 on/off(phase267) — 스트립과 독립
 const stripOn=()=>st.page?.stripOn!==false;
+const stripShow=()=>st.page?.stripOn===true ? true          // 스트립 독립(phase289): 명시 켬=갤러리 탭과 무관 표시
+  : st.page?.stripOn===false ? false                        // 명시 끔=숨김
+  : galOn();                                                // 미저장=종전대로 갤러리 탭 연동(기존 홈 무변)
 function goHome(){
   if(homeStyle()==='blog'){ goBoard('recent'); return; }
   st.backHome=false;
@@ -2289,9 +2292,13 @@ function renderAlbumBoard(){
   const open=st.albumOpen && list.find(a=>a.id===st.albumOpen);
   if(open){ renderAlbumView(open); return; }
   st.abIdx=0;
+  const asList=(st.page.abListView||{})[st.cat]==='list';       // 카테고리별 목록 모양(phase288d): 카드/제목만
   $('#rows').innerHTML =
     (list.length
-      ? `<div class="ab-cards">`+list.map(a=>
+      ? asList
+        ? `<div class="ab-rows">`+list.map(a=>
+            `<a class="ab-row" data-ab="${a.id}"><span class="ab-rt">${a.priv?'🔏 ':''}${esc(a.title||'(제목 없음)')}</span><span class="ab-rn">${(a.imgs||[]).length}장</span></a>`).join('')+`</div>`
+        : `<div class="ab-cards">`+list.map(a=>
           `<a class="ab-card" data-ab="${a.id}">
             <span class="ab-cov">${a.imgs?.[0]?`<img src="${a.imgs[0]}" alt="" draggable="false">`:'<i class="ab-emp">📚</i>'}</span>
             <span class="ab-tt">${a.priv?'🔏 ':''}${esc(a.title||'(제목 없음)')}</span>
@@ -2342,18 +2349,22 @@ function openAlbumModal(id, cat){
   abDraft={ id: id||null, title: src?.title||'', cat: src?.cat||cat||acats()[0]||'',
             view: src?.view||'vert', priv: !!src?.priv, imgs: [...(src?.imgs||[])] };
   let ov=$('#ab-modal');
-  if(!ov){ ov=document.createElement('div'); ov.id='ab-modal'; document.body.appendChild(ov); }
-  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:420;display:flex;align-items:center;justify-content:center;padding:18px';
+  if(!ov){ ov=document.createElement('div'); ov.id='ab-modal'; ov.className='memo-modal'; document.body.appendChild(ov); }
+  ov.style.zIndex='420';                                        // 메모 팝업 문법 차용(phase288d) — 스타일은 .memo-modal이 담당
   renderAlbumModal();
 }
 function renderAlbumModal(){
   const ov=$('#ab-modal'); if(!ov||!abDraft) return;
   ov.innerHTML=`
-   <div class="ab-mbox">
-    <p class="ab-mhead">📚 ${abDraft.id?'폴더 편집':'새 폴더'}</p>
-    <input id="abm-title" class="ab-mtitle" placeholder="폴더 제목" value="${esc(abDraft.title)}">
-    <div class="p-row" style="margin-top:10px;align-items:center">
-      <select id="abm-cat" style="width:auto;margin:0">${acats().map(c=>`<option ${c===abDraft.cat?'selected':''}>${esc(c)}</option>`).join('')}</select>
+   <div class="mm-card ab-wide">
+    <div class="mm-top">
+      <span class="abm-x" id="abm-x" title="닫기">✕</span>
+      <b>${abDraft.id?'폴더 편집':'새 폴더'}</b><i>${esc((abDraft.cat||'').toUpperCase())}</i>
+      <button class="btn abm-go" id="abm-go">${abDraft.id?'저장':'만들기'}</button>
+    </div>
+    <input id="abm-title" placeholder="폴더 제목" value="${esc(abDraft.title)}">
+    <div class="p-row" style="align-items:center;margin:0">
+      ${acats().length>1?`<select id="abm-cat" style="width:auto;margin:0">${acats().map(c=>`<option ${c===abDraft.cat?'selected':''}>${esc(c)}</option>`).join('')}</select>`:''}
       <select id="abm-view" style="width:auto;margin:0">${Object.entries(AB_VIEWS).map(([k,l])=>`<option value="${k}" ${k===abDraft.view?'selected':''}>${l}</option>`).join('')}</select>
       <label class="chk" style="margin:0;font-size:11px"><input type="checkbox" id="abm-priv" ${abDraft.priv?'checked':''}> 🔏 비공개</label>
       <span class="note" style="margin:0 0 0 auto">${abDraft.imgs.length}장</span>
@@ -2370,13 +2381,9 @@ function renderAlbumModal(){
       </span>`).join('')}
       <label class="ab-drop">＋<em>사진 추가</em><em class="s">여러 장 한 번에</em><input type="file" id="abm-file" accept="image/*" multiple style="display:none"></label>
     </div>
-    <div class="p-row" style="justify-content:flex-end;margin-top:14px">
-      <button class="btn" id="abm-x">닫기</button>
-      <button class="btn" id="abm-go" style="font-weight:700">${abDraft.id?'저장':'만들기'}</button>
-    </div>
    </div>`;
   $('#abm-title').oninput=e=>abDraft.title=e.target.value;
-  $('#abm-cat').onchange=e=>abDraft.cat=e.target.value;
+  const acset=$('#abm-cat'); if(acset) acset.onchange=e=>{ abDraft.cat=e.target.value; renderAlbumModal(); };
   $('#abm-view').onchange=e=>abDraft.view=e.target.value;
   $('#abm-priv').onchange=e=>abDraft.priv=e.target.checked;
   ov.onclick=e=>{ if(e.target===ov) closeAlbumModal(); };
@@ -2740,6 +2747,10 @@ function renderCatMgr(){
         <option value="album" ${isA(c)?'selected':''}>사진첩 (제목 있는 묶음)</option>
         <option value="memo" ${isMemo(c)?'selected':''}>메모 (카드 모아보기)</option>
       </select>
+      ${isA(c)?`<select data-alv="${i}" style="width:auto;margin-bottom:0;font-size:11px" title="이 사진첩의 목록을 어떻게 보여줄지">
+        <option value="card" ${(st.page.abListView||{})[c]!=='list'?'selected':''}>표지 카드</option>
+        <option value="list" ${(st.page.abListView||{})[c]==='list'?'selected':''}>제목만</option>
+      </select>`:''}
       <button class="btn" data-cs="${i}" style="font-size:12px">저장</button>
       ${ud}
       <label class="filelab" style="font-size:11px">🖼 이미지 추가<input type="file" data-cimg="${esc(c)}" accept="image/*" style="display:none"></label>
@@ -2772,6 +2783,15 @@ function renderCatMgr(){
     st.page.gcats=g; st.page.mcats=m; st.page.acats=a; refreshWriteCats(); refreshGalCats(); renderSide(); renderCatbar();
     msg(`'${name}' → ${s.value==='gallery'?'사진':s.value==='album'?'사진첩':s.value==='memo'?'메모':'글'} 카테고리로 변경!`);
   });
+  box.querySelectorAll('[data-alv]').forEach(s2=>s2.onchange=async()=>{     // 사진첩 목록 모양(phase288d) — 즉시 저장
+    const name=cats()[+s2.dataset.alv];
+    const m2={...(st.page.abListView||{})};
+    if(s2.value==='list') m2[name]='list'; else delete m2[name];
+    try{ await updateDoc(doc(db,'pages',st.handle),{abListView:m2}); }
+    catch(e){ msg('저장 실패 — '+e.message); renderCatMgr(); return; }
+    st.page.abListView=m2; if(st.cat===name) renderList();
+    msg(`'${name}' 목록을 ${s2.value==='list'?'제목만':'표지 카드'}(으)로 보여요.`);
+  });
   box.querySelectorAll('[data-cs]').forEach(b=>b.onclick=async()=>{
     const i=+b.dataset.cs, oldName=cats()[i],
           nv=box.querySelector(`[data-ci="${i}"]`).value.trim();
@@ -2786,9 +2806,11 @@ function renderCatMgr(){
         const g=gcats().map(x=>x===oldName?nv:x);
         const m2=mcats().map(x=>x===oldName?nv:x);
         const a2=acats().map(x=>x===oldName?nv:x);
+        const alv={...(st.page.abListView||{})};
+        if(alv[oldName]!==undefined){ alv[nv]=alv[oldName]; delete alv[oldName]; }
         const ns=navSeq().map(x=>x===oldName?nv:x);
-        await updateDoc(doc(db,'pages',st.handle),{gcats:g, mcats:m2, acats:a2, navSeq:ns});
-        st.page.gcats=g; st.page.mcats=m2; st.page.acats=a2; st.page.navSeq=ns;
+        await updateDoc(doc(db,'pages',st.handle),{gcats:g, mcats:m2, acats:a2, navSeq:ns, abListView:alv});
+        st.page.gcats=g; st.page.mcats=m2; st.page.acats=a2; st.page.navSeq=ns; st.page.abListView=alv;
       }
       const moves=st.posts.filter(p=>p.cat===oldName);
       await Promise.all(moves.map(p=>
@@ -2841,15 +2863,23 @@ function renderCatFix(){
       `<input data-cn="home" value="${esc(st.page.homeName||'')}" placeholder="HOME" title="홈 탭 이름 바꾸기 — 비우면 HOME" style="width:104px;margin-bottom:0;font-size:11.5px">`)+
     row('__gal',esc(galNm()),
       `<input data-cn="__gal" value="${esc(st.page.galName||'')}" placeholder="GALLERY" title="게시판 이름 바꾸기 — 비우면 GALLERY" style="width:104px;margin-bottom:0;font-size:11.5px">`+
-      `<button class="btn" id="gal-toggle" style="font-size:11px">${galOn()?'숨기기 (알약·하단 갤러리 제거)':'표시하기'}</button>`+
-      (galOn()?`<button class="btn" id="galtab-toggle" style="font-size:11px">${galTabOn()?'알약(탭)만 숨기기':'알약(탭) 보이기'}</button>
-        <button class="btn" id="strip-toggle" style="font-size:11px">${stripOn()?'하단 스트립 끄기':'하단 스트립 켜기'}</button>
-        <select id="strip-src" style="font-size:11px;width:auto;margin:0 0 0 6px">
-          <option value="recent" ${(st.page.stripSrc||'recent')==='recent'?'selected':''}>대문: 최신 사진</option>
-          <option value="pick" ${st.page.stripSrc==='pick'?'selected':''}>대문: ★로 고른 사진</option>
-          ${gcats().map(c=>`<option value="${esc(c)}" ${st.page.stripSrc===c?'selected':''}>대문: ${esc(c)} 카테고리</option>`).join('')}
-        </select>
-        <label class="chk" style="margin:6px 0 0 6px;font-size:11px" title="켜면 사진 카테고리에 넣은 사진이 GALLERY 메인 그리드에는 안 나와요 — 각 카테고리 탭·폴더에서만 보여요"><input type="checkbox" id="gal-split" ${st.page.galSplit?'checked':''}> 사진 카테고리는 메인에서 빼기</label>`:''))+
+      `<select id="gal-vis" style="font-size:11px;width:auto;margin:0" title="GALLERY 탭을 어떻게 보여줄지">
+          <option value="show" ${galOn()&&galTabOn()?'selected':''}>탭 보이기</option>
+          <option value="nopill" ${galOn()&&!galTabOn()?'selected':''}>알약(탭)만 숨기기</option>
+          <option value="hide" ${!galOn()?'selected':''}>탭 숨기기</option>
+        </select>`+
+      (galOn()?`<label class="chk" style="margin:0 0 0 6px;font-size:11px" title="켜면 사진 카테고리에 넣은 사진이 GALLERY 메인 그리드에는 안 나와요 — 각 카테고리 탭·폴더에서만 보여요"><input type="checkbox" id="gal-split" ${st.page.galSplit?'checked':''}> 사진 카테고리는 메인에서 빼기</label>`:''))+
+    `<div class="p-row" style="align-items:center">
+      <span style="flex:1;font-size:12px;color:var(--muted)">▤ 대문 하단 스트립
+        <i style="font-style:normal;font-size:10px;opacity:.8">— 갤러리 탭과 상관없이 따로 켜고 끌 수 있어요</i></span>
+      <label class="chk" style="margin:0;font-size:11px"><input type="checkbox" id="strip-on" ${stripShow()?'checked':''}> 대문에 표시</label>
+      <select id="strip-src" style="font-size:11px;width:auto;margin:0 0 0 6px">
+        <option value="recent" ${(st.page.stripSrc||'recent')==='recent'?'selected':''}>최신 사진</option>
+        <option value="pick" ${st.page.stripSrc==='pick'?'selected':''}>★로 고른 사진</option>
+        ${gcats().map(c=>`<option value="${esc(c)}" ${st.page.stripSrc===c?'selected':''}>${esc(c)} 카테고리</option>`).join('')}
+      </select>
+    </div>
+    <p class="note" style="margin:-2px 0 8px">스트립 사진은 대문의 ＋ 카드(편집 모드)로 직접 올릴 수도 있어요 — 갤러리 탭을 숨겨도 스트립은 그대로 씁니다.</p>`+
     row('__gb',esc(gbNm()),
       `<input data-cn="__gb" value="${esc(st.page.gbName||'')}" placeholder="GUESTBOOK" title="게시판 이름 바꾸기 — 비우면 GUESTBOOK" style="width:104px;margin-bottom:0;font-size:11.5px">
        <label class="chk" style="margin:0 0 0 6px;font-size:11px" title="켜면 방명록 탭이 숨겨지고 아무도 남길 수 없어요 — 기존 글은 지워지지 않아요"><input type="checkbox" data-gboff ${st.page.gbOff?'checked':''}> 끄기</label>`)+
@@ -2883,21 +2913,23 @@ function renderCatFix(){
     renderCatbar(); renderSide();
     msg(gbo.checked?'방명록을 껐어요 — 탭이 숨겨졌어요.':'방명록을 다시 켰어요!');
   });
-  const gt=$('#gal-toggle'); if(gt) gt.onclick=async()=>{
-    const next=!galOn();
-    await updateDoc(doc(db,'pages',st.handle),{galOn:next});
-    st.page.galOn=next;
-    document.querySelector('.strip-sec').classList.toggle('hidden', !(next&&stripOn()));
-    if(!next && (st.cat==='__gal')) goHome();
-    renderCatbar(); renderSide(); renderCatFix();
+  const gt=$('#gal-vis'); if(gt) gt.onchange=async()=>{
+    const v=$('#gal-vis').value;                              // 3태 통합(phase289)
+    const patch = v==='hide' ? {galOn:false} : {galOn:true, galTabOn: v==='show'};
+    try{ await updateDoc(doc(db,'pages',st.handle), patch); }
+    catch(e){ msg('저장 실패 — '+e.message); renderCatMgr(); return; }
+    Object.assign(st.page, patch);
+    document.querySelector('.strip-sec').classList.toggle('hidden', !stripShow());
+    if(v!=='show' && st.cat==='__gal') goHome();
+    renderCatbar(); renderSide(); renderCatFix(); renderCatMgr();
+    msg(v==='hide'?'GALLERY 탭을 숨겼어요 — 스트립은 아래 스위치로 따로 켜고 꺼요.':v==='nopill'?'알약(탭)만 숨겼어요.':'GALLERY 탭을 보여요.');
   };
-  const gtb=$('#galtab-toggle'); if(gtb) gtb.onclick=async()=>{
-    const next=!galTabOn();
-    await updateDoc(doc(db,'pages',st.handle),{galTabOn:next});
-    st.page.galTabOn=next;
-    if(!next && st.cat==='__gal') goHome();
-    renderCatbar(); renderSide(); renderCatFix();
-    msg(next?'갤러리 알약(탭)을 다시 보여요.':'알약(탭)만 숨겼어요 — 하단 스트립·갤러리는 그대로예요.');
+  const stn=$('#strip-on'); if(stn) stn.onchange=async()=>{
+    try{ await updateDoc(doc(db,'pages',st.handle),{stripOn:stn.checked}); }
+    catch(e){ msg('저장 실패 — '+e.message); stn.checked=!stn.checked; return; }
+    st.page.stripOn=stn.checked;
+    document.querySelector('.strip-sec').classList.toggle('hidden', !stripShow());
+    msg(stn.checked?'대문 하단 스트립을 켰어요.':'대문 하단 스트립을 껐어요.');
   };
   const gs=$('#gal-split'); if(gs) gs.onchange=async()=>{              // 메인 분리(phase287)
     try{ await updateDoc(doc(db,'pages',st.handle),{galSplit:gs.checked}); }
@@ -2910,13 +2942,6 @@ function renderCatFix(){
       msg(ss.value==='pick'?'★ 표시한 사진이 대문에 떠요 — 갤러리에서 ★를 눌러 골라주세요.':'대문 갤러리 기준을 바꿨어요.');
     }catch(e){ msg('저장 실패: '+e.message); }
     renderGal();
-  };
-  const sp=$('#strip-toggle'); if(sp) sp.onclick=async()=>{
-    const next=!stripOn();
-    await updateDoc(doc(db,'pages',st.handle),{stripOn:next});
-    st.page.stripOn=next;
-    document.querySelector('.strip-sec').classList.toggle('hidden', !(galOn()&&next));
-    renderCatFix();
   };
 }
 $('#cat-add2').onclick=async()=>{

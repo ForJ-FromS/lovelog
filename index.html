@@ -869,11 +869,11 @@
     border-bottom:1px solid var(--line)}
   .mm-top b{font-size:15px;letter-spacing:.02em}
   .mm-top i{font-family:'IBM Plex Mono',monospace;font-style:normal;font-size:10px;letter-spacing:.16em;color:var(--pri)}
-  .mm-top #mm-x{cursor:pointer;color:var(--muted);font-size:16px;padding:2px 5px}
-  .mm-top #mm-x:hover{color:var(--ink)}
-  .mm-top #mm-go{margin-left:auto;font-size:12.5px;padding:8px 18px;border-radius:10px;
+  .mm-top #mm-x, .mm-top .abm-x{cursor:pointer;color:var(--muted);font-size:16px;padding:2px 5px}
+  .mm-top #mm-x:hover, .mm-top .abm-x:hover{color:var(--ink)}
+  .mm-top #mm-go, .mm-top .abm-go{margin-left:auto;font-size:12.5px;padding:8px 18px;border-radius:10px;
     border:1px solid color-mix(in srgb, var(--pri) 55%, var(--line));color:var(--pri)}
-  .mm-top #mm-go:hover{background:color-mix(in srgb, var(--pri) 14%, transparent)}
+  .mm-top #mm-go:hover, .mm-top .abm-go:hover{background:color-mix(in srgb, var(--pri) 14%, transparent)}
   /* 입력칸 — 테마 반투명(브라우저 기본 흰색 차단) */
   .mm-card input, .mm-card textarea{
     background:color-mix(in srgb, var(--ink) 6%, transparent);
@@ -987,10 +987,14 @@
   .ab-slide img{flex:1;min-width:0;border-radius:10px;cursor:zoom-in}
   .ab-sbtn{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:9px;padding:10px 12px;cursor:pointer;flex:none}
   .ab-sbtn:disabled{opacity:.3} .ab-sn2{text-align:center;font-size:11px;color:var(--muted);margin-top:8px}
-  .ab-mbox{background:var(--bg);border:1px solid var(--line);border-radius:18px;padding:22px 24px;
-    width:min(880px,96vw);max-height:90vh;overflow:auto}
-  .ab-mhead{margin:0 0 12px;font-size:14px;font-weight:700;letter-spacing:.04em}
-  .ab-mtitle{width:100%;font-size:15.5px;padding:11px 13px}
+  .mm-card.ab-wide{width:min(880px,96vw)}
+  .mm-card select{background:color-mix(in srgb, var(--ink) 6%, transparent);border:1px solid var(--line);
+    border-radius:11px;color:var(--ink);padding:9px 10px;font-size:12.5px}
+  .ab-rows{display:flex;flex-direction:column}
+  .ab-row{display:flex;align-items:center;gap:10px;padding:13px 4px;border-bottom:1px dashed var(--line);cursor:pointer}
+  .ab-row:hover .ab-rt{color:var(--pri)}
+  .ab-rt{flex:1;font-size:13.5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ab-rn{flex:none;font-size:11px;color:var(--muted)}
   .ab-mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(138px,1fr));gap:10px;margin-top:12px}
   @media(max-width:560px){.ab-mgrid{grid-template-columns:repeat(2,1fr)}}
   .ab-mth{position:relative;aspect-ratio:1/1;border-radius:10px;overflow:hidden;border:1px solid var(--line)}
@@ -2296,6 +2300,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=297"></script>
+<script type="module" src="./app.js?v=299"></script>
 </body>
 </html>
