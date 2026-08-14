@@ -993,6 +993,23 @@
   .ab-rows{display:flex;flex-direction:column}
   .ab-row{display:flex;align-items:center;gap:10px;padding:13px 4px;border-bottom:1px dashed var(--line);cursor:pointer}
   .ab-row:hover .ab-rt{color:var(--pri)}
+  /* 🏷 글 태그(phase292) */
+  #tag-slot{display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 12px}
+  #tag-slot:empty{display:none}
+  .btg{font-size:10.5px;padding:3px 10px;border-radius:20px;border:1px solid var(--line);color:var(--muted);
+    cursor:pointer;user-select:none;transition:all .15s}
+  .btg:hover{border-color:var(--pri);color:var(--ink)}
+  .btg.on{color:var(--pri);border-color:color-mix(in srgb, var(--pri) 55%, transparent);
+    background:color-mix(in srgb, var(--pri) 10%, transparent)}
+  .row .rtg{flex:none;font-size:9.5px;color:var(--muted);border:1px solid var(--line);border-radius:20px;padding:1px 7px}
+  @media(max-width:720px){.row .rtg{display:none}}
+  .pv-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:20px;padding-top:14px;border-top:1px dashed var(--line)}
+  .wtagbox{display:flex;gap:6px;flex-wrap:wrap;align-items:center;border:1px solid var(--line);border-radius:10px;
+    padding:7px 10px;margin-top:8px;font-size:12px}
+  .wtagbox input{flex:1;min-width:150px;background:none;border:none;outline:none;color:var(--ink);font-size:12px;margin:0;padding:2px}
+  .wtg{font-size:10.5px;padding:3px 9px;border-radius:20px;color:var(--pri);
+    border:1px solid color-mix(in srgb, var(--pri) 45%, transparent)}
+  .wtg i{font-style:normal;margin-left:5px;cursor:pointer;opacity:.7}
   .ab-rd{flex:none;width:46px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;color:var(--muted)}
   .ab-rt{flex:1;font-size:13.5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .ab-rn{flex:none;font-size:11px;color:var(--muted)}
@@ -1622,6 +1639,7 @@
       <main>
         <div id="list-view">
           <div class="sec-head"><h2 id="v-label">RECENT</h2><span style="display:flex;gap:14px"><span class="en hidden" id="board-write" style="cursor:pointer">✎ WRITE</span><span class="en" id="go-home" style="cursor:pointer">‹ HOME</span></span></div>
+          <div id="tag-slot"></div>
           <div id="pin-slot"></div>
           <ul id="rows"></ul>
           <a class="more" id="more-btn">MORE →</a>
@@ -1779,6 +1797,7 @@
   <div class="pane" data-pane="write">
     <p class="p-h" style="border:none;padding-top:0;margin-top:0">✎ 새 글 쓰기</p>
     <input id="w-title" placeholder="제목">
+    <div class="wtagbox" id="w-tagbox">🏷 <input id="w-tagin" list="w-tagdl" placeholder="태그 (선택) — 페어명 등, 쉼표/엔터로 추가"><datalist id="w-tagdl"></datalist></div>
     <div class="p-row" style="align-items:center;gap:8px">
       <label style="font-size:11.5px;color:var(--muted);flex:none">📅 작성일</label>
       <input type="date" id="w-date" style="width:auto;margin-bottom:0" title="옛 로그를 옮겨 적을 때 그 날짜로 발행할 수 있어요 — 목록도 그 날짜 자리에 정렬됩니다">
@@ -2301,6 +2320,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=302"></script>
+<script type="module" src="./app.js?v=303"></script>
 </body>
 </html>

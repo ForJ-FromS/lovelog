@@ -958,7 +958,9 @@ function goHome(){
 function goBoard(cat){
   if(cat==='__gb' && st.page.gbOff){ msg('방명록이 잠시 닫혀 있어요.'); return; }
   if(cat==='recent' && st.page.allOff){ msg('전체 글 보기가 꺼져 있어요.'); return; }
+  if(st.cat!==cat) st.tagF=null;                              // 🏷 카테고리 이동 시 태그 필터 해제(phase292)
   st.cat=cat||'recent'; st.pg=1; applyView(); renderWidgets(); renderList(); backToList(); renderCatbar(); }
+const allTags=()=>[...new Set(st.posts.flatMap(p=>p.tags||[]))].sort((a,b)=>a.localeCompare(b,'ko'));   // 🏷(phase292)
 function catStyle(){
   return st.page.catStyle || (st.page.catBar===false ? 'widget' : 'bar');
 }
@@ -2065,6 +2067,7 @@ function renderList(){
     $('#list-view').classList.add('hidden'); renderGuest(); return; }
   $('#guest-view').classList.add('hidden');
   $('#list-view').classList.remove('hidden');
+  { const ts0=$('#tag-slot'); if(ts0) ts0.innerHTML=''; }      // 🏷 글 분기에서만 다시 채움(phase292)
   if(st.cat!=='recent' && st.cat!=='home' && isA(st.cat)){ renderAlbumBoard(); return; }   // 📚 사진첩(phase288)
   if(st.cat==='__gal' || (st.cat!=='recent' && st.cat!=='home' && isG(st.cat))){
     $('#v-label').textContent = st.cat==='__gal' ? galNm() : st.cat.toUpperCase();
@@ -2120,7 +2123,15 @@ function renderList(){
   let items=st.posts;
   if(st.cat!=='recent') items=items.filter(p=>p.cat===st.cat);
   if(st.q) items=items.filter(p=>p.title.toLowerCase().includes(st.q));
-  const pin=(st.cat==='recent'&&!st.q)?items.find(p=>p.pinned):null;
+  const tset=[...new Set(items.flatMap(p=>p.tags||[]))].sort((a,b)=>a.localeCompare(b,'ko'));   // 🏷 이 목록의 태그(phase292)
+  if(st.tagF && !tset.includes(st.tagF)) st.tagF=null;
+  const tslot=$('#tag-slot');
+  if(tslot) tslot.innerHTML = tset.length
+    ? `<span class="btg ${!st.tagF?'on':''}" data-btg="">전체</span>`+tset.map(t=>`<span class="btg ${st.tagF===t?'on':''}" data-btg="${esc(t)}">${esc(t)}</span>`).join('')
+    : '';
+  if(tslot) tslot.querySelectorAll('[data-btg]').forEach(b3=>b3.onclick=()=>{ st.tagF=b3.dataset.btg||null; st.pg=1; renderList(); });
+  if(st.tagF) items=items.filter(p=>(p.tags||[]).includes(st.tagF));
+  const pin=(st.cat==='recent'&&!st.q&&!st.tagF)?items.find(p=>p.pinned):null;
   const rest=items.filter(p=>p!==pin);
   $('#v-label').textContent = st.cat==='recent'?'RECENT':st.cat.toUpperCase();
   $('#pin-slot').innerHTML = pin?`
@@ -2137,6 +2148,7 @@ function renderList(){
     <li class="row ${t?'has-th':''}" data-id="${p.id}">
       <span class="d">${esc((p.date||'').slice(5))}</span>
       <span class="t">${esc(p.title)} ${p.secret?'<span class="k">🔒</span>':''}${p.priv?'<span class="k" title="비공개 — 나만 보여요">🔏</span>':''}${canFt?`<button class="ft-star${p.feat?' on':''}" data-ft="${p.id}" title="★ 대표글 위젯에 전시 (다시 누르면 해제)">${p.feat?'★':'☆'}</button>`:''}</span>
+      ${(p.tags&&p.tags[0])?`<span class="rtg">${esc(p.tags[0])}${p.tags.length>1?' +'+(p.tags.length-1):''}</span>`:''}
       <span class="c">${esc(p.cat)}</span>
       <span class="k"></span>${t?`<img class="th" src="${t}" alt="" draggable="false">`:''}</li>`; };
   $('#rows').innerHTML = shown.length?shown.map(rowHTML).join('')
@@ -2586,6 +2598,16 @@ async function openPost(id, fromHome=false){
     (newer?`<span class="back" data-nav="${newer.id}" style="text-align:right">다음 — ${esc(newer.title)} ›</span>`:'<span></span>');
   document.querySelectorAll('#pv-nav [data-nav]').forEach(el=>el.onclick=()=>openPost(el.dataset.nav, st.backHome));
   window.scrollTo({top:0});
+  { const tg=(st.cur&&st.cur.tags)||[];                        // 🏷 글 하단 태그(phase292)
+    document.querySelectorAll('.pv-tags').forEach(x=>x.remove());
+    if(tg.length){
+      const el=document.createElement('div'); el.className='pv-tags';
+      el.innerHTML=tg.map(t=>`<span class="btg" data-pvt="${esc(t)}">${esc(t)}</span>`).join('');
+      $('#pv-body').insertAdjacentElement('afterend', el);
+      el.querySelectorAll('[data-pvt]').forEach(b4=>b4.onclick=()=>{
+        const tf=b4.dataset.pvt, c=st.cur.cat||'recent';
+        goBoard(c); st.tagF=tf; renderList(); });               // goBoard가 tagF를 리셋하므로 이후 지정
+    } }
   loadComments(id);
 }
 async function loadComments(pid){
@@ -4111,6 +4133,31 @@ function bindFmtBar(barSel, taId){
 document.addEventListener('pointerdown',e=>{                    // 바깥 클릭 시 서식 메뉴 닫기
   if(!e.target.closest('.fmt-wrap')) document.querySelectorAll('.fmt-wrap.open').forEach(x=>x.classList.remove('open'));
 });
+/* 🏷 글 태그 입력(phase292) — 쉼표/엔터 추가, IME 조합 가드 */
+let wTags=[];
+function renderWTags(){
+  const box=$('#w-tagbox'); if(!box) return;
+  box.querySelectorAll('.wtg').forEach(e2=>e2.remove());
+  const inp=$('#w-tagin');
+  wTags.forEach((t,i)=>{
+    const sp=document.createElement('span'); sp.className='wtg';
+    sp.innerHTML=esc(t)+'<i data-wtx="'+i+'" title="빼기">✕</i>';
+    box.insertBefore(sp,inp);
+  });
+  box.querySelectorAll('[data-wtx]').forEach(b2=>b2.onclick=()=>{ wTags.splice(+b2.dataset.wtx,1); renderWTags(); });
+  const dl=$('#w-tagdl'); if(dl) dl.innerHTML=allTags().filter(t=>!wTags.includes(t)).map(t=>`<option value="${esc(t)}">`).join('');
+}
+(()=>{
+  const inp=$('#w-tagin'); if(!inp) return;
+  const commit=()=>{ const v=inp.value.trim().replace(/,+$/,''); if(v&&!wTags.includes(v)&&wTags.length<12) wTags.push(v); inp.value=''; renderWTags(); };
+  inp.addEventListener('keydown',e2=>{
+    if(e2.isComposing) return;                                 // 한글 조합 중 Enter 오폭 방지
+    if(e2.key==='Enter'||e2.key===','){ e2.preventDefault(); commit(); }
+    else if(e2.key==='Backspace'&&!inp.value&&wTags.length){ wTags.pop(); renderWTags(); }
+  });
+  inp.addEventListener('change',()=>{ if(inp.value.trim()) commit(); });   // datalist 선택 확정
+  inp.addEventListener('blur',()=>{ if(inp.value.trim()) commit(); });
+})();
 bindFmtBar('#w-fmt');
 (()=>{                                                          // 미리보기 팝업(phase269c — 보고 닫고 수정)
   const btn=$('#w-prevtoggle');
@@ -4180,6 +4227,7 @@ const msg=t=>{
 let editPost=null, editGal=null;
 function clearWriteForm(){
   editPost=null;
+  wTags=[]; renderWTags();                                     // 🏷(phase292)
   ['w-title','w-pw','w-body'].forEach(i=>$('#'+i).value='');
   $('#w-secret').checked=false; $('#w-pin').checked=false; $('#w-priv').checked=false; $('#w-feat').checked=false; $('#w-pw').style.display='none';
   $('#w-cmt').checked=true; $('#w-html').checked=false; wImgs=[]; renderWImgs();
@@ -4193,6 +4241,7 @@ function startEditPost(){
   refreshWriteCats(); refreshGalCats();
   editPost=p.id;
   $('#w-title').value=p.title||'';
+  wTags=[...(p.tags||[])]; renderWTags();                      // 🏷(phase292)
   $('#w-cat').value=p.cat||'';
   const wde=$('#w-date'); if(wde&&p.date) wde.value=p.date.replaceAll('.','-');
   if(!p.secret && typeof p.raw==='string' && p.raw!==''){
@@ -4254,6 +4303,7 @@ $('#w-go').onclick=async()=>{
     const wdDot=wd?wd.replaceAll('-','.'):today();
     const data={ title, cat, date:wdDot,
       ts: wdDot===today()?serverTimestamp():new Date(+wd.slice(0,4), +wd.slice(5,7)-1, +wd.slice(8,10), 12, 0, 0),
+      tags: wTags.slice(0,12),                                 // 🏷 태그(phase292) — 안전 상한 12
       secret, pinned:pin, cmtOff,
       priv: $('#w-priv').checked,
       feat: $('#w-feat').checked,
