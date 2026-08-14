@@ -1950,6 +1950,7 @@ function updateBoardWrite(){
   const ok = st.mine && c!=='home' && c!=='__gb';
   b.classList.toggle('hidden', !ok);
   if(!ok) return;
+  b.textContent = isA(c) ? '＋ ADD' : '✎ WRITE';               // 사진첩 탭은 추가 버튼(phase288c)
   b.onclick=()=>{
     if(isMemo(st.cat)){ openMemoModal(st.cat); return; }   // 🗒 메모형은 팝업 작성(phase216)
     if(isA(st.cat)){ openAlbumModal(null, st.cat); return; }   // 📚 사진첩은 묶음 팝업(phase288)
@@ -2289,7 +2290,6 @@ function renderAlbumBoard(){
   if(open){ renderAlbumView(open); return; }
   st.abIdx=0;
   $('#rows').innerHTML =
-    (st.mine?`<p style="margin:0 0 12px"><button class="btn" id="ab-new" style="font-size:12px">＋ 새 묶음</button></p>`:'')+
     (list.length
       ? `<div class="ab-cards">`+list.map(a=>
           `<a class="ab-card" data-ab="${a.id}">
@@ -2297,8 +2297,7 @@ function renderAlbumBoard(){
             <span class="ab-tt">${a.priv?'🔏 ':''}${esc(a.title||'(제목 없음)')}</span>
             <span class="ab-n">${(a.imgs||[]).length}장</span>
           </a>`).join('')+`</div>`
-      : `<p class="pl-empty">아직 묶음이 없습니다.${st.mine?' ＋ 새 묶음으로 사진 뭉치를 올려보세요.':''}</p>`);
-  const nb=$('#ab-new'); if(nb) nb.onclick=()=>openAlbumModal(null, st.cat);
+      : `<p class="pl-empty">아직 폴더가 없습니다.${st.mine?' 오른쪽 위 ＋ ADD로 사진 뭉치를 올려보세요.':''}</p>`);
   document.querySelectorAll('[data-ab]').forEach(el=>el.onclick=()=>{
     st.albumOpen=el.dataset.ab; st.abIdx=0; renderAlbumBoard(); window.scrollTo({top:0}); });
 }
@@ -2329,10 +2328,10 @@ function renderAlbumView(a){
   $('#ab-back').onclick=()=>{ st.albumOpen=null; renderAlbumBoard(); };
   const ed=$('#ab-edit'); if(ed) ed.onclick=()=>openAlbumModal(a.id, a.cat);
   const dl=$('#ab-del'); if(dl) dl.onclick=async()=>{
-    if(!confirm(`'${a.title||'(제목 없음)'}' 묶음을 삭제할까요? 사진 ${imgs.length}장이 함께 지워져요.`)) return;
+    if(!confirm(`'${a.title||'(제목 없음)'}' 폴더를 삭제할까요? 사진 ${imgs.length}장이 함께 지워져요.`)) return;
     try{ await deleteDoc(doc(db,'pages',st.handle,'albums',a.id)); }
     catch(e){ msg('삭제 실패 — '+e.message); return; }
-    st.albums=st.albums.filter(x=>x.id!==a.id); st.albumOpen=null; renderAlbumBoard(); msg('묶음 삭제!'); };
+    st.albums=st.albums.filter(x=>x.id!==a.id); st.albumOpen=null; renderAlbumBoard(); msg('폴더 삭제!'); };
   const sp=$('#ab-sp'); if(sp) sp.onclick=()=>{ st.abIdx=Math.max(0,(st.abIdx||0)-1); renderAlbumBoard(); };
   const sn=$('#ab-sn'); if(sn) sn.onclick=()=>{ st.abIdx=Math.min(imgs.length-1,(st.abIdx||0)+1); renderAlbumBoard(); };
   document.querySelectorAll('#rows [data-abi]').forEach(im=>im.onclick=()=>lb(+im.dataset.abi));
@@ -2351,26 +2350,29 @@ function renderAlbumModal(){
   const ov=$('#ab-modal'); if(!ov||!abDraft) return;
   ov.innerHTML=`
    <div class="ab-mbox">
-    <p class="p-h" style="margin-top:0">${abDraft.id?'묶음 편집':'새 묶음'}</p>
-    <input id="abm-title" placeholder="묶음 제목" value="${esc(abDraft.title)}" style="width:100%">
-    <div class="p-row" style="margin-top:6px">
-      <select id="abm-cat" style="width:auto">${acats().map(c=>`<option ${c===abDraft.cat?'selected':''}>${esc(c)}</option>`).join('')}</select>
-      <select id="abm-view" style="width:auto">${Object.entries(AB_VIEWS).map(([k,l])=>`<option value="${k}" ${k===abDraft.view?'selected':''}>${l}</option>`).join('')}</select>
+    <p class="ab-mhead">📚 ${abDraft.id?'폴더 편집':'새 폴더'}</p>
+    <input id="abm-title" class="ab-mtitle" placeholder="폴더 제목" value="${esc(abDraft.title)}">
+    <div class="p-row" style="margin-top:10px;align-items:center">
+      <select id="abm-cat" style="width:auto;margin:0">${acats().map(c=>`<option ${c===abDraft.cat?'selected':''}>${esc(c)}</option>`).join('')}</select>
+      <select id="abm-view" style="width:auto;margin:0">${Object.entries(AB_VIEWS).map(([k,l])=>`<option value="${k}" ${k===abDraft.view?'selected':''}>${l}</option>`).join('')}</select>
       <label class="chk" style="margin:0;font-size:11px"><input type="checkbox" id="abm-priv" ${abDraft.priv?'checked':''}> 🔏 비공개</label>
+      <span class="note" style="margin:0 0 0 auto">${abDraft.imgs.length}장</span>
     </div>
-    <div class="p-row" style="margin-top:8px">
-      <label class="filelab" style="font-size:11px">＋ 사진 추가 (여러 장 선택 가능) <input type="file" id="abm-file" accept="image/*" multiple></label>
-      <span class="note" style="margin:0">${abDraft.imgs.length}장</span>
-    </div>
-    <div class="ab-mstrip">${abDraft.imgs.map((u,i)=>`
+    <div class="ab-mgrid">
+      ${abDraft.imgs.map((u,i)=>`
       <span class="ab-mth"><img src="${u}" alt="">
-        <i data-abx="${i}" title="빼기">✕</i>
-        <i data-abl="${i}" class="mv" title="앞으로" ${i===0?'style="opacity:.25;pointer-events:none"':''}>◀</i>
-        <i data-abr="${i}" class="mv r" title="뒤로" ${i===abDraft.imgs.length-1?'style="opacity:.25;pointer-events:none"':''}>▶</i>
-      </span>`).join('')}</div>
-    <div class="p-row" style="justify-content:flex-end;margin-top:10px">
+        <b class="no">${i+1}</b>
+        <i data-abx="${i}" title="이 사진 빼기">✕</i>
+        <span class="mvs">
+          <i data-abl="${i}" ${i===0?'class="off"':''} title="앞으로">◀</i>
+          <i data-abr="${i}" ${i===abDraft.imgs.length-1?'class="off"':''} title="뒤로">▶</i>
+        </span>
+      </span>`).join('')}
+      <label class="ab-drop">＋<em>사진 추가</em><em class="s">여러 장 한 번에</em><input type="file" id="abm-file" accept="image/*" multiple style="display:none"></label>
+    </div>
+    <div class="p-row" style="justify-content:flex-end;margin-top:14px">
       <button class="btn" id="abm-x">닫기</button>
-      <button class="btn" id="abm-go" style="font-weight:700">${abDraft.id?'저장':'발행'}</button>
+      <button class="btn" id="abm-go" style="font-weight:700">${abDraft.id?'저장':'만들기'}</button>
     </div>
    </div>`;
   $('#abm-title').oninput=e=>abDraft.title=e.target.value;
@@ -2404,8 +2406,9 @@ function renderAlbumModal(){
         const ref=await addDoc(collection(db,'pages',st.handle,'albums'), data);
         st.albums.unshift({id:ref.id, ...data}); }
     }catch(e){ msg((abDraft.id?'저장':'발행')+' 실패 — '+e.message); return; }
+    const wasEdit=!!abDraft.id;
     closeAlbumModal(); if(isA(st.cat)) renderAlbumBoard();
-    msg(abDraft.id?'묶음 저장!':'묶음 발행!');
+    msg(wasEdit?'폴더 저장!':'폴더를 만들었어요!');
   };
 }
 function closeAlbumModal(){ const ov=$('#ab-modal'); if(ov) ov.remove(); abDraft=null; }
