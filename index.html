@@ -1007,7 +1007,9 @@
   @media(max-width:720px){.row .rtg{display:none}}
   .wtagbox{display:flex;gap:6px;flex-wrap:wrap;align-items:center;border:1px solid var(--line);border-radius:10px;
     padding:7px 10px;margin-top:8px;font-size:12px}
-  .wtagbox input{flex:1;min-width:150px;background:none;border:none;outline:none;color:var(--ink);font-size:12px;margin:0;padding:2px}
+  #w-tagbox input{flex:1 1 120px;min-width:120px;width:auto!important;background:transparent!important;
+    border:none!important;box-shadow:none!important;border-radius:0!important;outline:none;
+    color:var(--ink);font-size:12px;margin:0!important;padding:2px!important}   /* 홈 커스텀 input 스킨 방어(293b) */
   .wtg{font-size:10.5px;padding:3px 9px;border-radius:20px;color:var(--pri);
     border:1px solid color-mix(in srgb, var(--pri) 45%, transparent)}
   .wtg i{font-style:normal;margin-left:5px;cursor:pointer;opacity:.7}
@@ -1036,6 +1038,8 @@
   .post blockquote{margin:14px 0;padding:8px 16px;border-left:3px solid var(--pri);
     background:color-mix(in srgb, var(--card) 55%, transparent);border-radius:0 9px 9px 0;color:var(--muted)}  /* ✎ 자리채움(disabled 버튼) — 버튼과 동일 박스로 열·높이 정렬(283b) */
   #w-fmt button, #mm-fmt button{white-space:nowrap}
+  #w-fmt, #mm-fmt{flex-wrap:wrap}                              /* 서식 버튼 많아짐 — 폰에선 줄바꿈(293b) */
+  #w-fmt .note, #mm-fmt .note{display:none}
   #w-prevtoggle.on{color:var(--pri);border-color:var(--pri)}
   #pv-body p.al-c, #w-prev p.al-c{text-align:center}
   #pv-body p.al-r, #w-prev p.al-r{text-align:right}
@@ -1808,7 +1812,7 @@
     <div id="w-tagpre"></div>
     <div class="p-row" style="align-items:center;gap:8px">
       <label style="font-size:11.5px;color:var(--muted);flex:none">📅 작성일</label>
-      <input type="date" id="w-date" style="width:auto;margin-bottom:0" title="옛 로그를 옮겨 적을 때 그 날짜로 발행할 수 있어요 — 목록도 그 날짜 자리에 정렬됩니다">
+      <input type="date" id="w-date" style="width:auto;max-width:170px;margin-bottom:0" title="옛 로그를 옮겨 적을 때 그 날짜로 발행할 수 있어요 — 목록도 그 날짜 자리에 정렬됩니다">
     </div>
     <div class="p-row">
       <select id="w-cat"></select>
@@ -2329,6 +2333,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=306"></script>
+<script type="module" src="./app.js?v=308"></script>
 </body>
 </html>

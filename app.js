@@ -774,7 +774,7 @@ function pinCard(){                              // 고정글 카드 — 단독 
   pd.onclick=()=>openFromHome(pin.id);
   return pd;
 }
-function latestBlock(box, n, withPin=true, catL=[]){
+function latestBlock(box, n, withPin=true, catL=[], icon='◈'){
   catL=(Array.isArray(catL)?catL:[catL]).filter(c=>c&&cats().includes(c));   // 복수 선택(phase241) — 삭제·개명분 자동 제외
   if(withPin && !catL.length){ const pc=pinCard(); if(pc) box.appendChild(pc); }
   const d=document.createElement('div'); d.className='side sw-latest';
@@ -782,7 +782,7 @@ function latestBlock(box, n, withPin=true, catL=[]){
   const lbl=catL.length ? ' · '+catL.map(c=>esc(c.toUpperCase())).join(' · ') : '';
   d.innerHTML=`<p class="label">LATEST${lbl}</p><div class="mini-rows">`+
     (arr.length?arr.map(p2=>`<a data-lid="${p2.id}">
-      <span class="dot">◈</span><span class="t">${esc(p2.title)}${p2.secret?' 🔒':''}${p2.priv?' 🔏':''}</span>
+      <span class="dot">${esc(icon||'◈')}</span><span class="t">${esc(p2.title)}${p2.secret?' 🔒':''}${p2.priv?' 🔏':''}</span>
       <span class="dt">${esc((p2.date||'').slice(5))}</span></a>`).join('')
     :'<p class="pl-empty">아직 글이 없습니다.</p>')+
     `</div>${catL.length===1?`<p class="cat-add" style="display:block" id="latest-more">${esc(catL[0])} 전체 →</p>`:(st.page.allOff?'':'<p class="cat-add" style="display:block" id="latest-more">전체 보기 →</p>')}`;
@@ -1269,7 +1269,7 @@ function renderSide(){
     }
     if(w.t==='latest'){
       if(!home) return;
-      const el=latestBlock(box, w.n, w.noPin!==true, w.cats||(w.cat?[w.cat]:[]));
+      const el=latestBlock(box, w.n, w.noPin!==true, w.cats||(w.cat?[w.cat]:[]), w.icon||'◈');
       el.dataset.wi=wi; bindDrag(el);
       return;
     }
@@ -3187,6 +3187,7 @@ function renderWidEdit(){
       <input type="number" id="we-ltn" value="${+w.n>0?+w.n:5}" min="1" max="20" style="width:80px">
       <span style="font-size:10.5px">(기본 5)</span>
     </div>
+    <input id="we-ltic" placeholder="앞머리 모양 (비우면 ◈ — 이모지·문자 가능, 예: ✦ ♥ 🌊)" value="${esc(w.icon||'')}" maxlength="4">
     <label class="chk" style="font-size:11.5px"><input type="checkbox" id="we-ltpin" ${w.noPin?'':'checked'}> 📌 고정글 함께 표시 — 끄면 최신글만 나와요 (고정글은 '📌 고정글' 위젯으로 따로 둘 수 있어요)</label>
     <div class="p-row" style="align-items:center;gap:10px;flex-wrap:wrap;font-size:11.5px;color:var(--muted)">
       보여줄 카테고리
@@ -3640,6 +3641,8 @@ function renderWidEdit(){
   const chmx=$('#we-chmax'); if(chmx) chmx.addEventListener('input',()=>{ const n=+chmx.value; if(n>0) w.maxH=n; else delete w.maxH; });
   const ltn=$('#we-ltn'); if(ltn) ltn.addEventListener('input',()=>{
     const n=+ltn.value; if(n>0) w.n=Math.min(n,20); else delete w.n; });
+  const ltic=$('#we-ltic'); if(ltic) ltic.addEventListener('input',()=>{
+    if(ltic.value.trim()) w.icon=ltic.value.trim(); else delete w.icon; });   // 최신글 앞머리(phase294) — 대표글과 동일 문법
   const ltp=$('#we-ltpin'); if(ltp) ltp.addEventListener('change',()=>{
     if(ltp.checked) delete w.noPin; else w.noPin=true; });
   document.querySelectorAll('[data-ltcat]').forEach(cb=>cb.addEventListener('change',()=>{
