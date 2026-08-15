@@ -31,6 +31,14 @@ const enc=new TextEncoder(), dec=new TextDecoder();
 /* 📄 성향글(phase296c) — 장은 이 숨김 카테고리로 저장되고 별도 페이지(info.html)에서만 보입니다 */
 const INFOCAT='__info';
 const infoSlugOf=()=>st.page?.infoSlug||'info';
+/* 성향글 페이지 주소(phase296d) — info.html은 '실제 파일'이라 항상 사이트 루트에 있다.
+   깔끔 주소 /핸들 은 404 라우터가 만들어내는 가상 경로일 뿐이라
+   /핸들/info.html 로 걸면 존재하지 않는 파일이 되어 라우터가 홈으로 되돌린다. */
+const infoHref=()=>{
+  const seg=location.pathname.split('/').filter(Boolean);
+  const base=location.hostname.endsWith('github.io') && seg.length ? '/'+seg[0]+'/' : '/';
+  return base+'info.html'+(SUB?'':'?u='+encodeURIComponent(st.handle||''));
+};
 
 if(!firebaseConfig.apiKey || firebaseConfig.apiKey.includes('여기에')){ show('view-setup'); throw new Error('cfg'); }
 const app=initializeApp(firebaseConfig), auth=getAuth(app), db=getFirestore(app), stg=getStorage(app);
@@ -350,7 +358,7 @@ function renderSeal(){
   { const si=$('#seal-info');                                  // 📄 성향글 페이지로(phase296c)
     const on = st.handle && (st.mine || (st.page && st.page.infoPub && (st.infoPosts||[]).length));
     if(si){ si.classList.toggle('hidden', !on);
-      if(on) si.href = (SUB? '' : '/'+st.handle) + '/info.html' + (SUB?'':'?u='+encodeURIComponent(st.handle)); } }
+      if(on) si.href = infoHref(); } }
   $('#seal-txt').textContent = st.myHandle ? 'LOVELOG · @'+st.myHandle.toUpperCase() : 'LOVELOG';
   const myBtn=$('#seal-my');
   if(myBtn){
