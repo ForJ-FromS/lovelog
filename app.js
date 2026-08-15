@@ -12,8 +12,6 @@ import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteField, runTransacti
 import { getStorage, ref as sref, uploadBytes, getDownloadURL }
   from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
 import { firebaseConfig } from './firebase-config.js';
-import { inlineFmt, spanFix, bodyCore, bodyHTML, htmlToText, scopePostCSS, cleanHTML, htmlNl }
-  from './fmt.js?v=312';                                       // 서식 변환 공유(phase296c)
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -28,17 +26,6 @@ const show = id => { document.body.classList.remove('reading');
   document.body.dataset.view = id;                              // 홈 부유물(펫·스티커·단말기) 표시 게이트(phase261)
   VIEWS.forEach(v=>$('#'+v).classList.toggle('hidden',v!==id)); };
 const enc=new TextEncoder(), dec=new TextDecoder();
-/* 📄 성향글(phase296c) — 장은 이 숨김 카테고리로 저장되고 별도 페이지(info.html)에서만 보입니다 */
-const INFOCAT='__info';
-const infoSlugOf=()=>st.page?.infoSlug||'info';
-/* 성향글 페이지 주소(phase296d) — info.html은 '실제 파일'이라 항상 사이트 루트에 있다.
-   깔끔 주소 /핸들 은 404 라우터가 만들어내는 가상 경로일 뿐이라
-   /핸들/info.html 로 걸면 존재하지 않는 파일이 되어 라우터가 홈으로 되돌린다. */
-const infoHref=()=>{
-  const seg=location.pathname.split('/').filter(Boolean);
-  const base=location.hostname.endsWith('github.io') && seg.length ? '/'+seg[0]+'/' : '/';
-  return base+'info.html'+(SUB?'':'?u='+encodeURIComponent(st.handle||''));
-};
 
 if(!firebaseConfig.apiKey || firebaseConfig.apiKey.includes('여기에')){ show('view-setup'); throw new Error('cfg'); }
 const app=initializeApp(firebaseConfig), auth=getAuth(app), db=getFirestore(app), stg=getStorage(app);
@@ -212,6 +199,110 @@ function dday(dstr){ const d=new Date(dstr+'T00:00:00'), n=new Date(); n.setHour
   const f=Math.round((n-d)/86400000); return f>=0?'D+'+(f+1):'D'+f; }
 const today=()=>{ const d=new Date();
   return d.getFullYear()+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+String(d.getDate()).padStart(2,'0'); };
+/* 다이어리 서식 — **굵게** *기울임* __밑줄__ ~~취소선~~ ==형광== */
+const inlineFmt=s=>s
+  .replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>')          /* 줄바꿈에 걸친 굵게 허용(phase211) */
+  .replace(/\*([^*]+)\*/g,'<i>$1</i>')               /* 기울임도 줄바꿈 허용(phase267 — 문단 경계는 자연 차단) */
+  .replace(/__([^_]+)__/g,'<u>$1</u>')
+  .replace(/~~([^~]+)~~/g,'<s>$1</s>')
+  .replace(/==([^=]+)==/g,'<mark>$1</mark>')
+  .replace(/\{\{(\d{2}):([^}]+)\}\}/g,(m,n,x)=>{ n=Math.min(44,Math.max(10,+n));   /* {{18:크게}} 글자 크기(phase265) */
+    return `<span style="font-size:${n}px">${x}</span>`; })
+  .replace(/\{\{(#(?:[0-9a-fA-F]{3}){1,2}):([^}]+)\}\}/g,'<span style="color:$1">$2</span>')   /* {{#f00:빨강}} */
+  .replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)/g,'<a class="ext-link" href="$2" target="_blank" rel="noopener">$1</a>');   /* [글자](주소) 링크(phase286) */
+const spanFix=t=>{                                             // 문단 넘는 **·__·~~·== 쌍 재분배(phase269d)
+  [['\\*\\*','**'],['__','__'],['~~','~~'],['==','==']].forEach(([re,mk])=>{
+    t=t.replace(new RegExp(re+'([\\s\\S]*?)'+re,'g'), (m,inner)=>
+      inner.includes('\n\n')
+        ? inner.split(/\n{2,}/).map(seg=>seg.trim()?mk+seg+mk:seg).join('\n\n')
+        : m);
+  });
+  return t;
+};
+const bodyCore=t=>t.split(/\n{2,}/).map(p=>{
+  const raw0=p.trim();
+  const yt=raw0.match(/^https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?\S*v=|youtu\.be\/)([\w-]{11})\S*$/);
+  if(yt) return `<div class="yt-wrap"><iframe src="https://www.youtube.com/embed/${yt[1]}" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`;   /* 유튜브 단독 줄 = 재생 카드(phase269) */
+  if(/^https?:\/\/\S+$/.test(raw0))
+    return `<p class="al-c"><a class="ext-link" href="${esc(raw0)}" target="_blank" rel="noopener">🔗 ${esc(raw0.replace(/^https?:\/\//,'').slice(0,44))}${raw0.length>52?'…':''}</a></p>`;   /* 단독 URL = 링크 알약 */
+  if(/^(-{3,}|―{3,})$/.test(raw0)) return '<hr>';                     /* 구분선 5종(phase266) */
+  if(/^={3,}$/.test(raw0)) return '<hr class="hr-b">';
+  if(/^\.{3,}$/.test(raw0)) return '<hr class="hr-dot">';
+  if(/^~{3,}$/.test(raw0)) return '<hr class="hr-zz">';
+  if(/^\*{3,}$/.test(raw0)) return '<hr class="hr-dia">';
+  const lines=raw0.split('\n');
+  if(lines.length && lines.every(l=>/^\d+[.)]\s/.test(l)))            /* 전 줄이 1. 이면 순서 목록 */
+    return '<ol>'+lines.map(l=>'<li>'+inlineFmt(esc(l.replace(/^\d+[.)]\s/,'')))+'</li>').join('')+'</ol>';
+  if(lines.length && lines.every(l=>/^[-•]\s/.test(l)))               /* 전 줄이 - 또는 • 면 점 목록 */
+    return '<ul>'+lines.map(l=>'<li>'+inlineFmt(esc(l.replace(/^[-•]\s/,'')))+'</li>').join('')+'</ul>';
+  if(lines.length && lines.every(l=>/^>\s?/.test(l)))                 /* 전 줄이 > 면 인용 상자(phase286) */
+    return '<blockquote>'+lines.map(l=>inlineFmt(esc(l.replace(/^>\s?/,'')))).join('<br>')+'</blockquote>';
+  let cls='', body=p;
+  const m=body.match(/^((?:\*\*|__|~~|==)*)@([crji])\s/);
+  if(m){ cls={c:' class="al-c"',r:' class="al-r"',j:' class="al-j"',i:' class="ind"'}[m[2]];
+    body=m[1]+body.slice(m[0].length); }                       /* **@c 글** 도 인식(phase269d) */                                    /* @c 가운데 @r 오른쪽 @j 양쪽 @i 들여쓰기 */
+  return `<p${cls||''}>`+inlineFmt(esc(body)).replace(/\n/g,'<br>')+'</p>';
+}).join('');
+/* [접기:제목] ~ [/접기] — 눌러서 펼치는 접은 글(phase285). 문단 분해 전에 블록을 뽑아 재귀 처리 */
+const bodyHTML=t=>{
+  t=spanFix(t);
+  const folds=[];
+  t=t.replace(/^\[접기(?::([^\]\n]*))?\]\s*\n([\s\S]*?)\n?\[\/접기\]\s*$/gm,(m,tt,inner)=>{
+    folds.push({tt:(tt||'').trim(),inner}); return '\n\n\u0001FOLD'+(folds.length-1)+'\u0001\n\n'; });
+  let html=bodyCore(t);
+  html=html.replace(/<p[^>]*>\u0001FOLD(\d+)\u0001<\/p>|\u0001FOLD(\d+)\u0001/g,(m,a,b)=>{
+    const f=folds[+(a??b)];
+    return `<details class="fold"><summary>${inlineFmt(esc(f.tt||'펼쳐 보기'))}</summary><div class="fold-in">${bodyCore(f.inner)}</div></details>`; });
+  return html;
+};
+const htmlToText=h=>String(h||'')
+  .replace(/<br\s*\/?>/gi,'\n')
+  .replace(/<\/p>\s*<p[^>]*>/gi,'\n\n')
+  .replace(/<\/?p[^>]*>/gi,'')
+  .replace(/<img[^>]*>/gi,'')
+  .replace(/<[^>]+>/g,'')
+  .replace(/&nbsp;/g,' ').replace(/&lt;/g,'<').replace(/&gt;/g,'>')
+  .replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&amp;/g,'&')
+  .trim();
+/* 글 속 <style>이 홈 전체를 물들이지 않게 — 셀렉터를 #pv-body 스코프로 */
+function scopePostCSS(html){
+  if(!/<style/i.test(html)) return html;
+  const SC='#pv-body';
+  const scopeSel=sel=>sel.split(',').map(s=>{
+    s=s.trim(); if(!s) return '';
+    if(/^(body|html|:root)$/i.test(s)) return SC;
+    if(s==='*') return SC+' *';
+    return SC+' '+s.replace(/^(body|html|:root)\s+/i,'');
+  }).filter(Boolean).join(', ');
+  const scopeRules=block=>block.replace(/([^{}@]+)(\{[^{}]*\})/g,
+    (m,sel,body)=> scopeSel(sel)+body );
+  return html.replace(/(<style[^>]*>)([\s\S]*?)(<\/style\s*>)/gi,(m,o,css,c)=>{
+    let out='', pos=0, re=/@media[^{]+\{((?:[^{}]*\{[^{}]*\})*)\s*\}/g, am;
+    while((am=re.exec(css))){
+      out+=scopeRules(css.slice(pos,am.index));
+      out+=css.slice(am.index, css.indexOf('{',am.index)+1)+scopeRules(am[1])+'}';
+      pos=am.index+am[0].length;
+    }
+    out+=scopeRules(css.slice(pos));
+    return o+out+c;
+  });
+}
+const cleanHTML=h=>h
+  .replace(/<script[\s\S]*?<\/script\s*>/gi,'')
+  .replace(/\son\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi,'')
+  .replace(/javascript:/gi,'');
+/* HTML 글의 '태그 바깥 텍스트' 줄바꿈 살리기(phase280):
+   본문 첫 블록 태그 이전(머리말)·마지막 '>' 이후(맺음말)의 개행만 <br>로 —
+   태그 내부·CSS는 일절 안 건드림. <br> 뒤 개행은 이중 줄바꿈 방지로 보존. */
+const htmlNl=t=>{
+  const nl=x=>x.replace(/(<br\s*\/?>)?\r?\n/gi,(m,br)=>br?br+'\n':'<br>\n');
+  const i=t.search(/<(?:!doctype|html|head|style|link|script|div|section|article|table|main|center|iframe|figure|ul|ol|blockquote|p|img|h[1-6])\b/i);
+  if(i<0) return nl(t);                       // 블록 태그가 아예 없으면 전체 변환
+  let lead=nl(t.slice(0,i)), rest=t.slice(i);
+  const g=rest.lastIndexOf('>');
+  if(g>-1 && g<rest.length-1) rest=rest.slice(0,g+1)+nl(rest.slice(g+1));
+  return lead+rest;
+};
 const htmlText=h=>{ const d2=document.createElement('div');
   d2.innerHTML=String(h).replace(/<br\s*\/?>/gi,'\n').replace(/<\/p>/gi,'\n\n');
   return d2.textContent.replace(/\n{3,}/g,'\n\n').trim(); };
@@ -355,10 +446,6 @@ async function openHomes(){
 $('#homes-x').onclick=()=>$('#homes').classList.remove('show');
 $('#homes').onclick=e=>{ if(e.target.id==='homes') $('#homes').classList.remove('show'); };
 function renderSeal(){
-  { const si=$('#seal-info');                                  // 📄 성향글 페이지로(phase296c)
-    const on = st.handle && (st.mine || (st.page && st.page.infoPub && (st.infoPosts||[]).length));
-    if(si){ si.classList.toggle('hidden', !on);
-      if(on) si.href = infoHref(); } }
   $('#seal-txt').textContent = st.myHandle ? 'LOVELOG · @'+st.myHandle.toUpperCase() : 'LOVELOG';
   const myBtn=$('#seal-my');
   if(myBtn){
@@ -438,7 +525,6 @@ async function enterPage(){
   $('#pg-name').style.color = p.titleColor||'';
   $('#pg-sub').textContent=p.sub||'';
   $('#pg-over').textContent='@'+h.toUpperCase();
-  renderSeal();                                                // 📄 INFO 탭 — st.page 확정 후 다시(phase296c)
   $('#gb-title').textContent=gbNm(); $('#strip-title').textContent=galNm();
   if(st.mine) admInqBadge();
   checkUpdNotice(); checkMutualMemo();
@@ -585,9 +671,6 @@ async function loadContent(){
     return [];
   };
   st.posts=take(ps,'posts');
-  st.infoPosts=st.posts.filter(p=>p.cat===INFOCAT);            // 📄 성향글 장(phase296c) — 별도 페이지 info.html의 내용
-  st.posts=st.posts.filter(p=>p.cat!==INFOCAT);                // 홈 목록·최신글·검색·태그·★·📌 어디에도 안 섞임
-  if(!st.mine) st.infoPosts=st.infoPosts.filter(p=>!p.priv);
   /* 진단: 고정글의 저장된 플래그를 필터 '이전' 원본으로 출력 — 로그인/로그아웃 비교용 */
   const pins=st.posts.filter(p=>p.pinned);
   if(pins.length) console.log('[lovelog] pinned('+(st.mine?'주인':'방문자')+'):',
@@ -4316,7 +4399,7 @@ $('#w-go').onclick=async()=>{
     }
     const d0=wd?new Date(+wd.slice(0,4),+wd.slice(5,7)-1,+wd.slice(8,10)):new Date(), pad=n=>String(n).padStart(2,'0');
     const base=String(d0.getFullYear()).slice(2)+pad(d0.getMonth()+1)+pad(d0.getDate());
-    const used=new Set([...st.posts, ...(st.infoPosts||[])].map(p=>p.id));   // 📄 장 ID도 충돌 방지(phase296c)
+    const used=new Set(st.posts.map(p=>p.id));
     let nid='', n=1;
     do{ nid=base+'-'+n.toString(36); n++; }while(used.has(nid)&&n<400);
     await setDoc(doc(db,'pages',st.handle,'posts',nid),data);
@@ -5501,8 +5584,7 @@ function buildBackup(withDeco, withPosts){
   const data={ exported:new Date().toISOString(), service:'lovelog', handle:st.handle,
     home:{ name:st.page.name||'', sub:st.page.sub||'' } };
   if(withDeco) data.deco=decoSnap();
-  if(withPosts){ data.posts=[...st.posts, ...(st.infoPosts||[])];   // 📄 성향글 장도 백업(phase296c)
-    data.gallery=st.gallery; data.guest=st.guest; data.albums=st.albums||[]; }
+  if(withPosts){ data.posts=st.posts; data.gallery=st.gallery; data.guest=st.guest; data.albums=st.albums||[]; }
   return data;
 }
 $('#s-exp-json').onclick=()=>{
