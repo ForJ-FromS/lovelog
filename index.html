@@ -1498,41 +1498,6 @@
   #catbar a.pillimg.on{outline:2px solid var(--pri);outline-offset:2px}
   #catbar a.pillimg:hover{background:none}
   .strip-sec.hidden{display:none}
-  /* 📄 성향글(장 넘김) — phase296 */
-  .info-wrap{max-width:720px;margin:0 auto}
-  .info-ch{position:relative;padding:2px 0 6px}
-  .ich-own{position:absolute;top:0;right:0;display:flex;gap:9px;z-index:2}
-  .ich-own i{cursor:pointer;font-style:normal;font-size:12px;color:var(--muted)}
-  .ich-own i.off{opacity:.22;pointer-events:none}
-  .ich-t{font-size:19px;letter-spacing:.01em;margin:0 0 15px;padding-right:64px}
-  .ich-b{line-height:1.95;font-size:14px;color:var(--body)}
-  .ich-b img{max-width:100%}
-  .inf-nav{display:flex;justify-content:center;align-items:center;gap:9px;margin:30px 0 4px;flex-wrap:wrap}
-  .inf-nav .ina{cursor:pointer;font-size:16px;line-height:1.4;padding:3px 14px;border:1px solid var(--line);border-radius:999px;color:var(--body)}
-  .inf-nav .ina.off{opacity:.22;pointer-events:none}
-  .inf-nav .inc{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;color:var(--muted);min-width:52px;text-align:center}
-  .inf-nav .inp{cursor:pointer;font-size:12px;padding:5px 13px;border:1px solid var(--line);border-radius:999px;color:var(--muted)}
-  .inf-nav .inp.on{color:var(--pri);border-color:var(--pri)}
-  .inf-nav .ind{cursor:pointer;width:8px;height:8px;border-radius:50%;background:var(--line)}
-  .inf-nav .ind.on{background:var(--pri)}
-  /* 전용 주소 — 껍데기 없는 성향글 화면(phase296) */
-  /* 헤더·배경·스티커·펫·BGM은 성향글 공간에서도 그대로 살린다 — 홈 구조물만 걷는다 */
-  body.bare #catbar,body.bare #home-grid,body.bare #aside,
-  body.bare .strip-sec,body.bare #btn-edit,body.bare #pager,body.bare #tag-slot,
-  body.bare #pin-slot,body.bare #more-btn,body.bare #list-view .sec-head{display:none!important}
-  body.bare .cols{display:block;margin-top:0}
-  body.bare #board{padding-top:34px}
-  @media(max-width:760px){ body.bare #board{padding-top:22px} }
-  .inf-own-bar{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;
-    margin:34px 0 0;padding:16px 4px 4px;border-top:1px dashed var(--line)}
-  .inf-own-bar button{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;
-    cursor:pointer;background:none;color:var(--muted);border:1px solid var(--line);
-    border-radius:999px;padding:6px 13px}
-  .inf-own-bar button:hover{color:var(--pri);border-color:var(--pri)}
-  .inf-own-bar .note{width:100%;text-align:center;margin:8px 0 0}
-  #panel-scope{background:hsl(var(--h) calc(38% * var(--sf,1)) 18%);color:var(--ink);
-    border:1px solid var(--pri);border-radius:9px;padding:9px 12px;margin-bottom:12px;font-size:12px}
-  .tabs button.hidden{display:none}
   .cmt-closed{border:1px dashed var(--line);border-radius:10px;padding:14px;
     text-align:center;font-size:12px;color:var(--muted)}
   .cmt-toggle{cursor:pointer;font-size:10px;color:var(--muted);margin-left:10px}
@@ -1590,7 +1555,7 @@
 
 <div id="bgphoto"></div>
 <div id="bgm-dock" class="hidden"><div id="bgm-dock-fr"></div><button id="bgm-dock-x" title="재생 종료">✕</button></div>
-<div class="seal"><span id="seal-txt">LOVELOG</span><a id="seal-info" class="hidden" style="cursor:pointer"></a><a id="seal-mut" class="hidden" title="이웃 전용 메모" style="cursor:pointer">🔒</a><a id="seal-my" class="hidden" title="내 홈으로 돌아가기" style="cursor:pointer">MY ⌂</a><a href="/guide.html" style="text-decoration:none;color:inherit">GUIDE</a><a id="seal-auth"></a></div>
+<div class="seal"><span id="seal-txt">LOVELOG</span><a id="seal-info" class="hidden" style="text-decoration:none;color:inherit">INFO</a><a id="seal-mut" class="hidden" title="이웃 전용 메모" style="cursor:pointer">🔒</a><a id="seal-my" class="hidden" title="내 홈으로 돌아가기" style="cursor:pointer">MY ⌂</a><a href="/guide.html" style="text-decoration:none;color:inherit">GUIDE</a><a id="seal-auth"></a></div>
 <div id="homes"><div class="homes-box">
   <p class="p-h" style="margin:0 0 12px">◈ HOMES — 공개된 러브로그</p>
   <button id="homes-x" class="rmv" style="position:absolute;top:14px;right:16px">✕</button>
@@ -1837,7 +1802,6 @@
     <button data-tab="mng">관리</button>
     <button data-tab="adm" id="tab-adm">운영</button>
   </div>
-  <p id="panel-scope" class="hidden"></p>
 
   <div class="p-panes">
 
@@ -1973,7 +1937,6 @@
   </div>
 
   <div class="pane hidden" data-pane="set">
-    <div id="info-addr" class="hidden"></div>
     <p class="p-h">기본 정보</p>
     <input id="s-name" placeholder="홈 이름">
     <input id="s-sub" placeholder="부제 (선택)">
@@ -2370,6 +2333,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=311"></script>
+<script type="module" src="./app.js?v=312"></script>
 </body>
 </html>
