@@ -347,7 +347,7 @@ function renderStickers(){
         d.removeEventListener('pointermove',move);
         d.removeEventListener('pointerup',up);
         d.removeEventListener('pointercancel',up);
-        try{ await updateDoc(doc(db,'pages',st.handle),{stickers:arr}); }
+        try{ await pgUpd({stickers:arr}); }
         catch(e){ msg('스티커 위치 저장 실패 — '+e.message); }
       };
       d.addEventListener('pointermove',move);
@@ -358,7 +358,7 @@ function renderStickers(){
 }
 const stkOptSave=async patch=>{                        // 스티커 표시 옵션 즉시 저장(phase284b — 스티커 탭 관례)
   Object.assign(st.page,patch);
-  try{ await updateDoc(doc(db,'pages',st.handle),patch); }
+  try{ await pgUpd(patch); }
   catch(e){ msg('⚠ 설정 저장 실패 — 새로고침하면 되돌아가요. ('+e.message+')'); }
   renderStkList(); };
 $('#s-stkoff')?.addEventListener('change',e=>{ stkOptSave({stkOff:!e.target.checked}); renderStickers(); });
@@ -394,7 +394,7 @@ function renderStkList(){
       <button class="rmv" data-sx="${i}">✕</button>
     </div>`).reverse().join('')
     :'<p class="pl-empty">아직 스티커가 없어요.</p>');
-  const save=async()=>{ try{ await updateDoc(doc(db,'pages',st.handle),{stickers:st.page.stickers}); }
+  const save=async()=>{ try{ await pgUpd({stickers:st.page.stickers}); }
     catch(e){ msg('⚠ 스티커 저장 실패 — 새로고침하면 되돌아가요. ('+e.message+')'); } };
   box.querySelectorAll('[data-ss]').forEach(r=>r.addEventListener('input',()=>{
     st.page.stickers[+r.dataset.ss].size=+r.value; renderStickers(); }));
@@ -446,6 +446,15 @@ async function openHomes(){
 $('#homes-x').onclick=()=>$('#homes').classList.remove('show');
 $('#homes').onclick=e=>{ if(e.target.id==='homes') $('#homes').classList.remove('show'); };
 function renderSeal(){
+  { const si=$('#seal-info');                                  // 📄 성향글 탭(phase296b)
+    if(si){
+      if(st.bare){ si.textContent='‹ 홈으로'; si.classList.remove('hidden');
+        si.onclick=()=>{ location.href=urlFor(st.handle); }; }
+      else if(st.handle && (st.mine || (st.page && st.page.infoPub && infoOn()))){
+        si.textContent='INFO'; si.classList.remove('hidden');
+        si.onclick=()=>{ location.href=urlFor(st.handle, infoSlugOf()); }; }
+      else si.classList.add('hidden');
+    } }
   $('#seal-txt').textContent = st.myHandle ? 'LOVELOG · @'+st.myHandle.toUpperCase() : 'LOVELOG';
   const myBtn=$('#seal-my');
   if(myBtn){
@@ -479,6 +488,12 @@ async function loadPage(handle){
     show('view-page');
     $('#pg-name').textContent='없는 페이지예요'; $('#pg-sub').textContent='@'+handle; return; }
   st.page=snap.data(); st._mutual=undefined;
+  st.bare = !!(st.deepPost && st.deepPost===(st.page.infoSlug||'info'));   // 📄 성향글 주소(phase296b)
+  if(st.bare){
+    st.deepPost=null;                                            // 글ID가 아니므로 딥링크로 소비하지 않음
+    st.page={...st.page, ...(st.page.info||{})};                 // 성향글 꾸미기를 홈 설정 위에 덮어 기존 렌더 재사용
+    st.page.side=[]; st.page.noLatest=true;                      // 위젯 기둥은 성향글에 없음
+  }
   await resolveImgs(st.page);
   st.mine = st.me && st.page.owner===st.me.uid;
   applyColor(st.page.hue ?? 222, st.page.sat, st.page.lum);
@@ -526,6 +541,7 @@ async function enterPage(){
   $('#pg-sub').textContent=p.sub||'';
   $('#pg-over').textContent='@'+h.toUpperCase();
   $('#gb-title').textContent=gbNm(); $('#strip-title').textContent=galNm();
+  renderSeal();                                                // 📄 INFO 탭 — st.page 확정 후 다시(phase296b)
   if(st.mine) admInqBadge();
   checkUpdNotice(); checkMutualMemo();
   const hs=heroObjs();
@@ -655,6 +671,7 @@ async function enterPage(){
   // 딥링크 — loadPage에서 보관해둔 글ID를 1회 소비
   const pm=st.deepPost; st.deepPost=null;
   if(pm){ st.cat='recent'; applyView(); renderWidgets(); renderList(); openPost(pm, true); }   // 링크 진입 글도 BACK=홈
+  if(st.bare) applyBare();                                       // 📄 성향글 전용 주소(phase296)
 }
 async function loadContent(){
   /* 컬렉션별 격리: 예전엔 Promise.all이라 셋 중 하나만 규칙 오류가 나도
@@ -671,6 +688,9 @@ async function loadContent(){
     return [];
   };
   st.posts=take(ps,'posts');
+  st.infoPosts=st.posts.filter(p=>p.cat===INFOCAT);            // 📄 성향글 장은 홈에서 완전히 분리(phase296b)
+  st.posts=st.posts.filter(p=>p.cat!==INFOCAT);                // — 최신글·ALL·검색·태그·★·📌 어디에도 안 잡힘
+  if(!st.mine) st.infoPosts=st.infoPosts.filter(p=>!p.priv);
   /* 진단: 고정글의 저장된 플래그를 필터 '이전' 원본으로 출력 — 로그인/로그아웃 비교용 */
   const pins=st.posts.filter(p=>p.pinned);
   if(pins.length) console.log('[lovelog] pinned('+(st.mine?'주인':'방문자')+'):',
@@ -737,6 +757,19 @@ function gcats(){ return st.page.gcats||[]; }
 const isG=c=>gcats().includes(c);
 function acats(){ return st.page.acats||[]; }               // 사진첩(묶음) 카테고리(phase288)
 const isA=c=>acats().includes(c);
+/* 📄 성향글 공간(phase296b) — 카테고리가 아니라 홈 옆의 독립 페이지.
+   장은 숨김 카테고리 __info로 저장하고 loadContent에서 st.posts와 분리한다(홈 누수 원천 차단). */
+const INFOCAT='__info';
+const infoSlugOf=()=>st.page.infoSlug||'info';
+const infoOn=()=>!!(st.page.info || (st.infoPosts||[]).length);       // 한 번이라도 쓴 홈에만 INFO 탭
+function infoNav(){ const v=(st.page.info||{}).nav;
+  return ['arrow','pill','dot'].includes(v)?v:'arrow'; }
+function infoChapters(){                                    // 장 목록 — ord 순, 없으면 날짜 순(비밀 장은 제외)
+  return (st.infoPosts||[]).filter(p=>!p.secret && (st.mine||!p.priv))
+    .slice().sort((a,b)=>((a.ord??1e9)-(b.ord??1e9)) || String(a.date||'').localeCompare(String(b.date||''))); }
+/* 성향글 공간에서의 저장은 전부 page.info 아래로 — 홈 설정을 덮어쓰지 않게 하는 단일 관문 */
+const pgUpd=obj=>updateDoc(doc(db,'pages',st.handle),
+  st.bare ? Object.fromEntries(Object.entries(obj).map(([k,v])=>['info.'+k, v])) : obj);
 function mcats(){ return st.page.mcats||[]; }
 const isMemo=c=>mcats().includes(c);
 function navSeq(){                                   // 상단 탭 순서(카테고리+갤러리+방명록, phase217)
@@ -958,7 +991,7 @@ function goHome(){
 function goBoard(cat){
   if(cat==='__gb' && st.page.gbOff){ msg('방명록이 잠시 닫혀 있어요.'); return; }
   if(cat==='recent' && st.page.allOff){ msg('전체 글 보기가 꺼져 있어요.'); return; }
-  if(st.cat!==cat) st.tagF=null;                              // 🏷 카테고리 이동 시 태그 필터 해제(phase292)
+  if(st.cat!==cat){ st.tagF=null; st.infoIx=0; }               // 🏷 태그 필터·성향글 장 인덱스 리셋(phase292·296)
   st.cat=cat||'recent'; st.pg=1; applyView(); renderWidgets(); renderList(); backToList(); renderCatbar(); }
 const allTags=()=>[...new Set(st.posts.flatMap(p=>p.tags||[]))].sort((a,b)=>a.localeCompare(b,'ko'));   // 🏷(phase292)
 function catStyle(){
@@ -2062,6 +2095,7 @@ $('#mm-go').onclick=async()=>{
   if(!$('#w-title').value) closeMemoModal();               // 발행 성공 시 폼이 비워짐 — 실패면 팝업 유지
 };
 function renderList(){
+  if(st.bare){ renderInfoBoard(); return; }                  // 📄 성향글 공간은 목록 화면을 쓰지 않음(phase296b)
   updateBoardWrite();
   if(st.cat==='__gb'){ $('#guest-view').classList.remove('hidden');
     $('#list-view').classList.add('hidden'); renderGuest(); return; }
@@ -2069,6 +2103,7 @@ function renderList(){
   $('#list-view').classList.remove('hidden');
   { const ts0=$('#tag-slot'); if(ts0) ts0.innerHTML=''; }      // 🏷 글 분기에서만 다시 채움(phase292)
   if(st.cat!=='recent' && st.cat!=='home' && isA(st.cat)){ renderAlbumBoard(); return; }   // 📚 사진첩(phase288)
+
   if(st.cat==='__gal' || (st.cat!=='recent' && st.cat!=='home' && isG(st.cat))){
     $('#v-label').textContent = st.cat==='__gal' ? galNm() : st.cat.toUpperCase();
     $('#pin-slot').innerHTML='';
@@ -2312,6 +2347,147 @@ function abDate(a){                                          // 'YYYY.MM.DD' —
   try{ const d=a.ts?.toDate?a.ts.toDate():(a.ts?new Date(a.ts.seconds?a.ts.seconds*1000:a.ts):null);
     return d?d.getFullYear()+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+String(d.getDate()).padStart(2,'0'):''; }
   catch(e){ return ''; } }
+/* ── 📄 성향글 공간 — phase296b ────────────────────────────────
+   홈이 아니라 전용 주소({핸들}.luvlog.me/{슬러그})에서 열리는 독립 페이지.
+   꾸미기는 page.info 아래에 홈과 같은 필드 이름으로 저장하고, 열 때 st.page 위에 덮어
+   기존 렌더(헤더·배경·스티커·BGM·커서·대문)를 그대로 재사용한다. */
+function renderInfoBoard(){
+  const ch=infoChapters();
+  $('#pin-slot').innerHTML='';
+  $('#more-btn').style.display='none';
+  { const pg=$('#pager'); if(pg) pg.innerHTML=''; }
+  const ownBar = st.mine ? `<div class="inf-own-bar">
+      <button data-iadd="1">＋ 새 장</button>
+      <button data-ideco="1">🎨 이 공간 꾸미기</button>
+      <button data-icopy="1">🔗 링크 복사</button>
+      <p class="note">주인에게만 보이는 줄이에요 — 방문자에겐 글과 넘김 버튼만 보여요.</p>
+    </div>` : '';
+  if(!ch.length){
+    $('#rows').innerHTML=`<div class="info-wrap"><p class="pl-empty">${st.mine
+      ?'아직 장이 없어요 — [＋ 새 장]으로 첫 장을 써보세요.':'아직 성향글이 없습니다.'}</p>${ownBar}</div>`;
+    bindInfoOwn(ch); return;
+  }
+  const ix=Math.min(Math.max(0, st.infoIx||0), ch.length-1);
+  st.infoIx=ix;
+  const p=ch[ix];
+  let body=p.body||'';
+  if(p.html) body=htmlNl(body);
+  const nv=infoNav();
+  const navHTML = nv==='pill'
+    ? `<div class="inf-nav pill">${ch.map((x,i)=>`<span class="inp${i===ix?' on':''}" data-inx="${i}">${esc(x.title||('장 '+(i+1)))}</span>`).join('')}</div>`
+    : nv==='dot'
+    ? `<div class="inf-nav dot">${ch.map((x,i)=>`<span class="ind${i===ix?' on':''}" data-inx="${i}" title="${esc(x.title||'')}"></span>`).join('')}</div>`
+    : `<div class="inf-nav arrow"><span class="ina${ix<=0?' off':''}" data-inx="${ix-1}">‹</span>`
+      +`<span class="inc">${ix+1} / ${ch.length}</span>`
+      +`<span class="ina${ix>=ch.length-1?' off':''}" data-inx="${ix+1}">›</span></div>`;
+  $('#rows').innerHTML = `<div class="info-wrap">
+    <article class="info-ch">
+      ${st.mine?`<div class="ich-own"><i data-ine="1" title="이 장 고치기">✎</i>`
+        +`<i data-inm="-1" class="${ix<=0?'off':''}" title="앞으로 보내기">↑</i>`
+        +`<i data-inm="1" class="${ix>=ch.length-1?'off':''}" title="뒤로 보내기">↓</i>`
+        +`<i data-indel="1" title="이 장 지우기">🗑</i></div>`:''}
+      ${p.title?`<h3 class="ich-t">${esc(p.title)}${p.priv?' <span class="k" title="비공개 — 나만 보여요">🔏</span>':''}</h3>`:''}
+      <div class="ich-b">${scopePostCSS(body)}</div>
+    </article>
+    ${navHTML}${ownBar}</div>`;
+  $('#rows').querySelectorAll('[data-inx]').forEach(el=>{
+    if(el.classList.contains('off')) return;
+    el.onclick=()=>{ const j=+el.dataset.inx;
+      if(j<0||j>=ch.length||j===ix) return;
+      st.infoIx=j; renderInfoBoard(); window.scrollTo({top:0,behavior:'smooth'}); };
+  });
+  const ie=$('#rows').querySelector('[data-ine]');
+  if(ie) ie.onclick=()=>{ st.cur=p; st.curBody=body; st.curRaw=null; startEditPost(); };
+  const idel=$('#rows').querySelector('[data-indel]');
+  if(idel) idel.onclick=async()=>{
+    if(!confirm(`「${p.title||'제목 없음'}」 장을 지울까요?\n되돌릴 수 없어요.`)) return;
+    try{ await deleteDoc(doc(db,'pages',st.handle,'posts',p.id)); }
+    catch(e){ msg('삭제 실패 — '+e.message); return; }
+    st.infoIx=Math.max(0, ix-1);
+    await loadContent(); renderInfoBoard(); msg('장을 지웠어요.');
+  };
+  $('#rows').querySelectorAll('[data-inm]').forEach(el=>{
+    if(el.classList.contains('off')) return;
+    el.onclick=async()=>{
+      const j=ix+(+el.dataset.inm); if(j<0||j>=ch.length) return;
+      const seq=ch.map(x=>x.id); [seq[ix],seq[j]]=[seq[j],seq[ix]];
+      try{ await Promise.all(seq.map((id,i)=>updateDoc(doc(db,'pages',st.handle,'posts',id),{ord:i}))); }
+      catch(e){ msg('순서 저장 실패 — '+e.message); return; }
+      seq.forEach((id,i)=>{ const q=(st.infoPosts||[]).find(y=>y.id===id); if(q) q.ord=i; });
+      st.infoIx=j; renderInfoBoard(); msg('순서를 바꿨어요!');
+    };
+  });
+  bindInfoOwn(ch);
+}
+function bindInfoOwn(){
+  const bx=$('#rows');
+  const add=bx.querySelector('[data-iadd]');
+  if(add) add.onclick=()=>{ clearWriteForm(); refreshWriteCats(); refreshGalCats();
+    $('#w-cat').value=INFOCAT; openPanel('write'); switchTab('write'); };
+  const dc=bx.querySelector('[data-ideco]');
+  if(dc) dc.onclick=()=>{ openPanel('set'); switchTab('set'); };
+  const cp=bx.querySelector('[data-icopy]');
+  if(cp) cp.onclick=()=>{
+    const u=infoLink(infoSlugOf());
+    if(navigator.clipboard) navigator.clipboard.writeText(u).then(()=>msg('링크를 복사했어요 — '+u), ()=>msg(u));
+    else msg(u);
+  };
+}
+/* 전용 주소로 들어온 성향글 — 껍데기를 걷고 공간을 그린다(phase296b) */
+function applyBare(){
+  if(!st.bare) return;
+  document.body.classList.add('bare');
+  st.cat=INFOCAT; st.infoIx=st.infoIx||0;
+  $('#home-grid').classList.add('hidden');
+  $('#board').classList.remove('hidden');
+  $('#guest-view').classList.add('hidden');
+  $('#post-view').classList.add('hidden');
+  $('#list-view').classList.remove('hidden');
+  renderInfoBoard();
+}
+const infoLink=s=>'https://'+st.handle+'.luvlog.me/'+s;
+const INFO_RESERVED=['guide','index','app','assets','api','luvlog','www','admin','404','static'];
+/* 성향글 주소·공개 설정 — 성향글 공간에서 연 [기본 정보] 탭에만 나타나는 줄 */
+function renderInfoAddr(){
+  const box=$('#info-addr'); if(!box) return;
+  box.classList.toggle('hidden', !st.bare);
+  if(!st.bare) return;
+  const slug=infoSlugOf();
+  box.innerHTML = `
+    <p class="p-h">성향글 주소</p>
+    <div class="p-row">
+      <span style="font-size:12px;color:var(--muted)">${esc(st.handle)}.luvlog.me/</span>
+      <input id="inf-slug" value="${esc(slug)}" placeholder="info" style="flex:1;min-width:80px;margin-bottom:0">
+      <button class="btn" id="inf-slug-go" style="font-size:12px">주소 저장</button>
+      <button class="btn" id="inf-slug-cp" style="font-size:12px">🔗 링크 복사</button>
+    </div>
+    <div class="p-row">
+      <label class="chk"><input type="checkbox" id="inf-pub" ${st.page.infoPub?'checked':''}>
+        홈 오른쪽 위에 INFO 탭 보이기 (끄면 링크 아는 사람만 들어와요)</label>
+    </div>
+    <p class="note">영문 소문자·숫자·하이픈 2~19자. 이 주소로 들어오면 홈 껍데기 없이 성향글만 열려요.</p>`;
+  $('#inf-slug-go').onclick=async()=>{
+    const v=$('#inf-slug').value.trim().toLowerCase();
+    if(!/^[a-z0-9][a-z0-9-]{1,18}$/.test(v)){ msg('주소는 영문 소문자·숫자·하이픈 2~19자로 지어주세요.'); return; }
+    if(INFO_RESERVED.includes(v)){ msg('그 주소는 쓸 수 없어요 — 다른 이름으로 지어주세요.'); return; }
+    try{ await updateDoc(doc(db,'pages',st.handle),{infoSlug:v}); }     // 주소는 홈 문서 본체에(라우팅 값)
+    catch(e){ msg('저장 실패 — '+e.message); return; }
+    st.page.infoSlug=v;
+    history.replaceState(null,'',urlFor(st.handle, v));
+    renderInfoAddr(); msg('주소를 저장했어요 — '+infoLink(v));
+  };
+  $('#inf-slug-cp').onclick=()=>{
+    const u=infoLink(slug);
+    if(navigator.clipboard) navigator.clipboard.writeText(u).then(()=>msg('링크를 복사했어요 — '+u), ()=>msg(u));
+    else msg(u);
+  };
+  $('#inf-pub').onchange=async e=>{
+    const v=e.target.checked;
+    try{ await updateDoc(doc(db,'pages',st.handle),{infoPub:v}); }
+    catch(e2){ msg('저장 실패 — '+e2.message); return; }
+    st.page.infoPub=v; msg(v?'홈에 INFO 탭을 보여요.':'INFO 탭을 숨겼어요 — 링크로만 들어와요.');
+  };
+}
 function renderAlbumBoard(){
   $('#v-label').textContent = st.cat.toUpperCase();
   $('#pin-slot').innerHTML=''; $('#more-btn').style.display='none'; renderPager(0,1);
@@ -2492,7 +2668,7 @@ function backToList(){
   if(st.cat==='__gb'){ renderGuest(); $('#guest-view').classList.remove('hidden'); }
   else $('#list-view').classList.remove('hidden');
   st.cur=null;
-  history.replaceState(null,'',urlFor(st.handle)); }
+  history.replaceState(null,'',urlFor(st.handle, st.bare?(st.page.infoSlug||undefined):undefined)); }
 $('#pv-back').onclick=backToList;
 $('#go-home').onclick=goHome;
 /* 인앱 브라우저(트위터 등)는 prompt()를 차단해 비번 창이 안 뜸 — 자체 입력 모달로 대체(phase224) */
@@ -2710,14 +2886,31 @@ async function removeCat(c){
 
 /* ---------- 관리 패널 ---------- */
 function refreshWriteCats(){
-  $('#w-cat').innerHTML=cats().filter(c=>!isG(c)).map(c=>`<option>${esc(c)}</option>`).join('');
+  $('#w-cat').innerHTML=cats().filter(c=>!isG(c)).map(c=>`<option>${esc(c)}</option>`).join('')
+    + (st.bare?`<option value="${INFOCAT}">성향글 장</option>`:'');   // 📄 성향글 공간에서만(phase296b)
 }
 function refreshGalCats(){
   const g=gcats(), sel=$('#g-cat');
   sel.innerHTML = `<option value="">일반 갤러리 (하단 스트립)</option>`+
     g.map(c=>`<option>${esc(c)}</option>`).join('');
 }
+/* 성향글 공간에서 연 패널 — 홈 전용 탭을 접고 '이 공간을 꾸미는 중'임을 알린다(phase296b) */
+function syncPanelScope(){
+  const hide=['galup','wid','cats','mng','adm'];
+  document.querySelectorAll('.tabs button').forEach(b=>{
+    if(hide.includes(b.dataset.tab)) b.classList.toggle('hidden', !!st.bare);
+  });
+  const wt=document.querySelector('.tabs button[data-tab="write"]');
+  if(wt) wt.textContent = st.bare ? '새 장' : '새 글';
+  const bn=$('#panel-scope');
+  if(bn){
+    bn.classList.toggle('hidden', !st.bare);
+    bn.textContent='📄 지금 꾸미는 건 성향글 공간이에요 — 홈은 그대로예요.';
+  }
+  renderInfoAddr();
+}
 function openPanel(mode){
+  syncPanelScope();
   const groups={write:['write','galup'], deco:['set','wid','cats','theme','bg','stk','mng','adm']};
   document.querySelectorAll('.tabs button').forEach(b=>{
     b.style.display=groups[mode].includes(b.dataset.tab)?'':'none';
@@ -2821,10 +3014,11 @@ function renderCatMgr(){
   box.querySelectorAll('[data-ct]').forEach(s=>s.onchange=async()=>{
     const name=cats()[+s.dataset.ct];
     let g=[...gcats()], m=[...mcats()], a=[...acats()];
-    if(s.value==='gallery'){ if(!g.includes(name)) g.push(name); m=m.filter(x=>x!==name); a=a.filter(x=>x!==name); }
-    else if(s.value==='memo'){ if(!m.includes(name)) m.push(name); g=g.filter(x=>x!==name); a=a.filter(x=>x!==name); }
-    else if(s.value==='album'){ if(!a.includes(name)) a.push(name); g=g.filter(x=>x!==name); m=m.filter(x=>x!==name); }
-    else{ g=g.filter(x=>x!==name); m=m.filter(x=>x!==name); a=a.filter(x=>x!==name); }
+    const drop=(...ls)=>ls.forEach(l=>{ const k=l.indexOf(name); if(k>-1) l.splice(k,1); });
+    if(s.value==='gallery'){ if(!g.includes(name)) g.push(name); drop(m,a); }
+    else if(s.value==='memo'){ if(!m.includes(name)) m.push(name); drop(g,a); }
+    else if(s.value==='album'){ if(!a.includes(name)) a.push(name); drop(g,m); }
+    else drop(g,m,a);
     try{ await updateDoc(doc(db,'pages',st.handle),{gcats:g, mcats:m, acats:a}); }
     catch(e){ msg('저장 실패 — '+e.message); renderCatMgr(); return; }
     st.page.gcats=g; st.page.mcats=m; st.page.acats=a; refreshWriteCats(); refreshGalCats(); renderSide(); renderCatbar();
@@ -4325,7 +4519,7 @@ $('#w-cancel').onclick=()=>{
   const pid=editPost;                              // 수정 중이던 글 기억
   clearWriteForm();
   $('#panel').classList.remove('show','wfull');    // 패널 닫고
-  if(pid) openPost(pid,true);                      // 원래 글로 복귀 — "글이 사라졌다" 착시 방지(phase221)
+  if(pid && !st.bare) openPost(pid,true);          // 원래 글로 복귀 — "글이 사라졌다" 착시 방지(phase221)
   msg(pid?'수정을 취소했어요 — 글은 원래대로 그대로예요.':'작성을 취소했어요.');
 };
 const whf=$('#w-htmlfile'); if(whf) whf.addEventListener('change',e=>{   // 로그 파일 통째 업로드(phase258)
@@ -4393,13 +4587,13 @@ $('#w-go').onclick=async()=>{
       clearWriteForm();
       await loadContent(); renderWidgets(); renderList();
       $('#panel').classList.remove('show');
-      openPost(pid);
+      if(!st.bare) openPost(pid);                              // 📄 성향글 장은 목록 화면이 없음(phase296b)
       msg('수정 완료!');
       return;
     }
     const d0=wd?new Date(+wd.slice(0,4),+wd.slice(5,7)-1,+wd.slice(8,10)):new Date(), pad=n=>String(n).padStart(2,'0');
     const base=String(d0.getFullYear()).slice(2)+pad(d0.getMonth()+1)+pad(d0.getDate());
-    const used=new Set(st.posts.map(p=>p.id));
+    const used=new Set([...st.posts, ...(st.infoPosts||[])].map(p=>p.id));   // 📄 장 ID도 충돌 방지(phase296b)
     let nid='', n=1;
     do{ nid=base+'-'+n.toString(36); n++; }while(used.has(nid)&&n<400);
     await setDoc(doc(db,'pages',st.handle,'posts',nid),data);
@@ -4573,7 +4767,7 @@ $('#stk-file').addEventListener('change',async e=>{
   const img=await upFile(f,700,.92,60);
   st.page.stickers=st.page.stickers||[];
   st.page.stickers.push({img,x:8,y:20,size:120,rot:0});
-  try{ await updateDoc(doc(db,'pages',st.handle),{stickers:st.page.stickers});
+  try{ await pgUpd({stickers:st.page.stickers});
     msg('스티커 추가! 홈에서 드래그로 옮겨보세요.');
   }catch(e2){
     st.page.stickers.pop();
@@ -5217,11 +5411,12 @@ async function saveSettings(){
       msg('이미지 용량 초과 — 자세한 내용은 안내창을 확인하세요.');
       alert('저장 용량 초과!\n\n홈 전체 꾸미기 합산 한도: 약 900KB\n(서버 문서 1MB 제한 때문이에요)\n\n현재 이 설정의 용량:\n· 헤더 사진 '+(data.heroImgs||[]).length+'장 — 약 '+heroKB+'KB\n· 입장 화면 이미지 — 약 '+kb(data.enterImg)+'KB\n· 배경 이미지 — 약 '+kb(data.bgImg)+'KB\n\n가장 큰 항목을 지우고 다시 올려보세요 — 새로 올리면 자동 압축이 더 강하게 걸려요.');
       return; }
-    await updateDoc(doc(db,'pages',st.handle),data);
+    await pgUpd(data);                                       // 📄 성향글 공간에서는 page.info 아래로(phase296b)
     const keep=new Set([...heroOut.map(o=>o.ref), enterRef, bgRef].filter(Boolean));
     for(const r of oldRefs) if(!keep.has(r))
       deleteDoc(doc(db,'pages',st.handle,'imgs',r)).catch(()=>{});
     st.page={...st.page,...data};
+    if(st.bare) st.page.info={...(st.page.info||{}), ...data};   // 📄 성향글 설정 사본도 최신으로(phase296b)
     await resolveImgs(st.page);
     initPet(); petImgsNew=null; renderPetImgList();              // 펫 즉시 산책(phase254b) — 새로고침 없이 반영
     gateClear=false; renderGateState();
@@ -5253,8 +5448,9 @@ $('#s-reset').onclick=async()=>{
     : {...RESET[kind]};
   msg('초기화 중...');
   try{
-    await updateDoc(doc(db,'pages',st.handle),data);
+    await pgUpd(data);
     st.page={...st.page,...data};
+    if(st.bare) st.page.info={...(st.page.info||{}), ...data};
     sessionStorage.removeItem('gate_'+st.handle);
     fillSettings(); renderWidList?.();
     enterPage(); renderCatbar();
@@ -5584,7 +5780,8 @@ function buildBackup(withDeco, withPosts){
   const data={ exported:new Date().toISOString(), service:'lovelog', handle:st.handle,
     home:{ name:st.page.name||'', sub:st.page.sub||'' } };
   if(withDeco) data.deco=decoSnap();
-  if(withPosts){ data.posts=st.posts; data.gallery=st.gallery; data.guest=st.guest; data.albums=st.albums||[]; }
+  if(withPosts){ data.posts=[...st.posts, ...(st.infoPosts||[])];   // 📄 성향글 장도 백업(phase296b)
+    data.gallery=st.gallery; data.guest=st.guest; data.albums=st.albums||[]; }
   return data;
 }
 $('#s-exp-json').onclick=()=>{
