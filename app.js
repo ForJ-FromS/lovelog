@@ -1784,7 +1784,7 @@ function renderSide(){
         : w.sbg==='custom' ? `background:color-mix(in srgb, ${/^#[0-9a-fA-F]{3,8}$/.test(w.sbgc||'')?w.sbgc:'#9db8ff'} ${Math.min(100,Math.max(4,+w.sbga||12))}%, transparent)`
         : '';
       d.innerHTML=`<p class="label">${esc(w.title||'STAMP')}</p>
-        ${w.hint===false?'':'<p class="stamp-hint">발도장 꾹 — 하루에 하나!</p>'}
+        ${w.hint===false?'':'<p class="stamp-hint">'+esc(w.hintTxt||'발도장 꾹 — 하루에 하나!')+'</p>'}
         <div class="stamp-row${emos.length===1?' one':''}">
           ${emos.map((e2,i)=>`
             <button class="stamp-b" data-stamp="s${i}" style="${sbg}">
@@ -3378,7 +3378,8 @@ function renderWidEdit(){
   if(w.t==='stamp') html+=`
     <input id="we-ntt" placeholder="위젯 제목 (선택 — 비우면 STAMP)" value="${esc(w.title||'')}">
     <input id="we-semo" placeholder="도장 이모지 — 붙여서 1~4개 (예: 🐾 또는 ❤️🐾⭐💧)" value="${esc(w.icons||'')}">
-    <label class="chk" style="margin-top:6px"><input type="checkbox" id="we-shint" ${w.hint===false?'':'checked'}> '발도장 꾹 — 하루에 하나!' 문구 표시</label>
+    <label class="chk" style="margin-top:6px"><input type="checkbox" id="we-shint" ${w.hint===false?'':'checked'}> 안내 문구 표시</label>
+    <input id="we-stxt" placeholder="안내 문구 — 비우면 '발도장 꾹 — 하루에 하나!'" value="${esc(w.hintTxt||'')}" maxlength="40" ${w.hint===false?'disabled':''}>
     <div class="p-row" style="align-items:center;margin-top:8px">
       <select id="we-sbg" style="flex:1.3;margin-bottom:0">
         <option value=""${!w.sbg?' selected':''}>도장 배경 — 은은한 테마색 (기본)</option>
@@ -3597,7 +3598,10 @@ function renderWidEdit(){
   const ntt=$('#we-ntt'); if(ntt) ntt.addEventListener('input',()=>{ w.title=ntt.value; });
   const semo=$('#we-semo'); if(semo) semo.addEventListener('input',()=>{ w.icons=semo.value; });
   const shint=$('#we-shint'); if(shint) shint.addEventListener('change',()=>{
-    if(shint.checked) delete w.hint; else w.hint=false; });
+    if(shint.checked) delete w.hint; else w.hint=false;
+    const t=$('#we-stxt'); if(t) t.disabled=!shint.checked; });
+  const stxt=$('#we-stxt'); if(stxt) stxt.addEventListener('input',()=>{
+    if(stxt.value.trim()) w.hintTxt=stxt.value.trim(); else delete w.hintTxt; });   // 발도장 문구 자유(phase297)
   const sbg=$('#we-sbg'); if(sbg) sbg.addEventListener('change',()=>{
     if(sbg.value) w.sbg=sbg.value; else delete w.sbg; });
   const sbgc=$('#we-sbgc'); if(sbgc) sbgc.addEventListener('input',()=>{ w.sbgc=sbgc.value; });
