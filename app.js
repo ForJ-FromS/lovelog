@@ -524,7 +524,9 @@ async function enterPage(){
   $('#pg-name').textContent=p.name||h;
   $('#pg-name').style.color = p.titleColor||'';
   $('#pg-sub').textContent=p.sub||'';
-  $('#pg-over').textContent=(st.page.overTxt||'').trim()||('@'+h.toUpperCase());   // 헤더 라벨 자유(phase298)
+  { const sym=(st.page.overSym||'').trim()||'◈';             // 도형·라벨 분리(phase298c) — 각각 비우면 기본
+    const ot=(st.page.overTxt||'').trim()||('@'+h.toUpperCase());
+    $('#pg-over').innerHTML='<i class="osym">'+esc(sym)+'</i> '+esc(ot); }
   $('#gb-title').textContent=gbNm(); $('#strip-title').textContent=galNm();
   if(st.mine) admInqBadge();
   checkUpdNotice(); checkMutualMemo();
@@ -5057,7 +5059,7 @@ $('#s-bg-clear').onclick=()=>{
 };
 function fillSettings(){
   const p=st.page;
-  $('#s-name').value=p.name||''; $('#s-sub').value=p.sub||''; $('#s-over').value=p.overTxt||'';
+  $('#s-name').value=p.name||''; $('#s-sub').value=p.sub||''; $('#s-over').value=p.overTxt||''; $('#s-osym').value=p.overSym||'';
   $('#s-mut-title').value=(p.mutualMemo&&p.mutualMemo.title)||''; $('#s-mut-text').value=(p.mutualMemo&&p.mutualMemo.text)||'';
   $('#s-gate').value=''; gateClear=false; renderGateState(); priVal=null; $('#s-pri').value=p.priColor||'#9db4ff'; $('#s-color').value=hslToHex(p.hue??222, p.sat??60, p.lum??62);
   $('#s-headmode').value=p.headMode||'wide'; $('#s-headh').value=p.headH||380; $('#s-headfit').value=p.headFit||'cover';
@@ -5158,6 +5160,7 @@ async function saveSettings(){
       name:$('#s-name').value.trim()||st.handle,
       sub:$('#s-sub').value.trim(),
       overTxt:$('#s-over').value.trim(),
+      overSym:$('#s-osym').value.trim(),
       heroImgs: heroOut,
       heroImg: '',
       enterText: $('#s-enter').value.trim(),
