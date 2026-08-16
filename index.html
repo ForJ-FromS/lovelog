@@ -175,6 +175,10 @@
   .head::before{left:11px;top:11px;border-right:none;border-bottom:none;border-radius:4px 0 0 0}
   .head::after{right:11px;bottom:11px;border-left:none;border-top:none;border-radius:0 0 4px 0}
   .head .over .osym{font-style:normal;color:var(--pri)}   /* 도형·라벨 분리(phase298c) — 도형은 포인트색 */
+  /* 모서리 조절(phase299) — 전역 각지게, 원형(50%) 요소는 자동 추출 목록으로 보존 */
+  body.corner-soft *{border-radius:4px!important}
+  body.corner-sharp *{border-radius:0!important}
+  body.corner-soft .thumb-x .rm2, body.corner-soft .ph-chip, body.corner-soft .fab, body.corner-soft .gdel, body.corner-soft .bgm-cov, body.corner-soft .bgm-btn2, body.corner-soft .bgm-play .ic, body.corner-soft .ch-p, body.corner-soft .cst-scr, body.corner-soft .cst-reel, body.corner-soft .bgm-cst .bgm-btn2, body.corner-soft .bgm-lp .bgm-btn2, body.corner-soft .bgm-tun .bgm-btn2, body.corner-soft .lp-disc, body.corner-soft .lp-disc img,.lp-disc .mus, body.corner-soft .mm-th i, body.corner-soft .w-cal .cmemo, body.corner-soft .tl-dot, body.corner-soft .ph-x, body.corner-soft .chl-pv, body.corner-soft .gpin, body.corner-soft .gedit, body.corner-sharp .thumb-x .rm2, body.corner-sharp .ph-chip, body.corner-sharp .fab, body.corner-sharp .gdel, body.corner-sharp .bgm-cov, body.corner-sharp .bgm-btn2, body.corner-sharp .bgm-play .ic, body.corner-sharp .ch-p, body.corner-sharp .cst-scr, body.corner-sharp .cst-reel, body.corner-sharp .bgm-cst .bgm-btn2, body.corner-sharp .bgm-lp .bgm-btn2, body.corner-sharp .bgm-tun .bgm-btn2, body.corner-sharp .lp-disc, body.corner-sharp .lp-disc img,.lp-disc .mus, body.corner-sharp .mm-th i, body.corner-sharp .w-cal .cmemo, body.corner-sharp .tl-dot, body.corner-sharp .ph-x, body.corner-sharp .chl-pv, body.corner-sharp .gpin, body.corner-sharp .gedit{border-radius:50%!important}
   .head h1{text-shadow:0 0 26px hsl(var(--h) calc(60% * var(--sf,1)) 60% / .35)}
   .head .bgimg{position:absolute;inset:0;background-size:cover;background-position:center;
     transition:opacity 1.2s ease}
@@ -2180,6 +2184,14 @@
         <option value="6">메모 고정 — 최대 6개</option>
       </select>
       <label class="chk sp2"><input type="checkbox" id="s-memott"> 메모 카드 제목 숨기기 (본문만 — 작성 팝업에서도 제목 칸이 사라져요)</label>
+      <div class="p-row" style="align-items:center;margin:8px 0 2px">
+        <span style="font-size:12px">🔲 모서리</span>
+        <select id="s-corner" style="width:auto;margin:0;font-size:12px">
+          <option value="">둥글게 (기본)</option>
+          <option value="soft">살짝 각지게</option>
+          <option value="sharp">뾰족하게</option>
+        </select>
+      </div>
       <label class="chk sp2"><input type="checkbox" id="s-postpage"> 📖 글 전용 페이지 보기 — 글을 읽을 때 위젯·카테고리 바를 접고 본문만 넓게</label>
       <label class="chk sp2"><input type="checkbox" id="s-rowtag" checked> 🏷 글 목록 줄에 태그 알약 표시 — 카테고리 알약 옆에 첫 태그가 함께 보여요</label>
       <div class="sp2" style="display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--muted)">
@@ -2337,6 +2349,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=317"></script>
+<script type="module" src="./app.js?v=318"></script>
 </body>
 </html>

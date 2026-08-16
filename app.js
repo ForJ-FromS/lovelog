@@ -551,6 +551,8 @@ async function enterPage(){
     ? `<p class="n">${esc(dday(dd0.date))}</p><p class="t">${esc(dd0.title)}</p>` : '';
   // 레이아웃 · 테마
   document.body.classList.toggle('light', !!p.light);
+  document.body.classList.toggle('corner-soft', p.corner==='soft');     // 모서리(phase299)
+  document.body.classList.toggle('corner-sharp', p.corner==='sharp');
   document.body.classList.toggle('style-blog', homeStyle()==='blog');
   document.body.classList.remove('theme-win98','theme-vhs');
   if(p.theme && p.theme!=='default') document.body.classList.add('theme-'+p.theme);
@@ -5098,7 +5100,7 @@ function fillSettings(){
   $('#s-homestyle').value=homeStyle();
   $('#s-theme').value=p.theme||'default';
   renderStkList();
-  $('#s-dim').value=p.bgDim??78; $('#s-dots').checked=p.dots!==false; $('#s-protect').checked=p.protectImg!==false; $('#s-stkm').checked=!!p.stkHideM; $('#s-stkhome').checked=!!p.stkHome; $('#s-stkoff').checked=p.stkOff!==true; $('#s-fx').value=p.fx ?? (p.sparkle?'sparkle':''); $('#s-fxc').value=p.fxC||'#ffb3c8'; fxCVal=null; $('#s-postpage').checked=!!p.postPage; $('#s-rowtag').checked=p.rowTag!==false;
+  $('#s-dim').value=p.bgDim??78; $('#s-dots').checked=p.dots!==false; $('#s-protect').checked=p.protectImg!==false; $('#s-stkm').checked=!!p.stkHideM; $('#s-stkhome').checked=!!p.stkHome; $('#s-stkoff').checked=p.stkOff!==true; $('#s-fx').value=p.fx ?? (p.sparkle?'sparkle':''); $('#s-fxc').value=p.fxC||'#ffb3c8'; fxCVal=null; $('#s-postpage').checked=!!p.postPage; $('#s-corner').value=p.corner||''; $('#s-rowtag').checked=p.rowTag!==false;
   $('#s-gatebtn').value=p.gateBtn||''; $('#s-listed').checked=!!p.listed; cardNew=null; bnrNew=null; renderCard(); renderBnr(); $('#s-lbicon').value=p.labelIcon??'◈'; gateColVal=null;
   $('#s-gatecolor').value=p.gateColor||'#ffffff';
   $('#del-h').textContent=st.handle||'—'; $('#s-del-confirm').value=''; delMsg('');
@@ -5201,6 +5203,7 @@ async function saveSettings(){
       fxC: fxCVal ?? st.page.fxC ?? '',
       sparkle: $('#s-fx').value==='sparkle',
       postPage: $('#s-postpage').checked,
+      corner: $('#s-corner').value||'',
       rowTag: $('#s-rowtag').checked,
       gateBtn: $('#s-gatebtn').value.trim(),
       listed: $('#s-listed').checked,
