@@ -524,7 +524,7 @@ async function enterPage(){
   $('#pg-name').textContent=p.name||h;
   $('#pg-name').style.color = p.titleColor||'';
   $('#pg-sub').textContent=p.sub||'';
-  $('#pg-over').textContent='@'+h.toUpperCase();
+  $('#pg-over').textContent=(st.page.overTxt||'').trim()||('@'+h.toUpperCase());   // 헤더 라벨 자유(phase298)
   $('#gb-title').textContent=gbNm(); $('#strip-title').textContent=galNm();
   if(st.mine) admInqBadge();
   checkUpdNotice(); checkMutualMemo();
@@ -5057,7 +5057,7 @@ $('#s-bg-clear').onclick=()=>{
 };
 function fillSettings(){
   const p=st.page;
-  $('#s-name').value=p.name||''; $('#s-sub').value=p.sub||'';
+  $('#s-name').value=p.name||''; $('#s-sub').value=p.sub||''; $('#s-over').value=p.overTxt||'';
   $('#s-mut-title').value=(p.mutualMemo&&p.mutualMemo.title)||''; $('#s-mut-text').value=(p.mutualMemo&&p.mutualMemo.text)||'';
   $('#s-gate').value=''; gateClear=false; renderGateState(); priVal=null; $('#s-pri').value=p.priColor||'#9db4ff'; $('#s-color').value=hslToHex(p.hue??222, p.sat??60, p.lum??62);
   $('#s-headmode').value=p.headMode||'wide'; $('#s-headh').value=p.headH||380; $('#s-headfit').value=p.headFit||'cover';
@@ -5157,6 +5157,7 @@ async function saveSettings(){
     const data={
       name:$('#s-name').value.trim()||st.handle,
       sub:$('#s-sub').value.trim(),
+      overTxt:$('#s-over').value.trim(),
       heroImgs: heroOut,
       heroImg: '',
       enterText: $('#s-enter').value.trim(),
