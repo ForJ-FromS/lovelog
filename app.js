@@ -5081,8 +5081,8 @@ function fillSettings(){
   $('#s-headgrad').value=p.headGrad||'dark'; $('#s-headtext').checked=p.headText!==false; $('#s-headh-v').textContent=(p.headH||380)+'px';
   $('#s-sidepos').value=p.sidePos||'right';
   hhSliderSync();
-  $('#s-light').checked=!!p.light;
-  $('#s-glass').checked=!!p.glass;
+  $('#s-light').value=p.light?'light':'';
+  $('#s-glass').value=p.glass?'glass':'';
   $('#s-catstyle').value=catStyle();
   $('#s-catshape').value=catShape();
   $('#s-galcols').value=String(galCols());
@@ -5112,7 +5112,7 @@ function fillSettings(){
   $('#s-homestyle').value=homeStyle();
   $('#s-theme').value=p.theme||'default';
   renderStkList();
-  $('#s-dim').value=p.bgDim??78; $('#s-dots').checked=p.dots!==false; $('#s-protect').checked=p.protectImg!==false; $('#s-stkm').checked=!!p.stkHideM; $('#s-stkhome').checked=!!p.stkHome; $('#s-stkoff').checked=p.stkOff!==true; $('#s-fx').value=p.fx ?? (p.sparkle?'sparkle':''); $('#s-fxc').value=p.fxC||'#ffb3c8'; fxCVal=null; $('#s-postpage').checked=!!p.postPage; $('#s-corner').value=p.corner||''; $('#s-cardc').value=p.cardC||'#1a1c26'; cardCVal=null; $('#s-rowtag').checked=p.rowTag!==false;
+  $('#s-dim').value=p.bgDim??78; $('#s-dots').value=p.dots!==false?'on':''; $('#s-protect').value=p.protectImg!==false?'on':''; $('#s-stkm').checked=!!p.stkHideM; $('#s-stkhome').checked=!!p.stkHome; $('#s-stkoff').checked=p.stkOff!==true; $('#s-fx').value=p.fx ?? (p.sparkle?'sparkle':''); $('#s-fxc').value=p.fxC||'#ffb3c8'; fxCVal=null; $('#s-postpage').checked=!!p.postPage; $('#s-corner').value=p.corner||''; $('#s-cardc').value=p.cardC||'#1a1c26'; cardCVal=null; $('#s-rowtag').checked=p.rowTag!==false;
   $('#s-gatebtn').value=p.gateBtn||''; $('#s-listed').checked=!!p.listed; cardNew=null; bnrNew=null; renderCard(); renderBnr(); $('#s-lbicon').value=p.labelIcon??'◈'; gateColVal=null;
   $('#s-gatecolor').value=p.gateColor||'#ffffff';
   $('#del-h').textContent=st.handle||'—'; $('#s-del-confirm').value=''; delMsg('');
@@ -5192,8 +5192,8 @@ async function saveSettings(){
       headGrad: $('#s-headgrad').value,
       headText: $('#s-headtext').checked,
       sidePos: $('#s-sidepos').value,
-      light: $('#s-light').checked,
-      glass: $('#s-glass').checked,
+      light: $('#s-light').value==='light',
+      glass: $('#s-glass').value==='glass',
       catStyle: $('#s-catstyle').value,
       catShape: $('#s-catshape').value,
       galCols: +$('#s-galcols').value||3,
@@ -5209,8 +5209,8 @@ async function saveSettings(){
       homeStyle: $('#s-homestyle').value,
       theme: $('#s-theme').value,
       bgDim: parseInt($('#s-dim').value)||78,
-      dots: $('#s-dots').checked,
-      protectImg: $('#s-protect').checked,
+      dots: $('#s-dots').value==='on',
+      protectImg: $('#s-protect').value==='on',
       fx: $('#s-fx').value,
       fxC: fxCVal ?? st.page.fxC ?? '',
       cardC: cardCVal ?? st.page.cardC ?? '',

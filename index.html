@@ -175,6 +175,13 @@
   .head::before{left:11px;top:11px;border-right:none;border-bottom:none;border-radius:4px 0 0 0}
   .head::after{right:11px;bottom:11px;border-left:none;border-top:none;border-radius:0 0 4px 0}
   .head .over .osym{font-style:normal;color:var(--pri)}   /* 도형·라벨 분리(phase298c) — 도형은 포인트색 */
+  /* 테마 구획 정렬(phase300b) */
+  .trows{display:flex;flex-direction:column;gap:9px;margin:4px 0 10px}
+  .trow{display:grid;grid-template-columns:118px auto auto auto auto;justify-content:start;align-items:center;gap:9px}
+  .trow .tl{font-size:12.5px}
+  .trow .tl2{font-size:11.5px;color:var(--muted);margin-left:8px}
+  .trow select{width:auto;margin:0;font-size:12px}
+  .trow input[type=color]{width:44px;height:30px;padding:2px;margin:0}
   /* 모서리 조절(phase299) — 전역 각지게, 원형(50%) 요소는 자동 추출 목록으로 보존 */
   body.corner-soft *{border-radius:4px!important}
   body.corner-sharp *{border-radius:0!important}
@@ -2213,16 +2220,19 @@
     <p class="note">프리셋 위에 색·배경·투명화가 함께 적용돼요. (레트로 창은 고유 회색 팔레트 사용)</p>
     <p class="p-h">테마</p>
     <div class="p-row chks">
-      <label class="chk"><input type="checkbox" id="s-light"> 밝은 테마</label>
-      <label class="chk"><input type="checkbox" id="s-glass"> 카드 투명화</label>
-      <div class="p-row" style="align-items:center;margin:6px 0 2px">
-        <span style="font-size:12px">🎨 카드 색</span>
-        <input type="color" id="s-cardc" value="#1a1c26" style="width:44px;height:30px;padding:2px;margin:0">
-        <button class="btn" id="s-cardc-x" style="font-size:11px">기본으로</button>
-        <span class="note" style="margin:0">위젯·카드 배경색 — 투명화 중엔 이 색으로 반투명해요</span>
+      <div class="trows">
+        <div class="trow"><span class="tl">테마</span>
+          <select id="s-light"><option value="">어둡게</option><option value="light">밝게</option></select></div>
+        <div class="trow"><span class="tl">카드</span>
+          <select id="s-glass"><option value="">기본</option><option value="glass">투명 (유리)</option></select>
+          <span class="tl2">🎨 색</span>
+          <input type="color" id="s-cardc" value="#1a1c26" title="위젯·카드 배경색 — 투명화 중엔 이 색으로 반투명해요">
+          <button class="btn" id="s-cardc-x" style="font-size:11px">기본으로</button></div>
+        <div class="trow"><span class="tl">배경 도트</span>
+          <select id="s-dots"><option value="on">켜기</option><option value="">끄기</option></select></div>
+        <div class="trow"><span class="tl">이미지 저장 방지</span>
+          <select id="s-protect"><option value="on">켜기</option><option value="">끄기</option></select></div>
       </div>
-      <label class="chk"><input type="checkbox" id="s-dots" checked> 배경 도트 패턴</label>
-      <label class="chk"><input type="checkbox" id="s-protect" checked> 이미지 저장 방지</label>
     </div>
     <p class="p-h">꾸밈 효과</p>
     <div class="p-row" style="align-items:center">
@@ -2355,6 +2365,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=319"></script>
+<script type="module" src="./app.js?v=320"></script>
 </body>
 </html>
