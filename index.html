@@ -98,14 +98,14 @@
   .seal a:hover{color:var(--ink)}
   body.side-left .cols{grid-template-columns:270px 1fr}
   body.side-left aside{order:-1}
-  body.glass .side{background:hsl(var(--h) calc(28% * var(--sf,1)) 13% / .55);
+  body.glass .side{background:var(--cardG, hsl(var(--h) calc(28% * var(--sf,1)) 13% / .55));
     backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
-  body.light.glass .side{background:hsl(var(--h) calc(40% * var(--sf,1)) 99% / .55)}
+  body.light.glass .side{background:var(--cardG, hsl(var(--h) calc(40% * var(--sf,1)) 99% / .55))}
   body.glass .head,body.glass #post-view > article{
-    background:hsl(var(--h) calc(28% * var(--sf,1)) 13% / .55);   /* 위젯과 동일 투명도(phase278) */
+    background:var(--cardG, hsl(var(--h) calc(28% * var(--sf,1)) 13% / .55));   /* 위젯과 동일 투명도(phase278)·사용자 카드색(phase300) */
     backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
   body.light.glass .head,body.light.glass #post-view > article{
-    background:hsl(var(--h) calc(40% * var(--sf,1)) 99% / .55)}
+    background:var(--cardG, hsl(var(--h) calc(40% * var(--sf,1)) 99% / .55))}
   /* 헤더 배경 완전 투명 — 투명 PNG 헤더용(phase278) */
   body.headclear .head,
   body.glass.headclear .head,
@@ -2215,6 +2215,12 @@
     <div class="p-row chks">
       <label class="chk"><input type="checkbox" id="s-light"> 밝은 테마</label>
       <label class="chk"><input type="checkbox" id="s-glass"> 카드 투명화</label>
+      <div class="p-row" style="align-items:center;margin:6px 0 2px">
+        <span style="font-size:12px">🎨 카드 색</span>
+        <input type="color" id="s-cardc" value="#1a1c26" style="width:44px;height:30px;padding:2px;margin:0">
+        <button class="btn" id="s-cardc-x" style="font-size:11px">기본으로</button>
+        <span class="note" style="margin:0">위젯·카드 배경색 — 투명화 중엔 이 색으로 반투명해요</span>
+      </div>
       <label class="chk"><input type="checkbox" id="s-dots" checked> 배경 도트 패턴</label>
       <label class="chk"><input type="checkbox" id="s-protect" checked> 이미지 저장 방지</label>
     </div>
@@ -2349,6 +2355,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=318"></script>
+<script type="module" src="./app.js?v=319"></script>
 </body>
 </html>

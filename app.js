@@ -570,6 +570,11 @@ async function enterPage(){
   document.body.classList.toggle('side-both', p.sidePos==='both');
   document.documentElement.style.setProperty('--dim', (p.bgDim??78)/100);
   document.body.classList.toggle('glass', !!p.glass);
+  if(p.cardC){                                                 // 카드 배경색(phase300) — body 인라인이라 light·테마 스코프도 이김
+    const hx=p.cardC.replace('#',''); const n=parseInt(hx.length===3?hx.split('').map(c=>c+c).join(''):hx,16);
+    document.body.style.setProperty('--card', p.cardC);
+    document.body.style.setProperty('--cardG', `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},.55)`);
+  } else { document.body.style.removeProperty('--card'); document.body.style.removeProperty('--cardG'); }
   document.body.classList.toggle('headclear', !!p.headClear);   // 헤더 배경 투명(phase278)
   if(bgmPlaying() && bgmHandle!==st.handle) bgmStop();
   document.body.classList.toggle('no-dots', p.dots===false);
@@ -4590,7 +4595,7 @@ $('#stk-file').addEventListener('change',async e=>{
   }
   renderStkList(); renderStickers(); e.target.value='';
 });
-let favNew=null, curNew=null, gateColVal=null, gateBtnCVal=null, fxCVal=null, cardNew=null;
+let favNew=null, curNew=null, gateColVal=null, gateBtnCVal=null, fxCVal=null, cardNew=null, cardCVal=null;
 const lumHex=hx=>{ try{ const n=parseInt(hx.slice(1),16);
   return (((n>>16)&255)*.299+((n>>8)&255)*.587+(n&255)*.114)/255; }catch(e){ return .5; } };
 function applyGateBtnC(c){
@@ -4629,6 +4634,13 @@ $('#s-gatecolor').addEventListener('input',e=>{ gateColVal=e.target.value;
 $('#s-gatebtnc').addEventListener('input',e=>{ gateBtnCVal=e.target.value; applyGateBtnC(gateBtnCVal); });
 $('#s-gatebtnc-x').onclick=()=>{ gateBtnCVal=''; applyGateBtnC(''); };
 $('#s-fxc').addEventListener('input',e=>{ fxCVal=e.target.value; spkPri=fxCVal; });   // 즉시 미리보기
+$('#s-cardc').addEventListener('input',e=>{ cardCVal=e.target.value;                   // 카드 색 즉시 미리보기(phase300)
+  document.body.style.setProperty('--card', cardCVal);
+  const hx=cardCVal.replace('#',''); const n=parseInt(hx,16);
+  document.body.style.setProperty('--cardG', `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},.55)`); });
+$('#s-cardc-x').onclick=()=>{ cardCVal='';
+  document.body.style.removeProperty('--card'); document.body.style.removeProperty('--cardG');
+  msg('카드 색 — 테마색을 따라가요.'); };
 $('#s-fxc-x').onclick=()=>{ fxCVal=''; spkPri=getComputedStyle(document.body).getPropertyValue('--pri').trim()||'#9db4ff'; msg('커서 효과 색 — 테마색을 따라가요.'); };
 $('#s-gatecolor-x').onclick=()=>{ gateColVal='';
   document.documentElement.style.setProperty('--gtC','');
@@ -5100,7 +5112,7 @@ function fillSettings(){
   $('#s-homestyle').value=homeStyle();
   $('#s-theme').value=p.theme||'default';
   renderStkList();
-  $('#s-dim').value=p.bgDim??78; $('#s-dots').checked=p.dots!==false; $('#s-protect').checked=p.protectImg!==false; $('#s-stkm').checked=!!p.stkHideM; $('#s-stkhome').checked=!!p.stkHome; $('#s-stkoff').checked=p.stkOff!==true; $('#s-fx').value=p.fx ?? (p.sparkle?'sparkle':''); $('#s-fxc').value=p.fxC||'#ffb3c8'; fxCVal=null; $('#s-postpage').checked=!!p.postPage; $('#s-corner').value=p.corner||''; $('#s-rowtag').checked=p.rowTag!==false;
+  $('#s-dim').value=p.bgDim??78; $('#s-dots').checked=p.dots!==false; $('#s-protect').checked=p.protectImg!==false; $('#s-stkm').checked=!!p.stkHideM; $('#s-stkhome').checked=!!p.stkHome; $('#s-stkoff').checked=p.stkOff!==true; $('#s-fx').value=p.fx ?? (p.sparkle?'sparkle':''); $('#s-fxc').value=p.fxC||'#ffb3c8'; fxCVal=null; $('#s-postpage').checked=!!p.postPage; $('#s-corner').value=p.corner||''; $('#s-cardc').value=p.cardC||'#1a1c26'; cardCVal=null; $('#s-rowtag').checked=p.rowTag!==false;
   $('#s-gatebtn').value=p.gateBtn||''; $('#s-listed').checked=!!p.listed; cardNew=null; bnrNew=null; renderCard(); renderBnr(); $('#s-lbicon').value=p.labelIcon??'◈'; gateColVal=null;
   $('#s-gatecolor').value=p.gateColor||'#ffffff';
   $('#del-h').textContent=st.handle||'—'; $('#s-del-confirm').value=''; delMsg('');
@@ -5201,6 +5213,7 @@ async function saveSettings(){
       protectImg: $('#s-protect').checked,
       fx: $('#s-fx').value,
       fxC: fxCVal ?? st.page.fxC ?? '',
+      cardC: cardCVal ?? st.page.cardC ?? '',
       sparkle: $('#s-fx').value==='sparkle',
       postPage: $('#s-postpage').checked,
       corner: $('#s-corner').value||'',
