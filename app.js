@@ -1969,7 +1969,7 @@ function updateBoardWrite(){
     if(isMemo(st.cat)){ openMemoModal(st.cat); return; }   // 🗒 메모형은 팝업 작성(phase216)
     if(isA(st.cat)){ openAlbumModal(null, st.cat); return; }   // 📚 사진첩은 묶음 팝업(phase288)
     clearWriteForm();
-    refreshWriteCats(); refreshGalCats(); openPanel('write');
+    refreshWriteCats(); refreshGalCats(); restoreWDraft(); openPanel('write');
     if(c==='__gal' || isG(c)){ switchTab('galup'); if(isG(c)) $('#g-cat').value=c; }
     else if(c!=='recent'){ $('#w-cat').value=c; }
   };
@@ -2774,7 +2774,7 @@ $('#s-pri-auto').onclick=()=>{ priVal=''; applyPri(''); spkSync();
 $('#s-color').addEventListener('input',e=>{
   const [hh,s,l]=hexToHsl(e.target.value); applyColor(hh,s,l);
 });
-$('#btn-write').onclick=()=>{ refreshWriteCats(); refreshGalCats(); openPanel('write'); };
+$('#btn-write').onclick=()=>{ refreshWriteCats(); refreshGalCats(); if(!editPost) restoreWDraft(); openPanel('write'); };
 $('#btn-deco').onclick=()=>{ fillSettings(); fillWidgets(); renderCatMgr(); openPanel('deco'); };
 
 /* ---------- 카테고리 관리 (추가·삭제·이름 변경) ---------- */
@@ -4225,6 +4225,34 @@ function renderWTags(){
   inp.addEventListener('blur',()=>{ if(inp.value.trim()) commit(); });
   const wc=$('#w-cat'); if(wc) wc.addEventListener('change',renderWTags);  // 카테고리 바꾸면 프리셋 줄 갱신(phase293)
 })();
+/* ✍ 글 자동 임시저장(phase301) — 비밀번호·비밀 체크는 절대 저장하지 않음 */
+const wdKey=()=>'wdraft:'+(st.handle||'');
+let wdTimer=null;
+function saveWDraft(){
+  try{
+    const t=$('#w-title').value, b=$('#w-body').value;
+    if(!t.trim() && !b.trim() && !wTags.length){ localStorage.removeItem(wdKey()); return; }
+    localStorage.setItem(wdKey(), JSON.stringify({ t, b, c:$('#w-cat').value, g:wTags,
+      d:$('#w-date').value, e:editPost||null, ts:Date.now() }));
+  }catch(e){}
+}
+const delWDraft=()=>{ try{ localStorage.removeItem(wdKey()); }catch(e){} };
+function restoreWDraft(){
+  let d=null; try{ d=JSON.parse(localStorage.getItem(wdKey())||'null'); }catch(e){}
+  if(!d || (!String(d.t||'').trim() && !String(d.b||'').trim())) return;
+  const age=Math.round((Date.now()-(d.ts||0))/60000);
+  const what=d.e?'수정하던 글':'쓰던 글';
+  if(!confirm(`저장 안 된 ${what}이 있어요${age>0?` (${age<60?age+'분':Math.round(age/60)+'시간'} 전)`:''} — 이어서 쓸까요?\n[취소]하면 지워져요.`)){ delWDraft(); return; }
+  $('#w-title').value=d.t||''; $('#w-body').value=d.b||'';
+  if(d.c && [...$('#w-cat').options].some(o=>o.value===d.c)) $('#w-cat').value=d.c;
+  if(d.d) $('#w-date').value=d.d;
+  wTags=Array.isArray(d.g)?d.g.slice(0,12):[]; renderWTags();
+  if(d.e && st.posts.find(x=>x.id===d.e)){ editPost=d.e;
+    $('#w-edit-note').classList.remove('hidden');
+    $('#w-edit-note').textContent='✎ 임시저장에서 복구 — 발행하면 원래 글이 수정돼요.'; }
+}
+['w-title','w-body'].forEach(id=>{ const el=$('#'+id); if(el)
+  el.addEventListener('input',()=>{ clearTimeout(wdTimer); wdTimer=setTimeout(saveWDraft,1500); }); });
 bindFmtBar('#w-fmt');
 (()=>{                                                          // 미리보기 팝업(phase269c — 보고 닫고 수정)
   const btn=$('#w-prevtoggle');
@@ -4270,15 +4298,38 @@ function renderWImgs(){
     msg(`[사진${+el.dataset.wim+1}] 넣었어요 — 발행하면 그 자리에 사진이 나와요.`);
   });
 }
-$('#w-img').addEventListener('change',async e=>{
-  const f=e.target.files[0]; if(!f) return;
-  msg('이미지 압축 중...');
-  wImgs.push(await upFile(f,1600,.88,180));
-  insertWTag(wImgs.length);
+async function addWImgs(files){                                // 첨부 파이프 공용화(phase302)
+  const list=[...files].filter(f=>f && f.type && f.type.startsWith('image/'));
+  if(!list.length) return false;
+  for(const f of list){
+    msg('이미지 압축 중...');
+    wImgs.push(await upFile(f,1600,.88,180));
+    insertWTag(wImgs.length);
+  }
   renderWImgs();
-  e.target.value='';
+  clearTimeout(wdTimer); wdTimer=setTimeout(saveWDraft,300);   // 첨부 직후도 임시저장
   msg(`사진 ${wImgs.length} 삽입됨 — 아래 썸네일을 누르면 다른 자리에도 넣을 수 있어요.`);
+  return true;
+}
+$('#w-img').addEventListener('change',async e=>{
+  await addWImgs(e.target.files); e.target.value='';
 });
+/* 📋 붙여넣기·끌어넣기(phase302) — 본문에 Ctrl+V·드래그로 사진 즉시 첨부 */
+(()=>{
+  const wb=$('#w-body'); if(!wb) return;
+  wb.addEventListener('paste',e=>{
+    const fs2=[...(e.clipboardData?.files||[])].filter(f=>f.type.startsWith('image/'));
+    if(fs2.length){ e.preventDefault(); addWImgs(fs2); }
+  });
+  wb.addEventListener('dragover',e=>{
+    if([...(e.dataTransfer?.types||[])].includes('Files')){ e.preventDefault(); wb.classList.add('dropping'); } });
+  wb.addEventListener('dragleave',()=>wb.classList.remove('dropping'));
+  wb.addEventListener('drop',e=>{
+    const fs2=[...(e.dataTransfer?.files||[])].filter(f=>f.type.startsWith('image/'));
+    wb.classList.remove('dropping');
+    if(fs2.length){ e.preventDefault(); addWImgs(fs2); }
+  });
+})();
 let msgTimer=null;
 const msg=t=>{
   const p=$('#p-msg'); if(p) p.textContent=t;
@@ -4407,7 +4458,7 @@ $('#w-go').onclick=async()=>{
       await loadContent(); renderWidgets(); renderList();
       $('#panel').classList.remove('show');
       openPost(pid);
-      msg('수정 완료!');
+      delWDraft(); msg('수정 완료!');
       return;
     }
     const d0=wd?new Date(+wd.slice(0,4),+wd.slice(5,7)-1,+wd.slice(8,10)):new Date(), pad=n=>String(n).padStart(2,'0');
@@ -4419,7 +4470,7 @@ $('#w-go').onclick=async()=>{
     await loadContent(); renderWidgets(); renderList();
     clearWriteForm();
     $('#panel').classList.remove('show','wfull');   // 집필 창 닫기
-    msg('발행 완료!');
+    delWDraft(); msg('발행 완료!');
   }catch(e){ msg('오류: '+e.message); }
 };
 
