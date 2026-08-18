@@ -3073,7 +3073,7 @@ function renderWidList(){
       </select>
       ${w.t!=='latest'?`<button data-f="${i}" title="컬럼에서 떼어 화면에 자유 배치 (PC 전용)"${w.float?' style="color:var(--pri)"':''}>📌</button>`:''}
       ${['profile','quote','links','banner','dday','bgm','notice','chat','phone','img','nb','text','stamp','latest','tl','feat','char','pair','cal','habit'].includes(w.t)?`<button data-e="${i}">✎</button>`:'<button class="wl-ph" disabled>✎</button>'}
-      ${!['profile','search','category','cnt','bgm','stamp','pin','feat'].includes(w.t)?`<button data-c2="${i}" title="이 위젯을 설정 그대로 복사해 하나 더">⧉</button>`:'<button class="wl-ph" disabled>⧉</button>'}
+      ${!['search','category','cnt','bgm','stamp','pin','feat'].includes(w.t)?`<button data-c2="${i}" title="이 위젯을 설정 그대로 복사해 하나 더">⧉</button>`:'<button class="wl-ph" disabled>⧉</button>'}
       <button data-u="${i}">↑</button><button data-d="${i}">↓</button><button data-x="${i}">✕</button>
     </div>`).join('') || '<p class="pl-empty">위젯이 없어요 — 아래에서 추가하세요.</p>';
   if(draft.some(w=>w.home&&!w.hid))
