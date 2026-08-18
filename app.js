@@ -3059,7 +3059,7 @@ function fillWidgets(){
            ddHead: st.page.ddHead!==false,
            bgm:{url:st.page.bgm?.url||'', title:st.page.bgm?.title||''} };
   widSnap=JSON.stringify({d:draft,p:pdraft});   // 닫을 때 저장 안 한 변경 감지용
-  editIdx=-1; renderWidList(); $('#wid-edit').innerHTML='';
+  closeWidEdit(); renderWidList();
 }
 function renderWidList(){
   const wSt=w=>w.hid?'off':w.home?'home':'all';       // 표시 상태 3태(phase283 — A안 셀렉트 통합)
@@ -3097,7 +3097,7 @@ function renderWidList(){
     if(e!==undefined){ editIdx=+e; renderWidEdit(); return; }
     if(u!==undefined && +u>0){ const i=+u; [draft[i-1],draft[i]]=[draft[i],draft[i-1]]; }
     if(d!==undefined && +d<draft.length-1){ const i=+d; [draft[i+1],draft[i]]=[draft[i],draft[i+1]]; }
-    if(x!==undefined){ draft.splice(+x,1); editIdx=-1; $('#wid-edit').innerHTML=''; }
+    if(x!==undefined){ draft.splice(+x,1); closeWidEdit(); }
     renderWidList();
   });
   $('#wid-list').querySelectorAll('[data-st]').forEach(sl=>sl.onchange=()=>{
@@ -3208,9 +3208,13 @@ function cpFocusModal(w,pre){                      // 사진 초점 — 보면�
     msg('사진 위치 기억! [위젯 구성 저장]까지 눌러야 홈에 반영돼요.');
   };
 }
+function closeWidEdit(){ editIdx=-1; $('#wid-edit').innerHTML='';           // 위젯 편집 팝업(phase306)
+  $('#we-modal')?.classList.add('hidden'); }
 function renderWidEdit(){
-  const w=draft[editIdx]; if(!w){ $('#wid-edit').innerHTML=''; return; }
-  let html=`<p class="p-h">${WNAME[w.t]} 편집</p>`;
+  const w=draft[editIdx]; if(!w){ closeWidEdit(); return; }
+  $('#we-mtitle').textContent=(WNAME[w.t]||w.t)+' 편집';
+  $('#we-modal').classList.remove('hidden');
+  let html='';
   if(w.t==='profile') html+=`
     <div class="p-row"><label class="filelab">사진 <input type="file" id="we-img" accept="image/*"></label></div>
     <div class="p-row" style="align-items:center">
@@ -3939,6 +3943,9 @@ function renderWidEdit(){
 function syncWid(w){
   if(w && w.t==='links') w.items=(w.items||[]).filter(l=>l.label||l.url);
 }
+$('#we-close').onclick=()=>{ closeWidEdit(); renderWidList(); };            // 팝업 ✕(phase306)
+$('#we-modal').addEventListener('click',e=>{ if(e.target.id==='we-modal'){ closeWidEdit(); renderWidList(); } });
+$('#we-savego').onclick=()=>{ $('#wid-save').click(); closeWidEdit(); renderWidList(); };
 $('#wid-add').onclick=()=>{
   const t=$('#wid-type').value;
   if(t==='latest' && draft.some(w=>w.t==='latest')){ msg('최신글 블록은 하나만 둘 수 있어요.'); return; }
