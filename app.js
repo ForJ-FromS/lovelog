@@ -219,7 +219,8 @@ const spanFix=t=>{                                             // 문단 넘는 
   });
   return t;
 };
-const bodyCore=t=>t.split(/\n{2,}/).map(p=>{
+const bodyCore=t=>t.split(/(\n{2,})/).map(p=>{
+  if(/^\n{2,}$/.test(p)) return '<p class="pgap"></p>'.repeat(p.length-2);   // 엔터 여러 번 = 빈 줄 보존(phase307)
   const raw0=p.trim();
   const yt=raw0.match(/^https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?\S*v=|youtu\.be\/)([\w-]{11})\S*$/);
   if(yt) return `<div class="yt-wrap"><iframe src="https://www.youtube.com/embed/${yt[1]}" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`;   /* 유튜브 단독 줄 = 재생 카드(phase269) */
