@@ -696,6 +696,13 @@
   #wid-edit{margin-top:2px}
   .mm-card.we-card{width:min(780px,94vw)}
   .we-card #wid-edit{display:flex;flex-direction:column;gap:11px}   /* 팝업 폼 간격(306d) — 연속 입력 다닥다닥 방지 */
+  .we-head .abm-x{background:none;border:1px solid var(--line);border-radius:9px;   /* ✕ 톤 통일(306f) — mm-top 스코프 밖이라 맨몸이던 것 */
+    color:var(--muted);width:30px;height:30px;font-size:13px;cursor:pointer;flex:none;padding:0}
+  .we-head .abm-x:hover{color:var(--ink);border-color:var(--pri)}
+  #wid-edit .chk{justify-content:flex-start;align-self:flex-start;width:auto;text-align:left}   /* 체크 좌측 고정(306f) */
+  @media(max-width:540px){ #we-modal.memo-modal{padding:0}
+    .memo-modal .mm-card.we-card{width:100vw!important;max-height:100dvh;border-radius:0;padding:16px 14px}
+    .we-head{position:sticky;top:-16px;background:inherit;z-index:2;padding:6px 0} }   /* 모바일 풀시트(306f) */
   .we-card #wid-edit>*{margin:0}
   .we-card #wid-edit .p-row{margin:0}
   .we-head{display:flex;align-items:center;gap:10px}
@@ -2339,6 +2346,6 @@
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=334"></script>
+<script type="module" src="./app.js?v=335"></script>
 </body>
 </html>
