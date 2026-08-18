@@ -3208,13 +3208,13 @@ function cpFocusModal(w,pre){                      // 사진 초점 — 보면�
     msg('사진 위치 기억! [위젯 구성 저장]까지 눌러야 홈에 반영돼요.');
   };
 }
-function closeWidEdit(){ editIdx=-1; $('#wid-edit').innerHTML='';           // 위젯 편집 팝업(phase306)
+function closeWidEdit(){ editIdx=-1; const we=$('#wid-edit'); if(we) we.innerHTML='';   // 위젯 편집 팝업(phase306)
   $('#we-modal')?.classList.add('hidden'); }
 function renderWidEdit(){
   const w=draft[editIdx]; if(!w){ closeWidEdit(); return; }
-  $('#we-mtitle').textContent=(WNAME[w.t]||w.t)+' 편집';
-  $('#we-modal').classList.remove('hidden');
-  let html='';
+  const mt=$('#we-mtitle'); if(mt) mt.textContent=(WNAME[w.t]||w.t)+' 편집';       // 구 index 캐시(스큐) 내성(306b)
+  $('#we-modal')?.classList.remove('hidden');
+  let html=mt?'':`<p class="p-h">${WNAME[w.t]} 편집</p>`;
   if(w.t==='profile') html+=`
     <div class="p-row"><label class="filelab">사진 <input type="file" id="we-img" accept="image/*"></label></div>
     <div class="p-row" style="align-items:center">
@@ -3943,9 +3943,10 @@ function renderWidEdit(){
 function syncWid(w){
   if(w && w.t==='links') w.items=(w.items||[]).filter(l=>l.label||l.url);
 }
-$('#we-close').onclick=()=>{ closeWidEdit(); renderWidList(); };            // 팝업 ✕(phase306)
-$('#we-modal').addEventListener('click',e=>{ if(e.target.id==='we-modal'){ closeWidEdit(); renderWidList(); } });
-$('#we-savego').onclick=()=>{ $('#wid-save').click(); closeWidEdit(); renderWidList(); };
+{ const wc2=$('#we-close'), wm2=$('#we-modal'), ws2=$('#we-savego');        // 팝업 바인딩(306b — 구 index 스큐 시에도 앱 생존)
+  if(wc2) wc2.onclick=()=>{ closeWidEdit(); renderWidList(); };
+  if(wm2) wm2.addEventListener('click',e=>{ if(e.target.id==='we-modal'){ closeWidEdit(); renderWidList(); } });
+  if(ws2) ws2.onclick=()=>{ $('#wid-save').click(); closeWidEdit(); renderWidList(); }; }
 $('#wid-add').onclick=()=>{
   const t=$('#wid-type').value;
   if(t==='latest' && draft.some(w=>w.t==='latest')){ msg('최신글 블록은 하나만 둘 수 있어요.'); return; }
