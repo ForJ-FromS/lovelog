@@ -2409,7 +2409,7 @@ function renderAlbumModal(){
     </div>
     <div class="ab-mgrid">
       ${abDraft.imgs.map((u,i)=>`
-      <span class="ab-mth"><img src="${u}" alt="">
+      <span class="ab-mth" draggable="true" data-abd="${i}"><img src="${u}" alt="" draggable="false">
         <b class="no">${i+1}</b>
         <i data-abx="${i}" title="이 사진 빼기">✕</i>
         <span class="mvs">
@@ -2437,6 +2437,17 @@ function renderAlbumModal(){
     renderAlbumModal(); msg('사진 '+abDraft.imgs.length+'장 준비됐어요.');
   });
   ov.querySelectorAll('[data-abx]').forEach(b=>b.onclick=()=>{ abDraft.imgs.splice(+b.dataset.abx,1); renderAlbumModal(); });
+  let abDragI=null;                                           // 🖱 드래그 정렬(phase303) — ◀▶와 병행(폰은 ◀▶)
+  ov.querySelectorAll('[data-abd]').forEach(th=>{
+    th.addEventListener('dragstart',e2=>{ abDragI=+th.dataset.abd; e2.dataTransfer.effectAllowed='move'; });
+    th.addEventListener('dragover',e2=>{ e2.preventDefault(); th.classList.add('drop-t'); });
+    th.addEventListener('dragleave',()=>th.classList.remove('drop-t'));
+    th.addEventListener('drop',e2=>{ e2.preventDefault(); th.classList.remove('drop-t');
+      const to=+th.dataset.abd;
+      if(abDragI===null||abDragI===to) return;
+      const [m]=abDraft.imgs.splice(abDragI,1);
+      abDraft.imgs.splice(to,0,m); abDragI=null; renderAlbumModal(); });
+  });
   ov.querySelectorAll('[data-abl]').forEach(b=>b.onclick=()=>{ const i=+b.dataset.abl;
     [abDraft.imgs[i-1],abDraft.imgs[i]]=[abDraft.imgs[i],abDraft.imgs[i-1]]; renderAlbumModal(); });
   ov.querySelectorAll('[data-abr]').forEach(b=>b.onclick=()=>{ const i=+b.dataset.abr;
@@ -3062,6 +3073,7 @@ function renderWidList(){
       </select>
       ${w.t!=='latest'?`<button data-f="${i}" title="컬럼에서 떼어 화면에 자유 배치 (PC 전용)"${w.float?' style="color:var(--pri)"':''}>📌</button>`:''}
       ${['profile','quote','links','banner','dday','bgm','notice','chat','phone','img','nb','text','stamp','latest','tl','feat','char','pair','cal','habit'].includes(w.t)?`<button data-e="${i}">✎</button>`:'<button class="wl-ph" disabled>✎</button>'}
+      ${!['profile','search','category','cnt','bgm','stamp','pin','feat'].includes(w.t)?`<button data-c2="${i}" title="이 위젯을 설정 그대로 복사해 하나 더">⧉</button>`:'<button class="wl-ph" disabled>⧉</button>'}
       <button data-u="${i}">↑</button><button data-d="${i}">↓</button><button data-x="${i}">✕</button>
     </div>`).join('') || '<p class="pl-empty">위젯이 없어요 — 아래에서 추가하세요.</p>';
   if(draft.some(w=>w.home&&!w.hid))
@@ -3071,7 +3083,13 @@ function renderWidList(){
     $('#wid-list').insertAdjacentHTML('beforeend',
       '<p class="note">📌 띄운 위젯은 넓은 PC 화면에서만 떠 있어요 — 저장 후 홈의 ⠿ 편집 모드에서 드래그로 옮길 수 있고, 폰·좁은 창에서는 원래 자리로 돌아갑니다.</p>');
   $('#wid-list').querySelectorAll('button').forEach(b=>b.onclick=()=>{
-    const {e,u,d,x,f}=b.dataset;
+    const {e,u,d,x,f,c2}=b.dataset;
+    if(c2!==undefined){ const src=draft[+c2];                  // ⧉ 위젯 복제(phase304)
+      const cp=JSON.parse(JSON.stringify(src));
+      delete cp.float; delete cp.fx; delete cp.fy;             // 띄움 상태는 복사 안 함(겹침 방지)
+      draft.splice(+c2+1,0,cp);
+      renderWidList(); msg((WNAME[cp.t]||cp.t)+' 위젯을 복사했어요 — 바로 아래에 추가됐습니다. ✎에서 내용을 바꾸고 저장하세요.');
+      return; }
 
     if(f!==undefined){ const w=draft[+f]; w.float=!w.float;
       if(w.float){ if(w.fx==null) w.fx=62; if(w.fy==null) w.fy=160; }
