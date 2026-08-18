@@ -2149,70 +2149,41 @@
 
   <div class="pane hidden" data-pane="theme">
     <p class="p-big" style="border-top:0;padding-top:0;margin-top:0">📐 레이아웃 — 배치와 구조</p>
-    <div class="p-grid2">
-      <select id="s-headmode">
-        <option value="wide">헤더 — 가로 (상단 와이드)</option>
-        <option value="side">헤더 — 세로 (사이드 프로필형)</option>
-      </select>
-      <select id="s-sidepos">
-        <option value="right">사이드바 — 오른쪽</option>
-        <option value="left">사이드바 — 왼쪽</option>
-        <option value="both">사이드바 — 양쪽</option>
-      </select>
-      <select id="s-homestyle">
-        <option value="grid">홈 — 위젯 그리드형 (지금 구조)</option>
-        <option value="blog">홈 — 클래식 블로그형 (글 목록이 메인)</option>
-      </select>
-      <select id="s-catstyle">
-        <option value="bar">카테고리 — 상단 알약 바</option>
-        <option value="widget">카테고리 — 사이드 위젯</option>
-      </select>
-      <select id="s-catshape">
-        <option value="list">카테고리 모양 — 기본</option>
-        <option value="pill">카테고리 모양 — 알약</option>
-        <option value="text">카테고리 모양 — 글씨만</option>
-        <option value="box">카테고리 모양 — 네모</option>
-      </select>
-      <select id="s-galcols">
-        <option value="1">갤러리 — 한 줄에 1장 (크게)</option>
-        <option value="2">갤러리 — 한 줄에 2장</option>
-        <option value="3" selected>갤러리 — 한 줄에 3장 (기본)</option>
-        <option value="4">갤러리 — 한 줄에 4장</option>
-      </select>
-      <select id="s-memocols">
-        <option value="2">메모 — 한 줄에 2장 (넓게)</option>
-        <option value="3" selected>메모 — 한 줄에 3장 (기본)</option>
-        <option value="4">메모 — 한 줄에 4장 (촘촘)</option>
-      </select>
-      <select id="s-memoh">
-        <option value="s">메모 카드 — 짧게 (4줄)</option>
-        <option value="m" selected>메모 카드 — 보통 (7줄, 기본)</option>
-        <option value="l">메모 카드 — 길게 (11줄)</option>
-      </select>
-      <select id="s-mpinmax" class="sp2">
-        <option value="1">메모 고정 — 최대 1개</option>
-        <option value="2">메모 고정 — 최대 2개</option>
-        <option value="3" selected>메모 고정 — 최대 3개 (기본)</option>
-        <option value="4">메모 고정 — 최대 4개</option>
-        <option value="6">메모 고정 — 최대 6개</option>
-      </select>
-      <label class="chk sp2"><input type="checkbox" id="s-memott"> 메모 카드 제목 숨기기 (본문만 — 작성 팝업에서도 제목 칸이 사라져요)</label>
-      <div class="p-row" style="align-items:center;margin:8px 0 2px">
-        <span style="font-size:12px">🔲 모서리</span>
-        <select id="s-corner" style="width:auto;margin:0;font-size:12px">
-          <option value="">둥글게 (기본)</option>
-          <option value="soft">살짝 각지게</option>
-          <option value="sharp">뾰족하게</option>
-        </select>
-      </div>
-      <label class="chk sp2"><input type="checkbox" id="s-postpage"> 📖 글 전용 페이지 보기 — 글을 읽을 때 위젯·카테고리 바를 접고 본문만 넓게</label>
-      <label class="chk sp2"><input type="checkbox" id="s-rowtag" checked> 🏷 글 목록 줄에 태그 알약 표시 — 카테고리 알약 옆에 첫 태그가 함께 보여요</label>
-      <div class="sp2" style="display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--muted)">
-        글 목록 제목 색
-        <input type="color" id="s-listtc" style="width:38px;flex:none;padding:2px;height:30px;margin-bottom:0">
+    <div class="trows">
+      <div class="trow"><span class="tl">홈 구조</span><span class="tc"><select id="s-homestyle">
+        <option value="grid">위젯 그리드형 (지금 구조)</option>
+        <option value="blog">클래식 블로그형 (글 목록이 메인)</option></select></span></div>
+      <div class="trow"><span class="tl">사이드바</span><span class="tc"><select id="s-sidepos">
+        <option value="right">오른쪽</option><option value="left">왼쪽</option><option value="both">양쪽</option></select></span></div>
+      <div class="trow"><span class="tl">헤더</span><span class="tc"><select id="s-headmode">
+        <option value="wide">가로 (상단 와이드)</option>
+        <option value="side">세로 (사이드 프로필형)</option></select></span></div>
+      <div class="trow"><span class="tl">카테고리</span><span class="tc"><select id="s-catstyle">
+        <option value="bar">상단 알약 바</option><option value="widget">사이드 위젯</option></select>
+        <select id="s-catshape">
+        <option value="list">모양 — 기본</option><option value="pill">모양 — 알약</option>
+        <option value="text">모양 — 글씨만</option><option value="box">모양 — 네모</option></select></span></div>
+      <div class="trow"><span class="tl">갤러리 한 줄</span><span class="tc"><select id="s-galcols">
+        <option value="1">1장 (크게)</option><option value="2">2장</option>
+        <option value="3" selected>3장 (기본)</option><option value="4">4장</option></select></span></div>
+      <div class="trow"><span class="tl">메모 카드</span><span class="tc"><select id="s-memocols">
+        <option value="2">한 줄 2장</option><option value="3" selected>한 줄 3장</option><option value="4">한 줄 4장</option></select>
+        <select id="s-memoh">
+        <option value="s">짧게 (4줄)</option><option value="m" selected>보통 (7줄)</option><option value="l">길게 (11줄)</option></select>
+        <select id="s-mpinmax">
+        <option value="1">고정 1개</option><option value="2">고정 2개</option>
+        <option value="3" selected>고정 3개</option><option value="4">고정 4개</option><option value="6">고정 6개</option></select>
+        <select id="s-memott" title="숨기면 작성 팝업에서도 제목 칸이 사라져요">
+        <option value="">제목 보이기</option><option value="hide">제목 숨기기</option></select></span></div>
+      <div class="trow"><span class="tl">🔲 모서리</span><span class="tc"><select id="s-corner">
+        <option value="">둥글게 (기본)</option><option value="soft">살짝 각지게</option><option value="sharp">뾰족하게</option></select></span></div>
+      <div class="trow"><span class="tl">글 목록</span><span class="tc"><span class="tl2">제목 색</span>
+        <input type="color" id="s-listtc" title="게시판 목록의 제목 글씨색">
         <button class="rmv" id="s-listtc-x" style="font-size:10px">기본으로</button>
-        <span style="font-size:10px">— 게시판 목록의 제목 글씨</span>
-      </div>
+        <span class="tl2">🏷 태그 알약</span><select id="s-rowtag">
+        <option value="on" selected>보이기</option><option value="">숨기기</option></select></span></div>
+      <div class="trow"><span class="tl">📖 글 전용 페이지</span><span class="tc"><select id="s-postpage" title="글을 읽을 때 위젯·카테고리 바를 접고 본문만 넓게">
+        <option value="">끄기</option><option value="on">켜기 — 읽을 때 본문만 넓게</option></select></span></div>
     </div>
     <p class="p-big">🎨 테마 — 색과 무드</p>
     <p class="p-h">테마 프리셋 — 분위기를 통째로 갈아입어요</p>
@@ -2228,6 +2199,14 @@
       <div class="trows">
         <div class="trow"><span class="tl">테마</span><span class="tc">
           <select id="s-light"><option value="">어둡게</option><option value="light">밝게</option></select></span></div>
+        <div class="trow"><span class="tl">홈 색</span><span class="tc">
+          <input type="color" id="s-color" value="#8091d0" title="찍으면 홈 전체가 이 색으로 물들어요"><span class="tl2">홈 전체가 이 색으로</span></span></div>
+        <div class="trow"><span class="tl">포인트 색</span><span class="tc">
+          <input type="color" id="s-pri" title="강조·버튼·라벨 색 — 테마 색에서 자동으로 정해지는데 직접 고를 수도 있어요">
+          <button class="rmv" id="s-pri-auto" style="font-size:11px">자동으로</button></span></div>
+        <div class="trow"><span class="tl">타이틀 글씨색</span><span class="tc">
+          <input type="color" id="s-title" value="#eeeeee" title="홈 이름 글씨색">
+          <button class="rmv" id="s-title-reset" style="font-size:11px">기본색으로</button></span></div>
         <div class="trow"><span class="tl">카드</span><span class="tc">
           <select id="s-glass"><option value="">기본</option><option value="glass">투명 (유리)</option></select></span></div>
         <div class="trow"><span class="tl">카드 색</span><span class="tc">
@@ -2239,49 +2218,22 @@
           <select id="s-protect"><option value="on">켜기</option><option value="">끄기</option></select></span></div>
       </div>
     <p class="p-h">꾸밈 효과</p>
-    <div class="p-row" style="align-items:center">
-      <span style="font-size:12px;color:var(--muted)">커서 효과</span>
-      <select id="s-fx" style="flex:1">
+    <div class="trows">
+      <div class="trow"><span class="tl">커서 효과</span><span class="tc"><select id="s-fx">
         <option value="">없음</option>
         <option value="sparkle">✨ 반짝이 — 스파클</option>
-        <option value="heart">💗 하트 뿅뿅 — 통통 떠오르는 하트</option>
-        <option value="bubble">🫧 거품 — 몽글몽글 올라가는 방울</option>
-      </select>
-      <span style="font-size:12px;color:var(--muted)">색</span>
-      <input type="color" id="s-fxc" value="#ffb3c8" style="width:38px;padding:0" title="커서 효과 색 — 자유롭게 골라요">
-      <button class="rmv" id="s-fxc-x" style="font-size:11px">테마색</button>
-    </div>
-    <div class="p-row" style="align-items:center">
-      <span style="font-size:12px;color:var(--muted)">위젯 제목 기호</span>
-      <input id="s-lbicon" maxlength="3" placeholder="◈" style="width:70px;text-align:center">
-      <span class="note">SEARCH·CHAT 같은 제목 앞 기호 — 비우면 없어져요 (예: ◆ ✦ ❖ ▸ ·)</span>
-    </div>
-    <div class="p-row" style="align-items:center">
-      <span style="font-size:12px;color:var(--body)">타이틀(홈 이름) 글씨색</span>
-      <input type="color" id="s-title" value="#eeeeee"
-        style="width:58px;height:36px;padding:2px;border:1px solid var(--line);
-        border-radius:8px;background:var(--card2);cursor:pointer">
-      <button class="rmv" id="s-title-reset" style="font-size:11px">기본색으로</button>
-    </div>
-    <div class="p-row" style="align-items:center">
-      <span style="font-size:12px;color:var(--body)">테마 색 — 찍으면 홈 전체가 이 색으로 물들어요</span>
-      <input type="color" id="s-color" value="#8091d0"
-        style="width:58px;height:36px;padding:2px;border:1px solid var(--line);
-        border-radius:8px;background:var(--card2);cursor:pointer">
-    </div>
-    <div class="p-row" style="align-items:center">
-      <span style="font-size:12px;color:var(--muted)">포인트 색 (강조·버튼·라벨)</span>
-      <input type="color" id="s-pri" style="width:44px;padding:0">
-      <button class="rmv" id="s-pri-auto" style="font-size:11px">자동으로</button>
-      <span class="note">테마 색에서 자동으로 정해지는데, 원하는 색을 직접 고를 수도 있어요</span>
+        <option value="heart">💗 하트 뿅뿅</option>
+        <option value="bubble">🫧 거품 — 몽글몽글</option></select>
+        <input type="color" id="s-fxc" value="#ffb3c8" title="커서 효과 색 — 자유롭게 골라요">
+        <button class="rmv" id="s-fxc-x" style="font-size:11px">테마색</button></span></div>
+      <div class="trow"><span class="tl">위젯 제목 기호</span><span class="tc">
+        <input id="s-lbicon" maxlength="3" placeholder="◈" style="width:64px!important;text-align:center" title="SEARCH·CHAT 같은 제목 앞 기호 — 비우면 없어져요 (예: ◆ ✦ ❖ ▸ ·)"></span></div>
     </div>
     <p class="p-h">글꼴</p>
-    <div class="p-row">
-      <select id="s-font">
+    <div class="trows"><div class="trow"><span class="tl">홈 글꼴</span><span class="tc"><select id="s-font">
         <option value="sans">고딕 — Noto Sans KR</option>
         <option value="serif">명조 — Noto Serif KR</option>
-      </select>
-    </div>
+      </select></span></div></div>
     <p class="p-h">마우스 커서</p>
     <div class="p-row">
       <label class="filelab">커서 이미지 <input type="file" id="s-cur" accept="image/*"></label>
@@ -2369,6 +2321,6 @@
 </div></div>
 
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=328"></script>
+<script type="module" src="./app.js?v=329"></script>
 </body>
 </html>

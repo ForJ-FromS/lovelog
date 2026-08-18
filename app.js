@@ -5171,7 +5171,7 @@ function fillSettings(){
   }
   petImgsNew=null; renderPetImgList();
   const smh=$('#s-memoh'); if(smh) smh.value=st.page.memoH||'m';
-  const smt=$('#s-memott'); if(smt) smt.checked=!!st.page.memoNoTt;
+  const smt=$('#s-memott'); if(smt) smt.value=st.page.memoNoTt?'hide':'';
   const slt=$('#s-listtc');
   if(slt){
     slt.value=st.page.listTc||'#8899aa'; slt.dataset.on=st.page.listTc?'1':'';
@@ -5181,7 +5181,7 @@ function fillSettings(){
   $('#s-homestyle').value=homeStyle();
   $('#s-theme').value=p.theme||'default';
   renderStkList();
-  $('#s-dim').value=p.bgDim??78; $('#s-dots').value=p.dots!==false?'on':''; $('#s-protect').value=p.protectImg!==false?'on':''; $('#s-stkm').checked=!!p.stkHideM; $('#s-stkhome').checked=!!p.stkHome; $('#s-stkoff').checked=p.stkOff!==true; $('#s-fx').value=p.fx ?? (p.sparkle?'sparkle':''); $('#s-fxc').value=p.fxC||'#ffb3c8'; fxCVal=null; $('#s-postpage').checked=!!p.postPage; $('#s-corner').value=p.corner||''; $('#s-cardc').value=p.cardC||'#1a1c26'; cardCVal=null; $('#s-rowtag').checked=p.rowTag!==false;
+  $('#s-dim').value=p.bgDim??78; $('#s-dots').value=p.dots!==false?'on':''; $('#s-protect').value=p.protectImg!==false?'on':''; $('#s-stkm').checked=!!p.stkHideM; $('#s-stkhome').checked=!!p.stkHome; $('#s-stkoff').checked=p.stkOff!==true; $('#s-fx').value=p.fx ?? (p.sparkle?'sparkle':''); $('#s-fxc').value=p.fxC||'#ffb3c8'; fxCVal=null; $('#s-postpage').value=p.postPage?'on':''; $('#s-corner').value=p.corner||''; $('#s-cardc').value=p.cardC||'#1a1c26'; cardCVal=null; $('#s-rowtag').value=p.rowTag!==false?'on':'';
   $('#s-gatebtn').value=p.gateBtn||''; $('#s-listed').checked=!!p.listed; cardNew=null; bnrNew=null; renderCard(); renderBnr(); $('#s-lbicon').value=p.labelIcon??'◈'; gateColVal=null;
   $('#s-gatecolor').value=p.gateColor||'#ffffff';
   $('#del-h').textContent=st.handle||'—'; $('#s-del-confirm').value=''; delMsg('');
@@ -5269,7 +5269,7 @@ async function saveSettings(){
       memoCols: +($('#s-memocols')?.value)||3,
       mpinMax: +($('#s-mpinmax')?.value)||3,
       memoH: $('#s-memoh')?.value||'m',
-      memoNoTt: !!$('#s-memott')?.checked,
+      memoNoTt: $('#s-memott')?.value==='hide',
       clickFx: ($('#s-clickfx')?.value||'').trim(),
       unlisted: !!$('#s-unlisted')?.checked,
       pet: ($('#s-pet')?.value||'').trim(),
@@ -5284,9 +5284,9 @@ async function saveSettings(){
       fxC: fxCVal ?? st.page.fxC ?? '',
       cardC: cardCVal ?? st.page.cardC ?? '',
       sparkle: $('#s-fx').value==='sparkle',
-      postPage: $('#s-postpage').checked,
+      postPage: $('#s-postpage').value==='on',
       corner: $('#s-corner').value||'',
-      rowTag: $('#s-rowtag').checked,
+      rowTag: $('#s-rowtag').value==='on',
       gateBtn: $('#s-gatebtn').value.trim(),
       listed: $('#s-listed').checked,
       cardImg: cardNew ?? st.page.cardImg ?? '',
