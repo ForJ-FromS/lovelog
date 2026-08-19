@@ -1,115 +1,282 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LUVINFO 가이드</title>
-<link rel="icon" href="data:,">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LOVELOG — 사용 안내</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-  :root { --bg:#FDFDFB; --card:#FFFFFF; --line:#E8E6E1; --tx:#2A2A28; --dim:#8A8880; --mute:#B5B3AB; --pri:#B5A184; }
-  * { box-sizing: border-box; }
-  body { margin:0; background:var(--bg); color:var(--tx); font-family:'Pretendard',sans-serif; font-size:14px; line-height:1.85; }
-  .wrap { max-width:640px; margin:0 auto; padding:52px 22px 80px; }
-  h1 { font-size:22px; letter-spacing:.28em; margin:0 0 4px; }
-  .sub { font-size:11px; letter-spacing:.2em; color:var(--mute); margin:0 0 44px; }
-  h2 { font-size:14px; letter-spacing:.14em; color:var(--pri); margin:44px 0 12px; padding-bottom:8px; border-bottom:1px solid var(--line); }
-  p { margin:0 0 10px; }
-  ul { margin:0 0 10px; padding-left:18px; }
-  li { margin-bottom:6px; }
-  b { font-weight:700; }
-  code { background:#F3F1EC; border:1px solid var(--line); border-radius:5px; padding:1px 6px; font-size:12px; font-family:'Pretendard',monospace; }
-  .tip { background:#F8F6F1; border:1px solid var(--line); border-radius:12px; padding:12px 16px; font-size:12.5px; color:var(--dim); margin:12px 0; }
-  .tbl { width:100%; border-collapse:collapse; font-size:12.5px; margin:10px 0; }
-  .tbl th, .tbl td { border:1px solid var(--line); padding:8px 10px; text-align:left; vertical-align:top; }
-  .tbl th { background:#F8F6F1; font-weight:600; width:88px; }
-  /* 배너 미리보기 (실서비스와 같은 스타일) */
-  .banners { display:flex; flex-wrap:wrap; gap:10px; align-items:flex-start; margin:14px 0; }
-  .banners a { display:block; border:1px solid var(--line); border-radius:8px; overflow:hidden; position:relative; text-decoration:none; }
-  .banners .tb { display:flex; align-items:center; justify-content:center; width:200px; height:52px; background:#fff; color:var(--dim); font-size:12px; letter-spacing:.1em; }
-  .banners .bimg { display:flex; align-items:center; justify-content:center; width:220px; height:60px; background:linear-gradient(120deg,#2b2b33,#4a4152); color:#e8dcc8; font-size:11px; letter-spacing:.18em; }
-  .banners .mut { position:absolute; top:2px; right:5px; font-size:10px; color:var(--pri); }
-  .foot { margin-top:56px; padding-top:16px; border-top:1px solid var(--line); font-size:11px; color:var(--mute); text-align:center; letter-spacing:.1em; }
-  a.back { color:var(--pri); text-decoration:none; font-size:12px; }
-</style>
-</head>
-<body>
+:root{--h:222;--bg:hsl(var(--h) 40% 98%);--card:#fff;--line:hsl(var(--h) 24% 88%);
+  --ink:hsl(var(--h) 32% 16%);--body:hsl(var(--h) 14% 32%);--muted:hsl(var(--h) 10% 54%);--pri:hsl(var(--h) 68% 50%)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--body);font-family:'Noto Sans KR',sans-serif;
+  font-size:14px;line-height:1.8;-webkit-font-smoothing:antialiased}
+.wrap{max-width:760px;margin:0 auto;padding:60px 22px 90px}
+.en{font-family:'IBM Plex Mono',monospace;letter-spacing:.28em;font-size:9px;color:var(--muted)}
+h1{font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:500;color:var(--ink);
+  letter-spacing:.12em;margin:8px 0 6px}
+.sub{color:var(--muted);font-size:13px}
+h2{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;letter-spacing:.22em;
+  color:var(--ink);margin:56px 0 6px;padding-bottom:9px;border-bottom:1px solid var(--line);position:relative}
+h2::after{content:'';position:absolute;left:0;bottom:-1px;width:34px;height:2px;background:var(--pri)}
+h2 .no{color:var(--pri);margin-right:8px}
+h3{font-size:14px;font-weight:700;color:var(--ink);margin:30px 0 6px}
+h4{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.24em;
+  color:var(--pri);margin:20px 0 2px}
+p{margin:10px 0}
+b{color:var(--ink);font-weight:600}
+ul{margin:8px 0 12px;padding-left:4px;list-style:none}
+li{position:relative;padding-left:16px;margin:7px 0}
+li::before{content:'·';position:absolute;left:2px;color:var(--pri);font-weight:700}
+li>ul{margin:4px 0 4px}
+li li::before{content:'–';color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:14px 0;
+  box-shadow:0 1px 4px hsl(var(--h) 30% 50% / .05)}
+.card p{margin:6px 0}
+.card ul{margin:4px 0}
+kbd{display:inline-block;background:hsl(var(--h) 30% 94%);border:1px solid var(--line);
+  border-radius:6px;padding:1px 8px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--ink)}
+.pill{display:inline-block;border:1px solid var(--line);border-radius:99px;padding:2px 12px;
+  font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;color:var(--ink);margin:0 2px;background:var(--card)}
+.dim{color:var(--muted);font-size:12.5px}
+.q{border-left:3px solid var(--pri);padding:2px 0 2px 14px;margin:18px 0}
+.q .qq{color:var(--ink);font-weight:600}
+a{color:var(--pri);text-decoration:none}
+.top{position:fixed;top:14px;right:18px;font-family:'IBM Plex Mono',monospace;font-size:8.5px;
+  letter-spacing:.25em;color:var(--muted)}
+.top a{color:inherit}
+footer{margin-top:70px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:8.5px;
+  letter-spacing:.3em;color:var(--muted)}
+</style></head><body>
+<div class="top"><a href="/">← LOVELOG</a></div>
 <div class="wrap">
-  <h1>LUVINFO</h1>
-  <p class="sub">사용 가이드 · GUIDE</p>
 
-  <h2>01 — 시작하기</h2>
-  <ul>
-    <li>가입에는 <b>초대 코드</b>가 필요해요. 코드를 받았다면 첫 화면 → <b>시작하기</b> → Google 로그인 → 코드와 핸들 입력.</li>
-    <li><b>핸들</b>은 곧 주소예요 — <code>luvinfo.me/핸들</code>. 영문 소문자·숫자 2~20자, 나중에 바꾸기 어려우니 신중히!</li>
-    <li>화면 오른쪽 위: <b>📱 미리보기 · ✎ 편집 · 로그아웃</b> 버튼이 있어요.</li>
-  </ul>
+<p class="en">◆ USER GUIDE</p>
+<h1>LOVELOG 사용 안내</h1>
+<p class="sub">지인들을 위한 갠홈 서비스 — 처음 오신 분은 위에서부터 순서대로 읽으면 됩니다.</p>
 
-  <h2>02 — 장(페이지) 만들기</h2>
-  <p>성향글은 <b>장</b>을 넘기며 읽는 구조예요. 장은 두 종류:</p>
-  <ul>
-    <li><b>보통 장</b> — 블록을 쌓아 만드는 장. ＋ 버튼으로 블록을 추가하고 ↑↓로 순서를 바꿔요.</li>
-    <li><b>HTML 장</b> — 코드를 통째로 붙여넣는 장. <b>📄 HTML 파일 불러오기</b>로 파일째 올릴 수도 있어요. 이 장에서는 위 머리글이 자동으로 숨겨져요(체크로 다시 켤 수 있음).</li>
-  </ul>
-  <ul>
-    <li><b>장 넘김</b>은 화살표·이름 알약·점 3종 중 🎨 꾸미기에서 선택.</li>
-    <li><b>장 비밀번호</b> — 장 편집에서 비번을 넣으면 그 장만 잠겨요(대문 비번과 별개).</li>
-    <li><b>장 제목 꾸미기</b> — 제목 디자인 5종(꾸미기) + 장마다 제목 이미지(위/아래 위치 선택).</li>
-  </ul>
-
-  <h2>03 — 블록 9종</h2>
-  <table class="tbl">
-    <tr><th>글</th><td>자유 입력. 서식: <code>**굵게**</code> <code>==형광==</code> <code>__밑줄__</code> <code>~~취소~~</code> · 구분선 <code>---</code> · 접은 글 <code>{접기:제목}</code>…<code>{접기끝}</code> · 사진 <code>[사진1]</code></td></tr>
-    <tr><th>프로필</th><td>사진(원/네모, 좌/우)+닉네임+계정+소개 — 파츠별로 켜고 끄기, 사진은 드래그 조정</td></tr>
-    <tr><th>갤러리</th><td>여러 장 업로드, 2·3·4열/슬라이더 선택, 사진마다 위치 조정</td></tr>
-    <tr><th>음악</th><td>곡 제목+아티스트(+mp3 링크면 재생 가능)</td></tr>
-    <tr><th>스티커</th><td>이미지 여러 개를 크기·기울기 다르게 흩뿌리기</td></tr>
-    <tr><th>배너</th><td>아래 04 참고</td></tr>
-    <tr><th>링크</th><td>라벨+주소 → 「→ 라벨 ↗」 목록</td></tr>
-    <tr><th>인용구</th><td>기억하고 싶은 문장 + 출처</td></tr>
-    <tr><th>디데이</th><td>라벨+날짜 → D-30 / D-DAY / D+18 자동 계산</td></tr>
-  </table>
-  <div class="tip">모든 블록은 ✎에서 <b>카드 켬/끔 · 모서리 · 투명도</b>를 따로 정할 수 있고, 장 전체 통일 옵션도 있어요.</div>
-
-  <h2>04 — 배너 교환</h2>
-  <p>러브인포끼리는 <b>핸들만 넣으면</b> 배너가 걸려요:</p>
-  <ul>
-    <li>✎ 편집 → <b>＋ 배너</b> → 상대 핸들 입력 → 핸들로 추가 → 확인 → ✓ 저장</li>
-    <li>상대가 🎨 꾸미기의 <b>내 배너</b>(220×60 권장)에 올려둔 이미지가 자동으로 떠요. 없으면 홈 제목이 글자 배너로 나와요.</li>
-    <li><b>서로 걸면 배너에 ♥</b>가 자동으로 붙어요 — 맞배너 표시!</li>
-    <li>러브인포 밖 사이트는 이미지+주소를 직접 넣는 <b>외부 배너</b>로.</li>
-  </ul>
-  <p>이렇게 보여요:</p>
-  <div class="banners">
-    <a href="#"><span class="bimg">STELLAR · MARE</span><span class="mut">♥</span></a>
-    <a href="#"><span class="tb">@nyang</span></a>
-  </div>
-  <p style="font-size:12px;color:var(--dim);">← 왼쪽: 이미지 배너+맞배너 ♥ / 오른쪽: 이미지가 없어 글자 배너로 뜬 경우</p>
-
-  <h2>05 — 꾸미기</h2>
-  <ul>
-    <li><b>프리셋 10종</b> — 화이트·다크·다이어리·파스텔·모노·글래스·미드나잇·포레스트·레트로 창·VHS. 프리셋은 시작값이에요 — 고른 뒤 색·폰트를 얼마든지 바꿔도 돼요.</li>
-    <li><b>머리글</b> — 글/이미지+글/이미지만/없음. 이미지는 <b>가로 1200px·비율 3:1</b>(예: 1200×400) 권장, 슬라이더로 <b>위아래 위치·확대·높이</b> 조절.</li>
-    <li><b>배경 이미지</b>+덮임 정도, <b>파비콘</b>(탭 아이콘), 장 번호 표시/숨김.</li>
-    <li><b>직접 CSS</b> — 아는 사람용. 화면이 깨지면 주소 뒤에 <code>?nocss=1</code>을 붙여 들어와 지우세요.</li>
-    <li><b>러브로그에서 가져오기</b> — 러브로그 핸들을 넣으면 색·폰트·머리글·파비콘·배경·대문(이미지·문구)을 겹치는 만큼 가져와요. <b>대문 비밀번호는 안 가져오니</b> 러브인포에서 새로 설정!</li>
-  </ul>
-
-  <h2>06 — 저장 규칙 (중요!)</h2>
-  <ul>
-    <li>편집 창의 <b>확인</b> = 화면에만 반영 / 하단 <b>✓ 저장</b> = 서버에 진짜 저장. 저장 안 하고 닫으면 날아가요!</li>
-    <li>쓰던 글은 <b>자동 임시저장</b>돼요 — 실수로 닫아도 다시 열면 복구를 물어봐요.</li>
-    <li>🎨 꾸미기 맨 아래에서 <b>백업(JSON)</b> 내보내기/복원 가능. 큰 수정 전엔 백업 추천!</li>
-  </ul>
-
-  <h2>07 — 기타</h2>
-  <ul>
-    <li><b>문의</b> — 아무 홈이나 맨 아래 <b>✉ 문의</b>. 보낸 문의와 답변은 같은 창에서 확인.</li>
-    <li><b>대문</b> — 입장 화면(이미지+문구+비밀번호)을 켤 수 있어요.</li>
-    <li><b>홈 삭제</b> — 꾸미기 맨 아래. 되돌릴 수 없으니 신중히.</li>
-  </ul>
-
-  <p class="foot"><a class="back" href="./">‹ LUVINFO 첫 화면으로</a><br><br>LUVINFO · GUIDE</p>
+<h2><span class="no">01</span>시작하기</h2>
+<p>첫 화면에서 <b>구글 계정으로 로그인</b>한 뒤, <b>주소</b>(영문 소문자·숫자·하이픈 2~20자)와 <b>홈 이름</b>을 정하면 내 홈이 바로 만들어집니다. <b>초대코드</b>를 받았다면 코드 칸에 함께 입력하세요 — 코드가 필요한 시기에는 입력칸이 자동으로 뜹니다.</p>
+<div class="card">
+<p>내 홈 주소는 <kbd>luvlog.me/핸들</kbd> — 예를 들어 핸들이 jeste면 <kbd>luvlog.me/jeste</kbd>입니다.</p>
+<p class="dim">글 하나하나에도 고유 주소가 생겨서 트위터 등에 바로 공유할 수 있습니다.</p>
 </div>
-</body>
-</html>
+<p>친구 홈은 주소로 바로 방문하면 되고, 오른쪽 위 <span class="pill">IN</span>으로 로그인하면 방명록·댓글을 남길 수 있습니다.</p>
+
+<h2><span class="no">02</span>화면 구성</h2>
+<p>내 홈은 두 가지 형태 중에서 고를 수 있습니다 (꾸미기 → 테마·레이아웃 → 홈).</p>
+<div class="card">
+<p><b>위젯 그리드형</b> — 헤더 아래 위젯들이 카드로 배열되고, 중앙에 고정글과 최신글이 뜹니다. 대문 느낌.</p>
+<p><b>클래식 블로그형</b> — 헤더 아래 바로 글 목록이 펼쳐지는 블로그 구조. 로그 위주라면 이쪽.</p>
+</div>
+<ul>
+<li>카테고리는 상단 <b>알약 바</b>와 <b>사이드 위젯</b> 중 원하는 방식으로 표시하고, <b>모양 4종</b>(기본 목록 · 알약 · 글씨만 · 네모) 중 고를 수 있습니다 — 어느 위치에서든 똑같이 적용돼요.</li>
+<li>사이드바는 <b>왼쪽 / 오른쪽 / 양쪽</b> 중 고를 수 있고, 홈 화면의 기둥도 이 설정을 따라갑니다.</li>
+<li>내 홈을 편집하려면 오른쪽 아래 <b>⠿ (위젯 편집)</b> 버튼을 먼저 누르세요 — 켜져 있는 동안만 위젯 드래그·↑↓ 이동·스티커 배치가 됩니다. 평소에는 내 홈도 방문자처럼 편하게 구경할 수 있어요.</li>
+</ul>
+
+<h2><span class="no">03</span>글쓰기</h2>
+<p>오른쪽 아래 <span class="pill">✎</span> 버튼, 또는 각 게시판 상단의 <span class="pill">✎ WRITE</span>로 글을 씁니다. 게시판에서 누르면 그 카테고리가 자동 선택됩니다.</p>
+
+<h3>글에 걸 수 있는 옵션</h3>
+<ul>
+<li><b>비밀글</b> — 비밀번호를 걸면 내용이 암호화 저장됩니다. 비밀번호는 잊으면 복구가 안 됩니다!</li>
+<li><b>🔏 비공개</b> — 나만 볼 수 있게 저장(목록에도 나만 보임). 글 화면의 [공개로 전환]으로 언제든 공개. 초안·소장용 글에.</li>
+<li><b>고정글</b> — 홈 상단에 고정 카드로 뜹니다.</li>
+<li><b>📅 작성일</b> — 옛 로그를 옮겨 적을 때 그 날짜로 발행하면 목록에서도 그 날짜 자리에 정렬됩니다(수정에서 날짜를 바꾸면 그 자리로 이동).</li>
+<li><b>🏷 태그</b> — 제목 아래 태그 칸에 페어명·시리즈명 등을 달면(쉼표/엔터, 여러 개 가능) 게시판 위에 태그 알약이 모여서 눌러 좁혀 볼 수 있어요. 한 카테고리에서 여러 페어·AU를 나눌 때! 글 아래 태그를 누르면 그 태그 글만 모아 보고, 이미 쓴 태그는 입력할 때 자동으로 떠요. 카테고리 탭에서 <b>자주 쓸 태그를 미리 등록</b>해두면 글 쓸 때 ＋ 버튼으로 한 번에 붙습니다.</li>
+</ul>
+
+<p>엔터를 여러 번 치면 <b>빈 줄이 그만큼 그대로</b> 들어갑니다 — 문단 사이 여백을 자유롭게 조절해 보세요. 쓰던 글은 <b>자동으로 임시저장</b>됩니다 — 실수로 창을 닫거나 새로고침해도, 다시 글쓰기를 열면 이어서 쓸지 물어봐요(발행하면 사라지고, 비밀번호는 저장되지 않습니다).</p>
+<h3>본문 서식</h3>
+<ul>
+<li>글자를 드래그로 고르고 툴바의 <b>B · I · U · S · H</b>를 누르거나, <kbd>**굵게**</kbd> <kbd>*기울임*</kbd> <kbd>__밑줄__</kbd> <kbd>~~취소선~~</kbd> <kbd>==형광펜==</kbd>처럼 직접 감싸도 됩니다.</li>
+<li><b>문단 정렬</b>(☰▾ — 가운데·오른쪽·양쪽·들여쓰기) · <b>구분선</b>(―▾ — 가는 선·굵은 선·점선·빗금·◆ 장식) · <b>목록</b>(1.≡ 순서 / •≡ 점) · 글자를 고른 뒤 쓰는 <b>글자 크기(A↕)</b>와 <b>글자 색</b>.</li>
+<li><b>▸ 접은 글</b> — 툴바 ▸ 또는 <kbd>[접기:제목]</kbd> … <kbd>[/접기]</kbd>로 감싸면 읽는 사람이 눌러서 펼치는 상자가 됩니다. 스포일러·긴 TMI에 좋고, 접은 내용은 목록 미리보기(발췌)에도 안 나와요.</li>
+<li><b>❝ 인용 상자</b> — 문단 각 줄 앞에 <kbd>&gt; </kbd>(툴바 ❝)를 붙이면 포인트색 선이 있는 인용 상자.</li>
+<li><b>🔗 글자 링크</b> — <kbd>[보일 글자](https://주소)</kbd>(툴바 🔗)로 문장 속 글자에 링크.</li>
+<li><b>본문 사진</b> — 사진을 첨부하고 본문에 <kbd>[사진1]</kbd> <kbd>[사진2]</kbd>를 쓰면 그 자리에 들어갑니다. 본문 칸에 <b>사진을 붙여넣거나(Ctrl+V) 끌어다 놓으면</b> 바로 첨부되고 커서 자리에 [사진N]이 들어가요. 유튜브 주소는 한 줄에 붙여넣으면 카드로 예쁘게 박혀요.</li>
+</ul>
+
+<h3>HTML 모드</h3>
+<p>체크하면 본문을 HTML 코드 그대로 저장합니다 — 채팅 로그 백업 등 스타일 살려 올릴 때. 코드를 붙여넣는 대신 <b>📄 HTML 파일</b>을 그대로 업로드해도 되고, 코드 <b>위·아래에 쓴 일반 텍스트</b>는 줄바꿈까지 그대로 보입니다. 화면을 가득 붙잡는 형태의 로그는 홈이 밀리지 않게 자동으로 액자에 격리되고, 일반 HTML 글엔 홈 커스텀 CSS가 그대로 적용됩니다.</p>
+
+<h3>메모형 글 (팝업 작성)</h3>
+<p>카테고리 타입을 <b>메모</b>로 만들면 짧은 글들이 카드 그리드로 모입니다. 메모 게시판에서 WRITE를 누르면 <b>팝업 작성 창</b>이 떠요 — 제목(비우면 첫 줄로 자동)·서식 툴바·사진 4장·🔒 비밀·🔏 비공개·💬 댓글 설정까지 팝업에서 끝나고, 수정도 팝업으로 열립니다(비밀 메모 수정만 글쓰기 화면). 사진 있는 메모는 카드 위에 썸네일이 떠요. <b>메모는 💬 댓글이 기본으로 꺼져</b> 있으니 받고 싶은 메모만 💬를 켜세요.</p>
+
+<h3>읽기</h3>
+<ul>
+<li>글에 이미지가 있으면 목록에 썸네일이 자동으로 붙고, 글 하단 <b>‹ 이전 / 다음 ›</b>으로 연달아 읽습니다.</li>
+<li>글을 연 뒤 <b>✎ 수정</b> — 처음 쓴 그대로 열립니다. <span class="dim">비밀글 수정은 비밀번호를 다시 입력해야 저장.</span></li>
+<li>글 아래 <b>링크 복사</b>로 그 글의 주소를 바로 공유. <b>♡ 공감</b>으로 마음을 남길 수 있어요(다시 누르면 취소).</li>
+</ul>
+
+<h2><span class="no">04</span>꾸미기</h2>
+<p>오른쪽 아래 <span class="pill">✦</span> 버튼이 꾸미기 대시보드입니다. 왼쪽 메뉴 순서대로 소개할게요.</p>
+
+<h3>위젯 구성</h3>
+<p>넣을 수 있는 위젯들입니다. 이미지 위젯은 여러 개 넣을 수 있어요.</p>
+
+<h4>글 · 기록</h4>
+<ul>
+<li><b>최신글 블록</b> — 최근 글 목록. ✎에서 개수, 특정 카테고리만 골라 보이기(여러 개 두는 것도 가능), <b>앞머리 모양</b>(◈ 대신 ✦ ♥ 등 아무 이모지·문자)을 정할 수 있어요. <b>최신글을 아래로 내리고 싶다면 이 위젯을 추가하는 것이 열쇠</b> — 추가하는 순간 중앙 상단에 고정돼 있던 최신글 영역이 풀려서 드래그로 어디든 옮길 수 있습니다(공지·인용구를 그 위로 올릴 때도 이 방법).</li>
+<li><b>📌 고정글</b> — 고정글만 따로 두는 카드. 최신글 블록의 '고정글 함께 표시'를 끄면 완전히 분리됩니다.</li>
+<li><b>★ 대표글</b> — 추가하면 글 목록 제목 옆에 ☆가 생겨요. 눌러서 켠 글을 모아 N개 전시(글쓰기 화면의 체크로도 지정). 앞머리 기호도 자유.</li>
+<li><b>타임라인</b> — 연표 위젯. 항목마다 날짜·제목·로그, 라인·마디 카드·담백 3디자인, 점 모양 이모지 자유 지정, ✨움짤·↻반복·최대 높이 지원.</li>
+<li><b>공지</b> — 제목+내용 고정 카드. / <b>글</b> — 제목+자유 텍스트, 고정 카드 느낌 없이 담백하게.</li>
+<li><b>인용구</b> — ✨ 움짤 효과(타이핑)를 켜면 문장이 한 글자씩 나타나요.</li>
+</ul>
+
+<h4>전시 · 연출</h4>
+<ul>
+<li><b>채팅로그</b> — 좌우 대사 말풍선. 디자인 3종, 대사별 프사, 말풍선 색·글씨색·글꼴·글자 크기 조절. ✎에서 <b>✨ 움짤 효과</b>를 켜면 말풍선이 순서대로 떠오르고, <b>↻ 반복</b>은 다 뜬 뒤 처음부터 다시. <b>최대 높이(px)</b>를 정하면 긴 채팅은 스크롤(사이드 360px, 넓은 자리 440~480px 적당 — 비우면 전체 표시).</li>
+<li><b>단말기</b> — 핸드폰 잠금화면처럼 알림 배너가 쌓이는 위젯. 디자인 4종(OLED 미니멀·프로스트 글래스·관제 단말·레트로 창 — 윈도우 98풍 파란 타이틀바). 알림은 원하는 만큼, 관제 단말은 헤더 라벨에 세계관 이름 자유. 색은 직접 고르거나 '기본으로'를 누르면 홈 테마색, 케이싱(테두리)은 메탈/단색. 높이를 비우면 알림 개수만큼(삐삐st), 정하면 고정+스크롤. 시계 온오프, 우상단 ✕로 닫으면 📱 버튼으로 숨음. ✨움짤·↻반복 지원.</li>
+<li><b>이미지</b> — 사진 한 장+제목을 LOVE처럼 직접 입력.</li>
+<li><b>캐릭터 / 페어 프로필</b> — 스킨 4종·템플릿 5종으로 캐릭터 소개 카드를 꾸밉니다.</li>
+<li><b>디데이</b> · <b>달력</b> · <b>해빗 트래커</b> — 기념일 카운트와 기록 위젯.</li>
+</ul>
+
+<h4>연결 · 상호작용</h4>
+<ul>
+<li><b>프로필</b> · <b>검색</b> · <b>카테고리</b> — 기본 3종.</li>
+<li><b>링크</b> · <b>배너칸</b> — 바깥으로 나가는 목록. 배너칸은 러브로그 홈 걸기 지원(05 참고).</li>
+<li><b>이웃 홈</b> — 다른 러브로그 주소를 적으면 그 홈의 이름·헤더 사진이 자동으로 뜨는 링크 목록.</li>
+<li><b>방문자수</b> — TODAY/TOTAL, 옛날 갠홈 카운터 감성(하나만).</li>
+<li><b>발도장</b> — 방문자가 하루에 하나씩 도장을 찍고 갑니다. 도장 이모지 1~4개 직접 지정, 안내 문구도 원하는 말로 바꾸거나 끌 수 있어요.</li>
+</ul>
+
+<h4>음악</h4>
+<ul>
+<li><b>BGM</b> — 유튜브 음악 플레이어(자세한 건 06).</li>
+<li><b>BGM 플레이어 디자인</b> — 기본 앨범아트 외에 카세트 테이프·LP 턴테이블·주파수 튜너. 재생하면 릴이 감기고, 판이 돌고, 바늘이 떨립니다. 보조 문구와 색 자유, 밝은 홈에선 밝은 몸체가 기본.</li>
+</ul>
+
+<div class="card">
+<p><b>위젯 공통</b></p>
+<ul>
+<li>PC에선 <b>드래그</b>로 기둥 사이·순서를 옮깁니다 — 카드 위쪽 절반에 놓으면 그 위, 아래쪽 절반이면 그 아래. 마우스를 올리면 나오는 ↑↓ 버튼으로도 이동.</li>
+<li><b>모바일 순서는 따로 저장</b> — 폰으로 내 홈을 열면 위젯마다 ↑↓가 떠서 모바일 순서를 그 자리에서 정합니다(PC 배치는 안 바뀜).</li>
+<li><b>⧉ 복제</b> — 채팅로그·이미지·타임라인처럼 여러 개 두는 위젯은 목록의 ⧉로 설정을 통째로 복사해 하나 더 만들 수 있습니다. ✎를 누르면 편집이 <b>큰 팝업 창</b>으로 열립니다 — 닫아도 내용은 남고, [위젯 구성 저장]까지 눌러야 홈에 반영돼요. 내용이 빈 위젯은 방문자에게 안 보입니다. 이웃 홈·배너칸은 보여줄 개수(높이)를 정할 수 있고 넘치면 스크롤.</li>
+<li>위젯 제목 앞 기호(◈)는 테마·레이아웃에서 바꾸거나 없앨 수 있습니다.</li>
+<li>편집 후 <b>[위젯 구성 저장]</b>을 꼭 누르세요.</li>
+</ul>
+</div>
+
+<ul>
+<li><b>표시 범위 셀렉트</b> — 위젯 목록 각 줄에서 <b>[모든 화면 / 홈에서만 / 꺼두기]</b>를 고릅니다. <b>홈에서만</b>: 카테고리·글 목록으로 가면 잠시 숨겨져요 — 홈용 위젯이 게시판 사이드로 몰려 길어지는 게 싫을 때. <b>꺼두기</b>: 설정·내용을 보관한 채 잠시 감춤(꺼둔 채로도 순서·✎ 편집 가능).</li>
+<li><b>📌 플로팅 위젯 (PC 전용)</b> — 목록의 📌를 누르면 그 위젯이 컬럼에서 빠져나와 화면 위에 떠요. 저장 후 ⠿ 편집 모드에서 드래그로 배치(자동 저장), 화면 양옆 여백까지 자유. 폰·좁은 창에선 자동으로 원래 자리로 돌아가고, 글 읽는 동안엔 잠시 비켜 줍니다.</li>
+</ul>
+
+<h3>카테고리</h3>
+<p>카테고리를 추가하고 타입을 정합니다. 이름을 바꾸면 기존 글·사진·폴더도 같이 이사해요.</p>
+<ul>
+<li><b>글</b> — 일반 게시판. 행 아래 <b>🏷 칸에 자주 쓸 태그를 미리 등록</b>해두면 글 쓸 때 ＋로 붙일 수 있어요(즉시 저장).</li>
+<li><b>사진</b> — 낱장 그리드 갤러리. 상단 메뉴에 이름이 달리는 나만의 사진 게시판 — 원하는 만큼 만들 수 있어요. 사진 올릴 때(또는 ✎ 수정에서) 카테고리를 골라 담습니다.</li>
+<li><b>사진첩</b> — 낱장이 아니라 <b>제목 있는 사진 폴더</b>가 단위. 탭을 열면 폴더 표지 카드가 뜨고(셀렉트에서 <b>표지 카드 / 제목만</b> 목록 모양 선택), 폴더를 열면 사진이 펼쳐집니다.
+  <ul>
+  <li>폴더마다 보는 방식 선택 — <b>세로로 쭉(웹툰식) / 정사각형 그리드 / 타일 / 슬라이드</b>. 사진을 누르면 크게 보며 ‹ ›로 넘겨요.</li>
+  <li>만들기: 탭 오른쪽 위 <b>＋ ADD</b> — 제목·📅 날짜(옛 기록은 그 날짜로, 목록도 그 자리에 정렬)·사진 여러 장 한 번에. 사진마다 번호가 붙고 ◀▶ 또는 <b>드래그</b>로 순서 변경, ✎ 편집으로 나중에 더하고 빼기.</li>
+  <li>RP 로그의 사진 백업처럼 '한 컨셉을 한 뭉치로' 모아둘 때 쓰세요.</li>
+  </ul></li>
+<li><b>메모</b> — 짧은 글 카드 그리드(작성은 03의 팝업 참고).</li>
+</ul>
+<div class="card">
+<p><b>탭 관리</b></p>
+<ul>
+<li><b>↑↓로 순서</b>를 바꾸면 알약 바·사이드 목록에 그대로 반영. 목록에는 GALLERY·GUESTBOOK 줄도 함께 있어 자유롭게 섞을 수 있어요(HOME은 맨 앞, ALL은 맨 뒤 고정).</li>
+<li><b>GALLERY 탭은 선택</b> — [탭 보이기 / 알약(탭)만 숨기기 / 탭 숨기기] 셀렉트로. <b>GALLERY·GUESTBOOK 이름도 직접 변경</b> 가능(알약 바·게시판 제목까지 전부 같이 바뀌고, 비우면 원래대로).</li>
+<li><b>대문 하단 스트립은 갤러리와 별개</b> — 갤러리 탭을 숨겨도 스트립만 켤 수 있고, 사진은 대문의 ＋ 카드(편집 모드)로 직접 올려도 돼요. 스트립 사진은 <b>최신 / ★로 고른 사진 / 특정 카테고리</b> 중 선택 — ★는 GALLERY에서 사진 왼쪽 위 ★를 누르면 됩니다.</li>
+<li>방명록 줄의 <b>끄기</b> 체크 = 방명록 탭 숨김(기존 글 보존·해제로 복구). ALL 줄의 끄기 = 전체 글 탭 숨김(카테고리별 탭은 유지).</li>
+<li>카테고리 버튼에 사진을 쓰려면 [🖼 이미지 추가].</li>
+</ul>
+</div>
+<ul>
+<li>갤러리는 사진을 열면 <b>‹ ›(키보드 ←→)로 넘겨보기</b>, 사진 왼쪽 위 <b>✎</b>로 제목·카테고리·이미지 수정, <b>🔏 비공개(나만 보기)</b> 체크도 사진마다 가능.</li>
+<li>글·사진이 쌓이면 목록 아래 <b>페이지 번호</b>가 생깁니다(글 12개·사진은 한 화면 분량씩).</li>
+</ul>
+
+<h3>기본 정보</h3>
+<ul>
+<li><b>홈 이름·부제</b>, <b>헤더 위 작은 라벨</b>(도형과 글자를 따로 정합니다 — 기본은 ◈ @핸들), <b>파비콘</b>(탭 아이콘 — 정사각 PNG 권장).</li>
+<li><b>헤더 사진</b> — 여러 장이면 자동 슬라이드. <b>크롭해서 올릴 필요 없습니다</b>: 사진마다 확대(100~250%)·가로·세로 슬라이더로 보여줄 부분을 정하고, PC·모바일 미리보기가 나란히 떠요. ↑↓로 순서(첫 장이 슬라이드 시작이자 입장 화면 기본). 헤더 글씨 표시 끄기, 그라데이션(어둡게/밝게/없음), 헤더 높이·채우기 — 세로로 긴 사진은 <b>'사진 비율에 맞추기'</b>를 고르면 여백도 잘림도 없어요(꽉 채우기=잘릴 수 있음/전체 보이기=여백).</li>
+<li><b>입장 화면</b> — 첫 방문자에게 보이는 대문. 사진뿐 아니라 <b>움짤·짧은 영상(mp4·webm, 15MB)</b>도 배경 가능(소리 없이 자동 반복). 문구·비밀번호([잠금 해제하기]로 풀기)·입장 버튼 글자·글씨색·버튼색·그라데이션 끄기, [대문 미리보기]로 확인(아무 데나 클릭·ESC로 나옴).</li>
+<li><b>대표 이미지</b>(정사각 — 이웃 위젯·홈 목록용)와 <b>배너 이미지</b>(가로형 — 남의 배너칸용)를 따로 올릴 수 있어요.</li>
+<li><b>이웃 전용 메모 🔒</b> — 맞배너인 분에게만 화면 오른쪽 위 🔒로 보이는 비밀 메모. 비밀글 비번 안내 등에.</li>
+<li>백업·복원·초기화·홈 삭제도 이 탭에 있어요(07 참고).</li>
+</ul>
+
+<h3>테마 · 레이아웃</h3>
+<ul>
+<li><b>컬러 피커</b>로 홈 전체 색(포인트 색은 자동이지만 따로 지정 가능) — 아래 바로 색상, 위 네모에서 채도(왼쪽=차분/오른쪽=쨍)·밝기.</li>
+<li><b>🔲 모서리</b> — 홈 전체의 둥근 모서리를 <b>살짝 각지게 / 뾰족하게</b> 바꿀 수 있습니다(카드·버튼·알약까지 전부, 원형 버튼은 유지).</li>
+<li><b>🎨 카드 색</b> — 위젯·카드의 배경색을 직접 고를 수 있습니다. 카드 투명화 중이라면 고른 색으로 반투명해집니다(기본으로 버튼을 누르면 테마색 자동).</li>
+<li>밝은 테마 · 카드 투명화 · <b>헤더 배경 없애기</b>(투명 PNG 헤더가 칸·테두리 없이 배경 위에 그대로) · 배경 도트 · 프리셋(Win98·VHS).</li>
+<li><b>홈 글꼴 12종</b> — 고딕·명조·프리텐다드·수트·고운돋움·고운바탕·마루 부리·리디바탕·나눔손글씨 펜·둥근모꼴·갈무리·페이퍼로지. 고른 글꼴만 그때 불러와서 홈이 무거워지지 않아요. 명조 계열은 제목·라벨·카테고리 바까지 함께 바뀝니다.</li>
+<li>갤러리 한 줄 장수(1~4) · 메모 카드 한 줄 개수(2~4) · 글 목록 제목 색 · <b>🏷 글 목록 줄에 태그 알약 표시</b> 온오프 · <b>글 전용 페이지 보기</b>(글 읽을 때 위젯을 접고 본문만).</li>
+<li><b>마우스 커서</b> — 움직이는 GIF를 올리면 따라다니는 움짤 커서(PC 전용). <b>커서 효과</b> — ✨ 반짝이·💗 하트·🫧 거품, 색은 테마색 또는 피커.</li>
+<li><b>이미지 저장 방지</b>(우클릭·드래그 차단 — 끌 수도 있음).</li>
+<li><b>커스텀 CSS</b>(아는 사람만!) — 화면이 깨져 손을 못 대겠으면 주소 뒤에 <kbd>?nocss=1</kbd>을 붙여 여세요(CSS 꺼진 채 열려 고치거나 비울 수 있음). CSS를 몰라도 <b>컨셉 프리셋 12종</b>(눈 내리는 밤·벚꽃·반딧불이·심해 부유물·거품·빛 입자·금빛 별가루·VHS·비 오는 창가·필름 카메라·CRT·점선 스크랩북)을 [넣어보기]로 바로 적용해볼 수 있어요(같은 자리 효과끼리는 하나만).</li>
+</ul>
+
+<h3>배경 · 스티커</h3>
+<ul>
+<li>배경 이미지+농도 조절. 투명 PNG는 투명 그대로, <b>움짤 GIF도 그대로</b>(8MB까지 — 사진 올리는 곳 전부 동일).</li>
+<li>스티커는 드래그로 배치·크기·회전. <b>PC와 모바일 위치가 따로 저장</b>되고, 크기도 📱 슬라이더로 모바일만 따로(안 만지면 PC 크기).</li>
+<li>겹침 순서는 목록의 ▲▼ — 위쪽 스티커가 겹쳤을 때 위에 보여요. 하나씩 [숨기기]/[▷ 보이기]도 됩니다.</li>
+<li>탭 위쪽 체크(즉시 저장): <b>전체 표시 끄기 · 모바일만 숨기기 · 홈 화면에서만 보이기</b>(카테고리·글 목록에선 숨김).</li>
+<li>스티커는 첫 화면만이 아니라 <b>페이지 아래쪽 어디든</b> 놓을 수 있고, <b>글 읽는 동안엔 잠시 걷혀서</b> 본문을 안 가려요.</li>
+</ul>
+
+<h2><span class="no">05</span>이웃과 연결하기</h2>
+<ul>
+<li><b>배너칸</b>의 [＋ 러브로그 홈 걸기]에 핸들만 적으면 그 홈이 배너로 걸립니다. 상대가 배너 이미지(가로형)를 올려뒀으면 그 이미지가, 없으면 사진+이름 카드형으로(항목마다 표시 방식 선택). 내가 이미지를 직접 올리면 그게 우선.</li>
+<li><b>이웃 홈 위젯</b>에 주소를 적으면 그 홈의 이름·사진이 자동으로 뜨고, [사진]으로 원하는 이미지 지정도 가능. <b>러브로그 밖의 갠홈·블로그·트위터</b>도 https:// 주소+이름으로 같은 목록에(새 창으로 열림).</li>
+<li>서로가 서로를 걸면 — 이웃이든 배너칸이든 — 이름 옆에 <b>♥</b>가 붙어요.</li>
+<li>꾸미기 → 기본 정보의 <b>'내 홈 공개하기'</b>를 체크하면 남이 나를 걸었을 때 내 이름·사진이 자동으로 떠요(기본은 비공개 — 주소 아는 사람만 방문 가능). 대표 이미지를 지정하면 헤더 대신 그 사진이 쓰입니다.</li>
+<li>방명록·댓글의 <b>@주소를 누르면 그 사람 홈으로</b> 바로 이동.</li>
+<li>방명록은 <b>🔒 비공개로 남기기</b> 체크 시 내용이 홈 주인(과 본인)에게만 보이고(작성자는 표시), 홈 주인은 방명록마다 <b>답글</b>을 달 수 있어요.</li>
+</ul>
+
+<h2><span class="no">06</span>BGM</h2>
+<p>BGM 위젯에 유튜브 링크(영상 또는 재생목록)를 넣고 ▶를 누르면 <b>화면 왼쪽 아래 미니 플레이어</b>에서 재생됩니다. 게시판을 옮겨 다녀도 음악이 안 끊기고, 플레이어의 ✕로 끄면 됩니다. 다른 사람 홈으로 가면 자동으로 꺼집니다.</p>
+<ul>
+<li><b>플레이리스트</b> — ✎ 편집의 [+ 곡 추가]로 여러 곡 등록하면 대표곡부터 순서대로 이어 재생. 곡 목록에서 눌러 바로 넘어갈 수도(곡 전환은 홈 화면에서).</li>
+<li><b>커버 이미지</b> — 유튜브 썸네일 대신 앨범아트를 직접. [🖼 커버 이미지]=위젯 공통, 곡 줄 끝 🖼=곡별(설정된 곡은 🖼✓, 곡별이 우선). 네 스킨 모두 적용, LP는 판 한가운데 라벨이라 직접 그린 그림을 올리면 진짜 레코드 같아요.</li>
+</ul>
+
+<h2><span class="no">07</span>백업 · 복원 · 이사 · 초기화</h2>
+<ul>
+<li>꾸미기 → 기본 정보의 <b>백업</b> — 꾸미기와 글·갤러리를 골라 <b>원본 JSON</b>(비밀글 암호화 원문까지 전부)으로 저장, <b>읽기용 HTML</b>(브라우저로 열어 그대로 읽기)로도 저장.</li>
+<li><b>복원</b> — 그 파일로 되돌리기. 복원 직전 현재 상태가 자동 백업되고, 글 복원은 되살리기만(지금 글을 지우지 않음).</li>
+<li><b>이사</b> — 다른 홈의 백업을 복원하면 사진(사진첩 폴더 포함)까지 이 홈으로 복사돼 새 주소로 이사됩니다(방명록·발도장 기록은 이전되지 않아요).</li>
+<li>사진은 링크로 담기니, 가끔 한 번씩 백업해 두면 어떤 일이 있어도 글은 안전합니다.</li>
+<li><b>꾸미기 초기화</b> — 테마·색만 / 위젯 구성만 / 스티커만 / 사진만 / 전체 중 선택. <b>글·갤러리·방명록은 지워지지 않습니다.</b> 되돌린 설정은 복구 불가이니 신중하게!</li>
+<li><b>홈 삭제(탈퇴)</b> — 내 주소를 직접 입력하고 두 번 확인하면 홈과 글·사진·방명록이 전부 삭제됩니다. 되돌릴 수 없고 주소는 풀립니다. <span class="dim">구글 계정은 남아 있어 다시 로그인해 새 홈을 만들 수 있어요.</span></li>
+</ul>
+
+<h2><span class="no">08</span>사진 용량</h2>
+<div class="card">
+<p>사진은 모두 <b>전용 저장소</b>에 올라갑니다 — 올릴 때 자동으로 적당한 크기로 줄여주니 큰 파일도 그대로 올리면 되고, 용량 제한은 거의 신경 쓸 필요 없습니다.</p>
+<p class="dim">예외 두 가지: <b>움짤(GIF)은 8MB</b>, <b>대문 영상은 15MB</b>까지 — 원본 그대로 올라가는 항목이라 넘으면 안내가 뜹니다. 움짤은 가로 300~500px 정도로 줄여 올리면 화질도 충분하고 홈이 가볍습니다.</p>
+</div>
+
+<h2><span class="no">09</span>자주 묻는 것</h2>
+<div class="q"><p class="qq">Q. 꾸민 게 바로 반영이 안 됩니다.</p>
+<p>저장 버튼을 눌렀는지 먼저 확인하시고(위젯 구성은 [위젯 구성 저장]), 새로고침해 보세요. 반영에 몇 분 걸릴 때가 있습니다.</p></div>
+<div class="q"><p class="qq">Q. 이웃에 넣었는데 이름·사진이 안 뜹니다.</p>
+<p>상대가 꾸미기 → 기본 정보의 <b>'내 홈 공개하기'</b>를 켜야 자동으로 뜹니다. 그 전에는 [사진] 버튼으로 직접 이미지를 넣어 쓸 수 있어요.</p></div>
+<div class="q"><p class="qq">Q. 스티커가 안 보여요 / 사라졌어요.</p>
+<p>꾸미기 → 스티커 탭을 열면 지금 안 보이는 이유(전체 표시 꺼짐 / 모바일 숨김 / 홈에서만 보이기)가 맨 위에 뜹니다. 개별 [숨기기] 상태면 목록에서 흐리게 표시돼요.</p></div>
+<div class="q"><p class="qq">Q. 투명 PNG를 올렸는데 배경이 까맣게 나옵니다.</p>
+<p>투명 PNG는 투명 그대로 올라갑니다 — 헤더가 하얗게/까맣게 떠 보인다면 테마·레이아웃의 <b>헤더 배경 없애기</b>를 켜보세요.</p></div>
+<div class="q"><p class="qq">Q. 비밀글 비밀번호를 잊었어요.</p>
+<p>복구할 방법이 없습니다. 암호화 저장이라 운영자도 열 수 없어요.</p></div>
+<div class="q"><p class="qq">Q. 헤더가 모바일에서 다르게 잘려요.</p>
+<p>헤더 편집의 <b>PC·모바일 미리보기</b>를 보면서 확대·위치 슬라이더를 맞추면 두 화면 모두 예쁘게 나옵니다.</p></div>
+<div class="q"><p class="qq">Q. 홈을 아예 지우고 싶어요 / 핸들을 바꾸고 싶어요.</p>
+<p>꾸미기 → 기본 정보 맨 아래 <b>홈 삭제</b>로 정리할 수 있습니다. 핸들 변경은 백업 → 홈 삭제 → 새 핸들로 재가입 → 복원(이사) 순서로 하면 글·사진까지 그대로 옮겨져요.</p></div>
+
+<h2><span class="no">10</span>지켜줄 것</h2>
+<p>서로의 방명록과 댓글에서 예의를 지켜 주시고, 버그나 바라는 기능은 <b>꾸미기 → 기본 정보 → 문의 · 제보</b>로 보내주세요 — 운영자에게 바로 전달되고, 답변도 같은 자리에서 확인할 수 있습니다. 홈과 관련해 불미스러운 일이 생길 경우 운영자가 조치를 취합니다.</p>
+
+<footer>LOVELOG · PRIVATE SERVICE</footer>
+</div></body></html>
