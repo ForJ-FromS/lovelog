@@ -521,7 +521,7 @@ async function enterPage(){
   const p=st.page, h=st.handle;
   applyColor(p.hue ?? 222, p.sat, p.lum);
   applyPri(p.priColor||'');
-  document.title=(p.name||h)+' — LOVELOG';
+  document.title=(p.name||h)+' — luvlog';
   $('#pg-name').textContent=p.name||h;
   $('#pg-name').style.color = p.titleColor||'';
   $('#pg-sub').textContent=p.sub||'';
@@ -587,7 +587,7 @@ async function enterPage(){
   ensureFont(fk);
   document.documentElement.style.setProperty('--uFam', FONTS[fk].fam);
   document.body.classList.toggle('font-serif', fk==='serif');
-  document.title = p.name ? p.name : 'LOVELOG';
+  document.title = p.name ? p.name : 'luvlog';
   let fl=document.getElementById('favlink');
   if(p.fav){ if(!fl){ fl=document.createElement('link'); fl.rel='icon'; fl.sizes='any'; fl.id='favlink'; document.head.appendChild(fl); } fl.href=p.fav; }
   else if(fl) fl.remove();
@@ -2209,8 +2209,16 @@ async function togglePin(id){
 let galShown=null;
 function renderGal(all){
   const base = all ? st.gallery : stripList();
-  const arr = all ? base : base.slice(0,4);
+  const cnt = Math.min(6, Math.max(2, +st.page?.stripCnt||4));              // ▤ 장수(phase310)
+  const arr = all ? base : base.slice(0,cnt);
   galShown=arr;
+  const g0=$('#gal'); if(g0){ g0.className='';                              // ▤ 스트립 모양 — 대문에서만
+    if(!all && st.page?.stripShape) g0.classList.add('sp-'+st.page.stripShape);
+    if(all){ g0.style.removeProperty('--spc'); g0.style.removeProperty('--spcm'); }
+    else{ const wide=st.page?.stripShape==='wide';
+      const cols=Math.max(1, Math.min(wide?2:cnt, arr.length||cnt));        // 사진이 적으면 있는 만큼 꽉 채움=자연 중앙
+      g0.style.setProperty('--spc', cols);
+      g0.style.setProperty('--spcm', wide?1:Math.min(cols,2)); } }
   const pins=galPins();
   const addCard = (!all && st.mine)
     ? `<label class="strip-add" title="여기서 바로 사진 추가 — 대문 기준에 맞춰 올라가요">＋<input type="file" id="strip-file" accept="image/*" style="display:none"></label>`
@@ -2968,6 +2976,16 @@ function renderCatFix(){
       <span style="flex:1;font-size:12px;color:var(--muted)">▤ 대문 하단 스트립
         <i style="font-style:normal;font-size:10px;opacity:.8">— 갤러리 탭과 상관없이 따로 켜고 끌 수 있어요</i></span>
       <label class="chk" style="margin:0;font-size:11px"><input type="checkbox" id="strip-on" ${stripShow()?'checked':''}> 대문에 표시</label>
+      <select id="strip-cnt" style="font-size:11px;width:auto;margin:0 0 0 6px" title="대문 스트립에 보여줄 장수 — 사진이 더 적으면 있는 만큼 꽉 채워요">
+        ${[2,3,4,5,6].map(n=>`<option value="${n}" ${(st.page.stripCnt||4)==n?'selected':''}>${n}장</option>`).join('')}
+      </select>
+      <select id="strip-shape" style="font-size:11px;width:auto;margin:0 0 0 6px" title="스트립 칸의 사진 비율">
+        <option value="" ${!st.page.stripShape?'selected':''}>기본 (4:3)</option>
+        <option value="wide" ${st.page.stripShape==='wide'?'selected':''}>가로 와이드</option>
+        <option value="sq" ${st.page.stripShape==='sq'?'selected':''}>정사각</option>
+        <option value="v" ${st.page.stripShape==='v'?'selected':''}>세로</option>
+        <option value="free" ${st.page.stripShape==='free'?'selected':''}>원본 그대로 (안 자름)</option>
+      </select>
       <select id="strip-src" style="font-size:11px;width:auto;margin:0 0 0 6px">
         <option value="recent" ${(st.page.stripSrc||'recent')==='recent'?'selected':''}>최신 사진</option>
         <option value="pick" ${st.page.stripSrc==='pick'?'selected':''}>★로 고른 사진</option>
@@ -3026,6 +3044,16 @@ function renderCatFix(){
     document.querySelector('.strip-sec').classList.toggle('hidden', !stripShow());
     msg(stn.checked?'대문 하단 스트립을 켰어요.':'대문 하단 스트립을 껐어요.');
   };
+  const sc2=$('#strip-cnt'); if(sc2) sc2.onchange=async()=>{           // ▤ 장수(phase310) — 즉시 저장
+    st.page.stripCnt=+sc2.value;
+    try{ await updateDoc(doc(db,'pages',st.handle),{stripCnt:+sc2.value});
+      renderGal(); msg('스트립 장수를 바꿨어요.'); }
+    catch(e3){ msg('저장 실패: '+e3.message); } };
+  const sh=$('#strip-shape'); if(sh) sh.onchange=async()=>{           // ▤ 모양(phase308) — 즉시 저장
+    st.page.stripShape=sh.value;
+    try{ await updateDoc(doc(db,'pages',st.handle),{stripShape:sh.value});
+      renderGal(); msg('스트립 모양을 바꿨어요 — 대문에서 확인해 보세요.'); }
+    catch(e2){ msg('저장 실패: '+e2.message); } };
   const ss=$('#strip-src'); if(ss) ss.onchange=async()=>{
     st.page.stripSrc=ss.value;
     try{ await updateDoc(doc(db,'pages',st.handle),{stripSrc:ss.value});
