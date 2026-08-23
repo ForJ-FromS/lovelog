@@ -3495,7 +3495,10 @@ function renderWidEdit(){
     <button class="rmv" data-dr="${i}">✕</button></div>
     <div class="p-row" style="margin-top:-4px">
       <label class="filelab" style="font-size:11px">📷 사진 ${d.img?'(있음)':''} <input type="file" data-dimg="${i}" accept="image/*"></label>
-      <label class="chk" style="font-size:11px;flex:none" title="켜면 시작한 날을 0일로 셉니다(당일 D+0·다음날 D+1) — 끄면 첫날=1일(기본)"><input type="checkbox" data-dz0="${i}" ${d.z0?'checked':''}> 당일=0</label>
+      <select data-dz0="${i}" style="flex:none;width:auto;font-size:11.5px;margin-bottom:0" title="시작한 날을 몇 일로 셀지 — 1일이면 당일 D+1(커플식), 0일이면 당일 D+0(경과일식)">
+        <option value="1" ${d.z0?'':'selected'}>당일=1일</option>
+        <option value="0" ${d.z0?'selected':''}>당일=0일</option>
+      </select>
       ${d.img?`<button class="rmv" data-dximg="${i}" style="font-size:10px">사진 제거</button>`:''}
     </div>`).join('')+
     `<div class="p-row" style="align-items:center;margin-bottom:2px">
@@ -3964,7 +3967,7 @@ function renderWidEdit(){
   $('#wid-edit').querySelectorAll('[data-dd]').forEach(i=>i.addEventListener('change',()=>{ pdraft.ddays[i.dataset.dd].date=i.value; }));
   $('#wid-edit').querySelectorAll('[data-dr]').forEach(b=>b.onclick=()=>{ pdraft.ddays.splice(+b.dataset.dr,1); renderWidEdit(); });
   $('#wid-edit').querySelectorAll('[data-dz0]').forEach(i=>i.addEventListener('change',()=>{
-    if(i.checked) pdraft.ddays[i.dataset.dz0].z0=true; else delete pdraft.ddays[i.dataset.dz0].z0; }));
+    if(i.value==='0') pdraft.ddays[i.dataset.dz0].z0=true; else delete pdraft.ddays[i.dataset.dz0].z0; }));
   $('#wid-edit').querySelectorAll('[data-dimg]').forEach(inp=>inp.addEventListener('change',async e=>{
     const f=e.target.files[0]; if(!f) return; msg('사진 압축 중...');
     pdraft.ddays[inp.dataset.dimg].img=await upFile(f,1000,.9,100);
