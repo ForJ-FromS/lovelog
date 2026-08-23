@@ -2558,7 +2558,9 @@ async function openPost(id, fromHome=false){
     try{ body=await decTxt(pw,p.enc); }catch(e){ msg('비밀번호가 맞지 않아요.'); return; }
     st.curRaw = null;
     if(p.encRaw){ try{ st.curRaw = await decTxt(pw, p.encRaw); }catch(e){} }   // 원문(수정용)도 같이 복호(phase258)
-  } else { body=p.body; st.curRaw=null; }
+    st.curImgs = null;
+    if(p.encImgs){ try{ st.curImgs = JSON.parse(await decTxt(pw, p.encImgs)); }catch(e){} }   // 사진 목록 복호(보안점검 3b)
+  } else { body=p.body; st.curRaw=null; st.curImgs=null; }
   st.cur=p; st.curBody=body;
   $('#pv-meta').textContent=p.cat+' · '+p.date+(p.secret?' · SECRET':'')+(p.priv?' · 🔏 비공개':'');
   /* ── 공감 ♥ ── */
@@ -4428,7 +4430,8 @@ function startEditPost(){
     $('#w-body').value = p.html ? src : htmlToText(src);           // HTML 글은 역변환하지 않음 — 코드 변형 방지
     $('#w-html').checked = !!p.html;                               // 모드 승계 — 수정만 해도 풀리던 구멍 봉쇄
   }
-  wImgs = Array.isArray(p.imgs) ? p.imgs.slice() : []; renderWImgs();
+  wImgs = (p.secret && Array.isArray(st.curImgs)) ? st.curImgs.slice()      // 🔒 비밀글은 복호화한 사진 목록(보안점검 3b)
+        : (Array.isArray(p.imgs) ? p.imgs.slice() : []); renderWImgs();
   $('#w-pin').checked=!!p.pinned;
   $('#w-cmt').checked=!p.cmtOff;
   $('#w-secret').checked=!!p.secret; $('#w-priv').checked=!!p.priv; $('#w-feat').checked=!!p.feat;
@@ -4491,11 +4494,13 @@ $('#w-go').onclick=async()=>{
         .replace(/\*\*|__|~~|==|\*/g,'')
         .replace(/^@[crji]\s/gm,'').replace(/\{\{[^:}]{1,8}:/g,'').replace(/\}\}/g,'')
         .replace(/^(-{3,}|―{3,}|={3,}|\.{3,}|~{3,}|\*{3,})$/gm,'').replace(/^(\d+[.)]|[-•])\s/gm,'')).replace(/\s+/g,' ').trim().slice(0,70),
-      html: asHtml, imgs: wImgs.slice() };
+      html: asHtml, imgs: secret?[]:wImgs.slice() };   // 🔒 비밀글은 사진 주소도 평문 미저장(보안점검 3b)
     if(!secret){ data.raw = raw; data.encRaw=''; }        // 원문 보관(수정 시 그대로 열기)
     else { data.raw = '';                                  // 비밀글은 평문 원문을 남기지 않고
            data.encRaw = await encTxt(pw, raw); }          // 암호화한 원문을 보관 — 수정해도 HTML 모드·코드 무손실(phase258)
-    if(secret) data.enc=await encTxt(pw,html); else data.body=html;
+    if(secret){ data.enc=await encTxt(pw,html);
+      data.encImgs=await encTxt(pw, JSON.stringify(wImgs));      // 사진 목록도 암호화 보관(보안점검 3b)
+    } else { data.body=html; data.encImgs=''; }
     if(JSON.stringify(data).length>980000){ msg('이 글의 본문 이미지가 너무 많아요 — 사진 수를 줄여주세요. (꾸미기 용량과는 별개예요)'); return; }
     if(pin) await Promise.all(st.posts.filter(p=>p.pinned).map(p=>
       updateDoc(doc(db,'pages',st.handle,'posts',p.id),{pinned:false})));
@@ -4508,7 +4513,7 @@ $('#w-go').onclick=async()=>{
           ? (old.ts || dateNoon(old.date||data.date))   // 승계 — ts 없던 옛 글도 '지금'이 아니라 제 날짜 자리로(phase235)
           : data.ts,
         editedAt: serverTimestamp()};
-      if(!secret){ upd.enc=''; upd.encRaw=''; }
+      if(!secret){ upd.enc=''; upd.encRaw=''; upd.encImgs=''; }
       await setDoc(doc(db,'pages',st.handle,'posts',editPost), upd);
       const pid=editPost;
       clearWriteForm();
@@ -5731,7 +5736,7 @@ $('#s-exp-json').onclick=()=>{
 };
 
 /* ---------- 복원 (백업에서 불러오기, phase208) ---------- */
-const POST_KEYS=['title','cat','date','ts','secret','pinned','cmtOff','priv','excerpt','html','imgs','raw','enc','body','feat','mpin','encRaw'];
+const POST_KEYS=['title','cat','date','ts','secret','pinned','cmtOff','priv','excerpt','html','imgs','raw','enc','body','feat','mpin','encRaw','encImgs'];
 let bkData=null;
 $('#bk-file')?.addEventListener('change', async e=>{
   bkData=null; $('#bk-scope').hidden=true;
