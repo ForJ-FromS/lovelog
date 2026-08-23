@@ -1031,6 +1031,17 @@
   /* 🏷 글 태그(phase292) */
   #tag-slot{display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 12px}
   #tag-slot:empty{display:none}
+  .gb-reform{display:flex;gap:8px;align-items:flex-start;margin-top:7px}   /* 방명록 답글 폼(phase313) */
+  .gb-reta{flex:1;background:var(--card2);border:1px solid var(--line);border-radius:10px;
+    color:var(--ink);padding:9px 12px;font-size:12.5px;font-family:inherit;line-height:1.6;resize:vertical;min-height:44px}
+  .gb-reta:focus{outline:none;border-color:var(--pri)}
+  .gb-reta::placeholder{color:var(--muted);opacity:.8}
+  .gb-reform .gb-rego{flex:none;margin:0;width:auto;padding:9px 15px}
+  /* 🏷 태그 알약 모양(phase313) — 카테고리 모양 문법 차용 */
+  body.tag-text .btg{border:none;padding:3px 4px;border-radius:0;background:none!important}
+  body.tag-text .btg.on{background:none!important;text-decoration:underline;text-underline-offset:4px}
+  body.tag-box .btg{border-radius:6px}
+  body.tag-box .btg.on{border-radius:6px}
   .btg{font-size:10.5px;padding:3px 10px;border-radius:20px;border:1px solid var(--line);color:var(--muted);
     cursor:pointer;user-select:none;transition:all .15s}
   .btg:hover{border-color:var(--pri);color:var(--ink)}
@@ -2202,7 +2213,9 @@
         <input type="color" id="s-listtc" title="게시판 목록의 제목 글씨색">
         <button class="rmv" id="s-listtc-x" style="font-size:10px">기본으로</button>
         <span class="tl2">🏷 태그 알약</span><select id="s-rowtag">
-        <option value="on" selected>보이기</option><option value="">숨기기</option></select></span></div>
+        <option value="on" selected>보이기</option><option value="">숨기기</option></select>
+        <select id="s-tagshape" title="게시판·글 하단 태그의 모양">
+        <option value="">알약 (기본)</option><option value="text">글씨만</option><option value="box">네모</option></select></span></div>
       <div class="trow"><span class="tl">📖 글 전용 페이지</span><span class="tc"><select id="s-postpage" title="글을 읽을 때 위젯·카테고리 바를 접고 본문만 넓게">
         <option value="">끄기</option><option value="on">켜기 — 읽을 때 본문만 넓게</option></select></span></div>
     </div>
@@ -2353,6 +2366,6 @@
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=341"></script>
+<script type="module" src="./app.js?v=342"></script>
 </body>
 </html>

@@ -554,6 +554,8 @@ async function enterPage(){
   document.body.classList.toggle('light', !!p.light);
   document.body.classList.toggle('corner-soft', p.corner==='soft');     // 모서리(phase299)
   document.body.classList.toggle('corner-sharp', p.corner==='sharp');
+  document.body.classList.toggle('tag-text', p.tagShape==='text');      // 🏷 태그 모양(phase313)
+  document.body.classList.toggle('tag-box', p.tagShape==='box');
   document.body.classList.toggle('style-blog', homeStyle()==='blog');
   document.body.classList.remove('theme-win98','theme-vhs');
   if(p.theme && p.theme!=='default') document.body.classList.add('theme-'+p.theme);
@@ -5218,7 +5220,7 @@ function fillSettings(){
   $('#s-homestyle').value=homeStyle();
   $('#s-theme').value=p.theme||'default';
   renderStkList();
-  $('#s-dim').value=p.bgDim??78; $('#s-dots').value=p.dots!==false?'on':''; $('#s-protect').value=p.protectImg!==false?'on':''; $('#s-stkm').checked=!!p.stkHideM; $('#s-stkhome').checked=!!p.stkHome; $('#s-stkoff').checked=p.stkOff!==true; $('#s-fx').value=p.fx ?? (p.sparkle?'sparkle':''); $('#s-fxc').value=p.fxC||'#ffb3c8'; fxCVal=null; $('#s-postpage').value=p.postPage?'on':''; $('#s-corner').value=p.corner||''; $('#s-cardc').value=p.cardC||'#1a1c26'; cardCVal=null; $('#s-rowtag').value=p.rowTag!==false?'on':'';
+  $('#s-dim').value=p.bgDim??78; $('#s-dots').value=p.dots!==false?'on':''; $('#s-protect').value=p.protectImg!==false?'on':''; $('#s-stkm').checked=!!p.stkHideM; $('#s-stkhome').checked=!!p.stkHome; $('#s-stkoff').checked=p.stkOff!==true; $('#s-fx').value=p.fx ?? (p.sparkle?'sparkle':''); $('#s-fxc').value=p.fxC||'#ffb3c8'; fxCVal=null; $('#s-postpage').value=p.postPage?'on':''; $('#s-corner').value=p.corner||''; $('#s-cardc').value=p.cardC||'#1a1c26'; cardCVal=null; $('#s-rowtag').value=p.rowTag!==false?'on':''; const sts=$('#s-tagshape'); if(sts) sts.value=p.tagShape||'';
   $('#s-gatebtn').value=p.gateBtn||''; $('#s-listed').checked=!!p.listed; cardNew=null; bnrNew=null; renderCard(); renderBnr(); $('#s-lbicon').value=p.labelIcon??'◈'; gateColVal=null;
   $('#s-gatecolor').value=p.gateColor||'#ffffff';
   $('#del-h').textContent=st.handle||'—'; $('#s-del-confirm').value=''; delMsg('');
@@ -5324,6 +5326,7 @@ async function saveSettings(){
       postPage: $('#s-postpage').value==='on',
       corner: $('#s-corner').value||'',
       rowTag: $('#s-rowtag').value==='on',
+      tagShape: $('#s-tagshape')?.value||'',
       gateBtn: $('#s-gatebtn').value.trim(),
       listed: $('#s-listed').checked,
       cardImg: cardNew ?? st.page.cardImg ?? '',
