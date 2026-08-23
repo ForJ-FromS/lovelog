@@ -984,6 +984,12 @@ function galPos(g){                                            // 썸네일 크�
 }
 function memoCols(){ const n=+st.page.memoCols; return (n>=2&&n<=4)?n:3; }
 function mpinMax(){ const n=+st.page.mpinMax; return (n>=1&&n<=6)?n:3; }
+/* 🔴 새 방명록 배지(주인 전용): 마지막 확인 시각을 localStorage에 — 서버 비용 0 (phase315) */
+const gbLastTs=()=>st.guest.reduce((m,g)=>Math.max(m,(g.ts&&g.ts.seconds)||0),0);
+const gbNew=()=>!!(st.mine && st.guest.length && gbLastTs()>+(localStorage.getItem('gbSeen:'+st.handle)||0));
+const gbMarkSeen=()=>{ if(!st.mine||!st.guest.length) return;
+  try{ localStorage.setItem('gbSeen:'+st.handle, String(gbLastTs())); }catch(e){}
+  document.querySelectorAll('.gbdot').forEach(x=>x.remove()); };
 function renderCatbar(){
   const bar=$('#catbar');
   if(catStyle()!=='bar'){ bar.classList.add('hidden'); return; }   // 블로그형에서도 '상단 알약 바' 선택 존중
@@ -995,7 +1001,7 @@ function renderCatbar(){
     : `<a data-c="${esc(key)}" class="${on?'on':''}">${esc(label)}</a>`;
   bar.innerHTML = pill('home',homeNm(),homeOn)+
     navSeq().map(t=> t==='__gal' ? (galOn()&&galTabOn()?pill('__gal',galNm(),st.cat==='__gal'):'')
-      : t==='__gb' ? (st.page.gbOff?'' : pill('__gb',gbNm(),st.cat==='__gb'))
+      : t==='__gb' ? (st.page.gbOff?'' : pill('__gb',gbNm(),st.cat==='__gb').replace('</a>',(gbNew()?'<i class="gbdot"></i>':'')+'</a>'))
       : pill(t,t.toUpperCase(),st.cat===t)).join('')+
     (homeStyle()==='blog'||st.page.allOff?'':pill('recent','ALL',st.cat==='recent'));
   bar.querySelectorAll('a').forEach(el=>el.onclick=()=>{
@@ -1304,7 +1310,7 @@ function renderSide(){
           <span>${esc(c)}</span>
           <span class="n">${cnt(c)}</span></a></li>`).join('')+
         (galOn()&&galTabOn()?`<li><a data-c="__gal" class="${st.cat==='__gal'?'on':''}"><span>${esc(galNm())}</span><span class="n">${st.gallery.length}</span></a></li>`:'')+
-        (st.page.gbOff?'':`<li><a data-c="__gb" class="${st.cat==='__gb'?'on':''}"><span>${esc(gbNm())}</span><span class="n">${st.guest.length}</span></a></li>`)+
+        (st.page.gbOff?'':`<li><a data-c="__gb" class="${st.cat==='__gb'?'on':''}"><span>${esc(gbNm())}</span><span class="n">${st.guest.length}</span>${gbNew()?'<i class="gbdot" title="새 방명록 글"></i>':''}</a></li>`)+
         (st.page.allOff?'</ul>':`<li><a data-c="recent" class="${st.cat==='recent'?'on':''}"><span>전체</span><span class="n">${st.posts.length}</span></a></li></ul>`);
       box.appendChild(d);
       d.querySelectorAll('#cats a').forEach(el=>el.onclick=()=>goBoard(el.dataset.c));
@@ -1917,8 +1923,11 @@ async function addCat(){
   await updateDoc(doc(db,'pages',st.handle),{cats:next});
   st.page.cats=next; renderSide(); refreshWriteCats();
 }
+/* 검색 헤이스택: 제목+태그+본문(비밀글 본문 제외) — 발행/수정마다 loadContent가 객체를 새로 만들어 ||= 캐시 안전(phase315) */
+const postHay=p=>p.__hay||(p.__hay=(p.title+' '+(p.tags||[]).join(' ')+' '+(p.secret?'':htmlToText(p.body||''))).toLowerCase());
 function renderGuest(){
   $('#list-view').classList.add('hidden');
+  gbMarkSeen();                                   // 방명록 열면 확인 처리 → 배지 제거
   $('#gb-form').classList.toggle('hidden', !st.me);
   $('#gb-login').classList.toggle('hidden', !!st.me);
   $('#gb-list').innerHTML = st.guest.length? st.guest.map(g=>`
@@ -2090,7 +2099,7 @@ function renderList(){
     const items = all.slice(((st.pg||1)-1)*gper, (st.pg||1)*gper);
     $('#rows').innerHTML = (items.length
       ? `<div class="gal-grid">`+items.map(g=>
-          `<a data-gg="${g.id}"><img src="${g.img}" alt="" draggable="false"${galPos(g)}>${g.priv?'<i class="gpriv">🔏</i>':''}${st.mine?
+          `<a data-gg="${g.id}"><img src="${g.img}" alt="" draggable="false" loading="lazy"${galPos(g)}>${g.priv?'<i class="gpriv">🔏</i>':''}${st.mine?
             `<i class="gdel" data-gx="${g.id}">✕</i><i class="gedit" data-ge="${g.id}" title="제목·카테고리·사진 수정">✎</i><i class="gpin${galPins().includes(g.id)?' on':''}" data-gp="${g.id}" title="대문 갤러리에 고정">★</i>`:''}</a>`).join('')+`</div>`
         +(st.mine?`<p class="note" style="margin-top:10px">★를 누르면 대문(홈) 갤러리에 걸려요 — 카테고리 탭에서 '대문: ★로 고른 사진'을 선택해야 적용돼요.</p>`:'')
       : '<p class="pl-empty">아직 이미지가 없습니다.</p>');
@@ -2108,7 +2117,7 @@ function renderList(){
     $('#v-label').textContent = st.cat.toUpperCase();
     $('#pin-slot').innerHTML='';
     let all=st.posts.filter(p=>p.cat===st.cat);
-    if(st.q) all=all.filter(p=>p.title.toLowerCase().includes(st.q));
+    if(st.q) all=all.filter(p=>postHay(p).includes(st.q));
     all=[...all.filter(p=>p.mpin), ...all.filter(p=>!p.mpin)];   // 📌 고정 메모는 맨 앞(phase231)
     const mper=memoCols()*4;
     renderPager(all.length, mper);
@@ -2119,7 +2128,7 @@ function renderList(){
     $('#rows').innerHTML = items.length
       ? `<div class="memo-grid">`+items.map(p=>{ const th=p.secret?'':postThumb(p); return `
           <a class="memo-card${th?' has-mth':''}" data-id="${p.id}">
-            ${th?`<img class="mth" src="${th}" alt="" draggable="false">`:''}
+            ${th?`<img class="mth" src="${th}" alt="" draggable="false" loading="lazy">`:''}
             ${!st.page.memoNoTt&&p.title?`<b class="mt">${esc(p.title)}</b>`:''}
             <span class="mk">${st.mine?`<i class="mp${p.mpin?' on':''}" data-mp="${p.id}" title="첫 화면에 고정 (${mpinMax()}개까지)">📌</i>`:''}${p.secret?'🔒':''}${p.priv?'🔏':''}</span>
             <p class="mx">${p.secret?'비밀 메모예요.':esc(strip(p.raw||p.excerpt||''))}</p>
@@ -2134,7 +2143,7 @@ function renderList(){
   }
   let items=st.posts;
   if(st.cat!=='recent') items=items.filter(p=>p.cat===st.cat);
-  if(st.q) items=items.filter(p=>p.title.toLowerCase().includes(st.q));
+  if(st.q) items=items.filter(p=>postHay(p).includes(st.q));
   const tset=[...new Set(items.flatMap(p=>p.tags||[]))].sort((a,b)=>a.localeCompare(b,'ko'));   // 🏷 이 목록의 태그(phase292)
   if(st.tagF && !tset.includes(st.tagF)) st.tagF=null;
   const tslot=$('#tag-slot');
@@ -2163,7 +2172,7 @@ function renderList(){
       ${(st.page.rowTag!==false && p.tags&&p.tags[0])
         ?`<span class="cw"><span class="rtg">${esc(p.tags[0])}${p.tags.length>1?' +'+(p.tags.length-1):''}</span><span class="c">${esc(p.cat)}</span></span>`
         :`<span class="c">${esc(p.cat)}</span>`}
-      <span class="k"></span>${t?`<img class="th" src="${t}" alt="" draggable="false">`:''}</li>`; };
+      <span class="k"></span>${t?`<img class="th" src="${t}" alt="" draggable="false" loading="lazy">`:''}</li>`; };
   $('#rows').innerHTML = shown.length?shown.map(rowHTML).join('')
     :'<p class="pl-empty">아직 글이 없습니다.</p>';
   $('#more-btn').style.display='none';
@@ -2226,7 +2235,7 @@ function renderGal(all){
     ? `<label class="strip-add" title="여기서 바로 사진 추가 — 대문 기준에 맞춰 올라가요">＋<input type="file" id="strip-file" accept="image/*" style="display:none"></label>`
     : '';
   $('#gal').innerHTML = (arr.length?arr.map(g=>
-    `<a data-g="${g.id}"><img src="${g.img}" alt="" draggable="false"${galPos(g)}>${g.priv?'<i class="gpriv">🔏</i>':''}${st.mine?`<i class="gdel" data-gx="${g.id}">✕</i>`:''}</a>`).join('')
+    `<a data-g="${g.id}"><img src="${g.img}" alt="" draggable="false" loading="lazy"${galPos(g)}>${g.priv?'<i class="gpriv">🔏</i>':''}${st.mine?`<i class="gdel" data-gx="${g.id}">✕</i>`:''}</a>`).join('')
     :(st.mine?'':'<p class="pl-empty">아직 이미지가 없습니다.</p>')) + addCard;
   document.querySelectorAll('#gal a[data-g]').forEach(a=>a.onclick=e=>{
     if(e.target.dataset.gx){ e.stopPropagation(); delGal(e.target.dataset.gx); return; }
@@ -2347,7 +2356,7 @@ function renderAlbumBoard(){
             `<a class="ab-row" data-ab="${a.id}"><span class="ab-rd">${esc(abDate(a).slice(5))}</span><span class="ab-rt">${a.priv?'🔏 ':''}${esc(a.title||'(제목 없음)')}</span><span class="ab-rn">${(a.imgs||[]).length}장</span></a>`).join('')+`</div>`
         : `<div class="ab-cards">`+list.map(a=>
           `<a class="ab-card" data-ab="${a.id}">
-            <span class="ab-cov">${a.imgs?.[0]?`<img src="${a.imgs[0]}" alt="" draggable="false">`:'<i class="ab-emp">📚</i>'}</span>
+            <span class="ab-cov">${a.imgs?.[0]?`<img src="${a.imgs[0]}" alt="" draggable="false" loading="lazy">`:'<i class="ab-emp">📚</i>'}</span>
             <span class="ab-tt">${a.priv?'🔏 ':''}${esc(a.title||'(제목 없음)')}</span>
             <span class="ab-n">${(a.imgs||[]).length}장${abDate(a)?' · '+esc(abDate(a).slice(5)):''}</span>
           </a>`).join('')+`</div>`
@@ -2508,7 +2517,12 @@ document.addEventListener('keydown',e=>{
   if(e.key==='ArrowRight') lbMove(1);
   if(e.key==='Escape') $('#lb').classList.remove('show');
 });
-$('#lb').onclick=()=>$('#lb').classList.remove('show');
+let lbSwiped=false, lbTX=0, lbTY=0;                          // 📱 스와이프로 넘기기(phase315)
+$('#lb').addEventListener('touchstart',e=>{ const t=e.touches[0]; lbTX=t.clientX; lbTY=t.clientY; },{passive:true});
+$('#lb').addEventListener('touchend',e=>{ const t=e.changedTouches[0]; const dx=t.clientX-lbTX, dy=t.clientY-lbTY;
+  if(Math.abs(dx)>44 && Math.abs(dx)>Math.abs(dy)*1.4){ lbSwiped=true; lbMove(dx<0?1:-1); } },{passive:true});
+$('#lb').onclick=()=>{ if(lbSwiped){ lbSwiped=false; return; }   // 스와이프 직후 따라오는 click은 닫기 아님
+  $('#lb').classList.remove('show'); };
 document.addEventListener('contextmenu',e=>{
   if(e.target.closest&&(e.target.closest('#gal')||e.target.closest('#lb'))) e.preventDefault();
 });
@@ -2706,9 +2720,29 @@ $('#cmt-go').onclick=async()=>{
 $('#cmt-login-btn').onclick=doLogin;
 $('#pv-copy').onclick=()=>{
   const url=location.origin+urlFor(st.handle, st.cur?.id||'');
-  (navigator.clipboard?navigator.clipboard.writeText(url).then(()=>alert('링크를 복사했어요!\n'+url))
-    :Promise.reject()).catch(()=>prompt('이 링크를 복사하세요',url));
+  (navigator.clipboard?navigator.clipboard.writeText(url).then(()=>msg('🔗 링크를 복사했어요!'))
+    :Promise.reject()).catch(()=>showCopyBox(url));
 };
+/* 인앱 브라우저는 clipboard도 prompt도 막힐 수 있음 — 직접 긁어 복사하는 자체 모달(askPw 동족, phase315) */
+function showCopyBox(url){
+  let m=document.getElementById('copy-modal');
+  if(!m){
+    m=document.createElement('div'); m.id='copy-modal'; m.className='memo-modal hidden';
+    m.innerHTML=`<div class="mm-card" style="width:min(380px,92vw)">
+      <div class="mm-top"><b>🔗 링크 복사</b><button class="btn" id="cpm-x" style="margin-left:auto;font-size:12px;padding:8px 18px;border-radius:10px">닫기</button></div>
+      <input id="cpm-in" readonly>
+      <p class="note" style="margin:8px 0 0">자동 복사가 막힌 브라우저예요 — 위 주소를 길게 눌러 복사해주세요.</p>
+    </div>`;
+    document.body.appendChild(m);
+  }
+  const inp=m.querySelector('#cpm-in'); inp.value=url;
+  inp.onclick=()=>inp.select();
+  m.classList.remove('hidden');
+  const done=()=>{ m.classList.add('hidden'); m.onclick=null; };
+  m.querySelector('#cpm-x').onclick=done;
+  m.onclick=e=>{ if(e.target===m) done(); };
+  setTimeout(()=>{ inp.focus(); inp.select(); },60);
+}
 $('#pv-del').onclick=async()=>{
   const p=st.cur; if(!p||!st.mine) return;
   if(!confirm('「'+p.title+'」 글을 삭제할까요?')) return;
@@ -2727,7 +2761,7 @@ $('#more-btn').onclick=()=>{ if(st.page.allOff){ msg('전체 글 보기가 꺼�
       <span class="d">${esc((p.date||'').slice(5))}</span>
       <span class="t">${esc(p.title)} ${p.secret?'<span class="k">🔒</span>':''}${p.priv?'<span class="k" title="비공개 — 나만 보여요">🔏</span>':''}</span>
       <span class="c">${esc(p.cat)}</span>
-      <span class="k"></span>${t?`<img class="th" src="${t}" alt="" draggable="false">`:''}</li>`; }).join('');
+      <span class="k"></span>${t?`<img class="th" src="${t}" alt="" draggable="false" loading="lazy">`:''}</li>`; }).join('');
   $('#more-btn').style.display='none';
   document.querySelectorAll('#rows [data-id]').forEach(el=>el.onclick=()=>openPost(el.dataset.id));
 };
