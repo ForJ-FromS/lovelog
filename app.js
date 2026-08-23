@@ -195,8 +195,9 @@ function hslToHex(hh,sp,lp){
 function hexFromHue(hh){ return hslToHex(hh,60,62); }
 const ytId=u=>{ const m=String(u||'').match(/(?:youtu\.be\/|v=|shorts\/|embed\/)([A-Za-z0-9_-]{11})/); return m?m[1]:null; };
 const ytList=u=>{ const m=String(u||'').match(/[?&]list=([A-Za-z0-9_-]+)/); return m?m[1]:null; };
-function dday(dstr){ const d=new Date(dstr+'T00:00:00'), n=new Date(); n.setHours(0,0,0,0);
-  const f=Math.round((n-d)/86400000); return f>=0?'D+'+(f+1):'D'+f; }
+function dday(dstr,z0){ const d=new Date(dstr+'T00:00:00'), n=new Date(); n.setHours(0,0,0,0);
+  const f=Math.round((n-d)/86400000);                       /* z0: 당일=0으로 세는 경과일식(phase316) — 기본은 첫날=1(커플식) */
+  return f>=0?'D+'+(f+(z0?0:1)):'D'+f; }
 const today=()=>{ const d=new Date();
   return d.getFullYear()+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+String(d.getDate()).padStart(2,'0'); };
 /* 다이어리 서식 — **굵게** *기울임* __밑줄__ ~~취소선~~ ==형광== */
@@ -549,7 +550,7 @@ async function enterPage(){
   }
   const dd0=(p.ddays||[])[0];
   $('#pg-dday-main').innerHTML = (dd0 && p.ddHead!==false)
-    ? `<p class="n">${esc(dday(dd0.date))}</p><p class="t">${esc(dd0.title)}</p>` : '';
+    ? `<p class="n">${esc(dday(dd0.date,dd0.z0))}</p><p class="t">${esc(dd0.title)}</p>` : '';
   // 레이아웃 · 테마
   document.body.classList.toggle('light', !!p.light);
   document.body.classList.toggle('corner-soft', p.corner==='soft');     // 모서리(phase299)
@@ -1324,8 +1325,8 @@ function renderSide(){
       }
       d.innerHTML=`<p class="label">D-DAY</p>`+p.ddays.map(x=> x.img
         ? `<div class="dd-card" style="background-image:url(${x.img})">
-             <div class="in2"><span class="t">${esc(x.title)}</span><span class="n">${esc(dday(x.date))}</span></div></div>`
-        : `<div class="dd-item"><span class="t">${esc(x.title)}</span><span class="n">${esc(dday(x.date))}</span></div>`).join('');
+             <div class="in2"><span class="t">${esc(x.title)}</span><span class="n">${esc(dday(x.date,x.z0))}</span></div></div>`
+        : `<div class="dd-item"><span class="t">${esc(x.title)}</span><span class="n">${esc(dday(x.date,x.z0))}</span></div>`).join('');
       box.appendChild(d); return;
     }
     if(w.t==='bgm'){
@@ -3494,6 +3495,7 @@ function renderWidEdit(){
     <button class="rmv" data-dr="${i}">✕</button></div>
     <div class="p-row" style="margin-top:-4px">
       <label class="filelab" style="font-size:11px">📷 사진 ${d.img?'(있음)':''} <input type="file" data-dimg="${i}" accept="image/*"></label>
+      <label class="chk" style="font-size:11px;flex:none" title="켜면 시작한 날을 0일로 셉니다(당일 D+0·다음날 D+1) — 끄면 첫날=1일(기본)"><input type="checkbox" data-dz0="${i}" ${d.z0?'checked':''}> 당일=0</label>
       ${d.img?`<button class="rmv" data-dximg="${i}" style="font-size:10px">사진 제거</button>`:''}
     </div>`).join('')+
     `<div class="p-row" style="align-items:center;margin-bottom:2px">
@@ -3961,6 +3963,8 @@ function renderWidEdit(){
   $('#wid-edit').querySelectorAll('[data-dt]').forEach(i=>i.addEventListener('input',()=>{ pdraft.ddays[i.dataset.dt].title=i.value; }));
   $('#wid-edit').querySelectorAll('[data-dd]').forEach(i=>i.addEventListener('change',()=>{ pdraft.ddays[i.dataset.dd].date=i.value; }));
   $('#wid-edit').querySelectorAll('[data-dr]').forEach(b=>b.onclick=()=>{ pdraft.ddays.splice(+b.dataset.dr,1); renderWidEdit(); });
+  $('#wid-edit').querySelectorAll('[data-dz0]').forEach(i=>i.addEventListener('change',()=>{
+    if(i.checked) pdraft.ddays[i.dataset.dz0].z0=true; else delete pdraft.ddays[i.dataset.dz0].z0; }));
   $('#wid-edit').querySelectorAll('[data-dimg]').forEach(inp=>inp.addEventListener('change',async e=>{
     const f=e.target.files[0]; if(!f) return; msg('사진 압축 중...');
     pdraft.ddays[inp.dataset.dimg].img=await upFile(f,1000,.9,100);
@@ -4040,7 +4044,7 @@ $('#wid-save').onclick=async()=>{
     st.page.side=JSON.parse(JSON.stringify(draft));
     st.page.ddays=dd; st.page.bgm={...pdraft.bgm};
     const d0=dd[0];
-    $('#pg-dday-main').innerHTML = d0?`<p class="n">${esc(dday(d0.date))}</p><p class="t">${esc(d0.title)}</p>`:'';
+    $('#pg-dday-main').innerHTML = d0?`<p class="n">${esc(dday(d0.date,d0.z0))}</p><p class="t">${esc(d0.title)}</p>`:'';
     widSnap=JSON.stringify({d:draft,p:pdraft});   // 저장됨 — dirty 해제
     renderSide(); msg('위젯 구성 저장 완료!');
   }catch(e){ msg('오류: '+e.message); alert('저장 실패: '+e.message); }
