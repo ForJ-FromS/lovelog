@@ -5480,15 +5480,28 @@ async function signup(){
   if(mode==='code' && !code){
     $('#invite-wrap').classList.remove('hidden');
     err.textContent = notice || '지금은 초대코드가 있어야 가입할 수 있어요.'; return; }
-  /* 추천 핸들 상시 필수(phase318): 기존 가입자의 실제 주소여야 가입 가능 */
-  const refH=ref.toLowerCase().replace(/^(https?:\/\/)?(www\.)?luvlog\.me\//,'').replace(/^https?:\/\/[^/]*\//,'').replace(/^@/,'').replace(/\/.*$/,'').trim();
-  if(!refH){ err.textContent='1차 핸들(초대해 준 분의 러브로그 주소)을 적어주세요.'; return; }
-  if(!/^[a-z0-9-]{2,20}$/.test(refH) || refH===handle){
-    err.textContent='1차 핸들 형식이 이상해요 — luvlog.me/ 뒤의 주소만 적어주세요.'; return; }
-  try{
-    const rp=await getDoc(doc(db,'pages',refH));
-    if(!rp.exists()){ err.textContent='그 핸들의 러브로그를 찾지 못했어요 — 1차 핸들을 다시 확인해주세요.'; return; }
-  }catch(e){ err.textContent='1차 핸들 확인에 실패했어요 — 잠시 후 다시 시도해주세요.'; return; }
+  /* 1차가 심긴 코드(phase321): 코드의 ref가 있으면 핸들 칸을 비워도 통과 — 심긴 값이 우선 기록 */
+  let codeRef='';
+  if(code){
+    try{
+      const ivs=await getDoc(doc(db,'invites',code));
+      if(!ivs.exists()){ err.textContent='초대코드가 올바르지 않아요.'; return; }
+      const cr=ivs.data().ref;
+      if(typeof cr==='string' && cr.trim()) codeRef=cr.trim();
+    }catch(e){ /* 읽기 실패 시엔 아래 일반 절차로 — 트랜잭션에서 다시 검증됨 */ }
+  }
+  /* 추천 핸들 필수(phase318): 심긴 코드가 아니면 기존 가입자의 실제 주소여야 가입 가능 */
+  let refH='';
+  if(!codeRef){
+    refH=ref.toLowerCase().replace(/^(https?:\/\/)?(www\.)?luvlog\.me\//,'').replace(/^https?:\/\/[^/]*\//,'').replace(/^@/,'').replace(/\/.*$/,'').trim();
+    if(!refH){ err.textContent='1차 핸들(초대해 준 분의 러브로그 주소)을 적어주세요.'; return; }
+    if(!/^[a-z0-9-]{2,20}$/.test(refH) || refH===handle){
+      err.textContent='1차 핸들 형식이 이상해요 — luvlog.me/ 뒤의 주소만 적어주세요.'; return; }
+    try{
+      const rp=await getDoc(doc(db,'pages',refH));
+      if(!rp.exists()){ err.textContent='그 핸들의 러브로그를 찾지 못했어요 — 1차 핸들을 다시 확인해주세요.'; return; }
+    }catch(e){ err.textContent='1차 핸들 확인에 실패했어요 — 잠시 후 다시 시도해주세요.'; return; }
+  }
   try{
     const rs=await getDoc(doc(db,'config','reserved'));
     if(rs.exists() && (rs.data().list||[]).includes(handle)){
@@ -5511,7 +5524,7 @@ async function signup(){
       }
       if(b.exists()) throw new Error('이미 쓰는 주소예요.');
       if(c.exists()) throw new Error('이 계정의 페이지가 이미 있어요.');
-      tx.set(pg,{owner:st.me.uid,name,sub:'',cats:['archive','ooc'],hue:222,createdAt:serverTimestamp(),ref:refH});
+      tx.set(pg,{owner:st.me.uid,name,sub:'',cats:['archive','ooc'],hue:222,createdAt:serverTimestamp(),ref:codeRef||refH});
       tx.set(us,{handle,createdAt:serverTimestamp()});
       if(iv) tx.update(iv, multi
         ? {count:(id.count||0)+1, lastBy:st.me.uid, lastAt:serverTimestamp()}
@@ -5783,18 +5796,26 @@ $('#adm-make').onclick=async()=>{
   const pre=($('#adm-pre').value.trim().toLowerCase()||'code').replace(/[^a-z0-9-]/g,'');
   const n=Math.min(30,Math.max(1,+$('#adm-n').value||10));
   const kind=$('#adm-kind').value;
+  /* 1차 지정(phase321): 심으면 이 코드 가입자는 핸들 칸을 비워도 되고, 이 값이 1차로 기록됨 */
+  const refPin=($('#adm-ref')?.value||'').trim().replace(/^@/,'');
+  if(refPin && /^[a-z0-9-]{2,20}$/.test(refPin.toLowerCase())){
+    try{
+      const rp=await getDoc(doc(db,'pages',refPin.toLowerCase()));
+      if(!rp.exists() && !confirm('러브로그에 없는 핸들이에요 — 자유 표기로 그대로 심을까요?')){ admMsg('취소했어요.'); return; }
+    }catch(e){}
+  }
   admMsg('만드는 중...');
   try{
     const made=[];
     if(kind==='multi'){
       const c=pre+'-'+rnd4();
-      await setDoc(doc(db,'invites',c),{max:n,created:serverTimestamp()});
-      made.push(c+'   (최대 '+n+'명)');
+      await setDoc(doc(db,'invites',c),{max:n,created:serverTimestamp(),...(refPin?{ref:refPin}:{})});
+      made.push(c+'   (최대 '+n+'명'+(refPin?' · 1차:'+refPin:'')+')');
     }else{
       for(let i=0;i<n;i++){
         const c=pre+'-'+rnd4();
-        await setDoc(doc(db,'invites',c),{created:serverTimestamp()});
-        made.push(c);
+        await setDoc(doc(db,'invites',c),{created:serverTimestamp(),...(refPin?{ref:refPin}:{})});
+        made.push(c+(refPin?'   (1차:'+refPin+')':''));
       }
     }
     $('#adm-out').value=made.join('\n');

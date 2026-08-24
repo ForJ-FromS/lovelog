@@ -1650,7 +1650,8 @@
     <div class="field"><label>홈 이름</label><input id="in-name" placeholder="예: 내 홈 이름"></div>
     <div class="field hidden" id="invite-wrap"><label>초대코드</label><input id="in-invite" placeholder="받은 코드를 그대로 입력"></div>
     <div class="field" id="ref-wrap"><label>1차 핸들 (초대해 준 분의 러브로그 주소 · 필수)</label>
-      <input id="in-ref" placeholder="예: jeste — luvlog.me/ 뒤의 주소"></div>
+      <input id="in-ref" placeholder="예: jeste — luvlog.me/ 뒤의 주소">
+      <p class="note" style="margin:6px 0 0">1차가 미리 지정된 초대코드로 가입하는 경우엔 비워도 돼요.</p></div>
     <p class="err" id="signup-err"></p>
     <button class="btn pri" id="btn-signup">페이지 만들기</button>
     <p class="note" style="margin-top:12px">주소는 나중에 바꿀 수 없어요 — 신중하게 골라주세요.</p>
@@ -2154,6 +2155,7 @@
       <p class="p-h" style="margin-top:30px">초대코드 만들기 <span style="font-size:10px;color:var(--muted)">(운영자)</span></p>
       <div class="p-row" style="align-items:center">
         <input id="adm-pre" placeholder="접두어 (예: wave)" style="flex:1;margin-bottom:0">
+        <input id="adm-ref" placeholder="1차 지정 (선택 · 예: jeste)" style="flex:1;margin-bottom:0">
         <input id="adm-n" type="number" min="1" max="30" value="10" style="width:64px;margin-bottom:0" title="개수">
         <select id="adm-kind" style="flex:1;margin-bottom:0">
           <option value="single">1회용 코드 여러 개</option>
@@ -2381,6 +2383,6 @@
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=349"></script>
+<script type="module" src="./app.js?v=350"></script>
 </body>
 </html>
