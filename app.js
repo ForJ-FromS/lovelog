@@ -5655,7 +5655,7 @@ async function checkInqReply(){                               // 💌 문의 답
   try{
     const qs=await getDocs(query(collection(db,'inquiries'),where('by','==',st.me.uid)));
     const un=qs.docs.filter(d=>d.data().reply && !localStorage.getItem('lv-inqseen-'+d.id));
-    if(un.length) msg(`💌 문의 답장 ${un.length}건이 도착해 있어요 — 설정의 문의함에서 확인해 주세요!`);
+    if(un.length) msg(`💌 문의 답장 ${un.length}건이 도착해 있어요 — 꾸미기 → 관리 탭에서 확인해 주세요!`);
   }catch(e){}
 }
 /* ── 📨 운영자 쪽지(notes) — 수신(phase318): 읽음은 localStorage라 이용자 쓰기 권한 불필요 ── */
@@ -5664,7 +5664,8 @@ async function checkNotes(){
   try{
     const qs=await getDocs(query(collection(db,'notes'),where('to','==',st.me.uid)));
     const un=qs.docs.filter(d=>!localStorage.getItem('lv-ntseen-'+d.id));
-    if(un.length) msg(`📨 운영자 쪽지 ${un.length}건이 도착해 있어요 — 설정의 문의함에서 확인해 주세요!`);
+    if(un.length){ msg(`📨 운영자 쪽지 ${un.length}건이 도착해 있어요 — 꾸미기 → 관리 탭의 받은 쪽지에서 확인해 주세요!`);
+      const bd=$('#btn-deco'); if(bd) bd.classList.add('noti'); }   // 꾸미기 버튼에도 점(phase320)
   }catch(e){}
 }
 async function renderMyNotes(){
@@ -5674,6 +5675,7 @@ async function renderMyNotes(){
     const rows=qs.docs.map(d=>({id:d.id,...d.data()}))
       .sort((a,b)=>(b.at?.seconds||0)-(a.at?.seconds||0)).slice(0,20);
     rows.forEach(r=>{ try{ localStorage.setItem('lv-ntseen-'+r.id,'1'); }catch(e){} });
+    if(st.myHandle!=='jeste'){ const bd=$('#btn-deco'); if(bd) bd.classList.remove('noti'); }
     sec.classList.toggle('hidden', !rows.length);
     box.innerHTML=rows.map(r=>`
       <div class="inq-card"><div class="im">${inqDate(r.at)} · 운영자 쪽지</div>
