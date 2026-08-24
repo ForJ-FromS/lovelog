@@ -1482,7 +1482,7 @@ function renderSide(){
       box.appendChild(d); return;
     }
     if(w.t==='char' || w.t==='pair'){
-      const stl=['file','frame','story'].includes(w.style)?w.style:'basic';   // 스킨(phase245)
+      const stl=['file','frame','story','id','tcg','msgr'].includes(w.style)?w.style:'basic';   // 스킨(phase245)
       const card=(P,idx,rev)=>{ P=P||{};
         const its=(P.items||[]).filter(i=>i.k||i.v);
         const kvs=its.filter(i=>i.k);
@@ -1515,6 +1515,34 @@ function renderSide(){
               ${kvs.length?`<dl class="cp-dl">${kvs.map(i=>`<div><dt>${esc(i.k)}</dt><dd>${esc(i.v||'')}</dd></div>`).join('')}</dl>`:''}
               ${P.bio?`<p class="cp-bio">${esc(P.bio)}</p>`:''}
             </div></div>`;
+        if(stl==='id') return `<div class="cp-card"${stA}>
+            <p class="cp-idtop"><span>IDENTIFICATION</span><span>No.0${idx+1}</span></p>
+            <div class="cp-idbody">${img}
+              <div class="cp-idinfo">
+                ${P.name?`<b class="cp-nm">${esc(P.name)}</b>`:''}
+                ${P.sub?`<i class="cp-sub">${esc(P.sub)}</i>`:''}
+                ${kvs.length?`<dl class="cp-dl">${kvs.map(i=>`<div><dt>${esc(i.k)}</dt><dd>${esc(i.v||'')}</dd></div>`).join('')}</dl>`:''}
+              </div></div>
+            ${(P.bio||tgl.length)?`<div class="cp-bd">${P.bio?`<p class="cp-bio">${esc(P.bio)}</p>`:''}${tgl.length?`<div class="cp-hash">${tgl.map(t=>`<span>#${esc(t)}</span>`).join('')}</div>`:''}</div>`:''}
+            <span class="cp-bar" aria-hidden="true"></span></div>`;
+        if(stl==='tcg') return `<div class="cp-card"${stA}>
+            <p class="cp-tcgtop">${P.name?`<b class="cp-nm">${esc(P.name)}</b>`:'<b class="cp-nm"></b>'}${P.sub?`<span class="cp-lv">${esc(P.sub)}</span>`:''}</p>
+            ${img}
+            <div class="cp-bd">
+              ${P.bio?`<p class="cp-bio">${esc(P.bio)}</p>`:''}
+              ${tgl.length?`<div class="cp-hash">${tgl.map(t=>`<span>#${esc(t)}</span>`).join('')}</div>`:''}
+              ${kvs.length?`<dl class="cp-dl">${kvs.map(i=>`<div><dt>${esc(i.k)}</dt><dd>${esc(i.v||'')}</dd></div>`).join('')}</dl>`:''}
+            </div></div>`;
+        if(stl==='msgr') return `<div class="cp-card"${stA}>
+            <span class="cp-cover" aria-hidden="true"></span>${img}
+            <div class="cp-bd">
+              ${P.name?`<b class="cp-nm">${esc(P.name)}</b>`:''}
+              ${P.sub?`<i class="cp-sub">${esc(P.sub)}</i>`:''}
+              ${P.bio?`<p class="cp-bio">${esc(P.bio)}</p>`:''}
+              ${kvs.length?`<dl class="cp-dl">${kvs.map(i=>`<div><dt>${esc(i.k)}</dt><dd>${esc(i.v||'')}</dd></div>`).join('')}</dl>`:''}
+              ${tgl.length?`<div class="cp-hash">${tgl.map(t=>`<span>#${esc(t)}</span>`).join('')}</div>`:''}
+            </div>
+            <p class="cp-mico" aria-hidden="true"><span>💬</span><span>📞</span><span>🎁</span></p></div>`;
         if(stl==='story') return `<div class="cp-card${rev?' rev':''}"${stA}>
             <div class="cp-top">${img}<span>
               ${P.name?`<b class="cp-nm">${esc(P.name)}</b>`:''}
@@ -3344,6 +3372,9 @@ function renderWidEdit(){
       <option value="file" ${w.style==='file'?'selected':''}>디자인 — 아카이브 파일 (기밀 문서)</option>
       <option value="frame" ${w.style==='frame'?'selected':''}>디자인 — 컬러 프레임 (인물색 테두리 · 태그 알약)</option>
       <option value="story" ${w.style==='story'?'selected':''}>디자인 — 스토리 카드 (소개문 · 해시태그${w.t==='pair'?' · 위아래 마주 보기':''})</option>
+      <option value="id" ${w.style==='id'?'selected':''}>디자인 — 신분증 (ID 카드 · 일련번호 · 바코드)</option>
+      <option value="tcg" ${w.style==='tcg'?'selected':''}>디자인 — 트레이딩 카드 (도톰 테두리 · 부제가 LV 자리)</option>
+      <option value="msgr" ${w.style==='msgr'?'selected':''}>디자인 — 메신저 프로필 (커버 · 부제가 상태메시지)</option>
     </select>`;
   if(w.t==='char') html+=cpForm(w.p,'p','인물');
   if(w.t==='pair') html+=`

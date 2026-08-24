@@ -1190,6 +1190,42 @@
   .cp-story .cp-sub{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.15em;
     color:var(--cpc, var(--pri));display:block;margin-top:1px}
   .w-cp .cp-bio{font-size:11px;line-height:1.8;color:var(--cpt, var(--ink));opacity:.92;white-space:pre-line;margin:2px 0 0}
+  /* 스킨 · 신분증 (phase322) */
+  .cp-id .cp-card{padding:0 0 11px;border-radius:8px;overflow:hidden;gap:0}
+  .cp-id .cp-idtop{display:flex;justify-content:space-between;gap:8px;margin:0;padding:6px 11px;
+    background:var(--cpc, var(--pri));color:var(--cpt, #fff);
+    font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.18em}
+  .cp-id .cp-idtop span{white-space:nowrap}
+  .cp-id .cp-idbody{display:flex;gap:11px;padding:12px 12px 0;align-items:flex-start}
+  .cp-id .cp-imw{width:64px;aspect-ratio:4/5;border-radius:4px}
+  .cp-id .cp-idinfo{min-width:0;flex:1;display:flex;flex-direction:column;gap:4px}
+  .cp-id .cp-dl dt{min-width:40px;font-size:10.5px}
+  .cp-id .cp-dl div{font-size:11px}
+  .cp-id .cp-bd{padding:9px 12px 0;display:flex;flex-direction:column;gap:6px}
+  .cp-id .cp-hash span{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--cpc, var(--pri));margin-right:8px}
+  .cp-id .cp-bar{display:block;height:13px;margin:10px 12px 0;opacity:.5;
+    background:repeating-linear-gradient(90deg,var(--muted) 0 2px,transparent 2px 4px,var(--muted) 4px 5px,transparent 5px 9px,var(--muted) 9px 12px,transparent 12px 14px)}
+  /* 스킨 · 트레이딩 카드 (phase322) */
+  .cp-tcg .cp-card{padding:0 0 12px;border:2px solid var(--cpc, var(--pri));border-radius:12px;overflow:hidden;gap:0}
+  .cp-tcg .cp-tcgtop{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:0;padding:7px 11px;
+    background:color-mix(in srgb, var(--cpc, var(--pri)) 14%, transparent)}
+  .cp-tcg .cp-nm{font-size:14px}
+  .cp-tcg .cp-lv{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.12em;color:var(--cpc, var(--pri));white-space:nowrap}
+  .cp-tcg .cp-imw{width:100%;aspect-ratio:4/3.2;border-radius:0;border:0;border-bottom:1px solid var(--line)}
+  .cp-tcg .cp-bd{padding:10px 12px 0;display:flex;flex-direction:column;gap:6px}
+  .cp-tcg .cp-hash{display:flex;flex-wrap:wrap;gap:4px 9px}
+  .cp-tcg .cp-hash span{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--cpc, var(--pri))}
+  /* 스킨 · 메신저 프로필 (phase322) */
+  .cp-msgr .cp-card{padding:0 0 10px;border-radius:14px;overflow:hidden;gap:0;text-align:center}
+  .cp-msgr .cp-cover{display:block;height:54px;background:color-mix(in srgb, var(--cpc, var(--pri)) 26%, transparent)}
+  .cp-msgr .cp-imw{width:66px;aspect-ratio:1/1;border-radius:24px;margin:-33px auto 0;border:3px solid var(--card)}
+  .cp-msgr .cp-bd{padding:8px 14px 0;display:flex;flex-direction:column;gap:4px;align-items:center}
+  .cp-msgr .cp-dl{width:100%}
+  .cp-msgr .cp-dl div{justify-content:center}
+  .cp-msgr .cp-hash{display:flex;flex-wrap:wrap;gap:4px 9px;justify-content:center}
+  .cp-msgr .cp-hash span{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--cpc, var(--pri))}
+  .cp-msgr .cp-mico{display:flex;justify-content:center;gap:24px;margin:10px 14px 0;padding-top:9px;
+    border-top:1px solid var(--line);font-size:14px;opacity:.75}
   .cp-story .cp-hash{display:flex;flex-wrap:wrap;gap:4px 9px}
   .cp-story .cp-hash span{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--cpc, var(--pri))}
   .cp-story .cp-card.rev{padding:13px 19px 14px 14px}
@@ -2383,6 +2419,6 @@
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=350"></script>
+<script type="module" src="./app.js?v=351"></script>
 </body>
 </html>
