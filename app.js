@@ -485,7 +485,7 @@ async function loadPage(handle){
   st.mine = st.me && st.page.owner===st.me.uid;
   applyColor(st.page.hue ?? 222, st.page.sat, st.page.lum);
   initPet();
-  setTimeout(checkInqReply, 1800); setTimeout(checkNotes, 2400);
+  setTimeout(checkInqReply, 1800); setTimeout(checkNotes, 2400); setTimeout(checkGbReply, 2600);
   // 입장 대문: 방문 시 1회(세션) + 비번 홈은 비번 입력
   const needPw = st.page.gate && !st.mine
     && sessionStorage.getItem('gate_'+handle)!==st.page.gate;
@@ -1957,6 +1957,8 @@ const postHay=p=>p.__hay||(p.__hay=(p.title+' '+(p.tags||[]).join(' ')+' '+(p.se
 function renderGuest(){
   $('#list-view').classList.add('hidden');
   gbMarkSeen();                                   // 방명록 열면 확인 처리 → 배지 제거
+  if(st.me && !st.mine) st.guest.forEach(g=>{     // 💬 답글 읽음 처리(phase323)
+    if(g.uid===st.me.uid && g.reply && g.id){ try{ localStorage.setItem('gbre-'+g.id,'1'); }catch(e){} } });
   $('#gb-form').classList.toggle('hidden', !st.me);
   $('#gb-login').classList.toggle('hidden', !!st.me);
   $('#gb-list').innerHTML = st.guest.length? st.guest.map(g=>`
@@ -2181,15 +2183,16 @@ function renderList(){
     : '';
   if(tslot) tslot.querySelectorAll('[data-btg]').forEach(b3=>b3.onclick=()=>{ st.tagF=b3.dataset.btg||null; st.pg=1; renderList(); });
   if(st.tagF) items=items.filter(p=>(p.tags||[]).includes(st.tagF));
-  const pin=(st.cat==='recent'&&!st.q&&!st.tagF)?items.find(p=>p.pinned):null;
-  const rest=items.filter(p=>p!==pin);
+  /* 📌 phase323: 카테고리 뷰에도 고정 노출 + 여러 카테고리의 고정글 공존(카테고리당 1개) */
+  const pins=(!st.q&&!st.tagF)?items.filter(p=>p.pinned):[];
+  const rest=items.filter(p=>!pins.includes(p));
   $('#v-label').textContent = st.cat==='recent'?'RECENT':st.cat.toUpperCase();
-  $('#pin-slot').innerHTML = pin?`
+  $('#pin-slot').innerHTML = pins.map(pin=>`
     <a class="pin" data-id="${pin.id}">
       <span class="tag">◈ PINNED</span>
       <p class="t">${esc(pin.title)}${pin.secret?' 🔒':''}${pin.priv?' 🔏':''}</p>
       ${pin.excerpt?`<p class="ex">${esc(pin.excerpt)}</p>`:''}
-      <p class="meta">${esc(pin.cat)} · ${esc(pin.date)}</p></a>`:'';
+      <p class="meta">${esc(pin.cat)} · ${esc(pin.date)}</p></a>`).join('');
   const PER=12;
   renderPager(rest.length, PER);
   const shown=rest.slice(((st.pg||1)-1)*PER, (st.pg||1)*PER);
@@ -4574,8 +4577,8 @@ $('#w-go').onclick=async()=>{
       data.encImgs=await encTxt(pw, JSON.stringify(wImgs));      // 사진 목록도 암호화 보관(보안점검 3b)
     } else { data.body=html; data.encImgs=''; }
     if(JSON.stringify(data).length>980000){ msg('이 글의 본문 이미지가 너무 많아요 — 사진 수를 줄여주세요. (꾸미기 용량과는 별개예요)'); return; }
-    if(pin) await Promise.all(st.posts.filter(p=>p.pinned).map(p=>
-      updateDoc(doc(db,'pages',st.handle,'posts',p.id),{pinned:false})));
+    if(pin) await Promise.all(st.posts.filter(p=>p.pinned && p.cat===cat && p.id!==editPost).map(p=>
+      updateDoc(doc(db,'pages',st.handle,'posts',p.id),{pinned:false})));   // 📌 같은 카테고리의 기존 고정만 해제(phase323)
     if(editPost){
       const old=st.posts.find(p=>p.id===editPost)||{};
       const dateNoon=s=>{ const[y,m,d]=(s||'').split('.').map(Number);
@@ -5701,6 +5704,12 @@ async function checkInqReply(){                               // 💌 문의 답
     const un=qs.docs.filter(d=>d.data().reply && !localStorage.getItem('lv-inqseen-'+d.id));
     if(un.length) msg(`💌 문의 답장 ${un.length}건이 도착해 있어요 — 꾸미기 → 관리 탭에서 확인해 주세요!`);
   }catch(e){}
+}
+/* 💬 내가 남긴 방명록의 주인 답글 알림(phase323) — 그 홈 재방문 때 · localStorage · 서버 비용 0 */
+function checkGbReply(){
+  if(!st.me || st.mine || !st.handle || !Array.isArray(st.guest)) return;
+  const un=st.guest.filter(g=>g.uid===st.me.uid && g.reply && g.id && !localStorage.getItem('gbre-'+g.id));
+  if(un.length) msg('💬 이 홈에 남긴 방명록에 주인 답글이 달려 있어요 — 방명록에서 확인해보세요!');
 }
 /* ── 📨 운영자 쪽지(notes) — 수신(phase318): 읽음은 localStorage라 이용자 쓰기 권한 불필요 ── */
 async function checkNotes(){
