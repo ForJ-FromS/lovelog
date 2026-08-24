@@ -5496,13 +5496,37 @@ const RESERVED = new Set(['guide','index','404','app','api','admin','root','syst
   'home','main','www','mail','blog','help','about','support','contact','terms','privacy',
   'lovelog','luvlog','test','demo','null','undefined','new','edit','delete','search',
   'gallery','guestbook','archive','all','post','posts','tag','tags']);
+/* ⚡ 주소 실시간 확인(phase324): 형식→예약어→실존 순, 500ms 디바운스로 읽기 최소화 */
+let hcTimer=null, hcSeq=0;
+function hookHandleCheck(){
+  const inp=$('#in-handle'), out=$('#handle-chk');
+  if(!inp||!out||inp.__hc) return; inp.__hc=true;
+  inp.addEventListener('input',()=>{
+    clearTimeout(hcTimer);
+    const h=inp.value.trim().toLowerCase();
+    out.className='note';
+    if(!h){ out.textContent=''; return; }
+    if(!/^[a-z0-9-]{2,20}$/.test(h)){ out.textContent='영문 소문자·숫자·하이픈 2~20자예요.'; return; }
+    out.textContent='확인 중...';
+    const seq=++hcSeq;
+    hcTimer=setTimeout(async()=>{
+      try{
+        /* 예약어도 '이미 사용 중'과 같은 문구·타이밍으로 — 예약 여부를 티내지 않음(phase325) */
+        const taken = RESERVED.has(h) || (await getDoc(doc(db,'pages',h))).exists();
+        if(seq!==hcSeq) return;                          // 늦게 도착한 옛 응답 무시
+        if(taken){ out.textContent='✗ 이미 사용 중인 주소예요.'; out.className='note bad'; }
+        else { out.textContent='✓ 사용할 수 있는 주소예요!'; out.className='note ok'; }
+      }catch(e){ if(seq===hcSeq) out.textContent=''; }
+    },500);
+  });
+}
 async function signup(){
   const code=$('#in-invite').value.trim(), ref=$('#in-ref').value.trim().slice(0,30),
         handle=$('#in-handle').value.trim().toLowerCase(),
         name=$('#in-name').value.trim(), err=$('#signup-err');
   err.textContent='';
   if(!/^[a-z0-9-]{2,20}$/.test(handle)){ err.textContent='주소 형식을 확인해 주세요.'; return; }
-  if(RESERVED.has(handle)){ err.textContent='이 주소는 사용할 수 없어요. 다른 주소를 골라주세요.'; return; }
+  if(RESERVED.has(handle)){ err.textContent='이미 사용 중인 주소예요. 다른 주소를 골라주세요.'; return; }
   // 가입 개방 상태 확인 (콘솔 config/signup 문서로 제어)
   let mode='open', notice='';
   try{
@@ -5539,7 +5563,7 @@ async function signup(){
   try{
     const rs=await getDoc(doc(db,'config','reserved'));
     if(rs.exists() && (rs.data().list||[]).includes(handle)){
-      err.textContent='이 주소는 사용할 수 없어요. 다른 주소를 골라주세요.'; return; }
+      err.textContent='이미 사용 중인 주소예요. 다른 주소를 골라주세요.'; return; }
   }catch(e){}
   if(!name){ err.textContent='홈 이름을 입력해 주세요.'; return; }
   try{
@@ -6075,7 +6099,7 @@ onAuthStateChanged(auth,async user=>{
   renderSeal();
   if(viewing) loadPage(viewing);
   else if(!st.me) show('view-login');
-  else if(!st.myHandle){ show('view-signup');
+  else if(!st.myHandle){ show('view-signup'); hookHandleCheck();
     getDoc(doc(db,'config','signup')).then(sc=>{
       if(!sc.exists()) return; const m=sc.data().mode||'open';
       if(m==='code'){ $('#invite-wrap').classList.remove('hidden'); $('#ref-wrap').classList.remove('hidden');
