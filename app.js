@@ -570,6 +570,8 @@ async function enterPage(){
   document.documentElement.style.setProperty('--memoMh', mh[1]);
   document.body.classList.remove('catsh-list','catsh-pill','catsh-text','catsh-box');
   document.body.classList.add('catsh-'+catShape());
+  document.body.classList.remove('catsel-soft','catsel-off');            // 선택 표시 3태(phase326)
+  if(st.page.catSel) document.body.classList.add('catsel-'+st.page.catSel);
   document.body.classList.toggle('side-left', p.sidePos==='left');
   document.body.classList.toggle('side-both', p.sidePos==='both');
   document.documentElement.style.setProperty('--dim', (p.bgDim??78)/100);
@@ -787,10 +789,10 @@ function pinCard(){                              // 고정글 카드 — 단독 
   pd.onclick=()=>openFromHome(pin.id);
   return pd;
 }
-function latestBlock(box, n, withPin=true, catL=[], icon='◈'){
+function latestBlock(box, n, withPin=true, catL=[], icon='◈', mh=false){
   catL=(Array.isArray(catL)?catL:[catL]).filter(c=>c&&cats().includes(c));   // 복수 선택(phase241) — 삭제·개명분 자동 제외
   if(withPin && !catL.length){ const pc=pinCard(); if(pc) box.appendChild(pc); }
-  const d=document.createElement('div'); d.className='side sw-latest';
+  const d=document.createElement('div'); d.className='side sw-latest'+(mh?' w-mhide':'');
   const arr=st.posts.filter(p=>!p.pinned && (!catL.length||catL.includes(p.cat))).slice(0, +n>0?Math.min(+n,20):5);
   const lbl=catL.length ? ' · '+catL.map(c=>esc(c.toUpperCase())).join(' · ') : '';
   d.innerHTML=`<p class="label">LATEST${lbl}</p><div class="mini-rows">`+
@@ -1288,11 +1290,11 @@ function renderSide(){
     }
     if(w.t==='latest'){
       if(!home) return;
-      const el=latestBlock(box, w.n, w.noPin!==true, w.cats||(w.cat?[w.cat]:[]), w.icon||'◈');
+      const el=latestBlock(box, w.n, w.noPin!==true, w.cats||(w.cat?[w.cat]:[]), w.icon||'◈', !!w.mhide);
       el.dataset.wi=wi; bindDrag(el);
       return;
     }
-    const d=document.createElement('div'); d.className='side sw-'+w.t;
+    const d=document.createElement('div'); d.className='side sw-'+w.t+(w.mhide?' w-mhide':'');
     d.dataset.wi=wi; if(!flw) bindDrag(d);   // 띄운 위젯은 컬럼 순서 드래그 대상이 아님
     if(w.t==='search'){
       d.innerHTML=`<p class="label">SEARCH</p>
@@ -3170,6 +3172,7 @@ function renderWidList(){
         <option value="home" ${wSt(w)==='home'?'selected':''}>홈에서만</option>
         <option value="off" ${wSt(w)==='off'?'selected':''}>꺼두기</option>
       </select>
+      <button data-m="${i}" title="모바일(좁은 화면)에서 이 위젯 숨김"${w.mhide?' style="color:var(--pri)"':''}>📱</button>
       ${w.t!=='latest'?`<button data-f="${i}" title="컬럼에서 떼어 화면에 자유 배치 (PC 전용)"${w.float?' style="color:var(--pri)"':''}>📌</button>`:''}
       ${['profile','quote','links','banner','dday','bgm','notice','chat','phone','img','nb','text','stamp','latest','tl','feat','char','pair','cal','habit'].includes(w.t)?`<button data-e="${i}">✎</button>`:'<button class="wl-ph" disabled>✎</button>'}
       ${!['search','category','cnt','bgm','stamp','pin','feat'].includes(w.t)?`<button data-c2="${i}" title="이 위젯을 설정 그대로 복사해 하나 더">⧉</button>`:'<button class="wl-ph" disabled>⧉</button>'}
@@ -3178,11 +3181,15 @@ function renderWidList(){
   if(draft.some(w=>w.home&&!w.hid))
     $('#wid-list').insertAdjacentHTML('beforeend',
       '<p class="note">🏠 \'홈에서만\'인 위젯은 카테고리·글 목록으로 이동하면 숨겨졌다가 홈으로 돌아오면 다시 나타납니다. \'꺼두기\'는 설정을 보관한 채 잠시 감춰요.</p>');
+  if(draft.some(w=>w.mhide))
+    $('#wid-list').insertAdjacentHTML('beforeend',
+      '<p class="note">📱 표시가 켜진 위젯은 폰·좁은 화면에서 숨겨지고 PC에서는 그대로 보여요.</p>');
   if(draft.some(w=>w.float))
     $('#wid-list').insertAdjacentHTML('beforeend',
       '<p class="note">📌 띄운 위젯은 넓은 PC 화면에서만 떠 있어요 — 저장 후 홈의 ⠿ 편집 모드에서 드래그로 옮길 수 있고, 폰·좁은 창에서는 원래 자리로 돌아갑니다.</p>');
   $('#wid-list').querySelectorAll('button').forEach(b=>b.onclick=()=>{
-    const {e,u,d,x,f,c2}=b.dataset;
+    const {e,u,d,x,f,c2,m}=b.dataset;
+    if(m!==undefined){ draft[+m].mhide=!draft[+m].mhide; if(!draft[+m].mhide) delete draft[+m].mhide; renderWidList(); return; }
     if(c2!==undefined){ const src=draft[+c2];                  // ⧉ 위젯 복제(phase304)
       const cp=JSON.parse(JSON.stringify(src));
       delete cp.float; delete cp.fx; delete cp.fy;             // 띄움 상태는 복사 안 함(겹침 방지)
@@ -5273,6 +5280,7 @@ function fillSettings(){
   $('#s-glass').value=p.glass?'glass':'';
   $('#s-catstyle').value=catStyle();
   $('#s-catshape').value=catShape();
+  const scs=$('#s-catsel'); if(scs) scs.value=st.page.catSel||'';
   $('#s-galcols').value=String(galCols());
   const smc=$('#s-memocols'); if(smc) smc.value=String(memoCols());
   const smp=$('#s-mpinmax'); if(smp) smp.value=String(mpinMax());
@@ -5384,6 +5392,7 @@ async function saveSettings(){
       glass: $('#s-glass').value==='glass',
       catStyle: $('#s-catstyle').value,
       catShape: $('#s-catshape').value,
+      catSel: $('#s-catsel')?.value||'',
       galCols: +$('#s-galcols').value||3,
       memoCols: +($('#s-memocols')?.value)||3,
       mpinMax: +($('#s-mpinmax')?.value)||3,

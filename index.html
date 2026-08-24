@@ -1635,6 +1635,13 @@
   footer::before{content:'─── ◈ ───';display:block;margin-bottom:8px;
     letter-spacing:.2em;color:hsl(var(--h) calc(20% * var(--sf,1)) 30%)}
 
+/* 카테고리 선택 표시 3태 (phase326) */
+body.catsel-soft #cats a.on,body.catsel-soft #catbar a.on{background:transparent!important;border-color:var(--line)!important;box-shadow:none!important;color:var(--pri)!important}
+body.catsel-off #cats a.on,body.catsel-off #catbar a.on{background:transparent!important;border-color:var(--line)!important;box-shadow:none!important;color:inherit!important}
+/* 위젯별 모바일 숨김 (phase326) */
+@media(max-width:720px){.w-mhide{display:none!important}}
+/* 가로 스크롤 안전망 (phase326) — clip은 스크롤 컨테이너를 만들지 않아 sticky·고정요소 무해 */
+html,body{overflow-x:hidden;overflow-x:clip}
 .note.ok{color:#7fbf7f}
 .note.bad{color:#e08585}
 .gbdot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--pri);margin-left:6px;flex:none;vertical-align:middle}
@@ -2250,7 +2257,11 @@
         <option value="bar">상단 알약 바</option><option value="widget">사이드 위젯</option></select>
         <select id="s-catshape">
         <option value="list">모양 — 기본</option><option value="pill">모양 — 알약</option>
-        <option value="text">모양 — 글씨만</option><option value="box">모양 — 네모</option></select></span></div>
+        <option value="text">모양 — 글씨만</option><option value="box">모양 — 네모</option></select>
+        <select id="s-catsel" title="지금 보고 있는 카테고리를 어떻게 표시할지">
+        <option value="">선택 표시 — 기본</option>
+        <option value="soft">선택 표시 — 연하게 (글자색만)</option>
+        <option value="off">선택 표시 — 없음</option></select></span></div>
       <div class="trow"><span class="tl">갤러리 한 줄</span><span class="tc"><select id="s-galcols">
         <option value="1">1장 (크게)</option><option value="2">2장</option>
         <option value="3" selected>3장 (기본)</option><option value="4">4장</option></select></span></div>
@@ -2422,6 +2433,6 @@
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=354"></script>
+<script type="module" src="./app.js?v=355"></script>
 </body>
 </html>
