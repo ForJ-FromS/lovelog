@@ -485,7 +485,7 @@ async function loadPage(handle){
   st.mine = st.me && st.page.owner===st.me.uid;
   applyColor(st.page.hue ?? 222, st.page.sat, st.page.lum);
   initPet();
-  setTimeout(checkInqReply, 1800);
+  setTimeout(checkInqReply, 1800); setTimeout(checkNotes, 2400);
   // 입장 대문: 방문 시 1회(세션) + 비번 홈은 비번 입력
   const needPw = st.page.gate && !st.mine
     && sessionStorage.getItem('gate_'+handle)!==st.page.gate;
@@ -5270,7 +5270,7 @@ function fillSettings(){
   $('#s-gatebtn').value=p.gateBtn||''; $('#s-listed').checked=!!p.listed; cardNew=null; bnrNew=null; renderCard(); renderBnr(); $('#s-lbicon').value=p.labelIcon??'◈'; gateColVal=null;
   $('#s-gatecolor').value=p.gateColor||'#ffffff';
   $('#del-h').textContent=st.handle||'—'; $('#s-del-confirm').value=''; delMsg('');
-  renderMyInq(); renderAdmInq();
+  renderMyInq(); renderAdmInq(); renderMyNotes(); renderAdmNotes();
   if(st.myHandle==='jeste'){ getDoc(doc(db,'config','notice')).then(s=>{
     if(s.exists()) admNtcRender(noticeItems(s.data())); }).catch(()=>{}); }
   $('#s-gatebtnc').value=p.gateBtnC||'#e691a9'; gateBtnCVal=null;
@@ -5478,11 +5478,17 @@ async function signup(){
   if(mode==='closed'){
     err.textContent = notice || '지금은 새 홈 만들기가 닫혀 있어요.'; return; }
   if(mode==='code' && !code){
-    $('#invite-wrap').classList.remove('hidden'); $('#ref-wrap').classList.remove('hidden');
+    $('#invite-wrap').classList.remove('hidden');
     err.textContent = notice || '지금은 초대코드가 있어야 가입할 수 있어요.'; return; }
-  if(mode==='code' && !ref){
-    $('#ref-wrap').classList.remove('hidden');
-    err.textContent='초대해 준 분의 닉네임(또는 러브로그 주소)을 적어주세요.'; return; }
+  /* 추천 핸들 상시 필수(phase318): 기존 가입자의 실제 주소여야 가입 가능 */
+  const refH=ref.toLowerCase().replace(/^(https?:\/\/)?(www\.)?luvlog\.me\//,'').replace(/^https?:\/\/[^/]*\//,'').replace(/^@/,'').replace(/\/.*$/,'').trim();
+  if(!refH){ err.textContent='1차 핸들(초대해 준 분의 러브로그 주소)을 적어주세요.'; return; }
+  if(!/^[a-z0-9-]{2,20}$/.test(refH) || refH===handle){
+    err.textContent='1차 핸들 형식이 이상해요 — luvlog.me/ 뒤의 주소만 적어주세요.'; return; }
+  try{
+    const rp=await getDoc(doc(db,'pages',refH));
+    if(!rp.exists()){ err.textContent='그 핸들의 러브로그를 찾지 못했어요 — 1차 핸들을 다시 확인해주세요.'; return; }
+  }catch(e){ err.textContent='1차 핸들 확인에 실패했어요 — 잠시 후 다시 시도해주세요.'; return; }
   try{
     const rs=await getDoc(doc(db,'config','reserved'));
     if(rs.exists() && (rs.data().list||[]).includes(handle)){
@@ -5505,7 +5511,7 @@ async function signup(){
       }
       if(b.exists()) throw new Error('이미 쓰는 주소예요.');
       if(c.exists()) throw new Error('이 계정의 페이지가 이미 있어요.');
-      tx.set(pg,{owner:st.me.uid,name,sub:'',cats:['archive','ooc'],hue:222,createdAt:serverTimestamp(),ref:ref||''});
+      tx.set(pg,{owner:st.me.uid,name,sub:'',cats:['archive','ooc'],hue:222,createdAt:serverTimestamp(),ref:refH});
       tx.set(us,{handle,createdAt:serverTimestamp()});
       if(iv) tx.update(iv, multi
         ? {count:(id.count||0)+1, lastBy:st.me.uid, lastAt:serverTimestamp()}
@@ -5652,6 +5658,28 @@ async function checkInqReply(){                               // 💌 문의 답
     if(un.length) msg(`💌 문의 답장 ${un.length}건이 도착해 있어요 — 설정의 문의함에서 확인해 주세요!`);
   }catch(e){}
 }
+/* ── 📨 운영자 쪽지(notes) — 수신(phase318): 읽음은 localStorage라 이용자 쓰기 권한 불필요 ── */
+async function checkNotes(){
+  if(!st.me || window.__ntChecked) return; window.__ntChecked=true;
+  try{
+    const qs=await getDocs(query(collection(db,'notes'),where('to','==',st.me.uid)));
+    const un=qs.docs.filter(d=>!localStorage.getItem('lv-ntseen-'+d.id));
+    if(un.length) msg(`📨 운영자 쪽지 ${un.length}건이 도착해 있어요 — 설정의 문의함에서 확인해 주세요!`);
+  }catch(e){}
+}
+async function renderMyNotes(){
+  const sec=$('#note-sec'), box=$('#note-list'); if(!box||!st.me) return;
+  try{
+    const qs=await getDocs(query(collection(db,'notes'),where('to','==',st.me.uid)));
+    const rows=qs.docs.map(d=>({id:d.id,...d.data()}))
+      .sort((a,b)=>(b.at?.seconds||0)-(a.at?.seconds||0)).slice(0,20);
+    rows.forEach(r=>{ try{ localStorage.setItem('lv-ntseen-'+r.id,'1'); }catch(e){} });
+    sec.classList.toggle('hidden', !rows.length);
+    box.innerHTML=rows.map(r=>`
+      <div class="inq-card"><div class="im">${inqDate(r.at)} · 운영자 쪽지</div>
+      <div class="ib">${esc(r.body)}</div></div>`).join('');
+  }catch(e){ if(sec) sec.classList.add('hidden'); }
+}
 async function renderMyInq(){
   const box=$('#inq-list'); if(!box||!st.me) return;
   try{
@@ -5666,6 +5694,39 @@ async function renderMyInq(){
         ${r.reply?`<div class="ir">${esc(r.reply)}</div>`:''}
       </div>`).join('');
   }catch(e){ box.innerHTML=''; }
+}
+/* ── 📨 쪽지 발송(운영자) — pages/{핸들}.owner로 uid 해석(phase318) ── */
+$('#adm-nt-send').onclick=async()=>{
+  if(st.myHandle!=='jeste') return;
+  const m=t=>{ const e=$('#adm-nt-msg'); if(e) e.textContent=t; };
+  const h=$('#adm-nt-h').value.trim().toLowerCase().replace(/^@/,''), body=$('#adm-nt-b').value.trim();
+  if(!h||!body){ m('주소와 내용을 채워주세요.'); return; }
+  if(body.length>1000){ m('1000자 안으로 줄여주세요.'); return; }
+  m('보내는 중...');
+  try{
+    const pg=await getDoc(doc(db,'pages',h));
+    if(!pg.exists()){ m('그 주소의 홈이 없어요.'); return; }
+    await addDoc(collection(db,'notes'),{to:pg.data().owner,toHandle:h,body,at:serverTimestamp()});
+    $('#adm-nt-b').value=''; m('@'+h+'에게 보냈어요!'); renderAdmNotes();
+  }catch(e){ m('실패 — '+e.message); }
+};
+async function renderAdmNotes(){
+  const box=$('#adm-nt-list'); if(!box||st.myHandle!=='jeste') return;
+  try{
+    const qs=await getDocs(collection(db,'notes'));
+    const rows=qs.docs.map(d=>({id:d.id,...d.data()}))
+      .sort((a,b)=>(b.at?.seconds||0)-(a.at?.seconds||0)).slice(0,20);
+    box.innerHTML = rows.length? rows.map(r=>`
+      <div class="inq-card"><div class="im">${inqDate(r.at)} · → @${esc(r.toHandle||'?')}</div>
+      <div class="ib">${esc(r.body)}</div>
+      <div class="p-row"><button class="rmv" data-ntd="${r.id}" style="font-size:11px">삭제</button></div></div>`).join('')
+      : '<p class="pl-empty">보낸 쪽지가 없어요.</p>';
+    box.querySelectorAll('[data-ntd]').forEach(b=>b.onclick=async()=>{
+      if(!confirm('이 쪽지를 지울까요?\n받은 분 화면에서도 사라져요.')) return;
+      try{ await deleteDoc(doc(db,'notes',b.dataset.ntd)); renderAdmNotes(); }
+      catch(e){ alert('삭제 실패 — '+e.message); }
+    });
+  }catch(e){ box.innerHTML='<p class="pl-empty">불러오기 실패 — notes 규칙을 추가했는지 확인해주세요.</p>'; }
 }
 /* ── 운영자 문의함 ── */
 async function renderAdmInq(){
