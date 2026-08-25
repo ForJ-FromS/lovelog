@@ -1105,6 +1105,14 @@
   #pv-body hr.hr-dot, #w-prev hr.hr-dot{border-top:2px dotted var(--muted)}
   #pv-body hr.hr-zz, #w-prev hr.hr-zz{border:0;height:6px;margin:20px 26%;opacity:.8;background:
     repeating-linear-gradient(45deg, transparent 0 4px, var(--muted) 4px 5.6px)}
+  /* 구분선 정렬(phase330) — 좌/우 여백을 비대칭으로 줘서 짧은 선을 붙임 */
+  #pv-body hr.hr-al, #w-prev hr.hr-al{margin-left:0;margin-right:auto;width:34%}
+  #pv-body hr.hr-ac, #w-prev hr.hr-ac{margin-left:auto;margin-right:auto;width:34%}
+  #pv-body hr.hr-ar, #w-prev hr.hr-ar{margin-left:auto;margin-right:0;width:34%}
+  #pv-body hr.hr-aj, #w-prev hr.hr-aj{margin-left:0;margin-right:0;width:100%}
+  #pv-body hr.hr-dia.hr-ac, #w-prev hr.hr-dia.hr-ac{width:auto}
+  #pv-body hr.hr-dia.hr-al, #w-prev hr.hr-dia.hr-al{width:auto;text-align:left}
+  #pv-body hr.hr-dia.hr-ar, #w-prev hr.hr-dia.hr-ar{width:auto;text-align:right}
   #pv-body hr.hr-dia, #w-prev hr.hr-dia{border:0;text-align:center;margin:16px 0;height:auto}
   #pv-body p.pgap, #w-prev p.pgap{height:1.05em;margin:0;padding:0}   /* 엔터 여러 번 빈 줄(phase307) */
   #pv-body hr.hr-dia::after, #w-prev hr.hr-dia::after{content:'◆ ◆ ◆';font-size:9px;color:var(--pri);letter-spacing:6px}
@@ -2441,6 +2449,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=358"></script>
+<script type="module" src="./app.js?v=359"></script>
 </body>
 </html>

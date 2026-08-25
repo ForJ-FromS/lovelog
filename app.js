@@ -227,11 +227,13 @@ const bodyCore=t=>t.split(/(\n{2,})/).map(p=>{
   if(yt) return `<div class="yt-wrap"><iframe src="https://www.youtube.com/embed/${yt[1]}" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`;   /* 유튜브 단독 줄 = 재생 카드(phase269) */
   if(/^https?:\/\/\S+$/.test(raw0))
     return `<p class="al-c"><a class="ext-link" href="${esc(raw0)}" target="_blank" rel="noopener">🔗 ${esc(raw0.replace(/^https?:\/\//,'').slice(0,44))}${raw0.length>52?'…':''}</a></p>`;   /* 단독 URL = 링크 알약 */
-  if(/^(-{3,}|―{3,})$/.test(raw0)) return '<hr>';                     /* 구분선 5종(phase266) */
-  if(/^={3,}$/.test(raw0)) return '<hr class="hr-b">';
-  if(/^\.{3,}$/.test(raw0)) return '<hr class="hr-dot">';
-  if(/^~{3,}$/.test(raw0)) return '<hr class="hr-zz">';
-  if(/^\*{3,}$/.test(raw0)) return '<hr class="hr-dia">';
+  /* 구분선 5종(phase266) — @c/@r/@j 접두를 흡수해 짧은 선을 정렬(phase330) */
+  const hrM=raw0.match(/^(?:@([crj])\s+)?(-{3,}|―{3,}|={3,}|\.{3,}|~{3,}|\*{3,})$/);
+  if(hrM){
+    const hk={'-':'','―':'','=':' hr-b','.':' hr-dot','~':' hr-zz','*':' hr-dia'}[hrM[2][0]];
+    const ha=hrM[1]?' hr-a'+hrM[1]:'';
+    return `<hr class="${(hk+ha).trim()}">`;
+  }
   const lines=raw0.split('\n');
   if(lines.length && lines.every(l=>/^\d+[.)]\s/.test(l)))            /* 전 줄이 1. 이면 순서 목록 */
     return '<ol>'+lines.map(l=>'<li>'+inlineFmt(esc(l.replace(/^\d+[.)]\s/,'')))+'</li>').join('')+'</ol>';
