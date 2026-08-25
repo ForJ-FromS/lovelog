@@ -220,6 +220,7 @@ const spanFix=t=>{                                             // 문단 넘는 
   });
   return t;
 };
+const HRLINE=/^(?:@([crj])[ \t]+)?(-{3,}|―{3,}|={3,}|\.{3,}|~{3,}|\*{3,})[ \t]*$/;   // 구분선 줄(정렬 접두 포함, phase332)
 const bodyCore=t=>t.split(/(\n{2,})/).map(p=>{
   if(/^\n{2,}$/.test(p)) return '<p class="pgap"></p>'.repeat(p.length-2);   // 엔터 여러 번 = 빈 줄 보존(phase307)
   const raw0=p.trim();
@@ -228,13 +229,22 @@ const bodyCore=t=>t.split(/(\n{2,})/).map(p=>{
   if(/^https?:\/\/\S+$/.test(raw0))
     return `<p class="al-c"><a class="ext-link" href="${esc(raw0)}" target="_blank" rel="noopener">🔗 ${esc(raw0.replace(/^https?:\/\//,'').slice(0,44))}${raw0.length>52?'…':''}</a></p>`;   /* 단독 URL = 링크 알약 */
   /* 구분선 5종(phase266) — @c/@r/@j 접두를 흡수해 짧은 선을 정렬(phase330) */
-  const hrM=raw0.match(/^(?:@([crj])\s+)?(-{3,}|―{3,}|={3,}|\.{3,}|~{3,}|\*{3,})$/);
+  const hrM=raw0.match(HRLINE);
   if(hrM){
     const hk={'-':'','―':'','=':' hr-b','.':' hr-dot','~':' hr-zz','*':' hr-dia'}[hrM[2][0]];
     const ha=hrM[1]?' hr-a'+hrM[1]:'';
     return `<hr class="${(hk+ha).trim()}">`;
   }
   const lines=raw0.split('\n');
+  /* 문단 속에 섞인 구분선 줄 자동 분리(phase332) — 사진 자리표가 \n 한 번으로 붙는 케이스:
+     [사진1]⏎@c *** 처럼 빈 줄 없이 이어져도 구분선으로 인식되게 조각내 재귀 처리 */
+  if(lines.length>1 && lines.some(l=>HRLINE.test(l.trim()))){
+    const chunks=[]; let cur=[];
+    lines.forEach(l=>{ if(HRLINE.test(l.trim())){ if(cur.length){ chunks.push(cur.join('\n')); cur=[]; } chunks.push(l.trim()); }
+      else cur.push(l); });
+    if(cur.length) chunks.push(cur.join('\n'));
+    return chunks.map(c=>bodyCore(c)).join('');
+  }
   if(lines.length && lines.every(l=>/^\d+[.)]\s/.test(l)))            /* 전 줄이 1. 이면 순서 목록 */
     return '<ol>'+lines.map(l=>'<li>'+inlineFmt(esc(l.replace(/^\d+[.)]\s/,'')))+'</li>').join('')+'</ol>';
   if(lines.length && lines.every(l=>/^[-•]\s/.test(l)))               /* 전 줄이 - 또는 • 면 점 목록 */
@@ -249,7 +259,13 @@ const bodyCore=t=>t.split(/(\n{2,})/).map(p=>{
 }).join('');
 /* [접기:제목] ~ [/접기] — 눌러서 펼치는 접은 글(phase285). 문단 분해 전에 블록을 뽑아 재귀 처리 */
 const bodyHTML=t=>{
+  /* 구분선 줄 격리(phase331): ***·===·~~~가 서식 마커와 같은 문자라 spanFix가
+     구분선의 **를 다른 문단의 굵게와 짝지어 주변 서식을 깨뜨림 — 먼저 빼두고 나중에 복원 */
+  const hrs=[];
+  t=t.replace(/^(?:@[crj][ \t]+)?(?:-{3,}|―{3,}|={3,}|\.{3,}|~{3,}|\*{3,})[ \t]*$/gm,
+    m=>{ hrs.push(m.trim()); return '\u0001HR'+(hrs.length-1)+'\u0001'; });
   t=spanFix(t);
+  t=t.replace(/\u0001HR(\d+)\u0001/g,(m,n)=>hrs[+n]);
   const folds=[];
   t=t.replace(/^\[접기(?::([^\]\n]*))?\]\s*\n([\s\S]*?)\n?\[\/접기\]\s*$/gm,(m,tt,inner)=>{
     folds.push({tt:(tt||'').trim(),inner}); return '\n\n\u0001FOLD'+(folds.length-1)+'\u0001\n\n'; });
