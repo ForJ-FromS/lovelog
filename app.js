@@ -2993,7 +2993,9 @@ function renderCatMgr(){
       const next=[...cats()]; next[i]=nv;
       await updateDoc(doc(db,'pages',st.handle),{cats:next});
       st.page.cats=next;
-      if(isG(oldName)){
+      /* 개명 이사(phase333): 사진 타입뿐 아니라 모든 타입에서 부속 데이터 이사 —
+         isG 분기에만 있던 탓에 글·메모·사진첩 개명 시 탭 순서가 밑으로 가고 이미지·태그가 고아가 됐음 */
+      {
         const g=gcats().map(x=>x===oldName?nv:x);
         const m2=mcats().map(x=>x===oldName?nv:x);
         const a2=acats().map(x=>x===oldName?nv:x);
@@ -3001,9 +3003,11 @@ function renderCatMgr(){
         if(alv[oldName]!==undefined){ alv[nv]=alv[oldName]; delete alv[oldName]; }
         const ctg={...(st.page.catTags||{})};
         if(ctg[oldName]!==undefined){ ctg[nv]=ctg[oldName]; delete ctg[oldName]; }
+        const cim={...(st.page.catImgs||{})};                     // 🖼 카테고리 이미지도 이사
+        if(cim[oldName]!==undefined){ cim[nv]=cim[oldName]; delete cim[oldName]; }
         const ns=navSeq().map(x=>x===oldName?nv:x);
-        await updateDoc(doc(db,'pages',st.handle),{gcats:g, mcats:m2, acats:a2, navSeq:ns, abListView:alv, catTags:ctg});
-        st.page.gcats=g; st.page.mcats=m2; st.page.acats=a2; st.page.navSeq=ns; st.page.abListView=alv; st.page.catTags=ctg;
+        await updateDoc(doc(db,'pages',st.handle),{gcats:g, mcats:m2, acats:a2, navSeq:ns, abListView:alv, catTags:ctg, catImgs:cim});
+        st.page.gcats=g; st.page.mcats=m2; st.page.acats=a2; st.page.navSeq=ns; st.page.abListView=alv; st.page.catTags=ctg; st.page.catImgs=cim;
       }
       const moves=st.posts.filter(p=>p.cat===oldName);
       await Promise.all(moves.map(p=>
