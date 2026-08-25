@@ -1094,6 +1094,7 @@
   #w-fmt button, #mm-fmt button{white-space:nowrap}
   #w-fmt, #mm-fmt{flex-wrap:wrap}                              /* 서식 버튼 많아짐 — 폰에선 줄바꿈(293b) */
   #w-fmt .note, #mm-fmt .note{display:none}
+  #w-prevtoggle{width:auto;padding:0 12px}                     /* 한 글자 버튼용 30px 고정폭 해제(phase329) */
   #w-prevtoggle.on{color:var(--pri);border-color:var(--pri)}
   #pv-body p.al-c, #w-prev p.al-c{text-align:center}
   #pv-body p.al-r, #w-prev p.al-r{text-align:right}
@@ -1461,6 +1462,7 @@
     padding:clamp(26px,3.4vw,46px) clamp(22px,3.2vw,50px)}
   body.reading #post-view #pv-body{font-size:14.5px;line-height:2}
   body.reading #pv-nav{max-width:1000px;margin:14px auto 0}
+  body.reading #cmt{max-width:1000px;margin:16px auto 0}       /* 댓글도 본문 폭 정렬(phase329) */
   body.reading .wrap{padding-bottom:60px}
   .w-img .iw{display:block;border-radius:10px;overflow:hidden;border:1px solid var(--line)}
   .w-img .iw img{width:100%;display:block}
@@ -2439,6 +2441,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=357"></script>
+<script type="module" src="./app.js?v=358"></script>
 </body>
 </html>
