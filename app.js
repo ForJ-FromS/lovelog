@@ -3162,34 +3162,36 @@ function fillWidgets(){
   widSnap=JSON.stringify({d:draft,p:pdraft});   // 닫을 때 저장 안 한 변경 감지용
   closeWidEdit(); renderWidList();
 }
+let wstOpen=null;                                            // 표시 패널이 열린 행(phase328)
 function renderWidList(){
-  const wSt=w=>w.hid?'off':w.home?'home':'all';       // 표시 상태 3태(phase283 — A안 셀렉트 통합)
+  /* 표시 상태(phase328): 홈에서만·PC에서만은 조합 가능 — 라벨은 요약, 체크는 독립 */
+  const wLbl=w=>w.hid?'꺼두기':(w.home&&w.mhide)?'홈+PC':w.home?'홈에서만':w.mhide?'PC에서만':'모든 화면';
+  const wCls=w=>w.hid?'off':(w.home||w.mhide)?'home':'all';
   $('#wid-list').innerHTML = draft.map((w,i)=>`
     <div class="wl${w.hid?' off':''}">
       <span class="nm"><span class="t">${WNAME[w.t]||w.t}${w.t==='links'?` (${(w.items||[]).length})`:''}${w.t==='banner'?` (${(w.items||[]).length})`:''}</span>${w.float?'<span class="wbdg pri">📌</span>':''}</span>
-      <select class="wst st-${wSt(w)}" data-st="${i}" title="이 위젯을 어디에 보여줄지">
-        <option value="all" ${wSt(w)==='all'?'selected':''}>모든 화면</option>
-        <option value="home" ${wSt(w)==='home'?'selected':''}>홈에서만</option>
-        <option value="off" ${wSt(w)==='off'?'selected':''}>꺼두기</option>
-      </select>
-      <button data-m="${i}" title="모바일(좁은 화면)에서 이 위젯 숨김"${w.mhide?' style="color:var(--pri)"':''}>📱</button>
+      <button class="wst st-${wCls(w)}" data-st="${i}" title="이 위젯을 어디에 보여줄지 — 눌러서 조합 선택">${wLbl(w)} ▾</button>
       ${w.t!=='latest'?`<button data-f="${i}" title="컬럼에서 떼어 화면에 자유 배치 (PC 전용)"${w.float?' style="color:var(--pri)"':''}>📌</button>`:''}
       ${['profile','quote','links','banner','dday','bgm','notice','chat','phone','img','nb','text','stamp','latest','tl','feat','char','pair','cal','habit'].includes(w.t)?`<button data-e="${i}">✎</button>`:'<button class="wl-ph" disabled>✎</button>'}
       ${!['search','category','cnt','bgm','stamp','pin','feat'].includes(w.t)?`<button data-c2="${i}" title="이 위젯을 설정 그대로 복사해 하나 더">⧉</button>`:'<button class="wl-ph" disabled>⧉</button>'}
       <button data-u="${i}">↑</button><button data-d="${i}">↓</button><button data-x="${i}">✕</button>
-    </div>`).join('') || '<p class="pl-empty">위젯이 없어요 — 아래에서 추가하세요.</p>';
+    </div>${wstOpen===i?`
+    <div class="wl-opts">
+      <label class="chk"><input type="checkbox" data-wo="home" data-woi="${i}" ${w.home?'checked':''}> 홈에서만 <span class="note">(카테고리·글에선 숨김)</span></label>
+      <label class="chk"><input type="checkbox" data-wo="pc" data-woi="${i}" ${w.mhide?'checked':''}> PC에서만 <span class="note">(폰·좁은 화면에선 숨김)</span></label>
+      <label class="chk"><input type="checkbox" data-wo="off" data-woi="${i}" ${w.hid?'checked':''}> 꺼두기 <span class="note">(설정 보관한 채 감춤)</span></label>
+    </div>`:''}`).join('') || '<p class="pl-empty">위젯이 없어요 — 아래에서 추가하세요.</p>';
   if(draft.some(w=>w.home&&!w.hid))
     $('#wid-list').insertAdjacentHTML('beforeend',
       '<p class="note">🏠 \'홈에서만\'인 위젯은 카테고리·글 목록으로 이동하면 숨겨졌다가 홈으로 돌아오면 다시 나타납니다. \'꺼두기\'는 설정을 보관한 채 잠시 감춰요.</p>');
-  if(draft.some(w=>w.mhide))
+  if(draft.some(w=>w.mhide&&!w.hid))
     $('#wid-list').insertAdjacentHTML('beforeend',
-      '<p class="note">📱 표시가 켜진 위젯은 폰·좁은 화면에서 숨겨지고 PC에서는 그대로 보여요.</p>');
+      '<p class="note">📱 \'PC에서만\' 위젯은 폰·좁은 화면에서 숨겨지고 PC에서는 그대로 보여요.</p>');
   if(draft.some(w=>w.float))
     $('#wid-list').insertAdjacentHTML('beforeend',
       '<p class="note">📌 띄운 위젯은 넓은 PC 화면에서만 떠 있어요 — 저장 후 홈의 ⠿ 편집 모드에서 드래그로 옮길 수 있고, 폰·좁은 창에서는 원래 자리로 돌아갑니다.</p>');
-  $('#wid-list').querySelectorAll('button').forEach(b=>b.onclick=()=>{
-    const {e,u,d,x,f,c2,m}=b.dataset;
-    if(m!==undefined){ draft[+m].mhide=!draft[+m].mhide; if(!draft[+m].mhide) delete draft[+m].mhide; renderWidList(); return; }
+  $('#wid-list').querySelectorAll('button:not(.wst)').forEach(b=>b.onclick=()=>{
+    const {e,u,d,x,f,c2}=b.dataset;
     if(c2!==undefined){ const src=draft[+c2];                  // ⧉ 위젯 복제(phase304)
       const cp=JSON.parse(JSON.stringify(src));
       delete cp.float; delete cp.fx; delete cp.fy;             // 띄움 상태는 복사 안 함(겹침 방지)
@@ -3206,11 +3208,13 @@ function renderWidList(){
     if(x!==undefined){ draft.splice(+x,1); closeWidEdit(); }
     renderWidList();
   });
-  $('#wid-list').querySelectorAll('[data-st]').forEach(sl=>sl.onchange=()=>{
-    const w=draft[+sl.dataset.st], v=sl.value;                 // 표시 셀렉트(phase283): 배타 3태
-    delete w.hid; delete w.home;                               //  — 저장 필드는 기존 hid/home 그대로(렌더 필터 호환)
-    if(v==='home') w.home=true;
-    if(v==='off') w.hid=true;
+  $('#wid-list').querySelectorAll('[data-st]').forEach(b=>b.onclick=()=>{
+    wstOpen = (wstOpen===+b.dataset.st) ? null : +b.dataset.st;  // 펼침/접힘(phase328)
+    renderWidList();
+  });
+  $('#wid-list').querySelectorAll('[data-wo]').forEach(c=>c.onchange=()=>{
+    const w=draft[+c.dataset.woi], k={home:'home',pc:'mhide',off:'hid'}[c.dataset.wo];
+    if(c.checked) w[k]=true; else delete w[k];                 // 독립 체크 — 조합 자유
     renderWidList();
   });
 }
