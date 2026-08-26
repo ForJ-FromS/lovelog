@@ -5704,18 +5704,44 @@ async function admNtcLoad(){
        return s.exists()? noticeItems(s.data()) : []; }
   catch(e){ return []; }
 }
+let ntcEdit=null;                                         // ✏ 수정 중인 공지 id(phase334)
 function admNtcRender(items){
   const box=$('#adm-ntc-list'); if(!box) return;
   box.innerHTML=items.length? items.map(it=>`
     <div class="ntc-row"><span class="ntc-d">${esc(it.date||'')}</span>
       <span class="ntc-t">${esc(it.text.slice(0,46))}${it.text.length>46?'…':''}</span>
-      <button class="rmv" data-ntcx="${it.id}" style="font-size:10px">삭제</button></div>`).join('')
+      <button class="rmv" data-ntce="${it.id}" style="font-size:10px">수정</button>
+      <button class="rmv" data-ntcx="${it.id}" style="font-size:10px">삭제</button></div>
+    ${String(ntcEdit)===String(it.id)?`
+    <div class="ntc-editbox">
+      <textarea data-ntcta="${it.id}" style="min-height:90px;width:100%">${esc(it.text)}</textarea>
+      <div class="p-row">
+        <button class="btn" data-ntcs="${it.id}" style="font-size:11px">고쳐서 저장</button>
+        <button class="rmv" data-ntcc="${it.id}" style="font-size:11px">취소</button>
+        <span class="note">글만 바뀌고 날짜·NEW 배지 상태는 그대로예요 — 오타 수정용.</span>
+      </div></div>`:''}`).join('')
     : '<p class="note">떠 있는 공지가 없어요.</p>';
+  box.querySelectorAll('[data-ntce]').forEach(b=>b.onclick=()=>{
+    ntcEdit = String(ntcEdit)===b.dataset.ntce ? null : b.dataset.ntce;
+    admNtcRender(items);
+  });
+  box.querySelectorAll('[data-ntcc]').forEach(b=>b.onclick=()=>{ ntcEdit=null; admNtcRender(items); });
+  box.querySelectorAll('[data-ntcs]').forEach(b=>b.onclick=async()=>{
+    const ta=box.querySelector(`[data-ntcta="${b.dataset.ntcs}"]`);
+    const nt=(ta?.value||'').trim();
+    if(!nt){ admNtcMsg('내용이 비었어요 — 지우려면 삭제를 눌러주세요.'); return; }
+    try{
+      const items2=(await admNtcLoad()).map(x=>String(x.id)===b.dataset.ntcs?{...x, text:nt}:x);
+      await setDoc(doc(db,'config','notice'),
+        {items:items2, ver:items2.length?Math.max(...items2.map(x=>+x.id||0)):Date.now(), at:serverTimestamp()});
+      ntcEdit=null; admNtcRender(items2); admNtcMsg('고쳤어요 — 이미 본 분들에게 NEW가 다시 뜨진 않아요.');
+    }catch(e){ admNtcMsg('실패 — '+e.message); }
+  });
   box.querySelectorAll('[data-ntcx]').forEach(b=>b.onclick=async()=>{
     const items2=(await admNtcLoad()).filter(x=>String(x.id)!==b.dataset.ntcx);
     try{ await setDoc(doc(db,'config','notice'),
       {items:items2, ver:items2.length?Math.max(...items2.map(x=>+x.id||0)):Date.now(), at:serverTimestamp()});
-      admNtcRender(items2); admNtcMsg('지웠어요.');
+      ntcEdit=null; admNtcRender(items2); admNtcMsg('지웠어요.');
     }catch(e){ admNtcMsg('실패 — '+e.message); }
   });
 }
