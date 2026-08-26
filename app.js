@@ -1692,8 +1692,14 @@ function renderSide(){
       if(w.bc){ sv.push(`--pqB:${w.bc}`); sv.push(`--pqBt:${lum(w.bc)>.62?'#1a1a1a':'#fff'}`); }
       const lim=(+w.n>0 && qs.length>+w.n)?+w.n:qs.length;
       const bub=(s,nm,av,tx)=>`<div class="pq-row pq-${s}">${av?`<img class="pq-av" src="${av}" alt="" draggable="false" loading="lazy">`:''}<div class="pq-bub"><p class="pq-nm">${esc(nm||(s==='a'?'A':'B'))}</p><p class="pq-tx">${esc(tx)}</p></div></div>`;
+      /* 문답 스타일(phase339): 말풍선 대신 "이름: 답" 한 줄 — 이름은 각자 색 */
+      const pln=(s,nm,tx)=>`<p class="pq-pl"><span class="pq-pn" style="color:${s==='a'?(w.ac||'var(--pri)'):(w.bc||'var(--ink)')}">${esc(nm||(s==='a'?'A':'B'))}:</span>${esc(tx)}</p>`;
+      const row=(x,i)=> w.style==='plain'
+        ? `${x.a?pln('a',w.an,x.a):''}${x.b?pln('b',w.bn,x.b):''}`
+        : `${x.a?bub('a',w.an,w.ai,x.a):''}${x.b?bub('b',w.bn,w.bi,x.b):''}`;
+      if(w.style==='plain') d.className+=' pq-plain';
       d.innerHTML=`<p class="pq-head">PAIR INTERVIEW</p>`
-        + qs.map((x,i)=>`<div class="pq-item${i>=lim?' pq-more hidden':''}"><p class="pq-q"><b>Q${i+1}.</b> ${esc(x.q)}</p>${x.a?bub('a',w.an,w.ai,x.a):''}${x.b?bub('b',w.bn,w.bi,x.b):''}</div>`).join('')
+        + qs.map((x,i)=>`<div class="pq-item${i>=lim?' pq-more hidden':''}"><p class="pq-q"><b>Q${i+1}.</b> ${esc(x.q)}</p>${row(x,i)}</div>`).join('')
         + (qs.length>lim?`<button class="pq-morebtn">더보기 (${qs.length-lim})</button>`:'')
         + (!qs.length&&st.mine?`<p class="pl-empty">✎에서 인물과 질문을 추가하세요.</p>`:'');
       if(sv.length) d.style.cssText+=';'+sv.join(';');
@@ -3451,6 +3457,10 @@ function renderWidEdit(){
       ${w.bi?`<button class="rmv" data-pqxi="b" style="font-size:10px">제거</button>`:''}
     </div>
     <div class="p-row" style="align-items:center;gap:8px;font-size:11.5px;color:var(--muted)">
+      <select id="pq-style" style="width:auto;margin-bottom:0">
+        <option value="bub" ${w.style!=='plain'?'selected':''}>디자인 — 말풍선</option>
+        <option value="plain" ${w.style==='plain'?'selected':''}>디자인 — 문답 (이름: 답)</option>
+      </select>
       <select id="pq-n" style="width:auto;margin-bottom:0">
         <option value="0" ${!+w.n?'selected':''}>전부 표시</option>
         <option value="3" ${+w.n===3?'selected':''}>처음 3개 + 더보기</option>
@@ -3811,7 +3821,7 @@ function renderWidEdit(){
   // 라이브 바인딩: 쓰는 즉시 draft에 반영
   const t=$('#we-text'); if(t) t.addEventListener('input',()=>{ w.text=t.value; });
   // 📇 페어 인터뷰(phase338)
-  [['pq-an','an'],['pq-bn','bn'],['pq-ac','ac'],['pq-bc','bc'],['pq-n','n']].forEach(([id,k])=>{
+  [['pq-an','an'],['pq-bn','bn'],['pq-ac','ac'],['pq-bc','bc'],['pq-n','n'],['pq-style','style']].forEach(([id,k])=>{
     const el=$('#'+id); if(el) el.addEventListener('input',()=>{ w[k]=el.value; }); });
   $('#wid-edit').querySelectorAll('[data-pqq],[data-pqa],[data-pqb]').forEach(inp=>{
     const key=inp.dataset.pqq!==undefined?['pqq','q']:inp.dataset.pqa!==undefined?['pqa','a']:['pqb','b'];
