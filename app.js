@@ -887,7 +887,7 @@ const galNm=()=>st.page?.galName||'GALLERY';
 const gbNm=()=>st.page?.gbName||'GUESTBOOK';
 const homeNm=()=>st.page?.homeName||'HOME';
 const WNAME={latest:'최신글',pin:'📌 고정글',char:'캐릭터 프로필',pair:'페어 프로필',cal:'달력',habit:'해빗 트래커',notice:'공지',chat:'채팅로그',phone:'단말기',tl:'타임라인',feat:'★ 대표글',img:'이미지',nb:'이웃 홈',profile:'프로필',search:'검색',category:'카테고리',
-  dday:'디데이',bgm:'BGM',quote:'인용구',links:'링크',banner:'배너칸',text:'글',cnt:'방문자수',stamp:'발도장'};
+  dday:'디데이',bgm:'BGM',quote:'인용구',links:'링크',banner:'배너칸',text:'글',cnt:'방문자수',stamp:'발도장',pairqa:'페어 인터뷰'};
 const STAMP_LEGACY=['heart','paw','star','drop'];   // 옛 슬롯 이름 — 카운트 승계용
 function parseEmo(s){
   const raw=(s||'').replace(/\s+/g,'');
@@ -1679,6 +1679,26 @@ function renderSide(){
         catch(err){ msg('저장 실패 — '+err.message); return; }
         renderSide();
       });
+      box.appendChild(d); return;
+    }
+    if(w.t==='pairqa'){
+      const qs=(w.qas||[]).filter(x=>x.q&&(x.a||x.b));
+      if(!qs.length && !st.mine) return;
+      d.className+=' w-pairqa';
+      const lum=hx=>{ try{ const n2=parseInt(hx.slice(1),16);
+        return (((n2>>16)&255)*.299+((n2>>8)&255)*.587+(n2&255)*.114)/255; }catch(e){ return .5; } };
+      const sv=[];
+      if(w.ac){ sv.push(`--pqA:${w.ac}`); sv.push(`--pqAt:${lum(w.ac)>.62?'#1a1a1a':'#fff'}`); }
+      if(w.bc){ sv.push(`--pqB:${w.bc}`); sv.push(`--pqBt:${lum(w.bc)>.62?'#1a1a1a':'#fff'}`); }
+      const lim=(+w.n>0 && qs.length>+w.n)?+w.n:qs.length;
+      const bub=(s,nm,av,tx)=>`<div class="pq-row pq-${s}">${av?`<img class="pq-av" src="${av}" alt="" draggable="false" loading="lazy">`:''}<div class="pq-bub"><p class="pq-nm">${esc(nm||(s==='a'?'A':'B'))}</p><p class="pq-tx">${esc(tx)}</p></div></div>`;
+      d.innerHTML=`<p class="pq-head">PAIR INTERVIEW</p>`
+        + qs.map((x,i)=>`<div class="pq-item${i>=lim?' pq-more hidden':''}"><p class="pq-q"><b>Q${i+1}.</b> ${esc(x.q)}</p>${x.a?bub('a',w.an,w.ai,x.a):''}${x.b?bub('b',w.bn,w.bi,x.b):''}</div>`).join('')
+        + (qs.length>lim?`<button class="pq-morebtn">더보기 (${qs.length-lim})</button>`:'')
+        + (!qs.length&&st.mine?`<p class="pl-empty">✎에서 인물과 질문을 추가하세요.</p>`:'');
+      if(sv.length) d.style.cssText+=';'+sv.join(';');
+      const mb=d.querySelector('.pq-morebtn');
+      if(mb) mb.onclick=()=>{ d.querySelectorAll('.pq-more').forEach(x=>x.classList.remove('hidden')); mb.remove(); };
       box.appendChild(d); return;
     }
     if(w.t==='chat'){
@@ -3417,6 +3437,33 @@ function renderWidEdit(){
     <input id="we-cpcn" value="${esc(w.cn||'')}" placeholder="가운데 연결 기호 (선택 — 비우면 없음)" style="width:230px">
     <textarea id="we-cprel" rows="2" placeholder="관계 설명 (선택 — 두 카드 아래 가운데에 나와요)" style="font-size:12px">${esc(w.rel||'')}</textarea>`
     +cpForm(w.a,'a','왼쪽(위) 인물')+cpForm(w.b,'b','오른쪽(아래) 인물');
+  if(w.t==='pairqa') html+=`
+    <div class="p-row" style="align-items:center;gap:6px">
+      <input id="pq-an" placeholder="인물 A 이름" value="${esc(w.an||'')}" style="flex:1;margin-bottom:0">
+      <input type="color" id="pq-ac" value="${w.ac||'#8f88e8'}" title="A 말풍선 색" style="width:38px;flex:none;padding:2px;margin-bottom:0">
+      <label class="filelab" style="font-size:11px;flex:none">📷 ${w.ai?'(있음)':''}<input type="file" data-pqimg="a" accept="image/*"></label>
+      ${w.ai?`<button class="rmv" data-pqxi="a" style="font-size:10px">제거</button>`:''}
+    </div>
+    <div class="p-row" style="align-items:center;gap:6px">
+      <input id="pq-bn" placeholder="인물 B 이름" value="${esc(w.bn||'')}" style="flex:1;margin-bottom:0">
+      <input type="color" id="pq-bc" value="${w.bc||'#e8a4b8'}" title="B 말풍선 색" style="width:38px;flex:none;padding:2px;margin-bottom:0">
+      <label class="filelab" style="font-size:11px;flex:none">📷 ${w.bi?'(있음)':''}<input type="file" data-pqimg="b" accept="image/*"></label>
+      ${w.bi?`<button class="rmv" data-pqxi="b" style="font-size:10px">제거</button>`:''}
+    </div>
+    <div class="p-row" style="align-items:center;gap:8px;font-size:11.5px;color:var(--muted)">
+      <select id="pq-n" style="width:auto;margin-bottom:0">
+        <option value="0" ${!+w.n?'selected':''}>전부 표시</option>
+        <option value="3" ${+w.n===3?'selected':''}>처음 3개 + 더보기</option>
+        <option value="5" ${+w.n===5?'selected':''}>처음 5개 + 더보기</option>
+        <option value="10" ${+w.n===10?'selected':''}>처음 10개 + 더보기</option>
+      </select><span>사진은 안 넣으면 이름만 나와요 · 답을 비우면 그 사람 말풍선은 생략</span>
+    </div>
+    ${(w.qas||[]).map((x,i)=>`<div class="we-dd" style="flex-direction:column;align-items:stretch;gap:5px">
+      <div class="p-row" style="gap:6px"><input data-pqq="${i}" placeholder="질문 ${i+1}" value="${esc(x.q||'')}" style="flex:1;margin-bottom:0"><button class="rmv" data-pqdel="${i}" style="flex:none">✕</button></div>
+      <input data-pqa="${i}" placeholder="${esc(w.an||'A')}의 답" value="${esc(x.a||'')}" style="margin-bottom:0">
+      <input data-pqb="${i}" placeholder="${esc(w.bn||'B')}의 답" value="${esc(x.b||'')}" style="margin-bottom:0">
+    </div>`).join('')}
+    <button class="btn" id="pq-addq" style="font-size:12px">+ 질문 추가</button>`;
   if(w.t==='cal') html+=`
     <div class="p-row" style="align-items:center;gap:8px;font-size:11.5px;color:var(--muted)">
       <select id="we-calview" style="width:auto;margin-bottom:0">
@@ -3763,6 +3810,20 @@ function renderWidEdit(){
   $('#wid-edit').innerHTML=html;
   // 라이브 바인딩: 쓰는 즉시 draft에 반영
   const t=$('#we-text'); if(t) t.addEventListener('input',()=>{ w.text=t.value; });
+  // 📇 페어 인터뷰(phase338)
+  [['pq-an','an'],['pq-bn','bn'],['pq-ac','ac'],['pq-bc','bc'],['pq-n','n']].forEach(([id,k])=>{
+    const el=$('#'+id); if(el) el.addEventListener('input',()=>{ w[k]=el.value; }); });
+  $('#wid-edit').querySelectorAll('[data-pqq],[data-pqa],[data-pqb]').forEach(inp=>{
+    const key=inp.dataset.pqq!==undefined?['pqq','q']:inp.dataset.pqa!==undefined?['pqa','a']:['pqb','b'];
+    inp.addEventListener('input',()=>{ (w.qas??=[])[+inp.dataset[key[0]]][key[1]]=inp.value; }); });
+  const pqadd=$('#pq-addq'); if(pqadd) pqadd.onclick=()=>{ (w.qas??=[]).push({q:'',a:'',b:''}); renderWidEdit(); };
+  $('#wid-edit').querySelectorAll('[data-pqdel]').forEach(b=>b.onclick=()=>{ w.qas.splice(+b.dataset.pqdel,1); renderWidEdit(); });
+  $('#wid-edit').querySelectorAll('[data-pqimg]').forEach(f=>f.onchange=async()=>{
+    if(!f.files[0]) return;
+    try{ const d2=await shrinkBlob(f.files[0],128,.85); w[f.dataset.pqimg==='a'?'ai':'bi']=d2; renderWidEdit(); }
+    catch(e){ msg('사진 처리 실패 — 다른 파일로 시도해주세요.'); } });
+  $('#wid-edit').querySelectorAll('[data-pqxi]').forEach(b=>b.onclick=()=>{
+    delete w[b.dataset.pqxi==='a'?'ai':'bi']; renderWidEdit(); });
   const txan=$('#we-txanim'); if(txan) txan.addEventListener('change',()=>{
     if(txan.checked) w.anim=true; else delete w.anim; });
   const ntt=$('#we-ntt'); if(ntt) ntt.addEventListener('input',()=>{ w.title=ntt.value; });
@@ -4094,10 +4155,10 @@ $('#wid-add').onclick=()=>{
   if(['search','category','dday','profile','cnt','pin'].includes(t) && draft.some(w=>w.t===t)){
     msg('이미 있는 위젯이에요.'); return; }                     // bgm은 복수 허용(phase273 — 위젯별 곡 지정)
   draft.push(['links','banner','nb','tl'].includes(t)?{t,items:[]}
-    : t==='char'?{t,p:{items:[]}} : t==='pair'?{t,a:{items:[]},b:{items:[]}}
+    : t==='char'?{t,p:{items:[]}} : t==='pair'?{t,a:{items:[]},b:{items:[]}} : t==='pairqa'?{t,qas:[]}
     : t==='cal'?{t,marks:[]} : t==='habit'?{t,habits:[]} : {t});
   editIdx=draft.length-1; renderWidList();
-  if(['profile','quote','links','banner','dday','bgm','notice','chat','phone','img','nb','text','stamp','tl','feat','latest','char','pair','cal','habit'].includes(t)) renderWidEdit();
+  if(['profile','quote','links','banner','dday','bgm','notice','chat','phone','img','nb','text','stamp','tl','feat','latest','char','pair','cal','habit','pairqa'].includes(t)) renderWidEdit();
 };
 $('#wid-save').onclick=async()=>{
   if(editIdx>=0 && draft[editIdx]) syncWid(draft[editIdx]);

@@ -1665,6 +1665,23 @@ body.catsel-off #cats a.on,body.catsel-off #catbar a.on{background:transparent!i
 /* 가로 스크롤 안전망 (phase326) — clip은 스크롤 컨테이너를 만들지 않아 sticky·고정요소 무해 */
 html,body{overflow-x:hidden;overflow-x:clip}
 .ntc-editbox{margin:2px 0 10px;padding:8px;border:1px dashed var(--line);border-radius:8px;background:var(--card2)}
+/* 📇 페어 인터뷰 (phase338) */
+.w-pairqa .pq-head{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.22em;color:var(--muted);margin:0 0 10px}
+.w-pairqa .pq-q{font-size:11px;color:var(--muted);margin:12px 0 6px;line-height:1.5}
+.w-pairqa .pq-item:first-of-type .pq-q{margin-top:0}
+.w-pairqa .pq-q b{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--pri);margin-right:4px}
+.pq-row{display:flex;gap:7px;margin:0 0 5px;align-items:flex-end}
+.pq-b{flex-direction:row-reverse}
+.pq-av{width:30px;height:30px;border-radius:50%;object-fit:cover;flex:none;border:1px solid var(--line)}
+.pq-bub{max-width:82%;padding:7px 10px;border-radius:12px;font-size:12.5px;line-height:1.55;min-width:0}
+.pq-a .pq-bub{border-bottom-left-radius:3px;background:var(--pqA,color-mix(in srgb, var(--pri) 16%, transparent));color:var(--pqAt,var(--body))}
+.pq-b .pq-bub{border-bottom-right-radius:3px;background:var(--pqB,color-mix(in srgb, var(--ink) 9%, transparent));color:var(--pqBt,var(--body))}
+.pq-nm{font-size:10px;font-weight:600;margin:0 0 2px;opacity:.82}
+.pq-b .pq-nm{text-align:right}
+.pq-tx{margin:0;white-space:pre-wrap;word-break:break-word}
+.pq-morebtn{width:100%;margin-top:10px;border:1px dashed var(--line);background:none;color:var(--muted);
+  border-radius:8px;padding:6px 0;font-size:11px;cursor:pointer}
+.pq-morebtn:hover{color:var(--body);border-color:var(--pri)}
 .note.ok{color:#7fbf7f}
 .note.bad{color:#e08585}
 .gbdot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--pri);margin-left:6px;flex:none;vertical-align:middle}
@@ -2021,6 +2038,7 @@ html,body{overflow-x:hidden;overflow-x:clip}
         <option value="pin">📌 고정글 (최신글과 분리해 따로 두는 카드)</option>
         <option value="char">캐릭터 프로필 (1인)</option>
         <option value="pair">페어 프로필 (2인 — 가운데 이모지)</option>
+        <option value="pairqa">페어 인터뷰 (질문마다 두 사람 말풍선)</option>
         <option value="cal">달력 (날짜 마킹 · 기간 줄 · 메모 점)</option>
         <option value="habit">해빗 트래커 (칸 채우기)</option>
         <option value="quote">인용구</option>
@@ -2459,6 +2477,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=366"></script>
+<script type="module" src="./app.js?v=367"></script>
 </body>
 </html>
