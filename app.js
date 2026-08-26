@@ -5695,6 +5695,9 @@ async function checkUpdNotice(){
       localStorage.setItem('lv-upd-seen',String(n.ver));
       $('#upd-toast').classList.add('hidden');
     };
+    const dis=()=>$('#upd-toast').classList.add('hidden');            // ✕·배경 클릭 = 그냥 닫기(다음에 또 보임, phase335)
+    const ux=$('#upd-x'); if(ux) ux.onclick=dis;
+    $('#upd-toast').onclick=e=>{ if(e.target.id==='upd-toast') dis(); };
   }catch(e){}
 }
 /* ── 운영자: 공지 올리기/내리기 ── */

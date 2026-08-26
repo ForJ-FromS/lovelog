@@ -574,11 +574,16 @@
   #mut-pop-ok{margin-top:12px;width:100%;border:1px solid var(--line);background:none;
     color:var(--muted);border-radius:8px;padding:7px 0;font-size:11.5px;cursor:pointer}
   #mut-pop-ok:hover{color:var(--body);border-color:var(--pri)}
-  #upd-toast{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;z-index:60;
-    width:min(430px,calc(100% - 28px));background:var(--card);border:1px solid var(--pri);
-    border-radius:14px;padding:16px 18px 14px;box-shadow:0 10px 34px rgba(0,0,0,.45);
-    max-height:min(560px,calc(100dvh - 60px));display:flex;flex-direction:column}
+  #upd-toast{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.55);   /* 가운데 팝업(phase335) */
+    display:flex;align-items:center;justify-content:center;padding:20px}
   #upd-toast.hidden{display:none}
+  #upd-toast .upd-card{position:relative;width:min(460px,100%);background:var(--card);
+    border:1px solid var(--pri);border-radius:14px;padding:16px 18px 14px;
+    box-shadow:0 10px 34px rgba(0,0,0,.45);
+    max-height:min(640px,calc(100dvh - 60px));display:flex;flex-direction:column}
+  #upd-x{position:absolute;top:10px;right:12px;background:none;border:0;cursor:pointer;
+    color:var(--muted);font-size:14px;padding:4px}
+  #upd-x:hover{color:var(--ink)}
   #upd-toast .ut-tag{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.26em;
     color:var(--pri);margin:0 0 8px}
   #upd-body{font-size:12.5px;line-height:1.8;white-space:pre-wrap;color:var(--body);
@@ -1687,9 +1692,12 @@ html,body{overflow-x:hidden;overflow-x:clip}
 </div>
 
 <div id="upd-toast" class="hidden">
-  <p class="ut-tag">📢 UPDATE</p>
-  <div id="upd-body"></div>
-  <button id="upd-ok">확인 — 다시 뜨지 않아요</button>
+  <div class="upd-card">
+    <button id="upd-x" title="닫기 (다음 접속 때 다시 보여요)">✕</button>
+    <p class="ut-tag">📢 UPDATE</p>
+    <div id="upd-body"></div>
+    <button id="upd-ok">확인 — 다시 뜨지 않아요</button>
+  </div>
 </div>
 
   <div id="view-setup" class="center hidden"><h1>SETUP</h1>
@@ -2450,6 +2458,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=363"></script>
+<script type="module" src="./app.js?v=364"></script>
 </body>
 </html>
