@@ -508,7 +508,10 @@ async function loadPage(handle){
   const needPw = st.page.gate && !st.mine
     && sessionStorage.getItem('gate_'+handle)!==st.page.gate;
   const seen = sessionStorage.getItem('ent_'+handle);
-  if(!st.mine && (needPw || !seen)){
+  /* 🔗 글 링크 직행(phase340): 옵션이 켜져 있고 비번 대문이 아니면, 글 딥링크 방문자는 대문 생략 */
+  const skipGate = !!st.deepPost && st.page.gateSkipPost===true && !needPw;
+  if(skipGate && !seen) sessionStorage.setItem('ent_'+handle,'1');
+  if(!st.mine && (needPw || (!seen && !skipGate))){
     applyColor(st.page.hue ?? 222, st.page.sat, st.page.lum);
     const cover = st.page.enterImg || heroObjs()[0]?.img || '';
     setGateCover(cover);
@@ -5408,6 +5411,7 @@ function fillSettings(){
   $('#s-dim').value=p.bgDim??78; $('#s-dots').value=p.dots!==false?'on':''; $('#s-protect').value=p.protectImg!==false?'on':''; $('#s-stkm').checked=!!p.stkHideM; $('#s-stkhome').checked=!!p.stkHome; $('#s-stkoff').checked=p.stkOff!==true; $('#s-fx').value=p.fx ?? (p.sparkle?'sparkle':''); $('#s-fxc').value=p.fxC||'#ffb3c8'; fxCVal=null; $('#s-postpage').value=p.postPage?'on':''; $('#s-corner').value=p.corner||''; $('#s-cardc').value=p.cardC||'#1a1c26'; cardCVal=null; $('#s-rowtag').value=p.rowTag!==false?'on':''; const sts=$('#s-tagshape'); if(sts) sts.value=p.tagShape||'';
   $('#s-gatebtn').value=p.gateBtn||''; $('#s-listed').checked=!!p.listed; cardNew=null; bnrNew=null; renderCard(); renderBnr(); $('#s-lbicon').value=p.labelIcon??'◈'; gateColVal=null;
   $('#s-gatecolor').value=p.gateColor||'#ffffff';
+  const gsk=$('#s-gateskip'); if(gsk) gsk.checked=p.gateSkipPost===true;
   $('#del-h').textContent=st.handle||'—'; $('#s-del-confirm').value=''; delMsg('');
   renderMyInq(); renderAdmInq(); renderMyNotes(); renderAdmNotes();
   if(st.myHandle==='jeste'){ getDoc(doc(db,'config','notice')).then(s=>{
@@ -5519,6 +5523,7 @@ async function saveSettings(){
       bannerImg: bnrNew ?? st.page.bannerImg ?? '',
       labelIcon: $('#s-lbicon').value.trim(),
       gateColor: gateColVal ?? st.page.gateColor ?? '',
+      gateSkipPost: $('#s-gateskip')?.checked===true,
       gateBtnC: gateBtnCVal ?? st.page.gateBtnC ?? '',
       gateGrad: $('#s-gategrad').checked,
       font: $('#s-font').value,
