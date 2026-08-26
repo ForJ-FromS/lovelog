@@ -1693,7 +1693,8 @@ function renderSide(){
       const sv=[];
       if(w.ac){ sv.push(`--pqA:${w.ac}`); sv.push(`--pqAt:${lum(w.ac)>.62?'#1a1a1a':'#fff'}`); }
       if(w.bc){ sv.push(`--pqB:${w.bc}`); sv.push(`--pqBt:${lum(w.bc)>.62?'#1a1a1a':'#fff'}`); }
-      const lim=(+w.n>0 && qs.length>+w.n)?+w.n:qs.length;
+      const one=+w.n===-1;                                   // ‹ › 한 개씩(phase341)
+      const lim=one?qs.length:((+w.n>0 && qs.length>+w.n)?+w.n:qs.length);
       const bub=(s,nm,av,tx)=>`<div class="pq-row pq-${s}">${av?`<img class="pq-av" src="${av}" alt="" draggable="false" loading="lazy">`:''}<div class="pq-bub"><p class="pq-nm">${esc(nm||(s==='a'?'A':'B'))}</p><p class="pq-tx">${esc(tx)}</p></div></div>`;
       /* 문답 스타일(phase339): 말풍선 대신 "이름: 답" 한 줄 — 이름은 각자 색 */
       const pln=(s,nm,tx)=>`<p class="pq-pl"><span class="pq-pn" style="color:${s==='a'?(w.ac||'var(--pri)'):(w.bc||'var(--ink)')}">${esc(nm||(s==='a'?'A':'B'))}:</span>${esc(tx)}</p>`;
@@ -1702,12 +1703,22 @@ function renderSide(){
         : `${x.a?bub('a',w.an,w.ai,x.a):''}${x.b?bub('b',w.bn,w.bi,x.b):''}`;
       if(w.style==='plain') d.className+=' pq-plain';
       d.innerHTML=`<p class="pq-head">PAIR INTERVIEW</p>`
-        + qs.map((x,i)=>`<div class="pq-item${i>=lim?' pq-more hidden':''}"><p class="pq-q"><b>Q${i+1}.</b> ${esc(x.q)}</p>${row(x,i)}</div>`).join('')
-        + (qs.length>lim?`<button class="pq-morebtn">더보기 (${qs.length-lim})</button>`:'')
+        + qs.map((x,i)=>`<div class="pq-item${one?(i?' hidden':''):(i>=lim?' pq-more hidden':'')}"><p class="pq-q"><b>Q${i+1}.</b> ${esc(x.q)}</p>${row(x,i)}</div>`).join('')
+        + (!one && qs.length>lim?`<button class="pq-morebtn">더보기 (${qs.length-lim})</button>`:'')
+        + (one && qs.length>1?`<div class="pq-pager"><button class="pq-pv" title="이전 질문">‹</button><span class="pq-ct">1 / ${qs.length}</span><button class="pq-nx" title="다음 질문">›</button></div>`:'')
         + (!qs.length&&st.mine?`<p class="pl-empty">✎에서 인물과 질문을 추가하세요.</p>`:'');
       if(sv.length) d.style.cssText+=';'+sv.join(';');
       const mb=d.querySelector('.pq-morebtn');
       if(mb) mb.onclick=()=>{ d.querySelectorAll('.pq-more').forEach(x=>x.classList.remove('hidden')); mb.remove(); };
+      if(one){                                              // ‹ › 순환 페이저(phase341)
+        const its=[...d.querySelectorAll('.pq-item')]; let ix=0;
+        const ct=d.querySelector('.pq-ct');
+        const up=()=>{ its.forEach((el,i2)=>el.classList.toggle('hidden', i2!==ix));
+          if(ct) ct.textContent=(ix+1)+' / '+its.length; };
+        const pv=d.querySelector('.pq-pv'), nx=d.querySelector('.pq-nx');
+        if(pv) pv.onclick=()=>{ ix=(ix-1+its.length)%its.length; up(); };
+        if(nx) nx.onclick=()=>{ ix=(ix+1)%its.length; up(); };
+      }
       box.appendChild(d); return;
     }
     if(w.t==='chat'){
@@ -3223,7 +3234,7 @@ function renderWidList(){
       <span class="nm"><span class="t">${WNAME[w.t]||w.t}${w.t==='links'?` (${(w.items||[]).length})`:''}${w.t==='banner'?` (${(w.items||[]).length})`:''}</span>${w.float?'<span class="wbdg pri">📌</span>':''}</span>
       <button class="wst st-${wCls(w)}" data-st="${i}" title="이 위젯을 어디에 보여줄지 — 눌러서 조합 선택">${wLbl(w)} ▾</button>
       ${w.t!=='latest'?`<button data-f="${i}" title="컬럼에서 떼어 화면에 자유 배치 (PC 전용)"${w.float?' style="color:var(--pri)"':''}>📌</button>`:''}
-      ${['profile','quote','links','banner','dday','bgm','notice','chat','phone','img','nb','text','stamp','latest','tl','feat','char','pair','cal','habit'].includes(w.t)?`<button data-e="${i}">✎</button>`:'<button class="wl-ph" disabled>✎</button>'}
+      ${['profile','quote','links','banner','dday','bgm','notice','chat','phone','img','nb','text','stamp','latest','tl','feat','char','pair','cal','habit','pairqa'].includes(w.t)?`<button data-e="${i}">✎</button>`:'<button class="wl-ph" disabled>✎</button>'}
       ${!['search','category','cnt','bgm','stamp','pin','feat'].includes(w.t)?`<button data-c2="${i}" title="이 위젯을 설정 그대로 복사해 하나 더">⧉</button>`:'<button class="wl-ph" disabled>⧉</button>'}
       <button data-u="${i}">↑</button><button data-d="${i}">↓</button><button data-x="${i}">✕</button>
     </div>${wstOpen===i?`
@@ -3466,6 +3477,7 @@ function renderWidEdit(){
       </select>
       <select id="pq-n" style="width:auto;margin-bottom:0">
         <option value="0" ${!+w.n?'selected':''}>전부 표시</option>
+        <option value="-1" ${+w.n===-1?'selected':''}>한 개씩 넘겨보기 (‹ ›)</option>
         <option value="3" ${+w.n===3?'selected':''}>처음 3개 + 더보기</option>
         <option value="5" ${+w.n===5?'selected':''}>처음 5개 + 더보기</option>
         <option value="10" ${+w.n===10?'selected':''}>처음 10개 + 더보기</option>
