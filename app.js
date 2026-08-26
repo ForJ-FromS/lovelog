@@ -5685,11 +5685,8 @@ async function checkUpdNotice(){
     if(!items.length || !n.ver) return;
     const seen=+localStorage.getItem('lv-upd-seen')||0;
     if(+n.ver<=seen) return;                            // 새 항목 없음
-    $('#upd-body').innerHTML=items.map(it=>`
-      <div class="upd-item">
-        ${(+it.id>seen||it.date)?`<p class="upd-meta">${+it.id>seen?'<b class="upd-new">NEW!</b>':''}${esc(it.date||'')}</p>`:''}
-        <div class="upd-tx">${esc(String(it.text||'').trim().replace(/\n{3,}/g,'\n\n'))}</div>
-      </div>`).join('');
+    /* pre-wrap 본문이라 태그 사이 개행·들여쓰기가 그대로 빈 줄로 렌더됨 — 한 줄로 이어 붙여 여백 제거(phase336) */
+    $('#upd-body').innerHTML=items.map(it=>`<div class="upd-item">${(+it.id>seen||it.date)?`<p class="upd-meta">${+it.id>seen?'<b class="upd-new">NEW!</b>':''}${esc(it.date||'')}</p>`:''}<div class="upd-tx">${esc(String(it.text||'').trim().replace(/\n{3,}/g,'\n\n'))}</div></div>`).join('');
     $('#upd-toast').classList.remove('hidden');
     $('#upd-ok').onclick=()=>{
       localStorage.setItem('lv-upd-seen',String(n.ver));
