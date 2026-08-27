@@ -802,10 +802,6 @@ const openFromHome=id=>{                          // ALL이 꺼진 홈은 그 �
 };
 function pinCard(){                              // 고정글 카드 — 단독 위젯·최신글 동거 겸용(phase236)
   const pin=st.posts.find(p=>p.pinned); if(!pin) return null;
-    /* ⏰ 예약 발행(phase342): 켜져 있으면 미래 시각 필수 — 시각이 되면 자동 공개(방문자 필터) */
-    const schedOn=$('#w-sched')?.checked, schedRaw=$('#w-schedat')?.value||'';
-    const schedAt=(schedOn&&schedRaw)? new Date(schedRaw).getTime() : null;
-    if(schedOn && !(schedAt>Date.now())){ alert('예약 발행 시각을 미래로 정해주세요.'); return; }
   const pd=document.createElement('a'); pd.className='pin';
   pd.innerHTML=`<span class="tag">◈ PINNED</span>
     <p class="t">${esc(pin.title)}${pin.secret?' 🔒':''}${pin.priv?' 🔏':''}</p>
@@ -4696,7 +4692,10 @@ const msg=t=>{
 };
 
 let editPost=null, editGal=null;
-$('#w-sched').onchange=()=>$('#w-schedat').classList.toggle('hidden',!$('#w-sched').checked);
+$('#w-sched').onchange=()=>{ const si=$('#w-schedat');
+  si.classList.toggle('hidden',!$('#w-sched').checked);
+  if($('#w-sched').checked){ try{ si.showPicker(); }catch(e){} } };
+$('#w-schedat').addEventListener('click',function(){ try{ this.showPicker(); }catch(e){} });   // 클릭으로 달력(phase345)
 function clearWriteForm(){
   editPost=null;
   wTags=[]; renderWTags();                                     // 🏷(phase292)
@@ -4771,6 +4770,10 @@ $('#w-go').onclick=async()=>{
         raw=$('#w-body').value;
   if(!title){ msg('제목을 입력하세요.'); return; }
   if(secret&&!pw){ msg('비밀글 비밀번호를 입력하세요.'); return; }
+  /* ⏰ 예약 발행(phase342→345 위치 수정): 켜져 있으면 미래 시각 필수 */
+  const schedOn=$('#w-sched')?.checked, schedRaw=$('#w-schedat')?.value||'';
+  const schedAt=(schedOn&&schedRaw)? new Date(schedRaw).getTime() : null;
+  if(schedOn && !(schedAt>Date.now())){ msg('⏰ 예약 시각을 미래로 정해주세요.'); return; }
   msg('발행 중...');
   try{
     let html=asHtml?cleanHTML(raw):bodyHTML(raw);
