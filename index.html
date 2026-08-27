@@ -1100,7 +1100,7 @@
   #w-fmt button, #mm-fmt button{white-space:nowrap}
   #w-fmt, #mm-fmt{flex-wrap:wrap}                              /* 서식 버튼 많아짐 — 폰에선 줄바꿈(293b) */
   #w-fmt .note, #mm-fmt .note{display:none}
-  #w-prevtoggle{width:auto;padding:0 12px}                     /* 한 글자 버튼용 30px 고정폭 해제(phase329) */
+  #w-fmt button#w-prevtoggle{width:auto;padding:0 12px}        /* 한 글자 버튼용 30px 고정폭 해제 — #w-fmt button보다 세게(phase346) */
   #w-prevtoggle.on{color:var(--pri);border-color:var(--pri)}
   #pv-body p.al-c, #w-prev p.al-c{text-align:center}
   #pv-body p.al-r, #w-prev p.al-r{text-align:right}
@@ -2512,6 +2512,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=374"></script>
+<script type="module" src="./app.js?v=375"></script>
 </body>
 </html>
