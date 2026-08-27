@@ -890,7 +890,7 @@ const galNm=()=>st.page?.galName||'GALLERY';
 const gbNm=()=>st.page?.gbName||'GUESTBOOK';
 const homeNm=()=>st.page?.homeName||'HOME';
 const WNAME={latest:'최신글',pin:'📌 고정글',char:'캐릭터 프로필',pair:'페어 프로필',cal:'달력',habit:'해빗 트래커',notice:'공지',chat:'채팅로그',phone:'단말기',tl:'타임라인',feat:'★ 대표글',img:'이미지',nb:'이웃 홈',profile:'프로필',search:'검색',category:'카테고리',
-  dday:'디데이',bgm:'BGM',quote:'인용구',links:'링크',banner:'배너칸',text:'글',cnt:'방문자수',stamp:'발도장',pairqa:'페어 인터뷰'};
+  dday:'디데이',bgm:'BGM',quote:'인용구',links:'링크',banner:'배너칸',text:'글',cnt:'방문자수',stamp:'발도장',pairqa:'페어 인터뷰',todo:'투두리스트'};
 const STAMP_LEGACY=['heart','paw','star','drop'];   // 옛 슬롯 이름 — 카운트 승계용
 function parseEmo(s){
   const raw=(s||'').replace(/\s+/g,'');
@@ -1681,6 +1681,32 @@ function renderSide(){
         try{ await updateDoc(doc(db,'pages',st.handle),{side:st.page.side}); }
         catch(err){ msg('저장 실패 — '+err.message); return; }
         renderSide();
+      });
+      box.appendChild(d); return;
+    }
+    if(w.t==='todo'){
+      const its=(w.items||[]).filter(x=>x&&x.t);
+      if(!its.length && !st.mine) return;
+      d.className+=' w-todo'+(['memo','grid','ribbon'].includes(w.style)?' td-'+w.style:'');
+      if(w.c) d.style.setProperty('--tdc', w.c);                 // 🎨 포인트색(체크·밑줄·틴트)
+      /* ✍ 타이포 전권 개방(phase350): 제목·할 일 각각 폰트/색 — 스킨 기본값 위에 덮어씀 */
+      const TDF={sans:"'Noto Sans KR',sans-serif", serif:"'Noto Serif KR',serif", hand:"'Gaegu',cursive", mono:"'IBM Plex Mono',monospace"};
+      if(TDF[w.tf]) d.style.setProperty('--tdtf', TDF[w.tf]);
+      if(TDF[w.if]) d.style.setProperty('--tdif', TDF[w.if]);
+      if(w.tc) d.style.setProperty('--tdtc', w.tc);
+      if(w.ic) d.style.setProperty('--tdic', w.ic);
+      const emo = w.emo ?? (w.style==='ribbon'?'🎀':'');
+      d.innerHTML=`<p class="td-head">${emo?esc(emo)+' ':''}${esc(w.title||'TO-DO')}</p>`
+        + (w.sub?`<p class="td-sub">${esc(w.sub)}</p>`:'')
+        + its.map((x,i)=>`<label class="td-item${x.done?' done':''}"><input type="checkbox" data-td="${i}" ${x.done?'checked':''} ${st.mine?'':'disabled'}><span>${esc(x.t)}</span></label>`).join('')
+        + (its.length?`<p class="td-cnt">${its.filter(x=>x.done).length} / ${its.length}</p>`:'<p class="pl-empty">✎에서 할 일을 추가하세요.</p>');
+      if(st.mine) d.querySelectorAll('[data-td]').forEach(cb=>cb.onchange=async()=>{
+        its[+cb.dataset.td].done=cb.checked;                     // 홈에서 바로 체크(phase348) — 전체 재렌더 없이 그 자리만
+        cb.closest('.td-item').classList.toggle('done', cb.checked);
+        const ct=d.querySelector('.td-cnt');
+        if(ct) ct.textContent=its.filter(x=>x.done).length+' / '+its.length;
+        try{ await updateDoc(doc(db,'pages',st.handle),{side:st.page.side}); }
+        catch(e){ msg('체크 저장 실패 — 잠시 후 다시 시도해주세요.'); }
       });
       box.appendChild(d); return;
     }
@@ -3296,7 +3322,7 @@ function renderWidList(){
       <span class="nm"><span class="t">${WNAME[w.t]||w.t}${w.t==='links'?` (${(w.items||[]).length})`:''}${w.t==='banner'?` (${(w.items||[]).length})`:''}</span>${w.float?'<span class="wbdg pri">📌</span>':''}</span>
       <button class="wst st-${wCls(w)}" data-st="${i}" title="이 위젯을 어디에 보여줄지 — 눌러서 조합 선택">${wLbl(w)} ▾</button>
       ${w.t!=='latest'?`<button data-f="${i}" title="컬럼에서 떼어 화면에 자유 배치 (PC 전용)"${w.float?' style="color:var(--pri)"':''}>📌</button>`:''}
-      ${['profile','quote','links','banner','dday','bgm','notice','chat','phone','img','nb','text','stamp','latest','tl','feat','char','pair','cal','habit','pairqa'].includes(w.t)?`<button data-e="${i}">✎</button>`:'<button class="wl-ph" disabled>✎</button>'}
+      ${['profile','quote','links','banner','dday','bgm','notice','chat','phone','img','nb','text','stamp','latest','tl','feat','char','pair','cal','habit','pairqa','todo'].includes(w.t)?`<button data-e="${i}">✎</button>`:'<button class="wl-ph" disabled>✎</button>'}
       ${!['search','category','cnt','bgm','stamp','pin','feat'].includes(w.t)?`<button data-c2="${i}" title="이 위젯을 설정 그대로 복사해 하나 더">⧉</button>`:'<button class="wl-ph" disabled>⧉</button>'}
       <button data-u="${i}">↑</button><button data-d="${i}">↓</button><button data-x="${i}">✕</button>
     </div>${wstOpen===i?`
@@ -3551,6 +3577,49 @@ function renderWidEdit(){
       <input data-pqb="${i}" placeholder="${esc(w.bn||'B')}의 답" value="${esc(x.b||'')}" style="margin-bottom:0">
     </div>`).join('')}
     <button class="btn" id="pq-addq" style="font-size:12px">+ 질문 추가</button>`;
+  if(w.t==='todo') html+=`
+    <div class="p-row" style="align-items:center;gap:6px">
+      <select id="we-tdstyle" style="width:auto;margin-bottom:0">
+        <option value="" ${!w.style?'selected':''}>디자인 — 기본</option>
+        <option value="memo" ${w.style==='memo'?'selected':''}>디자인 — 메모지 (동그라미 체크 · 밑줄)</option>
+        <option value="grid" ${w.style==='grid'?'selected':''}>디자인 — 모눈 노트 (손글씨)</option>
+        <option value="ribbon" ${w.style==='ribbon'?'selected':''}>디자인 — 리본 편지지 (점선)</option>
+      </select>
+      <input type="color" id="we-tdc" value="${w.c||'#8f88e8'}" title="포인트색 — 체크·제목·줄에 써요" style="width:38px;flex:none;padding:2px;margin-bottom:0">
+      ${w.c?`<button class="rmv" id="we-tdcx" style="font-size:10px;flex:none">테마색으로</button>`:''}
+    </div>
+    <div class="p-row" style="gap:6px">
+      <input id="we-tdtl" placeholder="제목 (비우면 TO-DO)" value="${esc(w.title||'')}" style="flex:1;margin-bottom:0">
+      <input id="we-tdemo" placeholder="이모지" value="${esc(w.emo ?? (w.style==='ribbon'?'🎀':''))}" style="width:64px;flex:none;margin-bottom:0" title="제목 앞 이모지 — 비우면 없음">
+    </div>
+    <input id="we-tdsub" placeholder="부제 줄 (선택 — 예: Date. 8/27 · 이번 주)" value="${esc(w.sub||'')}">
+    <div class="p-row" style="align-items:center;gap:6px;font-size:11.5px;color:var(--muted)">제목
+      <select id="we-tdtf" style="width:auto;margin-bottom:0">
+        <option value="" ${!w.tf?'selected':''}>폰트 — 스킨 기본</option>
+        <option value="sans" ${w.tf==='sans'?'selected':''}>고딕</option>
+        <option value="serif" ${w.tf==='serif'?'selected':''}>명조</option>
+        <option value="hand" ${w.tf==='hand'?'selected':''}>손글씨</option>
+        <option value="mono" ${w.tf==='mono'?'selected':''}>모노</option>
+      </select>
+      <input type="color" id="we-tdtc" value="${w.tc||'#888888'}" title="제목 색" style="width:38px;flex:none;padding:2px;margin-bottom:0">
+      ${w.tc?`<button class="rmv" id="we-tdtcx" style="font-size:10px;flex:none">기본색</button>`:''}
+    </div>
+    <div class="p-row" style="align-items:center;gap:6px;font-size:11.5px;color:var(--muted)">할 일
+      <select id="we-tdif" style="width:auto;margin-bottom:0">
+        <option value="" ${!w.if?'selected':''}>폰트 — 스킨 기본</option>
+        <option value="sans" ${w.if==='sans'?'selected':''}>고딕</option>
+        <option value="serif" ${w.if==='serif'?'selected':''}>명조</option>
+        <option value="hand" ${w.if==='hand'?'selected':''}>손글씨</option>
+        <option value="mono" ${w.if==='mono'?'selected':''}>모노</option>
+      </select>
+      <input type="color" id="we-tdic" value="${w.ic||'#888888'}" title="할 일 글자 색" style="width:38px;flex:none;padding:2px;margin-bottom:0">
+      ${w.ic?`<button class="rmv" id="we-tdicx" style="font-size:10px;flex:none">기본색</button>`:''}
+    </div>
+    ${(w.items||[]).map((x,i)=>`<div class="p-row" style="gap:6px">
+      <input data-tdt="${i}" placeholder="할 일" value="${esc(x.t||'')}" style="flex:1;margin-bottom:0">
+      <button class="rmv" data-tdx="${i}" style="flex:none">✕</button></div>`).join('')}
+    <button class="btn" id="td-add" style="font-size:12px">+ 할 일 추가</button>
+    <p class="note">체크·해제는 홈 화면에서 바로 눌러요 — 방문자에게는 보기만 됩니다.</p>`;
   if(w.t==='cal') html+=`
     <div class="p-row" style="align-items:center;gap:8px;font-size:11.5px;color:var(--muted)">
       <select id="we-calview" style="width:auto;margin-bottom:0">
@@ -3904,6 +3973,21 @@ function renderWidEdit(){
     const key=inp.dataset.pqq!==undefined?['pqq','q']:inp.dataset.pqa!==undefined?['pqa','a']:['pqb','b'];
     inp.addEventListener('input',()=>{ (w.qas??=[])[+inp.dataset[key[0]]][key[1]]=inp.value; }); });
   const pqadd=$('#pq-addq'); if(pqadd) pqadd.onclick=()=>{ (w.qas??=[]).push({q:'',a:'',b:''}); renderWidEdit(); };
+  // ☑ 투두리스트(phase348)
+  const tdl=$('#we-tdtl'); if(tdl) tdl.addEventListener('input',()=>{ w.title=tdl.value; });
+  const tds=$('#we-tdstyle'); if(tds) tds.addEventListener('input',()=>{ w.style=tds.value; });
+  const tdb=$('#we-tdsub'); if(tdb) tdb.addEventListener('input',()=>{ w.sub=tdb.value; });
+  const tdc=$('#we-tdc'); if(tdc) tdc.addEventListener('input',()=>{ w.c=tdc.value; renderWidEdit(); });
+  const tdcx=$('#we-tdcx'); if(tdcx) tdcx.onclick=()=>{ delete w.c; renderWidEdit(); };
+  const tde=$('#we-tdemo'); if(tde) tde.addEventListener('input',()=>{ w.emo=tde.value.trim(); });
+  [['we-tdtf','tf'],['we-tdif','if']].forEach(([id,k])=>{
+    const el=$('#'+id); if(el) el.addEventListener('input',()=>{ if(el.value) w[k]=el.value; else delete w[k]; }); });
+  [['we-tdtc','tc','we-tdtcx'],['we-tdic','ic','we-tdicx']].forEach(([id,k,xid])=>{
+    const el=$('#'+id); if(el) el.addEventListener('input',()=>{ w[k]=el.value; renderWidEdit(); });
+    const xb=$('#'+xid); if(xb) xb.onclick=()=>{ delete w[k]; renderWidEdit(); }; });
+  $('#wid-edit').querySelectorAll('[data-tdt]').forEach(inp=>inp.addEventListener('input',()=>{ (w.items??=[])[+inp.dataset.tdt].t=inp.value; }));
+  $('#wid-edit').querySelectorAll('[data-tdx]').forEach(b=>b.onclick=()=>{ w.items.splice(+b.dataset.tdx,1); renderWidEdit(); });
+  const tda=$('#td-add'); if(tda) tda.onclick=()=>{ (w.items??=[]).push({t:'',done:false}); renderWidEdit(); };
   $('#wid-edit').querySelectorAll('[data-pqdel]').forEach(b=>b.onclick=()=>{ w.qas.splice(+b.dataset.pqdel,1); renderWidEdit(); });
   $('#wid-edit').querySelectorAll('[data-pqimg]').forEach(f=>f.onchange=async()=>{
     if(!f.files[0]) return;
@@ -4242,10 +4326,10 @@ $('#wid-add').onclick=()=>{
   if(['search','category','dday','profile','cnt','pin'].includes(t) && draft.some(w=>w.t===t)){
     msg('이미 있는 위젯이에요.'); return; }                     // bgm은 복수 허용(phase273 — 위젯별 곡 지정)
   draft.push(['links','banner','nb','tl'].includes(t)?{t,items:[]}
-    : t==='char'?{t,p:{items:[]}} : t==='pair'?{t,a:{items:[]},b:{items:[]}} : t==='pairqa'?{t,qas:[]}
+    : t==='char'?{t,p:{items:[]}} : t==='pair'?{t,a:{items:[]},b:{items:[]}} : t==='pairqa'?{t,qas:[]} : t==='todo'?{t,items:[]}
     : t==='cal'?{t,marks:[]} : t==='habit'?{t,habits:[]} : {t});
   editIdx=draft.length-1; renderWidList();
-  if(['profile','quote','links','banner','dday','bgm','notice','chat','phone','img','nb','text','stamp','tl','feat','latest','char','pair','cal','habit','pairqa'].includes(t)) renderWidEdit();
+  if(['profile','quote','links','banner','dday','bgm','notice','chat','phone','img','nb','text','stamp','tl','feat','latest','char','pair','cal','habit','pairqa','todo'].includes(t)) renderWidEdit();
 };
 $('#wid-save').onclick=async()=>{
   if(editIdx>=0 && draft[editIdx]) syncWid(draft[editIdx]);
