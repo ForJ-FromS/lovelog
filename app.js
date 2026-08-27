@@ -712,7 +712,7 @@ async function loadContent(){
   if(pins.length) console.log('[lovelog] pinned('+(st.mine?'주인':'방문자')+'):',
     pins.map(p=>({title:p.title, priv:p.priv??'(없음)', secret:p.secret??'(없음)', pinned:p.pinned, id:p.id})));
   else console.log('[lovelog] pinned: 없음 (필터 이전 기준)');
-  if(!st.mine) st.posts=st.posts.filter(p=>!p.priv);   // 비공개 글은 주인에게만 존재
+  if(!st.mine) st.posts=st.posts.filter(p=>!p.priv && !(+p.schedAt>Date.now()));   // 비공개·예약 전 글은 주인에게만 존재(phase342)
   st.gallery=take(gs,'gallery');
   if(!st.mine) st.gallery=st.gallery.filter(g=>!g.priv);   // 비공개 사진은 주인에게만
   st.albums=take(ab,'albums');
@@ -802,6 +802,10 @@ const openFromHome=id=>{                          // ALL이 꺼진 홈은 그 �
 };
 function pinCard(){                              // 고정글 카드 — 단독 위젯·최신글 동거 겸용(phase236)
   const pin=st.posts.find(p=>p.pinned); if(!pin) return null;
+    /* ⏰ 예약 발행(phase342): 켜져 있으면 미래 시각 필수 — 시각이 되면 자동 공개(방문자 필터) */
+    const schedOn=$('#w-sched')?.checked, schedRaw=$('#w-schedat')?.value||'';
+    const schedAt=(schedOn&&schedRaw)? new Date(schedRaw).getTime() : null;
+    if(schedOn && !(schedAt>Date.now())){ alert('예약 발행 시각을 미래로 정해주세요.'); return; }
   const pd=document.createElement('a'); pd.className='pin';
   pd.innerHTML=`<span class="tag">◈ PINNED</span>
     <p class="t">${esc(pin.title)}${pin.secret?' 🔒':''}${pin.priv?' 🔏':''}</p>
@@ -2260,7 +2264,7 @@ function renderList(){
   const rowHTML=p=>{ const t=postThumb(p); return `
     <li class="row ${t?'has-th':''}" data-id="${p.id}">
       <span class="d">${esc((p.date||'').slice(5))}</span>
-      <span class="t">${esc(p.title)} ${p.secret?'<span class="k">🔒</span>':''}${p.priv?'<span class="k" title="비공개 — 나만 보여요">🔏</span>':''}${canFt?`<button class="ft-star${p.feat?' on':''}" data-ft="${p.id}" title="★ 대표글 위젯에 전시 (다시 누르면 해제)">${p.feat?'★':'☆'}</button>`:''}</span>
+      <span class="t">${esc(p.title)} ${p.secret?'<span class="k">🔒</span>':''}${p.priv?'<span class="k" title="비공개 — 나만 보여요">🔏</span>':''}${+p.schedAt>Date.now()?'<span class="k" title="예약 발행 — 시각이 되면 공개돼요">⏰</span>':''}${canFt?`<button class="ft-star${p.feat?' on':''}" data-ft="${p.id}" title="★ 대표글 위젯에 전시 (다시 누르면 해제)">${p.feat?'★':'☆'}</button>`:''}</span>
       ${(st.page.rowTag!==false && p.tags&&p.tags[0])
         ?`<span class="cw"><span class="rtg">${esc(p.tags[0])}${p.tags.length>1?' +'+(p.tags.length-1):''}</span><span class="c">${esc(p.cat)}</span></span>`
         :`<span class="c">${esc(p.cat)}</span>`}
@@ -2668,7 +2672,9 @@ async function openPost(id, fromHome=false){
     if(p.encImgs){ try{ st.curImgs = JSON.parse(await decTxt(pw, p.encImgs)); }catch(e){} }   // 사진 목록 복호(보안점검 3b)
   } else { body=p.body; st.curRaw=null; st.curImgs=null; }
   st.cur=p; st.curBody=body;
-  $('#pv-meta').textContent=p.cat+' · '+p.date+(p.secret?' · SECRET':'')+(p.priv?' · 🔏 비공개':'');
+  $('#pv-meta').textContent=p.cat+' · '+p.date+(p.secret?' · SECRET':'')+(p.priv?' · 🔏 비공개':'')+((+p.schedAt>Date.now())?' · ⏰ '+new Date(+p.schedAt).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})+' 공개 예약':'');
+  buildToc();                                                   // 📑 목차(phase343)
+  refreshScrapBtn();                                            // 🔖 스크랩(phase343)
   /* ── 공감 ♥ ── */
   (async()=>{
     const el=$('#pv-like'); if(!el) return;
@@ -2780,17 +2786,51 @@ async function loadComments(pid){
     const p2=st.posts.find(x=>x.id===pid); if(p2) p2.cmtOff=true; loadComments(pid);
   };
   $('#cmt-list').innerHTML='<p class="pl-empty">불러오는 중...</p>';
-  $('#cmt-form').classList.toggle('hidden', !st.me);
+  /* 🤝 이웃 전용 댓글(phase344): 서로 이웃(배너·이웃홈 상호 등록)만 작성 — 읽기는 공개 유지 */
+  const mutOnly = st.page.cmtWho==='mut';
+  const canWrite = !!st.me && (!mutOnly || st.mine || await ensureMutual());
+  $('#cmt-form').classList.toggle('hidden', !canWrite);
   $('#cmt-login').classList.toggle('hidden', !!st.me);
+  const mn=$('#cmt-mut-note'); if(mn) mn.classList.toggle('hidden', !(mutOnly && st.me && !canWrite));
   try{
     const cs=await getDocs(query(collection(db,'pages',st.handle,'posts',pid,'comments'),orderBy('ts','asc')));
     const arr=cs.docs.map(d=>({id:d.id,...d.data()}));
-    $('#cmt-list').innerHTML = arr.length? arr.map(c=>`
-      <li class="cmt-item">
+    /* 🔒 비밀 댓글 + ↳ 대댓글(phase343): pid로 한 단계 스레딩 — 규칙 변경 없음(생성 권한 동일) */
+    const canSee=c=>!c.secret || st.mine || (st.me && c.uid===st.me.uid);
+    const cmtHTML=(c,child)=>`
+      <li class="cmt-item${child?' cmt-reply':''}">
         <p class="who"><span>${c.home?`<a class="who-h" href="${urlFor(c.home)}">@${esc(c.home)}</a>`:`@${esc(c.name||'guest')}`}</span><span class="dt">${fmtTs(c.ts)}</span>
-        ${(st.mine||c.uid===st.me?.uid)?`<i class="del" data-cd="${c.id}" style="cursor:pointer;color:var(--muted);font-size:10px">삭제</i>`:''}</p>
-        <p>${esc(c.text)}</p></li>`).join('')
+        ${canSee(c)&&c.secret?'<span class="k" title="비밀 댓글 — 주인과 작성자에게만 보여요">🔒</span>':''}
+        ${(st.mine||c.uid===st.me?.uid)?`<i class="del" data-cd="${c.id}" style="cursor:pointer;color:var(--muted);font-size:10px">삭제</i>`:''}
+        ${(!child&&canWrite)?`<i class="del" data-cr="${c.id}" style="cursor:pointer;color:var(--muted);font-size:10px">답글</i>`:''}</p>
+        ${canSee(c)?`<p>${esc(c.text)}</p>`:'<p class="cmt-lock">🔒 비밀 댓글이에요.</p>'}
+        <div class="cmt-rbox hidden" data-rb="${c.id}"></div></li>`;
+    const kids={};
+    arr.filter(c=>c.pid).forEach(c=>{ (kids[c.pid]??=[]).push(c); });
+    const tops=arr.filter(c=>!c.pid || !arr.some(p2=>p2.id===c.pid));   // 부모 잃은 답글은 원댓글로 승격
+    $('#cmt-list').innerHTML = arr.length? tops.map(c=>cmtHTML(c,false)+(kids[c.id]||[]).map(k=>cmtHTML(k,true)).join('')).join('')
       :'<p class="pl-empty">첫 댓글을 남겨보세요.</p>';
+    $('#cmt-list').querySelectorAll('[data-cr]').forEach(b=>b.onclick=()=>{
+      const box=$('#cmt-list').querySelector(`[data-rb="${b.dataset.cr}"]`);
+      if(!box) return;
+      if(!box.classList.contains('hidden')){ box.classList.add('hidden'); box.innerHTML=''; return; }
+      box.classList.remove('hidden');
+      box.innerHTML=`<textarea class="cmt-rta" placeholder="답글 남기기"></textarea>
+        <div class="p-row" style="justify-content:flex-end;gap:8px;margin-top:6px">
+          <label class="chk" style="font-size:11px"><input type="checkbox" class="cmt-rsec"> 🔒 비밀</label>
+          <button class="btn pri cmt-rgo" style="font-size:11.5px;padding:6px 16px">등록</button></div>`;
+      box.querySelector('.cmt-rgo').onclick=async()=>{
+        const t2=box.querySelector('.cmt-rta').value.trim(); if(!t2) return;
+        try{
+          await addDoc(collection(db,'pages',st.handle,'posts',pid,'comments'),
+            {uid:st.me.uid, name:st.myHandle||st.me.displayName||'guest',
+             home:st.myHandle||'', text:t2, pid:b.dataset.cr,
+             secret:box.querySelector('.cmt-rsec').checked===true, ts:serverTimestamp()});
+          loadComments(pid);
+        }catch(e){ msg('답글 저장 실패 — '+e.message); }
+      };
+      box.querySelector('.cmt-rta').focus();
+    });
     $('#cmt-list').querySelectorAll('[data-cd]').forEach(b=>b.onclick=async()=>{
       if(!confirm('댓글을 삭제할까요?')) return;
       await deleteDoc(doc(db,'pages',st.handle,'posts',pid,'comments',b.dataset.cd));
@@ -2805,8 +2845,10 @@ $('#cmt-go').onclick=async()=>{
   try{
     await addDoc(collection(db,'pages',st.handle,'posts',st.cur.id,'comments'),
       {uid:st.me.uid, name:st.myHandle||st.me.displayName||'guest',
-       home:st.myHandle||'', text:t, ts:serverTimestamp()});
-    $('#cmt-text').value=''; loadComments(st.cur.id);
+       home:st.myHandle||'', text:t,
+       secret:$('#cmt-secret')?.checked===true, ts:serverTimestamp()});
+    $('#cmt-text').value=''; const csx=$('#cmt-secret'); if(csx) csx.checked=false;
+    loadComments(st.cur.id);
   }catch(e){ msg('댓글 저장 실패 — '+e.message); }   // 규칙 거부 등 침묵 금지(phase120 교훈)
 };
 $('#cmt-login-btn').onclick=doLogin;
@@ -2815,7 +2857,65 @@ $('#pv-copy').onclick=()=>{
   (navigator.clipboard?navigator.clipboard.writeText(url).then(()=>msg('🔗 링크를 복사했어요!'))
     :Promise.reject()).catch(()=>showCopyBox(url));
 };
+/* 🔖 스크랩(phase343): localStorage 전용 — 기기별 저장, 서버 비용 0. 주인 scrapOff로 숨김 가능 */
+const scraps=()=>{ try{ return JSON.parse(localStorage.getItem('lv-scraps')||'[]'); }catch(e){ return []; } };
+const scrapKey=p=>st.handle+'/'+p.id;
+function refreshScrapBtn(){
+  const b=$('#pv-scrap'); if(!b||!st.cur) return;
+  const off=st.mine || st.page.scrapOff===true;
+  b.classList.toggle('hidden', off);
+  if(off) return;
+  const on=scraps().some(s2=>s2.k===scrapKey(st.cur));
+  b.textContent=on?'🔖 저장됨':'🔖 저장';
+  b.classList.toggle('on', on);
+}
+$('#pv-scrap').onclick=()=>{
+  const p=st.cur; if(!p) return;
+  let arr=scraps(); const k=scrapKey(p);
+  if(arr.some(s2=>s2.k===k)){ arr=arr.filter(s2=>s2.k!==k); msg('저장을 취소했어요.'); }
+  else{ arr.unshift({k, h:st.handle, id:p.id, t:p.title||'(무제)', d:p.date||'', at:Date.now()});
+    arr=arr.slice(0,200); msg('🔖 저장했어요 — 내 홈 꾸미기 → 관리에서 볼 수 있어요!'); }
+  try{ localStorage.setItem('lv-scraps', JSON.stringify(arr)); }catch(e){}
+  refreshScrapBtn();
+};
+function renderScraps(){
+  const sec=$('#scrap-sec'), box=$('#scrap-list'); if(!box||!st.mine) return;
+  const arr=scraps();
+  sec.classList.toggle('hidden', !arr.length);
+  box.innerHTML=arr.map(s2=>`
+    <div class="ntc-row"><span class="ntc-d">${esc(s2.d)}</span>
+      <a class="ntc-t" href="${urlFor(s2.h, s2.id)}" style="text-decoration:none;color:inherit">${esc(s2.t)} <span class="note">@${esc(s2.h)}</span></a>
+      <button class="rmv" data-scx="${esc(s2.k)}" style="font-size:10px">빼기</button></div>`).join('');
+  box.querySelectorAll('[data-scx]').forEach(b=>b.onclick=()=>{
+    try{ localStorage.setItem('lv-scraps', JSON.stringify(scraps().filter(s2=>s2.k!==b.dataset.scx))); }catch(e){}
+    renderScraps();
+  });
+}
 /* 인앱 브라우저는 clipboard도 prompt도 막힐 수 있음 — 직접 긁어 복사하는 자체 모달(askPw 동족, phase315) */
+/* 📑 목차(phase343): 큰 글자(18px 이상)만으로 된 짧은 문단을 제목으로 보고,
+   2개 이상 + 본문이 충분히 길 때만 상단에 목차를 자동 생성 */
+function buildToc(){
+  document.querySelectorAll('.pv-toc').forEach(x=>x.remove());
+  const pvb=$('#pv-body'); if(!pvb) return;
+  if((pvb.textContent||'').length<800) return;                  // 짧은 글엔 불필요
+  const hs=[];
+  pvb.querySelectorAll(':scope > p').forEach(p2=>{
+    const sp=p2.querySelector(':scope > span[style*="font-size"]');
+    if(!sp) return;
+    const t2=(p2.textContent||'').trim();
+    if(!t2 || t2.length>40) return;
+    if(t2!==(sp.textContent||'').trim()) return;                // 문단 전체가 그 스팬일 때만
+    const px=parseFloat((sp.getAttribute('style').match(/font-size:\s*([\d.]+)px/)||[])[1]||0);
+    if(px<18) return;
+    hs.push({el:p2, t:t2});
+  });
+  if(hs.length<2) return;
+  const nav=document.createElement('nav'); nav.className='pv-toc';
+  nav.innerHTML='<p class="toc-h">◈ 목차</p>'+hs.map((h,i2)=>`<a data-toc="${i2}">${esc(h.t)}</a>`).join('');
+  pvb.insertAdjacentElement('afterbegin', nav);
+  nav.querySelectorAll('[data-toc]').forEach(a=>a.onclick=()=>{
+    hs[+a.dataset.toc].el.scrollIntoView({behavior:'smooth', block:'start'}); });
+}
 function showCopyBox(url){
   let m=document.getElementById('copy-modal');
   if(!m){
@@ -2851,7 +2951,7 @@ $('#more-btn').onclick=()=>{ if(st.page.allOff){ msg('전체 글 보기가 꺼�
   $('#rows').innerHTML=rest.map(p=>{ const t=postThumb(p); return `
     <li class="row ${t?'has-th':''}" data-id="${p.id}">
       <span class="d">${esc((p.date||'').slice(5))}</span>
-      <span class="t">${esc(p.title)} ${p.secret?'<span class="k">🔒</span>':''}${p.priv?'<span class="k" title="비공개 — 나만 보여요">🔏</span>':''}</span>
+      <span class="t">${esc(p.title)} ${p.secret?'<span class="k">🔒</span>':''}${p.priv?'<span class="k" title="비공개 — 나만 보여요">🔏</span>':''}${+p.schedAt>Date.now()?'<span class="k" title="예약 발행 — 시각이 되면 공개돼요">⏰</span>':''}</span>
       <span class="c">${esc(p.cat)}</span>
       <span class="k"></span>${t?`<img class="th" src="${t}" alt="" draggable="false" loading="lazy">`:''}</li>`; }).join('');
   $('#more-btn').style.display='none';
@@ -4596,12 +4696,14 @@ const msg=t=>{
 };
 
 let editPost=null, editGal=null;
+$('#w-sched').onchange=()=>$('#w-schedat').classList.toggle('hidden',!$('#w-sched').checked);
 function clearWriteForm(){
   editPost=null;
   wTags=[]; renderWTags();                                     // 🏷(phase292)
   ['w-title','w-pw','w-body'].forEach(i=>$('#'+i).value='');
   $('#w-secret').checked=false; $('#w-pin').checked=false; $('#w-priv').checked=false; $('#w-feat').checked=false; $('#w-pw').style.display='none';
   $('#w-cmt').checked=true; $('#w-html').checked=false; wImgs=[]; renderWImgs();
+  $('#w-sched').checked=false; $('#w-schedat').value=''; $('#w-schedat').classList.add('hidden');
   const dN=new Date(), wdi=$('#w-date');
   if(wdi) wdi.value=dN.getFullYear()+'-'+String(dN.getMonth()+1).padStart(2,'0')+'-'+String(dN.getDate()).padStart(2,'0');
   $('#w-go').textContent='발행'; $('#w-edit-note').classList.add('hidden');
@@ -4627,6 +4729,10 @@ function startEditPost(){
   wImgs = (p.secret && Array.isArray(st.curImgs)) ? st.curImgs.slice()      // 🔒 비밀글은 복호화한 사진 목록(보안점검 3b)
         : (Array.isArray(p.imgs) ? p.imgs.slice() : []); renderWImgs();
   $('#w-pin').checked=!!p.pinned;
+  const psc=(+p.schedAt>Date.now())? +p.schedAt : null;          // 지난 예약은 발행된 것 — 표시 안 함
+  $('#w-sched').checked=!!psc; $('#w-schedat').classList.toggle('hidden',!psc);
+  if(psc){ const dL=new Date(psc); dL.setMinutes(dL.getMinutes()-dL.getTimezoneOffset());
+    $('#w-schedat').value=dL.toISOString().slice(0,16); } else $('#w-schedat').value='';
   $('#w-cmt').checked=!p.cmtOff;
   $('#w-secret').checked=!!p.secret; $('#w-priv').checked=!!p.priv; $('#w-feat').checked=!!p.feat;
   $('#w-pw').style.display=p.secret?'':'none';
@@ -4677,6 +4783,7 @@ $('#w-go').onclick=async()=>{
       ts: wdDot===today()?serverTimestamp():new Date(+wd.slice(0,4), +wd.slice(5,7)-1, +wd.slice(8,10), 12, 0, 0),
       tags: wTags.slice(0,12),                                 // 🏷 태그(phase292) — 안전 상한 12
       secret, pinned:pin, cmtOff,
+      schedAt: schedAt,
       priv: $('#w-priv').checked,
       feat: $('#w-feat').checked,
       mpin: editPost ? !!(st.posts.find(p2=>p2.id===editPost)?.mpin) : false,
@@ -5424,8 +5531,10 @@ function fillSettings(){
   $('#s-gatebtn').value=p.gateBtn||''; $('#s-listed').checked=!!p.listed; cardNew=null; bnrNew=null; renderCard(); renderBnr(); $('#s-lbicon').value=p.labelIcon??'◈'; gateColVal=null;
   $('#s-gatecolor').value=p.gateColor||'#ffffff';
   const gsk=$('#s-gateskip'); if(gsk) gsk.checked=p.gateSkipPost===true;
+  const sco=$('#s-scrapoff'); if(sco) sco.checked=p.scrapOff===true;
+  const cw=$('#s-cmtwho'); if(cw) cw.value=p.cmtWho||'';
   $('#del-h').textContent=st.handle||'—'; $('#s-del-confirm').value=''; delMsg('');
-  renderMyInq(); renderAdmInq(); renderMyNotes(); renderAdmNotes();
+  renderMyInq(); renderAdmInq(); renderMyNotes(); renderAdmNotes(); renderScraps();
   if(st.myHandle==='jeste'){ getDoc(doc(db,'config','notice')).then(s=>{
     if(s.exists()) admNtcRender(noticeItems(s.data())); }).catch(()=>{}); }
   $('#s-gatebtnc').value=p.gateBtnC||'#e691a9'; gateBtnCVal=null;
@@ -5536,6 +5645,8 @@ async function saveSettings(){
       labelIcon: $('#s-lbicon').value.trim(),
       gateColor: gateColVal ?? st.page.gateColor ?? '',
       gateSkipPost: $('#s-gateskip')?.checked===true,
+      scrapOff: $('#s-scrapoff')?.checked===true,
+      cmtWho: $('#s-cmtwho')?.value||'',
       gateBtnC: gateBtnCVal ?? st.page.gateBtnC ?? '',
       gateGrad: $('#s-gategrad').checked,
       font: $('#s-font').value,

@@ -1690,6 +1690,18 @@ html,body{overflow-x:hidden;overflow-x:clip}
 .pq-plain .pq-pl{font-size:12.5px;line-height:1.7;margin:0 0 3px;padding-left:15px;white-space:pre-wrap;word-break:break-word;color:var(--body)}
 .pq-plain .pq-pn{font-weight:600;margin-right:6px}
 .pq-plain .pq-q{margin-bottom:4px}
+/* 대댓글·비밀 댓글 (phase343) */
+.cmt-reply{margin-left:22px;padding-left:12px;border-left:2px solid var(--line)}
+.cmt-lock{color:var(--muted);font-style:italic}
+.cmt-rbox{margin-top:6px}
+.cmt-rta{width:100%;min-height:44px;border:1px solid var(--line);border-radius:9px;background:var(--card2);color:var(--ink);padding:8px 10px;resize:vertical;font-size:12.5px}
+/* 목차 (phase343) */
+.pv-toc{border:1px dashed var(--line);border-radius:10px;padding:12px 16px;margin:0 0 20px;font-size:12.5px}
+.pv-toc .toc-h{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.2em;color:var(--pri);margin:0 0 8px}
+.pv-toc a{display:block;color:var(--body);cursor:pointer;padding:2px 0;line-height:1.7}
+.pv-toc a:hover{color:var(--pri)}
+/* 스크랩 버튼 (phase343) */
+#pv-scrap.on{color:var(--pri);border-color:var(--pri)}
 .note.ok{color:#7fbf7f}
 .note.bad{color:#e08585}
 .gbdot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--pri);margin-left:6px;flex:none;vertical-align:middle}
@@ -1832,6 +1844,7 @@ html,body{overflow-x:hidden;overflow-x:clip}
             <div id="pv-body"></div>
             <div class="pv-actions">
               <button id="pv-copy">🔗 링크 복사</button>
+              <button id="pv-scrap" class="hidden">🔖 저장</button>
               <button id="pv-like" class="hidden" title="공감"></button>
               <button id="pv-pub" class="btn hidden" style="border-color:var(--pri);color:var(--pri)">🔏 공개로 전환</button>
               <button id="pv-edit" class="hidden">✎ 수정</button>
@@ -1844,10 +1857,12 @@ html,body{overflow-x:hidden;overflow-x:clip}
             <ul id="cmt-list" style="list-style:none"></ul>
             <div id="cmt-form" class="side" style="margin-top:10px">
               <textarea id="cmt-text" placeholder="댓글 남기기" style="width:100%;min-height:56px;border:1px solid var(--line);border-radius:9px;background:var(--card2);color:var(--ink);padding:9px 12px;resize:vertical"></textarea>
-              <div class="p-row" style="margin-top:8px;justify-content:flex-end">
+              <div class="p-row" style="margin-top:8px;justify-content:flex-end;align-items:center;gap:10px">
+                <label class="chk" style="font-size:11.5px" title="주인과 나에게만 보이는 댓글"><input type="checkbox" id="cmt-secret"> 🔒 비밀</label>
                 <button class="btn pri" id="cmt-go" style="font-size:12px">등록</button>
               </div>
             </div>
+            <p id="cmt-mut-note" class="cmt-closed hidden">🤝 이 홈은 서로 이웃만 댓글을 남길 수 있어요.</p>
             <div id="cmt-login" class="side hidden" style="margin-top:10px;text-align:center">
               <button class="btn" id="cmt-login-btn" style="font-size:12px">로그인하고 댓글 쓰기</button>
             </div>
@@ -1971,6 +1986,8 @@ html,body{overflow-x:hidden;overflow-x:clip}
       <label class="chk" title="★ 대표글 위젯에 전시돼요 — 여러 글에 체크할 수 있어요"><input type="checkbox" id="w-feat"> ★ 대표글</label>
       <input id="w-pw" placeholder="비밀번호" style="display:none;flex:none;width:150px">
       <label class="chk" title="목록 상단 ◈ PINNED 카드로 노출 — 카테고리마다 1개, 전체 글에도 함께 떠요"><input type="checkbox" id="w-pin"> 고정</label>
+      <label class="chk" title="정한 시각까지 방문자에게 숨겨졌다가, 시각이 되면 자동으로 공개돼요"><input type="checkbox" id="w-sched"> ⏰ 예약</label>
+      <input type="datetime-local" id="w-schedat" class="hidden" style="width:auto;margin-bottom:0;font-size:12px">
       <label class="chk"><input type="checkbox" id="w-cmt" checked> 댓글 허용</label>
       <label class="chk" title="본문을 HTML 코드 그대로 저장해요"><input type="checkbox" id="w-html"> HTML</label>
       <label class="filelab" style="font-size:11px" title="채팅 로그 등 .html 파일을 올리면 본문에 코드가 들어가고 HTML 모드가 켜져요">📄 HTML 파일<input type="file" id="w-htmlfile" accept=".html,.htm,text/html" style="display:none"></label>
@@ -2150,6 +2167,12 @@ html,body{overflow-x:hidden;overflow-x:clip}
       <input type="color" id="s-gatecolor" value="#ffffff" style="width:38px;padding:0">
       <button class="rmv" id="s-gatecolor-x" style="font-size:11px">기본색</button>
       <label class="chk" style="font-size:11.5px" title="글 링크로 바로 들어온 방문자는 대문을 거치지 않고 글부터 봐요 — 비밀번호가 걸린 대문에는 적용되지 않아요"><input type="checkbox" id="s-gateskip"> 🔗 글 링크로 오면 대문 건너뛰기</label>
+      <label class="chk" style="font-size:11.5px" title="방문자의 글 저장(스크랩) 버튼을 이 홈에서 숨겨요"><input type="checkbox" id="s-scrapoff"> 🔖 방문자 저장 버튼 숨기기</label>
+      <span class="p-row" style="align-items:center;gap:8px;font-size:11.5px;color:var(--muted)">💬 댓글 허용
+      <select id="s-cmtwho" style="width:auto;margin-bottom:0" title="댓글을 남길 수 있는 범위 — 읽기는 누구나 가능해요">
+        <option value="">로그인한 누구나 (기본)</option>
+        <option value="mut">서로 이웃만 (배너 · 이웃 홈 상호 등록)</option>
+      </select></span>
       <button class="btn" id="s-gate-pv" style="font-size:12px">대문 미리보기</button>
     </div>
     <div class="p-row" style="align-items:center">
@@ -2199,6 +2222,9 @@ html,body{overflow-x:hidden;overflow-x:clip}
     <div id="note-sec" class="hidden"><p class="p-h" style="margin-top:30px">📨 받은 쪽지</p>
     <p class="note" style="margin-top:-4px">운영자가 보낸 쪽지예요.</p>
     <div id="note-list"></div></div>
+    <div id="scrap-sec" class="hidden"><p class="p-h" style="margin-top:30px">🔖 저장한 글</p>
+    <p class="note" style="margin-top:-4px">다른 홈에서 저장한 글이에요 — 이 브라우저에만 담겨요.</p>
+    <div id="scrap-list"></div></div>
     <p class="p-h" style="margin-top:30px">문의 · 제보</p>
     <p class="note" style="margin-top:-4px">버그, 오류, 바라는 기능을 운영자에게 바로 보내요.
       답변이 달리면 여기서 확인할 수 있어요.</p>
@@ -2486,6 +2512,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=370"></script>
+<script type="module" src="./app.js?v=373"></script>
 </body>
 </html>
