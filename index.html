@@ -1701,7 +1701,8 @@ html,body{overflow-x:hidden;overflow-x:clip}
 .pv-toc a{display:block;color:var(--body);cursor:pointer;padding:2px 0;line-height:1.7}
 .pv-toc a:hover{color:var(--pri)}
 /* ☑ 투두리스트 (phase348) */
-.w-todo .td-head{font-family:var(--tdtf, 'IBM Plex Mono',monospace);font-size:9px;letter-spacing:.22em;color:var(--tdtc, var(--muted));margin:0 0 9px;text-transform:uppercase}
+.w-todo .td-head{font-family:var(--tdtf, 'IBM Plex Mono',monospace);font-size:var(--tdts, 9px);letter-spacing:.22em;color:var(--tdtc, var(--muted));margin:0 0 9px;text-transform:uppercase}
+.w-todo .td-sub{font-size:var(--tdss, 11px);color:var(--muted);margin:-4px 0 9px;line-height:1.5}
 .td-item{display:flex;gap:9px;align-items:flex-start;font-size:12.5px;line-height:1.6;padding:3px 0;font-family:var(--tdif, inherit);color:var(--tdic, inherit)}
 .td-item input{appearance:none;-webkit-appearance:none;width:15px;height:15px;margin-top:4px;flex:none;
   border:1.5px solid var(--tdc, var(--pri));border-radius:4px;background:none;display:inline-grid;place-content:center}
@@ -1711,17 +1712,17 @@ html,body{overflow-x:hidden;overflow-x:clip}
 .td-item input:disabled{opacity:.7}
 /* 스킨 · 메모지 */
 .td-memo{background:color-mix(in srgb, var(--tdc, var(--pri)) 7%, transparent)}
-.td-memo .td-head{font-family:var(--tdtf, 'Noto Serif KR',serif);font-size:15px;letter-spacing:.14em;text-align:center;
+.td-memo .td-head{font-family:var(--tdtf, 'Noto Serif KR',serif);font-size:var(--tdts, 15px);letter-spacing:.14em;text-align:center;
   text-transform:uppercase;color:var(--tdtc, var(--tdc, var(--ink)));margin-bottom:3px}
-.td-memo .td-sub{text-align:center;font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--muted);margin:0 0 10px;letter-spacing:.08em}
+.td-memo .td-sub{text-align:center;font-family:'IBM Plex Mono',monospace;font-size:var(--tdss, 9.5px);color:var(--muted);margin:0 0 10px;letter-spacing:.08em}
 .td-memo .td-item{border-bottom:1px solid color-mix(in srgb, var(--tdc, var(--pri)) 30%, transparent);padding:6px 0}
 .td-memo .td-item input{border-radius:50%}
 /* 스킨 · 모눈 노트 */
 .td-grid{background:
   repeating-linear-gradient(0deg, transparent 0 11px, color-mix(in srgb, var(--ink) 8%, transparent) 11px 12px),
   repeating-linear-gradient(90deg, transparent 0 11px, color-mix(in srgb, var(--ink) 8%, transparent) 11px 12px)}
-.td-grid .td-head{font-family:var(--tdtf, 'Gaegu',cursive);font-size:17px;letter-spacing:.03em;text-transform:none;color:var(--tdtc, var(--tdc, var(--ink)))}
-.td-grid .td-sub{font-family:'Gaegu',cursive;font-size:12px;color:var(--muted);margin:-4px 0 8px}
+.td-grid .td-head{font-family:var(--tdtf, 'Gaegu',cursive);font-size:var(--tdts, 17px);letter-spacing:.03em;text-transform:none;color:var(--tdtc, var(--tdc, var(--ink)))}
+.td-grid .td-sub{font-family:'Gaegu',cursive;font-size:var(--tdss, 12px);color:var(--muted);margin:-4px 0 8px}
 .td-grid .td-item{font-family:var(--tdif, 'Gaegu',cursive);font-size:14.5px}
 .td-grid .td-item input{border-radius:2px;border-width:2px}
 .td-grid .td-item:nth-of-type(odd) input{transform:rotate(-2deg)}
@@ -1730,9 +1731,9 @@ html,body{overflow-x:hidden;overflow-x:clip}
 /* 스킨 · 리본 편지지 */
 .td-ribbon{border:1px solid color-mix(in srgb, var(--tdc, var(--pri)) 45%, transparent);border-radius:14px;
   outline:1px dotted color-mix(in srgb, var(--tdc, var(--pri)) 35%, transparent);outline-offset:-6px}
-.td-ribbon .td-head{font-family:var(--tdtf, 'Noto Serif KR',serif);font-style:italic;text-align:center;font-size:14px;
+.td-ribbon .td-head{font-family:var(--tdtf, 'Noto Serif KR',serif);font-style:italic;text-align:center;font-size:var(--tdts, 14px);
   letter-spacing:.06em;text-transform:lowercase;color:var(--tdtc, var(--tdc, var(--ink)))}
-.td-ribbon .td-sub{text-align:center;font-size:10px;color:var(--muted);margin:-3px 0 9px}
+.td-ribbon .td-sub{text-align:center;font-size:var(--tdss, 10px);color:var(--muted);margin:-3px 0 9px}
 .td-ribbon .td-item{border-bottom:1px dotted color-mix(in srgb, var(--tdc, var(--pri)) 45%, transparent);padding:6px 0}
 .td-ribbon .td-item input{border-radius:2px;border-width:1px}
 .td-item span{min-width:0;word-break:break-word;transition:opacity .15s}
@@ -2544,6 +2545,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=380"></script>
+<script type="module" src="./app.js?v=382"></script>
 </body>
 </html>

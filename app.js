@@ -1695,8 +1695,14 @@ function renderSide(){
       if(TDF[w.if]) d.style.setProperty('--tdif', TDF[w.if]);
       if(w.tc) d.style.setProperty('--tdtc', w.tc);
       if(w.ic) d.style.setProperty('--tdic', w.ic);
+      if(+w.ts) d.style.setProperty('--tdts', (+w.ts)+'px');   // 제목 크기(phase352)
+      if(+w.ss) d.style.setProperty('--tdss', (+w.ss)+'px');   // 부제 크기(phase352)
       const emo = w.emo ?? (w.style==='ribbon'?'🎀':'');
-      d.innerHTML=`<p class="td-head">${emo?esc(emo)+' ':''}${esc(w.title||'TO-DO')}</p>`
+      /* 기본 스킨 제목은 표준 위젯 머리(.label) 규격 — ◈ 장식·테마 연동 승계(phase353).
+         커스텀 크기·색·폰트는 인라인으로 덮음. 스킨 3종은 자기 머리 디자인 유지 */
+      const skin=['memo','grid','ribbon'].includes(w.style);
+      const hIn=!skin?((+w.ts?`font-size:${+w.ts}px;`:'')+(w.tc?`color:${esc(w.tc)};`:'')+(TDF[w.tf]?`font-family:${TDF[w.tf]};`:'')):'';
+      d.innerHTML=`<p class="${skin?'td-head':'label'}"${hIn?` style="${hIn}"`:''}>${emo?esc(emo)+' ':''}${esc(w.title||'TO-DO')}</p>`
         + (w.sub?`<p class="td-sub">${esc(w.sub)}</p>`:'')
         + its.map((x,i)=>`<label class="td-item${x.done?' done':''}"><input type="checkbox" data-td="${i}" ${x.done?'checked':''} ${st.mine?'':'disabled'}><span>${esc(x.t)}</span></label>`).join('')
         + (its.length?`<p class="td-cnt">${its.filter(x=>x.done).length} / ${its.length}</p>`:'<p class="pl-empty">✎에서 할 일을 추가하세요.</p>');
@@ -3592,7 +3598,10 @@ function renderWidEdit(){
       <input id="we-tdtl" placeholder="제목 (비우면 TO-DO)" value="${esc(w.title||'')}" style="flex:1;margin-bottom:0">
       <input id="we-tdemo" placeholder="이모지" value="${esc(w.emo ?? (w.style==='ribbon'?'🎀':''))}" style="width:64px;flex:none;margin-bottom:0" title="제목 앞 이모지 — 비우면 없음">
     </div>
-    <input id="we-tdsub" placeholder="부제 줄 (선택 — 예: Date. 8/27 · 이번 주)" value="${esc(w.sub||'')}">
+    <div class="p-row" style="gap:6px">
+      <input id="we-tdsub" placeholder="부제 줄 (선택 — 예: Date. 8/27 · 이번 주)" value="${esc(w.sub||'')}" style="flex:1;margin-bottom:0">
+      <input type="number" id="we-tdss" min="8" max="40" placeholder="크기" value="${+w.ss||''}" title="부제 글자 크기(px) — 비우면 스킨 기본" style="width:58px;flex:none;margin-bottom:0">
+    </div>
     <div class="p-row" style="align-items:center;gap:6px;font-size:11.5px;color:var(--muted)">제목
       <select id="we-tdtf" style="width:auto;margin-bottom:0">
         <option value="" ${!w.tf?'selected':''}>폰트 — 스킨 기본</option>
@@ -3602,6 +3611,7 @@ function renderWidEdit(){
         <option value="mono" ${w.tf==='mono'?'selected':''}>모노</option>
       </select>
       <input type="color" id="we-tdtc" value="${w.tc||'#888888'}" title="제목 색" style="width:38px;flex:none;padding:2px;margin-bottom:0">
+      <input type="number" id="we-tdts" min="8" max="40" placeholder="크기" value="${+w.ts||''}" title="제목 글자 크기(px) — 비우면 스킨 기본" style="width:58px;flex:none;margin-bottom:0">
       ${w.tc?`<button class="rmv" id="we-tdtcx" style="font-size:10px;flex:none">기본색</button>`:''}
     </div>
     <div class="p-row" style="align-items:center;gap:6px;font-size:11.5px;color:var(--muted)">할 일
@@ -3977,6 +3987,8 @@ function renderWidEdit(){
   const tdl=$('#we-tdtl'); if(tdl) tdl.addEventListener('input',()=>{ w.title=tdl.value; });
   const tds=$('#we-tdstyle'); if(tds) tds.addEventListener('input',()=>{ w.style=tds.value; });
   const tdb=$('#we-tdsub'); if(tdb) tdb.addEventListener('input',()=>{ w.sub=tdb.value; });
+  [['we-tdts','ts'],['we-tdss','ss']].forEach(([id,k])=>{
+    const el=$('#'+id); if(el) el.addEventListener('input',()=>{ const v=+el.value; if(v) w[k]=v; else delete w[k]; }); });
   const tdc=$('#we-tdc'); if(tdc) tdc.addEventListener('input',()=>{ w.c=tdc.value; renderWidEdit(); });
   const tdcx=$('#we-tdcx'); if(tdcx) tdcx.onclick=()=>{ delete w.c; renderWidEdit(); };
   const tde=$('#we-tdemo'); if(tde) tde.addEventListener('input',()=>{ w.emo=tde.value.trim(); });
