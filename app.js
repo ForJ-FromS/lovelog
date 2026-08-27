@@ -4003,7 +4003,7 @@ function renderWidEdit(){
   $('#wid-edit').querySelectorAll('[data-pqdel]').forEach(b=>b.onclick=()=>{ w.qas.splice(+b.dataset.pqdel,1); renderWidEdit(); });
   $('#wid-edit').querySelectorAll('[data-pqimg]').forEach(f=>f.onchange=async()=>{
     if(!f.files[0]) return;
-    try{ const d2=await shrinkBlob(f.files[0],128,.85); w[f.dataset.pqimg==='a'?'ai':'bi']=d2; renderWidEdit(); }
+    try{ const d2=await compress(f.files[0],128,.85); w[f.dataset.pqimg==='a'?'ai':'bi']=d2; renderWidEdit(); }   // compress=dataURL — shrinkBlob은 파일 업로드용 {blob} 반환이라 저장 불가(phase355 수리)
     catch(e){ msg('사진 처리 실패 — 다른 파일로 시도해주세요.'); } });
   $('#wid-edit').querySelectorAll('[data-pqxi]').forEach(b=>b.onclick=()=>{
     delete w[b.dataset.pqxi==='a'?'ai':'bi']; renderWidEdit(); });
