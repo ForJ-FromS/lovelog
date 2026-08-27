@@ -2670,7 +2670,6 @@ async function openPost(id, fromHome=false){
   st.cur=p; st.curBody=body;
   $('#pv-meta').textContent=p.cat+' · '+p.date+(p.secret?' · SECRET':'')+(p.priv?' · 🔏 비공개':'')+((+p.schedAt>Date.now())?' · ⏰ '+new Date(+p.schedAt).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})+' 공개 예약':'');
   buildToc();                                                   // 📑 목차(phase343)
-  refreshScrapBtn();                                            // 🔖 스크랩(phase343)
   /* ── 공감 ♥ ── */
   (async()=>{
     const el=$('#pv-like'); if(!el) return;
@@ -2853,40 +2852,7 @@ $('#pv-copy').onclick=()=>{
   (navigator.clipboard?navigator.clipboard.writeText(url).then(()=>msg('🔗 링크를 복사했어요!'))
     :Promise.reject()).catch(()=>showCopyBox(url));
 };
-/* 🔖 스크랩(phase343): localStorage 전용 — 기기별 저장, 서버 비용 0. 주인 scrapOff로 숨김 가능 */
-const scraps=()=>{ try{ return JSON.parse(localStorage.getItem('lv-scraps')||'[]'); }catch(e){ return []; } };
-const scrapKey=p=>st.handle+'/'+p.id;
-function refreshScrapBtn(){
-  const b=$('#pv-scrap'); if(!b||!st.cur) return;
-  const off=st.mine || st.page.scrapOff===true;
-  b.classList.toggle('hidden', off);
-  if(off) return;
-  const on=scraps().some(s2=>s2.k===scrapKey(st.cur));
-  b.textContent=on?'🔖 저장됨':'🔖 저장';
-  b.classList.toggle('on', on);
-}
-$('#pv-scrap').onclick=()=>{
-  const p=st.cur; if(!p) return;
-  let arr=scraps(); const k=scrapKey(p);
-  if(arr.some(s2=>s2.k===k)){ arr=arr.filter(s2=>s2.k!==k); msg('저장을 취소했어요.'); }
-  else{ arr.unshift({k, h:st.handle, id:p.id, t:p.title||'(무제)', d:p.date||'', at:Date.now()});
-    arr=arr.slice(0,200); msg('🔖 저장했어요 — 내 홈 꾸미기 → 관리에서 볼 수 있어요!'); }
-  try{ localStorage.setItem('lv-scraps', JSON.stringify(arr)); }catch(e){}
-  refreshScrapBtn();
-};
-function renderScraps(){
-  const sec=$('#scrap-sec'), box=$('#scrap-list'); if(!box||!st.mine) return;
-  const arr=scraps();
-  sec.classList.toggle('hidden', !arr.length);
-  box.innerHTML=arr.map(s2=>`
-    <div class="ntc-row"><span class="ntc-d">${esc(s2.d)}</span>
-      <a class="ntc-t" href="${urlFor(s2.h, s2.id)}" style="text-decoration:none;color:inherit">${esc(s2.t)} <span class="note">@${esc(s2.h)}</span></a>
-      <button class="rmv" data-scx="${esc(s2.k)}" style="font-size:10px">빼기</button></div>`).join('');
-  box.querySelectorAll('[data-scx]').forEach(b=>b.onclick=()=>{
-    try{ localStorage.setItem('lv-scraps', JSON.stringify(scraps().filter(s2=>s2.k!==b.dataset.scx))); }catch(e){}
-    renderScraps();
-  });
-}
+
 /* 인앱 브라우저는 clipboard도 prompt도 막힐 수 있음 — 직접 긁어 복사하는 자체 모달(askPw 동족, phase315) */
 /* 📑 목차(phase343): 큰 글자(18px 이상)만으로 된 짧은 문단을 제목으로 보고,
    2개 이상 + 본문이 충분히 길 때만 상단에 목차를 자동 생성 */
@@ -5534,10 +5500,9 @@ function fillSettings(){
   $('#s-gatebtn').value=p.gateBtn||''; $('#s-listed').checked=!!p.listed; cardNew=null; bnrNew=null; renderCard(); renderBnr(); $('#s-lbicon').value=p.labelIcon??'◈'; gateColVal=null;
   $('#s-gatecolor').value=p.gateColor||'#ffffff';
   const gsk=$('#s-gateskip'); if(gsk) gsk.checked=p.gateSkipPost===true;
-  const sco=$('#s-scrapoff'); if(sco) sco.checked=p.scrapOff===true;
   const cw=$('#s-cmtwho'); if(cw) cw.value=p.cmtWho||'';
   $('#del-h').textContent=st.handle||'—'; $('#s-del-confirm').value=''; delMsg('');
-  renderMyInq(); renderAdmInq(); renderMyNotes(); renderAdmNotes(); renderScraps();
+  renderMyInq(); renderAdmInq(); renderMyNotes(); renderAdmNotes();
   if(st.myHandle==='jeste'){ getDoc(doc(db,'config','notice')).then(s=>{
     if(s.exists()) admNtcRender(noticeItems(s.data())); }).catch(()=>{}); }
   $('#s-gatebtnc').value=p.gateBtnC||'#e691a9'; gateBtnCVal=null;
@@ -5648,7 +5613,6 @@ async function saveSettings(){
       labelIcon: $('#s-lbicon').value.trim(),
       gateColor: gateColVal ?? st.page.gateColor ?? '',
       gateSkipPost: $('#s-gateskip')?.checked===true,
-      scrapOff: $('#s-scrapoff')?.checked===true,
       cmtWho: $('#s-cmtwho')?.value||'',
       gateBtnC: gateBtnCVal ?? st.page.gateBtnC ?? '',
       gateGrad: $('#s-gategrad').checked,
