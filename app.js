@@ -3595,12 +3595,13 @@ function renderWidEdit(){
       ${w.c?`<button class="rmv" id="we-tdcx" style="font-size:10px;flex:none">테마색으로</button>`:''}
     </div>
     <div class="p-row" style="gap:6px">
-      <input id="we-tdtl" placeholder="제목 (비우면 TO-DO)" value="${esc(w.title||'')}" style="flex:1;margin-bottom:0">
+      <input id="we-tdtl" placeholder="제목" value="${esc(w.title||'')}" style="flex:1;min-width:0;margin-bottom:0" title="비우면 TO-DO">
+      <input type="number" id="we-tdts" min="8" max="40" placeholder="크기" value="${+w.ts||''}" title="제목 글자 크기(px) — 비우면 스킨 기본" style="width:78px;flex:none;margin-bottom:0">
       <input id="we-tdemo" placeholder="이모지" value="${esc(w.emo ?? (w.style==='ribbon'?'🎀':''))}" style="width:64px;flex:none;margin-bottom:0" title="제목 앞 이모지 — 비우면 없음">
     </div>
     <div class="p-row" style="gap:6px">
-      <input id="we-tdsub" placeholder="부제 줄 (선택 — 예: Date. 8/27 · 이번 주)" value="${esc(w.sub||'')}" style="flex:1;margin-bottom:0">
-      <input type="number" id="we-tdss" min="8" max="40" placeholder="크기" value="${+w.ss||''}" title="부제 글자 크기(px) — 비우면 스킨 기본" style="width:58px;flex:none;margin-bottom:0">
+      <input id="we-tdsub" placeholder="부제 줄 (선택)" value="${esc(w.sub||'')}" style="flex:1;min-width:0;margin-bottom:0" title="예: Date. 8/27 · 이번 주">
+      <input type="number" id="we-tdss" min="8" max="40" placeholder="크기" value="${+w.ss||''}" title="부제 글자 크기(px) — 비우면 스킨 기본" style="width:78px;flex:none;margin-bottom:0">
     </div>
     <div class="p-row" style="align-items:center;gap:6px;font-size:11.5px;color:var(--muted)">제목
       <select id="we-tdtf" style="width:auto;margin-bottom:0">
@@ -3611,7 +3612,6 @@ function renderWidEdit(){
         <option value="mono" ${w.tf==='mono'?'selected':''}>모노</option>
       </select>
       <input type="color" id="we-tdtc" value="${w.tc||'#888888'}" title="제목 색" style="width:38px;flex:none;padding:2px;margin-bottom:0">
-      <input type="number" id="we-tdts" min="8" max="40" placeholder="크기" value="${+w.ts||''}" title="제목 글자 크기(px) — 비우면 스킨 기본" style="width:58px;flex:none;margin-bottom:0">
       ${w.tc?`<button class="rmv" id="we-tdtcx" style="font-size:10px;flex:none">기본색</button>`:''}
     </div>
     <div class="p-row" style="align-items:center;gap:6px;font-size:11.5px;color:var(--muted)">할 일
