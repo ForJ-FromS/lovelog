@@ -3623,7 +3623,7 @@ function renderWidEdit(){
         <option value="10" ${+w.n===10?'selected':''}>처음 10개 + 더보기</option>
       </select><span>사진은 안 넣으면 이름만 나와요 · 답을 비우면 그 사람 말풍선은 생략</span>
     </div>
-    ${(w.qas||[]).map((x,i)=>`<div class="we-dd" style="flex-direction:column;align-items:stretch;gap:5px">
+    ${(w.qas||[]).map((x,i)=>`<div class="pq-card">
       <div class="p-row" style="gap:6px"><input data-pqq="${i}" placeholder="질문 ${i+1}" value="${esc(x.q||'')}" style="flex:1;margin-bottom:0"><button class="rmv" data-pqdel="${i}" style="flex:none">✕</button></div>
       <input data-pqa="${i}" placeholder="${esc(w.an||'A')}의 답" value="${esc(x.a||'')}" style="margin-bottom:0">
       <input data-pqb="${i}" placeholder="${esc(w.bn||'B')}의 답" value="${esc(x.b||'')}" style="margin-bottom:0">
