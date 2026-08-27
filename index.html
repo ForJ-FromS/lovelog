@@ -1739,6 +1739,12 @@ html,body{overflow-x:hidden;overflow-x:clip}
 .td-item span{min-width:0;word-break:break-word;transition:opacity .15s}
 .td-item.done span{text-decoration:line-through;opacity:.45}
 .td-cnt{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--muted);margin:8px 0 0;text-align:right;letter-spacing:.08em}
+/* 📷 아바타 조절 창 (phase356) */
+.pq-adj{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:20px}
+.pq-adj-card{width:min(280px,100%);background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:0 10px 34px rgba(0,0,0,.45)}
+.pq-adj-cv{display:block;width:180px;height:180px;margin:0 auto 12px;border-radius:50%;border:1px solid var(--line)}
+.pq-adj-l{display:flex;align-items:center;gap:10px;font-size:11.5px;color:var(--muted);margin:6px 0}
+.pq-adj-l input{flex:1;accent-color:var(--pri)}
 .note.ok{color:#7fbf7f}
 .note.bad{color:#e08585}
 .gbdot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--pri);margin-left:6px;flex:none;vertical-align:middle}
@@ -2545,6 +2551,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=384"></script>
+<script type="module" src="./app.js?v=385"></script>
 </body>
 </html>

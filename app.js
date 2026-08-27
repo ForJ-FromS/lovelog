@@ -101,6 +101,52 @@ async function encTxt(pw,t){ const s=crypto.getRandomValues(new Uint8Array(16)),
   return JSON.stringify({s:b64(s),i:b64(iv),d:b64(ct)}); }
 async function decTxt(pw,blob){ const o=JSON.parse(blob), k=await keyOf(pw,ub64(o.s));
   return dec.decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:ub64(o.i)},k,ub64(o.d))); }
+/* 📷 아바타 위치 조절(phase356): 업로드 직후 확대·좌우·상하 슬라이더 창 → 결과를 128px에 구워 반환.
+   취소하면 null. 저장 형식은 기존과 동일한 dataURL이라 렌더·데이터 무변화 */
+function pqAdjust(file){ return new Promise(res=>{
+  const img=new Image();
+  const done=v=>{ try{ URL.revokeObjectURL(img.src); }catch(e){} res(v); };
+  img.onerror=()=>done(null);
+  img.onload=()=>{
+    const ov=document.createElement('div'); ov.className='pq-adj';
+    ov.innerHTML=`<div class="pq-adj-card">
+      <p class="p-h" style="margin:0 0 10px">📷 사진 위치 조절</p>
+      <canvas width="180" height="180" class="pq-adj-cv"></canvas>
+      <label class="pq-adj-l">확대 <input type="range" data-k="z" min="100" max="300" value="100"></label>
+      <label class="pq-adj-l">좌우 <input type="range" data-k="x" min="-100" max="100" value="0"></label>
+      <label class="pq-adj-l">상하 <input type="range" data-k="y" min="-100" max="100" value="0"></label>
+      <div class="p-row" style="justify-content:flex-end;gap:8px;margin-top:12px">
+        <button class="rmv" data-a="c" style="font-size:11.5px">취소</button>
+        <button class="btn pri" data-a="ok" style="font-size:12px;padding:6px 18px">적용</button>
+      </div></div>`;
+    document.body.appendChild(ov);
+    const cv=ov.querySelector('canvas');
+    const adj={z:1,x:0,y:0};
+    const draw=(c2,S2)=>{
+      const x2=c2.getContext('2d');
+      const s0=S2/Math.min(img.width,img.height), s=s0*adj.z;
+      const dw=img.width*s, dh=img.height*s;
+      const dx=(S2-dw)/2 - (adj.x/100)*Math.max(0,(dw-S2)/2);   // +면 사진의 오른쪽이 보이게
+      const dy=(S2-dh)/2 - (adj.y/100)*Math.max(0,(dh-S2)/2);   // +면 사진의 아래쪽이 보이게
+      x2.fillStyle='#fff'; x2.fillRect(0,0,S2,S2);
+      x2.drawImage(img,dx,dy,dw,dh);
+    };
+    draw(cv,180);
+    ov.querySelectorAll('input[type=range]').forEach(r=>r.oninput=()=>{
+      adj[r.dataset.k]=r.dataset.k==='z'? +r.value/100 : +r.value;
+      draw(cv,180);
+    });
+    const close=v=>{ ov.remove(); done(v); };
+    ov.querySelector('[data-a="c"]').onclick=()=>close(null);
+    ov.onclick=e=>{ if(e.target===ov) close(null); };
+    ov.querySelector('[data-a="ok"]').onclick=()=>{
+      const out=document.createElement('canvas'); out.width=128; out.height=128;
+      draw(out,128);
+      close(out.toDataURL('image/jpeg',.85));
+    };
+  };
+  img.src=URL.createObjectURL(file);
+});}
 function compress(file,maxW,q){ return new Promise((res,rej)=>{
   const img=new Image(); img.onload=()=>{ const sc=Math.min(1,maxW/img.width),
     c=document.createElement('canvas'); c.width=Math.round(img.width*sc);
@@ -4003,7 +4049,11 @@ function renderWidEdit(){
   $('#wid-edit').querySelectorAll('[data-pqdel]').forEach(b=>b.onclick=()=>{ w.qas.splice(+b.dataset.pqdel,1); renderWidEdit(); });
   $('#wid-edit').querySelectorAll('[data-pqimg]').forEach(f=>f.onchange=async()=>{
     if(!f.files[0]) return;
-    try{ const d2=await compress(f.files[0],128,.85); w[f.dataset.pqimg==='a'?'ai':'bi']=d2; renderWidEdit(); }   // compress=dataURL — shrinkBlob은 파일 업로드용 {blob} 반환이라 저장 불가(phase355 수리)
+    try{
+      const d2=await pqAdjust(f.files[0]);                     // 📷 조절 창(phase356) — 취소하면 null
+      f.value='';
+      if(d2){ w[f.dataset.pqimg==='a'?'ai':'bi']=d2; renderWidEdit(); }
+    }
     catch(e){ msg('사진 처리 실패 — 다른 파일로 시도해주세요.'); } });
   $('#wid-edit').querySelectorAll('[data-pqxi]').forEach(b=>b.onclick=()=>{
     delete w[b.dataset.pqxi==='a'?'ai':'bi']; renderWidEdit(); });
