@@ -305,6 +305,7 @@ const bodyCore=t=>t.split(/(\n{2,})/).map(p=>{
 }).join('');
 /* [접기:제목] ~ [/접기] — 눌러서 펼치는 접은 글(phase285). 문단 분해 전에 블록을 뽑아 재귀 처리 */
 const bodyHTML=t=>{
+  t=String(t??'').replace(/\r\n?/g,'\n');   // CRLF 정규화(phase365) — 복붙 본문의 \r가 블록·문단 인식을 통째로 깨뜨림
   /* 🧩 HTML 블록(phase359): [html]…[/html] 안은 서식 엔진을 통째로 우회해 그대로 렌더.
      새니타이저는 HTML 모드와 동일(cleanHTML) — 정책 일관 */
   const hbs=[];
