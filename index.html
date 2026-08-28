@@ -1096,7 +1096,12 @@
   .ab-drop:hover{border-color:var(--pri);color:var(--pri)}
   .ab-drop em{font-style:normal;font-size:12px} .ab-drop em.s{font-size:10px;opacity:.75}
   .post blockquote{margin:14px 0;padding:8px 16px;border-left:3px solid var(--pri);
-    background:color-mix(in srgb, var(--card) 55%, transparent);border-radius:0 9px 9px 0;color:var(--muted)}  /* ✎ 자리채움(disabled 버튼) — 버튼과 동일 박스로 열·높이 정렬(283b) */
+    background:color-mix(in srgb, var(--card) 55%, transparent);border-radius:0 9px 9px 0;color:var(--muted)}
+  body.qs-quote .post blockquote{border-left:0;padding:6px 18px 6px 34px;position:relative;font-style:italic}
+  body.qs-quote .post blockquote::before{content:'\201C';position:absolute;left:6px;top:-2px;
+    font-family:'Noto Serif KR',serif;font-size:34px;line-height:1;color:var(--pri);font-style:normal}
+  body.qs-letter .post blockquote{border-left:0;border:1px dashed color-mix(in srgb, var(--pri) 45%, var(--line));
+    border-radius:10px;padding:12px 16px;background:color-mix(in srgb, var(--pri) 6%, transparent)}  /* ✎ 자리채움(disabled 버튼) — 버튼과 동일 박스로 열·높이 정렬(283b) */
   #w-fmt button, #mm-fmt button{white-space:nowrap}
   #w-fmt, #mm-fmt{flex-wrap:wrap}                              /* 서식 버튼 많아짐 — 폰에선 줄바꿈(293b) */
   #w-fmt .note, #mm-fmt .note{display:none}
@@ -1750,6 +1755,15 @@ html,body{overflow-x:hidden;overflow-x:clip}
   border:1px dashed var(--line);border-radius:10px;background:var(--card2)}
 .pq-card input{margin-bottom:0}
 .html-block{margin:14px 0;max-width:100%;overflow-x:auto}  /* 🧩 HTML 블록(phase359) — 폭 넘침은 블록 안에서만 스크롤 */
+/* 💛 이모지 반응 (phase362) */
+.rx-row{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin:5px 0 2px}
+.rx-pill,.rx-add,.rx-pick button{border:1px solid var(--line);background:none;color:var(--muted);
+  border-radius:99px;padding:2px 9px;font-size:11px;cursor:pointer;line-height:1.5}
+.rx-pill.on{border-color:var(--pri);color:var(--pri)}
+.rx-pill:hover,.rx-add:hover,.rx-pick button:hover{border-color:var(--pri)}
+.rx-add{width:24px;padding:2px 0;text-align:center}
+.rx-pick{display:inline-flex;gap:4px}
+.rx-pick.hidden{display:none}
 .note.ok{color:#7fbf7f}
 .note.bad{color:#e08585}
 .gbdot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--pri);margin-left:6px;flex:none;vertical-align:middle}
@@ -2030,6 +2044,7 @@ html,body{overflow-x:hidden;overflow-x:clip}
       <button class="btn" id="w-catadd" title="새 카테고리 즉석 추가" style="font-size:12px">＋</button>
       <label class="chk"><input type="checkbox" id="w-secret"> 비밀글</label>
       <label class="chk" title="나만 볼 수 있게 발행 — 나중에 공개로 전환할 수 있어요"><input type="checkbox" id="w-priv"> 🔏 비공개</label>
+      <label class="chk" title="서로 이웃(배너·이웃 홈 상호 등록)에게만 보여요 — 비공개와는 함께 쓸 수 없어요"><input type="checkbox" id="w-mut"> 🤝 이웃 공개</label>
       <label class="chk" title="★ 대표글 위젯에 전시돼요 — 여러 글에 체크할 수 있어요"><input type="checkbox" id="w-feat"> ★ 대표글</label>
       <input id="w-pw" placeholder="비밀번호" style="display:none;flex:none;width:150px">
       <label class="chk" title="목록 상단 ◈ PINNED 카드로 노출 — 카테고리마다 1개, 전체 글에도 함께 떠요"><input type="checkbox" id="w-pin"> 고정</label>
@@ -2384,7 +2399,11 @@ html,body{overflow-x:hidden;overflow-x:clip}
         <select id="s-catsel" title="지금 보고 있는 카테고리를 어떻게 표시할지">
         <option value="">선택 표시 — 기본</option>
         <option value="soft">선택 표시 — 연하게 (글자색만)</option>
-        <option value="off">선택 표시 — 없음</option></select></span></div>
+        <option value="off">선택 표시 — 없음</option></select>
+        <select id="s-quotestyle" title="본문 인용(>) 상자의 모양">
+        <option value="">인용 — 기본 (세로선)</option>
+        <option value="quote">인용 — 따옴표</option>
+        <option value="letter">인용 — 편지지</option></select></span></div>
       <div class="trow"><span class="tl">갤러리 한 줄</span><span class="tc"><select id="s-galcols">
         <option value="1">1장 (크게)</option><option value="2">2장</option>
         <option value="3" selected>3장 (기본)</option><option value="4">4장</option></select></span></div>
@@ -2556,6 +2575,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=388"></script>
+<script type="module" src="./app.js?v=390"></script>
 </body>
 </html>
