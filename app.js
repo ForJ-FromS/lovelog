@@ -4681,6 +4681,19 @@ function bindFmtBar(barSel, taId){
         const cur=v.slice(at).match(/^@[crji]\s/);
         if(cur){ ta.value=v.slice(0,at)+v.slice(at+cur[0].length); ta.selectionStart=ta.selectionEnd=at; }
         ta.focus(); ta.scrollTop=st0; }
+      else if(f==='hb'){                                     // 🧩 HTML 블록 삽입(phase367)
+        const ta=$(taId||'#w-body'); if(!ta) return;
+        const st0=ta.scrollTop, s=ta.selectionStart??ta.value.length, e=ta.selectionEnd??s;
+        const sel=ta.value.slice(s,e);
+        const pre=ta.value.slice(0,s), post=ta.value.slice(e);
+        const nl1=(!pre || /\n\n$/.test(pre))?'':(/\n$/.test(pre)?'\n':'\n\n');
+        const nl2=(!post || /^\n\n/.test(post))?'':(/^\n/.test(post)?'\n':'\n\n');
+        const inner=sel||'<div>여기에 코드를 쓰세요</div>';
+        const block=nl1+'[html]\n'+inner+'\n[/html]'+nl2;
+        ta.value=pre+block+post;
+        const at=pre.length+nl1.length+7;                     // '[html]\n' 뒤
+        ta.setSelectionRange(at, at+inner.length);
+        ta.focus(); ta.scrollTop=st0; return; }
       else if(f==='ac') lineMark('@c ',taId);
       else if(f==='ar') lineMark('@r ',taId);
       else if(f==='aj') lineMark('@j ',taId);
