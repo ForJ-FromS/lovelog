@@ -305,6 +305,17 @@ const bodyCore=t=>t.split(/(\n{2,})/).map(p=>{
 }).join('');
 /* [접기:제목] ~ [/접기] — 눌러서 펼치는 접은 글(phase285). 문단 분해 전에 블록을 뽑아 재귀 처리 */
 const bodyHTML=t=>{
+  /* 🧩 HTML 블록(phase359): [html]…[/html] 안은 서식 엔진을 통째로 우회해 그대로 렌더.
+     새니타이저는 HTML 모드와 동일(cleanHTML) — 정책 일관 */
+  const hbs=[];
+  t=t.replace(/^\[html\][ \t]*\n([\s\S]*?)\n?\[\/html\][ \t]*$/gim,(m,inner,off,str)=>{
+    hbs.push(cleanHTML(inner));
+    const before=str.slice(0,off), after=str.slice(off+m.length);
+    /* 문단 분리에 딱 필요한 만큼만 개행 보충 — 원문 빈 줄(pgap)을 불리지 않게 */
+    const pre = (!before || /\n\n$/.test(before)) ? '' : (/\n$/.test(before) ? '\n' : '\n\n');
+    const post = (!after || /^\n\n/.test(after)) ? '' : (/^\n/.test(after) ? '\n' : '\n\n');
+    return pre+'\u0001HB'+(hbs.length-1)+'\u0001'+post;
+  });
   /* 구분선 줄 격리(phase331): ***·===·~~~가 서식 마커와 같은 문자라 spanFix가
      구분선의 **를 다른 문단의 굵게와 짝지어 주변 서식을 깨뜨림 — 먼저 빼두고 나중에 복원 */
   const hrs=[];
@@ -319,6 +330,8 @@ const bodyHTML=t=>{
   html=html.replace(/<p[^>]*>\u0001FOLD(\d+)\u0001<\/p>|\u0001FOLD(\d+)\u0001/g,(m,a,b)=>{
     const f=folds[+(a??b)];
     return `<details class="fold"><summary>${inlineFmt(esc(f.tt||'펼쳐 보기'))}</summary><div class="fold-in">${bodyCore(f.inner)}</div></details>`; });
+  html=html.replace(/<p[^>]*>\u0001HB(\d+)\u0001<\/p>|\u0001HB(\d+)\u0001/g,
+    (m,a,b)=>`<div class="html-block">${hbs[+(a??b)]}</div>`);   // p 속 div 무효 방지 겸 래핑
   return html;
 };
 const htmlToText=h=>String(h||'')
@@ -4804,6 +4817,9 @@ const msg=t=>{
 };
 
 let editPost=null, editGal=null;
+$('#w-html').addEventListener('change',function(){                    // HTML 모드 안내(phase358) — 서식 문의 예방
+  if(this.checked) msg('HTML 모드: 서식 문법(**굵게**, ==형광== 등)은 적용되지 않아요 — 굵게는 <b> 태그나 툴바 버튼을 쓰세요.');
+});
 $('#w-sched').onchange=()=>{ const si=$('#w-schedat');
   si.classList.toggle('hidden',!$('#w-sched').checked);
   if($('#w-sched').checked){ try{ si.showPicker(); }catch(e){} } };
