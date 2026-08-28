@@ -309,7 +309,8 @@ const bodyHTML=t=>{
   /* 🧩 HTML 블록(phase359): [html]…[/html] 안은 서식 엔진을 통째로 우회해 그대로 렌더.
      새니타이저는 HTML 모드와 동일(cleanHTML) — 정책 일관 */
   const hbs=[];
-  t=t.replace(/^\[html\][ \t]*\n([\s\S]*?)\n?\[\/html\][ \t]*$/gim,(m,inner,off,str)=>{
+  /* [^\S\n]* = 줄바꿈 뺀 모든 공백 — 복붙에 섞이는 NBSP(U+00A0) 같은 유령 공백까지 허용(phase366) */
+  t=t.replace(/^[^\S\n]*\[html\][^\S\n]*\n([\s\S]*?)\n?[^\S\n]*\[\/html\][^\S\n]*$/gim,(m,inner,off,str)=>{
     hbs.push(cleanHTML(inner));
     const before=str.slice(0,off), after=str.slice(off+m.length);
     /* 문단 분리에 딱 필요한 만큼만 개행 보충 — 원문 빈 줄(pgap)을 불리지 않게 */
