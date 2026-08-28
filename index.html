@@ -1761,7 +1761,8 @@ html,body{overflow-x:hidden;overflow-x:clip}
   border-radius:99px;padding:2px 9px;font-size:11px;cursor:pointer;line-height:1.5}
 .rx-pill.on{border-color:var(--pri);color:var(--pri)}
 .rx-pill:hover,.rx-add:hover,.rx-pick button:hover{border-color:var(--pri)}
-.rx-add{width:24px;padding:2px 0;text-align:center}
+.rx-add{width:20px;padding:2px 0;text-align:center;border:none;opacity:.4;font-size:12px}
+.rx-add:hover,.rx-add:focus{opacity:.95}
 .rx-pick{display:inline-flex;gap:4px}
 .rx-pick.hidden{display:none}
 .note.ok{color:#7fbf7f}
@@ -2230,14 +2231,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       <input type="color" id="s-gatecolor" value="#ffffff" style="width:38px;padding:0">
       <button class="rmv" id="s-gatecolor-x" style="font-size:11px">기본색</button>
       <label class="chk" style="font-size:11.5px" title="글 링크로 바로 들어온 방문자는 대문을 거치지 않고 글부터 봐요 — 비밀번호가 걸린 대문에는 적용되지 않아요"><input type="checkbox" id="s-gateskip"> 🔗 글 링크로 오면 대문 건너뛰기</label>
-      <span class="p-row" style="align-items:center;gap:8px;font-size:11.5px;color:var(--muted)">💬 댓글 허용
-      <select id="s-cmtwho" style="width:auto;margin-bottom:0" title="댓글을 남길 수 있는 범위 — 읽기는 누구나 가능해요">
-        <option value="">로그인한 누구나 (기본)</option>
-        <option value="mut">서로 이웃만 (배너 · 이웃 홈 상호 등록)</option>
-      </select></span>
-      <span class="p-row" style="align-items:center;gap:8px;font-size:11.5px;color:var(--muted)">💛 반응 이모지
-      <input id="s-rxemo" placeholder="❤️🥹👍✨😂" style="width:150px;margin-bottom:0"
-        title="댓글·방명록 반응 이모지 — 붙여서 1~5개, 비우면 기본. 이미 쌓인 숫자는 칸 순서를 따라가니, 순서를 바꾸면 다른 이모지의 숫자로 보여요"></span>
       <button class="btn" id="s-gate-pv" style="font-size:12px">대문 미리보기</button>
     </div>
     <div class="p-row" style="align-items:center">
@@ -2257,6 +2250,17 @@ html,body{overflow-x:hidden;overflow-x:clip}
     <p class="note">가벼운 잠금이에요 — 진짜 비밀 내용은 글을 '비밀글'로 발행하세요(그건 암호화됩니다).</p>
 
 
+    <p class="p-h" style="margin-top:30px">💬 댓글 · 💛 반응</p>
+    <div class="p-row" style="align-items:center;gap:8px;font-size:11.5px;color:var(--muted)">댓글 허용
+      <select id="s-cmtwho" style="width:auto;margin-bottom:0" title="댓글을 남길 수 있는 범위 — 읽기는 누구나 가능해요">
+        <option value="">로그인한 누구나 (기본)</option>
+        <option value="mut">서로 이웃만 (배너 · 이웃 홈 상호 등록)</option>
+      </select></div>
+    <div class="p-row" style="align-items:center;gap:8px;font-size:11.5px;color:var(--muted)">반응 이모지
+      <input id="s-rxemo" placeholder="❤️🥹👍✨😂" style="width:150px;margin-bottom:0"
+        title="붙여서 1~5개, 비우면 기본. 이미 쌓인 숫자는 칸 순서를 따라가요 — 순서를 바꾸면 다른 이모지의 숫자로 보입니다">
+      <label class="chk" style="font-size:11.5px;margin-left:6px" title="댓글·방명록의 이모지 반응 기능을 이 홈에서 숨겨요"><input type="checkbox" id="s-rxoff"> 반응 기능 끄기</label></div>
+    <p class="note" style="margin-top:-2px">이모지 반응은 댓글 · 방명록 글 아래 ＋ 로 남길 수 있어요.</p>
     <p class="p-h" style="margin-top:30px">이웃 전용 메모 🔒</p>
     <p class="note" style="margin-top:-4px">서로의 홈을 배너칸·이웃 홈에 걸어둔(맞배너) 분에게만,
       화면 오른쪽 위에 🔒로 나타나는 비밀 메모입니다. 비밀글 비번 안내 등에 쓰세요.
@@ -2578,6 +2582,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=391"></script>
+<script type="module" src="./app.js?v=392"></script>
 </body>
 </html>

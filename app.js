@@ -2132,6 +2132,7 @@ async function rxLoad(docId){
 }
 const rxMyKey=(docId,tid,i)=>'lv-rx-'+st.handle+'-'+docId+'-'+tid+'-'+i;
 function rxRow(docId,tid){
+  if(st.page.rxOff===true) return '';                        // 홈 주인이 반응 기능 끔(phase364)
   const m=(rxCache[docId]||{})[tid]||{};
   const pills=rxEmos().map((e2,i)=>{
     const n=+m['e'+i]||0; if(!n) return '';
@@ -5740,6 +5741,7 @@ function fillSettings(){
   const gsk=$('#s-gateskip'); if(gsk) gsk.checked=p.gateSkipPost===true;
   const cw=$('#s-cmtwho'); if(cw) cw.value=p.cmtWho||'';
   const rxe=$('#s-rxemo'); if(rxe) rxe.value=p.rxEmo||'';
+  const rxo=$('#s-rxoff'); if(rxo) rxo.checked=p.rxOff===true;
   $('#del-h').textContent=st.handle||'—'; $('#s-del-confirm').value=''; delMsg('');
   renderMyInq(); renderAdmInq(); renderMyNotes(); renderAdmNotes();
   if(st.myHandle==='jeste'){ getDoc(doc(db,'config','notice')).then(s=>{
@@ -5855,6 +5857,7 @@ async function saveSettings(){
       gateSkipPost: $('#s-gateskip')?.checked===true,
       cmtWho: $('#s-cmtwho')?.value||'',
       rxEmo: ($('#s-rxemo')?.value||'').trim(),
+      rxOff: $('#s-rxoff')?.checked===true,
       gateBtnC: gateBtnCVal ?? st.page.gateBtnC ?? '',
       gateGrad: $('#s-gategrad').checked,
       font: $('#s-font').value,
