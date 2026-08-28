@@ -2115,6 +2115,14 @@ const postHay=p=>p.__hay||(p.__hay=(p.title+' '+(p.tags||[]).join(' ')+' '+(p.se
    저장 = pages/{h}/rx/{글id|'gb'} 한 문서에 { 대상id: {e0..e4} } — 조회 1회로 목록 전체 커버.
    내가 누른 기억은 localStorage(기기별) — 발도장과 같은 수위 */
 const RX_EMO=['❤️','🥹','👍','✨','😂'];
+const rxEmos=()=>{                                           // 홈 주인 지정(phase363) — 1~5개, 비우면 기본
+  const raw=(st.page?.rxEmo||'').replace(/\s+/g,'');
+  if(!raw) return RX_EMO;                                    // parseEmo는 발도장 전용(빈값→🐾·4개 컷)이라 미사용
+  let arr;
+  try{ arr=[...new Intl.Segmenter('ko',{granularity:'grapheme'}).segment(raw)].map(x=>x.segment); }
+  catch(e){ arr=[...raw]; }
+  return arr.slice(0,5);
+};
 let rxCache={};                                            // {docId: data}
 async function rxLoad(docId){
   try{ const d2=await getDoc(doc(db,'pages',st.handle,'rx',docId));
@@ -2125,13 +2133,13 @@ async function rxLoad(docId){
 const rxMyKey=(docId,tid,i)=>'lv-rx-'+st.handle+'-'+docId+'-'+tid+'-'+i;
 function rxRow(docId,tid){
   const m=(rxCache[docId]||{})[tid]||{};
-  const pills=RX_EMO.map((e2,i)=>{
+  const pills=rxEmos().map((e2,i)=>{
     const n=+m['e'+i]||0; if(!n) return '';
     const on=localStorage.getItem(rxMyKey(docId,tid,i))?' on':'';
     return `<button class="rx-pill${on}" data-rx="${i}" data-rxt="${tid}">${e2} ${n}</button>`;
   }).join('');
   const add=st.me?`<button class="rx-add" data-rxa="${tid}" title="이모지 반응 남기기">＋</button>`:'';
-  return `<span class="rx-row" data-rxrow="${tid}">${pills}${add}<span class="rx-pick hidden" data-rxp="${tid}">${RX_EMO.map((e2,i)=>`<button data-rx="${i}" data-rxt="${tid}">${e2}</button>`).join('')}</span></span>`;
+  return `<span class="rx-row" data-rxrow="${tid}">${pills}${add}<span class="rx-pick hidden" data-rxp="${tid}">${rxEmos().map((e2,i)=>`<button data-rx="${i}" data-rxt="${tid}">${e2}</button>`).join('')}</span></span>`;
 }
 function rxBind(box,docId){
   box.querySelectorAll('[data-rxa]').forEach(b=>b.onclick=()=>{
@@ -5731,6 +5739,7 @@ function fillSettings(){
   $('#s-gatecolor').value=p.gateColor||'#ffffff';
   const gsk=$('#s-gateskip'); if(gsk) gsk.checked=p.gateSkipPost===true;
   const cw=$('#s-cmtwho'); if(cw) cw.value=p.cmtWho||'';
+  const rxe=$('#s-rxemo'); if(rxe) rxe.value=p.rxEmo||'';
   $('#del-h').textContent=st.handle||'—'; $('#s-del-confirm').value=''; delMsg('');
   renderMyInq(); renderAdmInq(); renderMyNotes(); renderAdmNotes();
   if(st.myHandle==='jeste'){ getDoc(doc(db,'config','notice')).then(s=>{
@@ -5845,6 +5854,7 @@ async function saveSettings(){
       gateColor: gateColVal ?? st.page.gateColor ?? '',
       gateSkipPost: $('#s-gateskip')?.checked===true,
       cmtWho: $('#s-cmtwho')?.value||'',
+      rxEmo: ($('#s-rxemo')?.value||'').trim(),
       gateBtnC: gateBtnCVal ?? st.page.gateBtnC ?? '',
       gateGrad: $('#s-gategrad').checked,
       font: $('#s-font').value,
