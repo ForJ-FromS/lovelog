@@ -341,21 +341,34 @@ const chatHTML=(head,inner)=>{
   const yiq=c=>{ try{ let h=c.slice(1); if(h.length===3) h=h.split('').map(x2=>x2+x2).join('');
     const n=parseInt(h.slice(0,6),16);
     return (((n>>16)&255)*.299+((n>>8)&255)*.587+(n&255)*.114)/255; }catch(e){ return .5; } };
-  const rows=[]; let prev=null;
-  String(inner).split('\n').forEach(line=>{
-    const t2=line.trim(); if(!t2){ prev=null; return; }
-    const mm=t2.match(/^([^:]{1,24}):\s?(.*)$/);
-    let nm=mm? mm[1].trim() : null;
-    if(mm && declared && !people.includes(nm)) nm=null;
-    if(nm===null){ rows.push({nar:t2}); prev=null; return; }
-    if(!seen.includes(nm)) seen.push(nm);
-    rows.push({nm, tx:mm[2], side:seen.indexOf(nm)===1?'r':'l', label:prev!==nm}); prev=nm;
-  });
+  const buildRows=(useDecl)=>{
+    const out=[]; const sn=useDecl? [...people] : []; let prev=null;
+    String(inner).split('\n').forEach(line=>{
+      const t2=line.trim(); if(!t2){ prev=null; return; }
+      const mm=t2.match(/^([^:]{1,24}):\s?(.*)$/);
+      let nm=mm? mm[1].trim() : null;
+      if(mm && useDecl && !people.includes(nm)) nm=null;
+      if(nm===null){ out.push({nar:t2}); prev=null; return; }
+      if(!sn.includes(nm)) sn.push(nm);
+      out.push({nm, tx:mm[2], side:sn.indexOf(nm)===1?'r':'l', label:prev!==nm}); prev=nm;
+    });
+    return out;
+  };
+  let rows=buildRows(declared);
+  /* 선언 이름과 대사 이름이 전혀 안 맞으면(오타·별칭) 느슨 모드로 재해석 — 블록이 통째로 죽는 것 방지(phase372) */
+  if(declared && !rows.some(r=>r.nm)) rows=buildRows(false);
   if(!rows.some(r=>r.nm)) return null;                               // 대사가 없으면 원문 유지
+  /* 아바타·색이 하나도 안 매칭되면 등장 순서대로 재배정(phase372) */
+  if(people.length && !rows.some(r=>r.nm && (avs[r.nm]||colors[r.nm]))){
+    const dlg=[...new Set(rows.filter(r=>r.nm).map(r=>r.nm))];
+    dlg.forEach((nm,i2)=>{ const p3=people[i2]; if(!p3) return;
+      if(avs[p3]!==undefined && avs[p3]!=='') avs[nm]=avs[p3];
+      if(colors[p3]) colors[nm]=colors[p3]; });
+  }
   const nar=r=>`<p class="ch-nar">${inlineFmt(esc(r.nar))}</p>`;
   if(skin==='radio'){
     const line=r=> r.nm==null? nar(r)
-      : `<p class="ch-ln"><span class="ch-tag"${colors[r.nm]?` style="color:${colors[r.nm]}"`:''}>[${esc(r.nm)}]</span> ${inlineFmt(esc(r.tx))}</p>`;
+      : `<p class="ch-ln">${avs[r.nm]?`<img class="ch-avr" src="${avs[r.nm]}" alt="">`:''}<span class="ch-tag"${colors[r.nm]?` style="color:${colors[r.nm]}"`:''}>[${esc(r.nm)}]</span> ${inlineFmt(esc(r.tx))}</p>`;
     const wst2=width>0? ` style="max-width:${Math.min(720,Math.max(200,width))}px;margin-left:auto;margin-right:auto;width:100%"`:'';
     return `<div class="chat-block chat-radio"${wst2}><p class="ch-hd">TRANSMISSION ▮▮▮▯</p><div class="ch-body">${rows.map(line).join('')}</div></div>`;
   }
@@ -463,6 +476,9 @@ function chatCfgOpen(taId){
   };
   ov.querySelector('[data-a="ins"]').onclick=()=>{
     const g=gather();
+    if(ppl.some(q=>q.img)){
+      if(!confirm('사진은 프리셋으로 저장해야 글에 나올 수 있어요.\n지금 넣으면 사진은 빠집니다 — 그래도 넣을까요?\n(사진까지 쓰려면 [취소] 후 프리셋 이름을 짓고 「저장 · 넣기」)')) return;
+    }
     const segs=[];
     if(g.skin==='msgr') segs.push('메신저'); if(g.skin==='radio') segs.push('무전');
     segs.push(g.w>0?('w='+g.w):'w=full');
