@@ -1762,7 +1762,8 @@ function renderSide(){
           e.stopPropagation();
           const i=+b2.dataset.tk; bgmTrk[wi]=i;
           const s2=srcFrom(i);
-          if(bgmPlaying()&&bgmCur===s2) bgmStop(); else bgmStart(s2);
+          const isCur=bgmPlaying() && (bgmNowVid ? ytId(trks[i].url)===bgmNowVid : bgmCur===s2);
+          if(isCur) bgmStop(); else bgmStart(s2);
           renderSide(); });
       }
       box.appendChild(d);
@@ -1770,10 +1771,13 @@ function renderSide(){
         : (list ? `https://www.youtube.com/embed/videoseries?list=${list}&autoplay=1`
                 : `https://www.youtube.com/embed/${vid}?autoplay=1&loop=1&playlist=${vid}`);
       const btn=d.querySelector('.bgm-btn2');
-      const on=bgmPlaying()&&bgmCur===src;
+      const mine2=bgmPlaying() && (bgmNowVid
+        ? (trks.length ? trks.some(t2=>ytId(t2.url)===bgmNowVid) : (vid && bgmNowVid===vid))
+        : bgmCur===src);                                     // 곡이 넘어가도 재생 상태 유지(phase380)
+      const on=mine2||(bgmPlaying()&&bgmCur===src);
       btn.textContent=on?'❚❚':'▶'; d.classList.toggle('playing',on);
       btn.onclick=()=>{
-        if(bgmPlaying()&&bgmCur===src) bgmStop(); else bgmStart(src);
+        if(on) bgmStop(); else bgmStart(src);
         renderSide(); };
       return;
     }
