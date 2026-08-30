@@ -1530,14 +1530,40 @@ async function nbInfo(h){
   }catch(e){ nbCache[h]=null; }
   return nbCache[h];
 }
-let bgmCur='', bgmHandle='';
+let bgmCur='', bgmHandle='', bgmNowVid='', bgmEar=null;
+/* 🎵 유튜브 iframe API 수신(phase376): listening 핸드셰이크 후 infoDelivery에서 현재 videoId를 받음 */
+window.addEventListener('message', e=>{
+  if(!/^https:\/\/www\.youtube(-nocookie)?\.com$/.test(e.origin)) return;
+  let d2; try{ d2=JSON.parse(e.data); }catch(err){ return; }
+  const v2=d2&&d2.info&&d2.info.videoData&&d2.info.videoData.video_id;
+  if(v2 && v2!==bgmNowVid){ bgmNowVid=v2; try{ renderSide(); }catch(err){} }
+});
+function bgmListen(){
+  clearInterval(bgmEar);
+  bgmEar=setInterval(()=>{
+    const fr=document.querySelector('#bgm-dock-fr iframe');
+    if(!fr){ clearInterval(bgmEar); return; }
+    try{ fr.contentWindow.postMessage(JSON.stringify({event:'listening', id:'lv', channel:'widget'}), '*'); }catch(err){}
+  }, 1200);
+}
+/* ▁ 영상 접기(phase375): 화면만 접고 소리는 유지 — 선택은 이 기기에 기억 */
+function bgmMinApply(){
+  $('#bgm-dock').classList.toggle('min', localStorage.getItem('lv-bgm-min')==='1');
+}
 const bgmPlaying=()=>!!document.querySelector('#bgm-dock-fr iframe');
-function bgmStart(src){ bgmCur=src; bgmHandle=st.handle;
+function bgmStart(src){ bgmCur=src; bgmHandle=st.handle; bgmNowVid='';
+  src+=(src.includes('?')?'&':'?')+'enablejsapi=1&origin='+encodeURIComponent(location.origin);
   $('#bgm-dock-fr').innerHTML=`<iframe style="width:200px;height:112px;border:0;border-radius:9px;display:block" src="${src}" allow="autoplay; encrypted-media"></iframe>`;
-  $('#bgm-dock').classList.remove('hidden'); }
+  $('#bgm-dock').classList.remove('hidden'); bgmMinApply(); bgmListen(); }
 function bgmStop(){ bgmCur=''; bgmHandle='';
-  $('#bgm-dock-fr').innerHTML=''; $('#bgm-dock').classList.add('hidden'); }
+  $('#bgm-dock-fr').innerHTML=''; $('#bgm-dock').classList.add('hidden');
+  bgmNowVid=''; clearInterval(bgmEar); }
 $('#bgm-dock-x').onclick=()=>{ bgmStop(); renderSide(); };
+$('#bgm-dock-mn').onclick=()=>{
+  const on=localStorage.getItem('lv-bgm-min')==='1';
+  try{ localStorage.setItem('lv-bgm-min', on?'0':'1'); }catch(e){}
+  bgmMinApply();
+};
 function renderWidgets(){ renderSide(); }
 const bgmTrk={};                                                 // 위젯별 현재 트랙(세션)(phase274)
 function renderSide(){
@@ -1644,7 +1670,12 @@ function renderSide(){
       if(String(p.bgm?.url||'').trim()) trks.push({url:p.bgm.url, title:p.bgm.title||''});
       if(String(w.url||'').trim()) trks.push({url:w.url, title:w.title||''});               // 구 위젯 전용 값 호환
       (w.tracks||[]).forEach(t=>{ if(t&&String(t.url||'').trim()) trks.push(t); });
-      const tcur=trks.length?Math.min(bgmTrk[wi]||0, trks.length-1):0;
+      let tcur=trks.length?Math.min(bgmTrk[wi]||0, trks.length-1):0;
+      /* 🎵 실시간 곡 동기화(phase376): 유튜브가 알려준 현재 곡으로 표시 갱신 */
+      if(bgmPlaying() && bgmNowVid){
+        const k=trks.findIndex(t2=>ytId(t2.url)===bgmNowVid);
+        if(k>=0) tcur=k;
+      }
       const bsrc = trks.length ? {url:trks[tcur].url, title:trks[tcur].title||''} : {};
       const vid=ytId(bsrc.url), list=ytList(bsrc.url);
       if(!vid && !list){
@@ -1722,7 +1753,7 @@ function renderSide(){
       if(trks.length>1){                                          // 곡 목록 UI(phase274)
         const tl=document.createElement('div'); tl.className='bgm-trk';
         tl.innerHTML=trks.map((t,i)=>{
-          const playing=bgmPlaying()&&bgmCur===srcFrom(i);
+          const playing=bgmPlaying() && (bgmNowVid ? ytId(trks[i].url)===bgmNowVid : bgmCur===srcFrom(i));
           return `<button data-tk="${i}" class="${i===tcur?'sel':''}${playing?' pl':''}">
             <span class="n">${playing?'♪':(i+1)}</span><span class="t">${esc(t.title||('트랙 '+(i+1)))}</span></button>`;
         }).join('');
@@ -2016,12 +2047,21 @@ function renderSide(){
       const bub=(s,nm,av,tx)=>`<div class="pq-row pq-${s}">${av?`<img class="pq-av" src="${av}" alt="" draggable="false" loading="lazy">`:''}<div class="pq-bub"><p class="pq-nm">${esc(nm||(s==='a'?'A':'B'))}</p><p class="pq-tx">${esc(tx)}</p></div></div>`;
       /* 문답 스타일(phase339): 말풍선 대신 "이름: 답" 한 줄 — 이름은 각자 색 */
       const pln=(s,nm,tx)=>`<p class="pq-pl"><span class="pq-pn" style="color:${s==='a'?(w.ac||'var(--pri)'):(w.bc||'var(--ink)')}">${esc(nm||(s==='a'?'A':'B'))}:</span>${esc(tx)}</p>`;
+      const iv=w.mode==='iv';                               // 🎙 서로 인터뷰(phase374): 질문도 인물의 말
       const row=(x,i)=> w.style==='plain'
         ? `${x.a?pln('a',w.an,x.a):''}${x.b?pln('b',w.bn,x.b):''}`
         : `${x.a?bub('a',w.an,w.ai,x.a):''}${x.b?bub('b',w.bn,w.bi,x.b):''}`;
+      const qline=(x,i)=>{
+        if(!iv) return `<p class="pq-q"><b>Q${i+1}.</b> ${esc(x.q)}</p>`;
+        const qs2=x.d==='ba'?'b':'a';                        // 질문자: 기본 A, 'ba'면 B
+        return w.style==='plain'
+          ? `<p class="pq-q pq-qiv"><b>Q${i+1}.</b></p>`+pln(qs2, qs2==='a'?w.an:w.bn, x.q)
+          : `<p class="pq-q pq-qiv"><b>Q${i+1}.</b></p>`+bub(qs2, qs2==='a'?w.an:w.bn, qs2==='a'?w.ai:w.bi, x.q);
+      };
       if(w.style==='plain') d.className+=' pq-plain';
-      d.innerHTML=`<p class="pq-head">PAIR INTERVIEW</p>`
-        + qs.map((x,i)=>`<div class="pq-item${one?(i?' hidden':''):(i>=lim?' pq-more hidden':'')}"><p class="pq-q"><b>Q${i+1}.</b> ${esc(x.q)}</p>${row(x,i)}</div>`).join('')
+      if(+w.qsz) d.style.setProperty('--pqQs', (+w.qsz)+'px');   // 질문 크기(phase374)
+      d.innerHTML=`<p class="pq-head">${esc(w.title||'PAIR INTERVIEW')}</p>`
+        + qs.map((x,i)=>`<div class="pq-item${one?(i?' hidden':''):(i>=lim?' pq-more hidden':'')}">${qline(x,i)}${row(x,i)}</div>`).join('')
         + (!one && qs.length>lim?`<button class="pq-morebtn">더보기 (${qs.length-lim})</button>`:'')
         + (one && qs.length>1?`<div class="pq-pager"><button class="pq-pv" title="이전 질문">‹</button><span class="pq-ct">1 / ${qs.length}</span><button class="pq-nx" title="다음 질문">›</button></div>`:'')
         + (!qs.length&&st.mine?`<p class="pl-empty">✎에서 인물과 질문을 추가하세요.</p>`:'');
@@ -3900,6 +3940,16 @@ function renderWidEdit(){
     <textarea id="we-cprel" rows="2" placeholder="관계 설명 (선택 — 두 카드 아래 가운데에 나와요)" style="font-size:12px">${esc(w.rel||'')}</textarea>`
     +cpForm(w.a,'a','왼쪽(위) 인물')+cpForm(w.b,'b','오른쪽(아래) 인물');
   if(w.t==='pairqa') html+=`
+    <div class="p-row" style="gap:6px">
+      <input id="pq-title" placeholder="위젯 제목 (비우면 PAIR INTERVIEW)" value="${esc(w.title||'')}" style="flex:1;min-width:0;margin-bottom:0">
+      <input type="number" id="pq-qsz" min="8" max="30" placeholder="질문 크기" value="${+w.qsz||''}" title="질문 글자 크기(px) — 비우면 기본" style="width:88px;flex:none;margin-bottom:0">
+    </div>
+    <div class="p-row" style="align-items:center;gap:8px;font-size:11.5px;color:var(--muted)">
+      <select id="pq-mode" style="width:auto;margin-bottom:0" title="서로 인터뷰: 질문도 인물의 말로 — 질문마다 누가 묻는지 고를 수 있어요">
+        <option value="" ${w.mode!=='iv'?'selected':''}>형식 — 함께 답하기 (질문에 둘 다 답)</option>
+        <option value="iv" ${w.mode==='iv'?'selected':''}>형식 — 서로 인터뷰 (묻고 답하기)</option>
+      </select>
+    </div>
     <div class="p-row" style="align-items:center;gap:6px">
       <input id="pq-an" placeholder="인물 A 이름" value="${esc(w.an||'')}" style="flex:1;margin-bottom:0">
       <input type="color" id="pq-ac" value="${w.ac||'#8f88e8'}" title="A 말풍선 색" style="width:38px;flex:none;padding:2px;margin-bottom:0">
@@ -3926,6 +3976,10 @@ function renderWidEdit(){
       </select><span>사진은 안 넣으면 이름만 나와요 · 답을 비우면 그 사람 말풍선은 생략</span>
     </div>
     ${(w.qas||[]).map((x,i)=>`<div class="pq-card">
+      ${w.mode==='iv'?`<select data-pqd="${i}" style="width:auto;margin-bottom:0;font-size:11px">
+        <option value="" ${x.d!=='ba'?'selected':''}>${esc(w.an||'A')} 질문 → ${esc(w.bn||'B')} 답</option>
+        <option value="ba" ${x.d==='ba'?'selected':''}>${esc(w.bn||'B')} 질문 → ${esc(w.an||'A')} 답</option>
+      </select>`:''}
       <div class="p-row" style="gap:6px"><input data-pqq="${i}" placeholder="질문 ${i+1}" value="${esc(x.q||'')}" style="flex:1;margin-bottom:0"><button class="rmv" data-pqdel="${i}" style="flex:none">✕</button></div>
       <input data-pqa="${i}" placeholder="${esc(w.an||'A')}의 답" value="${esc(x.a||'')}" style="margin-bottom:0">
       <input data-pqb="${i}" placeholder="${esc(w.bn||'B')}의 답" value="${esc(x.b||'')}" style="margin-bottom:0">
@@ -4331,6 +4385,12 @@ function renderWidEdit(){
     const key=inp.dataset.pqq!==undefined?['pqq','q']:inp.dataset.pqa!==undefined?['pqa','a']:['pqb','b'];
     inp.addEventListener('input',()=>{ (w.qas??=[])[+inp.dataset[key[0]]][key[1]]=inp.value; }); });
   const pqadd=$('#pq-addq'); if(pqadd) pqadd.onclick=()=>{ (w.qas??=[]).push({q:'',a:'',b:''}); renderWidEdit(); };
+  const pqt=$('#pq-title'); if(pqt) pqt.addEventListener('input',()=>{ w.title=pqt.value; });
+  const pqz=$('#pq-qsz'); if(pqz) pqz.addEventListener('input',()=>{ const v=+pqz.value; if(v) w.qsz=v; else delete w.qsz; });
+  const pqm=$('#pq-mode'); if(pqm) pqm.addEventListener('input',()=>{ w.mode=pqm.value; renderWidEdit(); });
+  $('#wid-edit').querySelectorAll('[data-pqd]').forEach(el=>el.addEventListener('input',()=>{
+    const q2=w.qas[+el.dataset.pqd]; if(!q2) return;
+    if(el.value) q2.d=el.value; else delete q2.d; }));
   // ☑ 투두리스트(phase348)
   const tdl=$('#we-tdtl'); if(tdl) tdl.addEventListener('input',()=>{ w.title=tdl.value; });
   const tds=$('#we-tdstyle'); if(tds) tds.addEventListener('input',()=>{ w.style=tds.value; });

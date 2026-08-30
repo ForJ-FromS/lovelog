@@ -127,6 +127,13 @@
   #bgm-dock-x{background:none;border:none;color:var(--muted);cursor:pointer;
     font-size:12px;padding:2px 4px}
   #bgm-dock-x:hover{color:var(--ink)}
+  #bgm-dock-mn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:11px;padding:2px 5px}
+  #bgm-dock-mn:hover{color:var(--ink)}
+  #bgm-dock-t{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.08em;padding:0 6px;align-self:center}
+  #bgm-dock.min #bgm-dock-fr iframe{width:1px!important;height:1px!important;opacity:0;position:absolute;pointer-events:none}
+  #bgm-dock.min #bgm-dock-fr{width:1px;height:1px;overflow:hidden}
+  #bgm-dock.min #bgm-dock-t{display:inline}
+  #bgm-dock.min #bgm-dock-mn{transform:rotate(180deg)}
   @media(max-width:640px){#bgm-dock{left:10px;bottom:10px;padding:6px}
     #bgm-dock-fr iframe{width:150px!important;height:84px!important}}
   #ph-dock{position:fixed;right:20px;bottom:196px;z-index:9;display:flex;flex-direction:column;gap:8px}
@@ -1672,7 +1679,7 @@ html,body{overflow-x:hidden;overflow-x:clip}
 .ntc-editbox{margin:2px 0 10px;padding:8px;border:1px dashed var(--line);border-radius:8px;background:var(--card2)}
 /* 📇 페어 인터뷰 (phase338) */
 .w-pairqa .pq-head{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.22em;color:var(--muted);margin:0 0 10px}
-.w-pairqa .pq-q{font-size:11px;color:var(--muted);margin:12px 0 6px;line-height:1.5}
+.w-pairqa .pq-q{font-size:var(--pqQs, 11px);color:var(--muted);margin:12px 0 6px;line-height:1.5}
 .w-pairqa .pq-item:first-of-type .pq-q{margin-top:0}
 .w-pairqa .pq-q b{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--pri);margin-right:4px}
 .pq-row{display:flex;gap:7px;margin:0 0 5px;align-items:flex-end}
@@ -1833,7 +1840,7 @@ html,body{overflow-x:hidden;overflow-x:clip}
 <body>
 
 <div id="bgphoto"></div>
-<div id="bgm-dock" class="hidden"><div id="bgm-dock-fr"></div><button id="bgm-dock-x" title="재생 종료">✕</button></div>
+<div id="bgm-dock" class="hidden"><div id="bgm-dock-fr"></div><span id="bgm-dock-t" class="hidden">♪ BGM 재생 중</span><button id="bgm-dock-mn" title="영상 접기 — 소리는 계속 나와요">▁</button><button id="bgm-dock-x" title="재생 종료">✕</button></div>
 <div class="seal"><span id="seal-txt">LOVELOG</span><a id="seal-mut" class="hidden" title="이웃 전용 메모" style="cursor:pointer">🔒</a><a id="seal-my" class="hidden" title="내 홈으로 돌아가기" style="cursor:pointer">MY ⌂</a><a href="/guide.html" style="text-decoration:none;color:inherit">GUIDE</a><a id="seal-auth"></a></div>
 <div id="homes"><div class="homes-box">
   <p class="p-h" style="margin:0 0 12px">◈ HOMES — 공개된 러브로그</p>
@@ -2644,6 +2651,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=401"></script>
+<script type="module" src="./app.js?v=404"></script>
 </body>
 </html>
