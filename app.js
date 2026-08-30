@@ -386,46 +386,50 @@ function chatCfgOpen(taId){
     ? `<div class="p-row" style="gap:5px;flex-wrap:wrap;margin-bottom:10px">${Object.keys(pres).map(k=>
         `<span class="ck-pre"><button class="btn" data-ckp="${esc(k)}" style="font-size:11px;padding:4px 10px">💬 ${esc(k)}</button><i data-ckx="${esc(k)}" title="프리셋 삭제">✕</i></span>`).join('')}</div>`
     : '';
-  ov.innerHTML=`<div class="pq-adj-card" style="width:min(340px,100%)">
-    <p class="p-h" style="margin:0 0 8px">💬 대화 서식</p>
+  ov.innerHTML=`<div class="pq-adj-card ck-card">
+    <p class="p-h" style="margin:0 0 10px">💬 대화 서식</p>
     ${preRow}
-    <div class="p-row" style="gap:6px;align-items:center">
-      <select id="ck-skin" style="width:auto;margin-bottom:0">
-        <option value="">기본</option><option value="msgr">메신저 (흰 박스)</option><option value="radio">무전 로그</option>
+    <div class="ck-row">
+      <span class="ck-l">모양</span>
+      <select id="ck-skin" style="flex:1;margin-bottom:0">
+        <option value="">기본 — 테마에 융화</option><option value="msgr">메신저 — 흰 박스</option><option value="radio">무전 로그</option>
       </select>
-      <span style="font-size:11px;color:var(--muted)">너비</span>
-      <input type="range" id="ck-w" min="240" max="560" step="10" value="380" style="flex:1">
-      <b id="ck-wv" style="font-size:11px;min-width:34px">380</b>
-      <label class="chk" style="font-size:11px"><input type="checkbox" id="ck-full"> 꽉</label>
     </div>
-    <div class="p-row" style="gap:10px;align-items:center;font-size:11px;color:var(--muted);margin-top:6px">
-      왼쪽 풍선 <input type="color" id="ck-lc" value="#3a3d45" style="width:34px;padding:2px;margin-bottom:0">
-      오른쪽 풍선 <input type="color" id="ck-rc" value="#8f88e8" style="width:34px;padding:2px;margin-bottom:0">
-      <label class="chk" style="font-size:11px"><input type="checkbox" id="ck-defc" checked> 스킨 기본색</label>
+    <div class="ck-row">
+      <span class="ck-l">너비</span>
+      <input type="range" id="ck-w" min="240" max="560" step="10" value="380" style="flex:1;margin:0">
+      <b id="ck-wv" style="font-size:11px;width:30px;text-align:right;color:var(--ink)">380</b>
+      <label class="chk" style="font-size:11px;flex:none"><input type="checkbox" id="ck-full"> 꽉 채움</label>
     </div>
+    <div class="ck-row">
+      <span class="ck-l">풍선색</span>
+      <span class="ck-sub">왼쪽</span><input type="color" id="ck-lc" class="ck-color" value="#3a3d45">
+      <span class="ck-sub">오른쪽</span><input type="color" id="ck-rc" class="ck-color" value="#8f88e8">
+      <label class="chk" style="font-size:11px;flex:none;margin-left:auto"><input type="checkbox" id="ck-defc" checked> 기본색</label>
+    </div>
+    <div class="ck-div"></div>
     <div id="ck-people"></div>
-    <div class="p-row" style="gap:6px;align-items:center;margin-top:10px">
-      <input id="ck-pname" placeholder="프리셋 이름 (사진 쓰려면 저장 필요)" style="flex:1;margin-bottom:0;font-size:12px">
-    </div>
-    <div class="p-row" style="justify-content:flex-end;gap:8px;margin-top:10px">
+    <div class="ck-div"></div>
+    <input id="ck-pname" placeholder="프리셋 이름 — 사진을 쓰려면 저장이 필요해요" style="width:100%;margin:0 0 10px;font-size:12px">
+    <div class="p-row" style="justify-content:flex-end;gap:7px;margin:0">
       <button class="rmv" data-a="c" style="font-size:11.5px">취소</button>
-      <button class="btn" data-a="ins" style="font-size:11.5px" title="설정을 글에 직접 적어 넣어요 — 사진 제외">저장 없이 넣기</button>
-      <button class="btn pri" data-a="save" style="font-size:12px;padding:6px 14px">프리셋 저장 · 넣기</button>
+      <button class="btn" data-a="ins" style="font-size:11.5px" title="설정을 글에 직접 적어 넣어요 — 사진 제외">저장 없이</button>
+      <button class="btn pri" data-a="save" style="font-size:12px;padding:6px 16px">저장 · 넣기</button>
     </div></div>`;
   document.body.appendChild(ov);
   const ppl=[{n:'',c:'',img:''},{n:'',c:'',img:''}];
   const pplBox=ov.querySelector('#ck-people');
   const drawPpl=()=>{
     pplBox.innerHTML=ppl.map((q,i2)=>`
-      <div class="p-row" style="gap:6px;align-items:center;margin-top:6px">
-        <span style="font-size:11px;color:var(--muted);width:34px">${i2===0?'왼쪽':i2===1?'오른쪽':'왼쪽+'}</span>
-        <img class="ch-av" src="${q.img||''}" style="${q.img?'':'display:none'}">
+      <div class="ck-row">
+        <span class="ck-l">${i2===0?'왼쪽':i2===1?'오른쪽':'왼쪽+'}</span>
+        <span class="ck-avslot">${q.img?`<img class="ch-av" src="${q.img}">`:'<i>·</i>'}</span>
         <input data-ckn="${i2}" placeholder="이름" value="${esc(q.n)}" style="flex:1;min-width:0;margin-bottom:0;font-size:12px">
-        <input type="color" data-ckc="${i2}" value="${q.c||'#8f88e8'}" title="이 사람 풍선색 (선택)" style="width:34px;padding:2px;margin-bottom:0">
-        <button class="rmv" data-cki="${i2}" style="font-size:10px">사진</button>
-        ${q.img?`<button class="rmv" data-ckix="${i2}" style="font-size:10px">✕</button>`:''}
+        <input type="color" data-ckc="${i2}" class="ck-color" value="${q.c||'#8f88e8'}" title="이 사람 풍선색 (선택)">
+        <button class="rmv ck-mini" data-cki="${i2}">${q.img?'사진 교체':'사진'}</button>
+        ${q.img?`<button class="rmv ck-mini" data-ckix="${i2}" title="사진 지우기">✕</button>`:''}
       </div>`).join('')
-      + `<button class="rmv" id="ck-padd" style="font-size:10.5px;margin-top:6px">+ 인물</button>`;
+      + `<button class="rmv ck-mini" id="ck-padd" style="margin-top:8px">＋ 인물 추가</button>`;
     pplBox.querySelectorAll('[data-ckn]').forEach(el=>el.oninput=()=>{ ppl[+el.dataset.ckn].n=el.value; });
     pplBox.querySelectorAll('[data-ckc]').forEach(el=>el.oninput=()=>{ ppl[+el.dataset.ckc].c=el.value; });
     pplBox.querySelectorAll('[data-cki]').forEach(el=>el.onclick=()=>{
