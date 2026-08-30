@@ -2046,17 +2046,18 @@ function renderSide(){
       const lim=one?qs.length:((+w.n>0 && qs.length>+w.n)?+w.n:qs.length);
       const bub=(s,nm,av,tx)=>`<div class="pq-row pq-${s}">${av?`<img class="pq-av" src="${av}" alt="" draggable="false" loading="lazy">`:''}<div class="pq-bub"><p class="pq-nm">${esc(nm||(s==='a'?'A':'B'))}</p><p class="pq-tx">${esc(tx)}</p></div></div>`;
       /* 문답 스타일(phase339): 말풍선 대신 "이름: 답" 한 줄 — 이름은 각자 색 */
-      const pln=(s,nm,tx)=>`<p class="pq-pl"><span class="pq-pn" style="color:${s==='a'?(w.ac||'var(--pri)'):(w.bc||'var(--ink)')}">${esc(nm||(s==='a'?'A':'B'))}:</span>${esc(tx)}</p>`;
+      const pln=(s,nm,tx,pre='')=>`<p class="pq-pl">${pre}<span class="pq-pn" style="color:${s==='a'?(w.ac||'var(--pri)'):(w.bc||'var(--ink)')}">${esc(nm||(s==='a'?'A':'B'))}:</span>${esc(tx)}</p>`;
       const iv=w.mode==='iv';                               // 🎙 서로 인터뷰(phase374): 질문도 인물의 말
       const row=(x,i)=> w.style==='plain'
         ? `${x.a?pln('a',w.an,x.a):''}${x.b?pln('b',w.bn,x.b):''}`
         : `${x.a?bub('a',w.an,w.ai,x.a):''}${x.b?bub('b',w.bn,w.bi,x.b):''}`;
       const qline=(x,i)=>{
-        if(!iv) return `<p class="pq-q"><b>Q${i+1}.</b> ${esc(x.q)}</p>`;
+        const num=w.noNum?'':`Q${i+1}.`;                     // 번호 숨김(phase378)
+        if(!iv) return `<p class="pq-q">${num?`<b>${num}</b> `:''}${esc(x.q)}</p>`;
         const qs2=x.d==='ba'?'b':'a';                        // 질문자: 기본 A, 'ba'면 B
         return w.style==='plain'
-          ? `<p class="pq-q pq-qiv"><b>Q${i+1}.</b></p>`+pln(qs2, qs2==='a'?w.an:w.bn, x.q)
-          : `<p class="pq-q pq-qiv"><b>Q${i+1}.</b></p>`+bub(qs2, qs2==='a'?w.an:w.bn, qs2==='a'?w.ai:w.bi, x.q);
+          ? pln(qs2, qs2==='a'?w.an:w.bn, x.q, num?`<b class="pq-qn">${num}</b> `:'')   // 문답: Q번호 인라인(phase377)
+          : (num?`<p class="pq-q pq-qiv"><b>${num}</b></p>`:'')+bub(qs2, qs2==='a'?w.an:w.bn, qs2==='a'?w.ai:w.bi, x.q);
       };
       if(w.style==='plain') d.className+=' pq-plain';
       if(+w.qsz) d.style.setProperty('--pqQs', (+w.qsz)+'px');   // 질문 크기(phase374)
@@ -3949,6 +3950,7 @@ function renderWidEdit(){
         <option value="" ${w.mode!=='iv'?'selected':''}>형식 — 함께 답하기 (질문에 둘 다 답)</option>
         <option value="iv" ${w.mode==='iv'?'selected':''}>형식 — 서로 인터뷰 (묻고 답하기)</option>
       </select>
+      <label class="chk" style="font-size:11.5px"><input type="checkbox" id="pq-nonum" ${w.noNum?'checked':''}> Q1 · Q2 번호 숨기기</label>
     </div>
     <div class="p-row" style="align-items:center;gap:6px">
       <input id="pq-an" placeholder="인물 A 이름" value="${esc(w.an||'')}" style="flex:1;margin-bottom:0">
@@ -4388,6 +4390,7 @@ function renderWidEdit(){
   const pqt=$('#pq-title'); if(pqt) pqt.addEventListener('input',()=>{ w.title=pqt.value; });
   const pqz=$('#pq-qsz'); if(pqz) pqz.addEventListener('input',()=>{ const v=+pqz.value; if(v) w.qsz=v; else delete w.qsz; });
   const pqm=$('#pq-mode'); if(pqm) pqm.addEventListener('input',()=>{ w.mode=pqm.value; renderWidEdit(); });
+  const pqnn=$('#pq-nonum'); if(pqnn) pqnn.addEventListener('change',()=>{ if(pqnn.checked) w.noNum=true; else delete w.noNum; });
   $('#wid-edit').querySelectorAll('[data-pqd]').forEach(el=>el.addEventListener('input',()=>{
     const q2=w.qas[+el.dataset.pqd]; if(!q2) return;
     if(el.value) q2.d=el.value; else delete q2.d; }));
