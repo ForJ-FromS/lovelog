@@ -365,29 +365,29 @@ const chatHTML=(head,inner)=>{
       if(avs[p3]!==undefined && avs[p3]!=='') avs[nm]=avs[p3];
       if(colors[p3]) colors[nm]=colors[p3]; });
   }
-  const nar=r=>`<p class="ch-nar">${inlineFmt(esc(r.nar))}</p>`;
+  const nar=r=>`<p class="tk-nar">${inlineFmt(esc(r.nar))}</p>`;
   if(skin==='radio'){
     const line=r=> r.nm==null? nar(r)
-      : `<p class="ch-ln">${avs[r.nm]?`<img class="ch-avr" src="${avs[r.nm]}" alt="">`:''}<span class="ch-tag"${colors[r.nm]?` style="color:${colors[r.nm]}"`:''}>[${esc(r.nm)}]</span> ${inlineFmt(esc(r.tx))}</p>`;
+      : `<p class="tk-ln">${avs[r.nm]?`<img class="tk-avr" src="${avs[r.nm]}" alt="">`:''}<span class="tk-tag"${colors[r.nm]?` style="color:${colors[r.nm]}"`:''}>[${esc(r.nm)}]</span> ${inlineFmt(esc(r.tx))}</p>`;
     const wst2=width>0? ` style="max-width:${Math.min(720,Math.max(200,width))}px;margin-left:auto;margin-right:auto;width:100%"`:'';
-    return `<div class="chat-block chat-radio"${wst2}><p class="ch-hd">TRANSMISSION ▮▮▮▯</p><div class="ch-body">${rows.map(line).join('')}</div></div>`;
+    return `<div class="tk-block tk-radio"${wst2}><p class="tk-hd">TRANSMISSION ▮▮▮▯</p><div class="tk-body">${rows.map(line).join('')}</div></div>`;
   }
   const bub=r=>{
     const c=colors[r.nm] || (r.side==='r'? rc : lc);
     const stl=c? ` style="background:${c};color:${yiq(c)>.55?'#15131f':'#fff'}"`:'';
     const av=avs[r.nm];
-    const body=`${r.label?`<p class="ch-n">${esc(r.nm)}</p>`:''}<div class="ch-b"${stl}>${inlineFmt(esc(r.tx))}</div>`;
+    const body=`${r.label?`<p class="tk-n">${esc(r.nm)}</p>`:''}<div class="tk-b"${stl}>${inlineFmt(esc(r.tx))}</div>`;
     return av
-      ? `<div class="ch-m ${r.side} withav">${r.label?`<img class="ch-av" src="${av}" alt="">`:'<span class="ch-avsp"></span>'}<div class="ch-mm">${body}</div></div>`
-      : `<div class="ch-m ${r.side}">${body}</div>`;
+      ? `<div class="tk-m ${r.side} withav">${r.label?`<img class="tk-av" src="${av}" alt="">`:'<span class="tk-avsp"></span>'}<div class="tk-mm">${body}</div></div>`
+      : `<div class="tk-m ${r.side}">${body}</div>`;
   };
   const wst=width>0? ` style="max-width:${Math.min(720,Math.max(200,width))}px;margin-left:auto;margin-right:auto;width:100%"`:'';
   const core=rows.map(r=> r.nm==null? nar(r) : bub(r)).join('');
   return skin==='msgr'
-    ? `<div class="chat-block chat-msgr"${wst}><div class="ch-box"><p class="ch-dots">· · ·</p>${core}</div></div>`
+    ? `<div class="tk-block tk-msgr"${wst}><div class="tk-box"><p class="tk-dots">· · ·</p>${core}</div></div>`
     : skin==='radio'
     ? null /* radio는 아래 별도 반환 유지 — 이 줄에 오지 않음 */
-    : `<div class="chat-block"${wst}>${core}</div>`;
+    : `<div class="tk-block"${wst}>${core}</div>`;
 };
 /* 💬 대화 설정 팝업(phase369): 스킨·너비·좌우 풍선색·인물(이름/색/사진)을 글 블록 단위로.
    [프리셋 저장]하면 홈 문서 chatPre에 담겨 [톡@이름]으로 재사용 — 사진은 프리셋 저장 시에만 가능 */
@@ -436,7 +436,7 @@ function chatCfgOpen(taId){
     pplBox.innerHTML=ppl.map((q,i2)=>`
       <div class="ck-row">
         <span class="ck-l">${i2===0?'왼쪽':i2===1?'오른쪽':'왼쪽+'}</span>
-        <span class="ck-avslot">${q.img?`<img class="ch-av" src="${q.img}">`:'<i>·</i>'}</span>
+        <span class="ck-avslot">${q.img?`<img class="tk-av" src="${q.img}">`:'<i>·</i>'}</span>
         <input data-ckn="${i2}" placeholder="이름" value="${esc(q.n)}" style="flex:1;min-width:0;margin-bottom:0;font-size:12px">
         <input type="color" data-ckc="${i2}" class="ck-color" value="${q.c||'#8f88e8'}" title="이 사람 풍선색 (선택)">
         <button class="rmv ck-mini" data-cki="${i2}">${q.img?'사진 교체':'사진'}</button>
