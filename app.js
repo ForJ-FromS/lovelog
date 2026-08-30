@@ -310,17 +310,32 @@ const bodyCore=t=>t.split(/(\n{2,})/).map(p=>{
    · 스킨: 기본 / 메신저(흰 박스) / 무전(모노 로그) — 홈 기본값은 테마의 chatStyle, 블록 지정이 우선 */
 const chatHTML=(head,inner)=>{
   const SK={'기본':'','메신저':'msgr','무전':'radio'};
-  let skin=null; const people=[]; const colors={};
-  String(head||'').replace(/^:/,'').split(':').forEach(seg=>{
+  let skin=null, width=380, lc='', rc=''; const people=[]; const colors={}; const avs={};
+  let h2=String(head||'');
+  /* 프리셋: [톡@이름] — 팝업에서 저장한 설정(사진 포함)을 홈 문서에서 불러옴(phase369) */
+  const pm=h2.match(/^@(.+)$/);
+  if(pm){
+    const P=(st.page?.chatPre||{})[pm[1].trim()];
+    if(!P) return null;                                     // 없는 프리셋 → 원문 유지
+    skin=P.skin||''; width=+P.w||380; lc=P.lc||''; rc=P.rc||'';
+    (P.people||[]).forEach(q=>{ if(!q||!q.n) return;
+      people.push(q.n); if(q.c) colors[q.n]=q.c; if(q.img) avs[q.n]=q.img; });
+    h2='';
+  }
+  h2.replace(/^:/,'').split(':').forEach(seg=>{
     seg=seg.trim(); if(!seg) return;
     if(skin===null && SK[seg]!==undefined){ skin=SK[seg]; return; }
+    let tm;
+    if((tm=seg.match(/^w=(\d{2,4}|full)$/))){ width=tm[1]==='full'?0:+tm[1]; return; }
+    if((tm=seg.match(/^lc=(#[0-9a-fA-F]{3,8})$/))){ lc=tm[1]; return; }
+    if((tm=seg.match(/^rc=(#[0-9a-fA-F]{3,8})$/))){ rc=tm[1]; return; }
     seg.split('/').forEach(p2=>{ p2=p2.trim(); if(!p2) return;
       const mm=p2.match(/^(.+?)=(#[0-9a-fA-F]{3,8})$/);
       const nm=(mm?mm[1]:p2).trim();
       if(nm && !people.includes(nm)) people.push(nm);
       if(mm && nm) colors[nm]=mm[2]; });
   });
-  if(skin===null) skin=({msgr:'msgr',radio:'radio'})[st.page?.chatStyle]||'';
+  if(skin===null) skin='';
   const declared=people.length>0;
   const seen=[...people];
   const yiq=c=>{ try{ let h=c.slice(1); if(h.length===3) h=h.split('').map(x2=>x2+x2).join('');
@@ -341,18 +356,144 @@ const chatHTML=(head,inner)=>{
   if(skin==='radio'){
     const line=r=> r.nm==null? nar(r)
       : `<p class="ch-ln"><span class="ch-tag"${colors[r.nm]?` style="color:${colors[r.nm]}"`:''}>[${esc(r.nm)}]</span> ${inlineFmt(esc(r.tx))}</p>`;
-    return `<div class="chat-block chat-radio"><p class="ch-hd">TRANSMISSION ▮▮▮▯</p><div class="ch-body">${rows.map(line).join('')}</div></div>`;
+    const wst2=width>0? ` style="max-width:${Math.min(720,Math.max(200,width))}px;margin-left:auto;margin-right:auto;width:100%"`:'';
+    return `<div class="chat-block chat-radio"${wst2}><p class="ch-hd">TRANSMISSION ▮▮▮▯</p><div class="ch-body">${rows.map(line).join('')}</div></div>`;
   }
   const bub=r=>{
-    const c=colors[r.nm];
+    const c=colors[r.nm] || (r.side==='r'? rc : lc);
     const stl=c? ` style="background:${c};color:${yiq(c)>.55?'#15131f':'#fff'}"`:'';
-    return `<div class="ch-m ${r.side}">${r.label?`<p class="ch-n">${esc(r.nm)}</p>`:''}<div class="ch-b"${stl}>${inlineFmt(esc(r.tx))}</div></div>`;
+    const av=avs[r.nm];
+    const body=`${r.label?`<p class="ch-n">${esc(r.nm)}</p>`:''}<div class="ch-b"${stl}>${inlineFmt(esc(r.tx))}</div>`;
+    return av
+      ? `<div class="ch-m ${r.side} withav">${r.label?`<img class="ch-av" src="${av}" alt="">`:'<span class="ch-avsp"></span>'}<div class="ch-mm">${body}</div></div>`
+      : `<div class="ch-m ${r.side}">${body}</div>`;
   };
+  const wst=width>0? ` style="max-width:${Math.min(720,Math.max(200,width))}px;margin-left:auto;margin-right:auto;width:100%"`:'';
   const core=rows.map(r=> r.nm==null? nar(r) : bub(r)).join('');
   return skin==='msgr'
-    ? `<div class="chat-block chat-msgr"><div class="ch-box"><p class="ch-dots">· · ·</p>${core}</div></div>`
-    : `<div class="chat-block">${core}</div>`;
+    ? `<div class="chat-block chat-msgr"${wst}><div class="ch-box"><p class="ch-dots">· · ·</p>${core}</div></div>`
+    : skin==='radio'
+    ? null /* radio는 아래 별도 반환 유지 — 이 줄에 오지 않음 */
+    : `<div class="chat-block"${wst}>${core}</div>`;
 };
+/* 💬 대화 설정 팝업(phase369): 스킨·너비·좌우 풍선색·인물(이름/색/사진)을 글 블록 단위로.
+   [프리셋 저장]하면 홈 문서 chatPre에 담겨 [톡@이름]으로 재사용 — 사진은 프리셋 저장 시에만 가능 */
+function chatCfgOpen(taId){
+  const ta=$(taId||'#w-body'); if(!ta) return;
+  const pres=st.page?.chatPre||{};
+  const ov=document.createElement('div'); ov.className='pq-adj';
+  const preRow=Object.keys(pres).length
+    ? `<div class="p-row" style="gap:5px;flex-wrap:wrap;margin-bottom:10px">${Object.keys(pres).map(k=>
+        `<span class="ck-pre"><button class="btn" data-ckp="${esc(k)}" style="font-size:11px;padding:4px 10px">💬 ${esc(k)}</button><i data-ckx="${esc(k)}" title="프리셋 삭제">✕</i></span>`).join('')}</div>`
+    : '';
+  ov.innerHTML=`<div class="pq-adj-card" style="width:min(340px,100%)">
+    <p class="p-h" style="margin:0 0 8px">💬 대화 서식</p>
+    ${preRow}
+    <div class="p-row" style="gap:6px;align-items:center">
+      <select id="ck-skin" style="width:auto;margin-bottom:0">
+        <option value="">기본</option><option value="msgr">메신저 (흰 박스)</option><option value="radio">무전 로그</option>
+      </select>
+      <span style="font-size:11px;color:var(--muted)">너비</span>
+      <input type="range" id="ck-w" min="240" max="560" step="10" value="380" style="flex:1">
+      <b id="ck-wv" style="font-size:11px;min-width:34px">380</b>
+      <label class="chk" style="font-size:11px"><input type="checkbox" id="ck-full"> 꽉</label>
+    </div>
+    <div class="p-row" style="gap:10px;align-items:center;font-size:11px;color:var(--muted);margin-top:6px">
+      왼쪽 풍선 <input type="color" id="ck-lc" value="#3a3d45" style="width:34px;padding:2px;margin-bottom:0">
+      오른쪽 풍선 <input type="color" id="ck-rc" value="#8f88e8" style="width:34px;padding:2px;margin-bottom:0">
+      <label class="chk" style="font-size:11px"><input type="checkbox" id="ck-defc" checked> 스킨 기본색</label>
+    </div>
+    <div id="ck-people"></div>
+    <div class="p-row" style="gap:6px;align-items:center;margin-top:10px">
+      <input id="ck-pname" placeholder="프리셋 이름 (사진 쓰려면 저장 필요)" style="flex:1;margin-bottom:0;font-size:12px">
+    </div>
+    <div class="p-row" style="justify-content:flex-end;gap:8px;margin-top:10px">
+      <button class="rmv" data-a="c" style="font-size:11.5px">취소</button>
+      <button class="btn" data-a="ins" style="font-size:11.5px" title="설정을 글에 직접 적어 넣어요 — 사진 제외">저장 없이 넣기</button>
+      <button class="btn pri" data-a="save" style="font-size:12px;padding:6px 14px">프리셋 저장 · 넣기</button>
+    </div></div>`;
+  document.body.appendChild(ov);
+  const ppl=[{n:'',c:'',img:''},{n:'',c:'',img:''}];
+  const pplBox=ov.querySelector('#ck-people');
+  const drawPpl=()=>{
+    pplBox.innerHTML=ppl.map((q,i2)=>`
+      <div class="p-row" style="gap:6px;align-items:center;margin-top:6px">
+        <span style="font-size:11px;color:var(--muted);width:34px">${i2===0?'왼쪽':i2===1?'오른쪽':'왼쪽+'}</span>
+        <img class="ch-av" src="${q.img||''}" style="${q.img?'':'display:none'}">
+        <input data-ckn="${i2}" placeholder="이름" value="${esc(q.n)}" style="flex:1;min-width:0;margin-bottom:0;font-size:12px">
+        <input type="color" data-ckc="${i2}" value="${q.c||'#8f88e8'}" title="이 사람 풍선색 (선택)" style="width:34px;padding:2px;margin-bottom:0">
+        <button class="rmv" data-cki="${i2}" style="font-size:10px">사진</button>
+        ${q.img?`<button class="rmv" data-ckix="${i2}" style="font-size:10px">✕</button>`:''}
+      </div>`).join('')
+      + `<button class="rmv" id="ck-padd" style="font-size:10.5px;margin-top:6px">+ 인물</button>`;
+    pplBox.querySelectorAll('[data-ckn]').forEach(el=>el.oninput=()=>{ ppl[+el.dataset.ckn].n=el.value; });
+    pplBox.querySelectorAll('[data-ckc]').forEach(el=>el.oninput=()=>{ ppl[+el.dataset.ckc].c=el.value; });
+    pplBox.querySelectorAll('[data-cki]').forEach(el=>el.onclick=()=>{
+      const f2=document.createElement('input'); f2.type='file'; f2.accept='image/*';
+      f2.onchange=async()=>{ if(!f2.files[0]) return;
+        try{ const d2=await pqAdjust(f2.files[0]); if(d2){ ppl[+el.dataset.cki].img=d2; drawPpl(); } }
+        catch(e){ msg('사진 처리 실패'); } };
+      f2.click(); });
+    pplBox.querySelectorAll('[data-ckix]').forEach(el=>el.onclick=()=>{ ppl[+el.dataset.ckix].img=''; drawPpl(); });
+    const pa=pplBox.querySelector('#ck-padd'); if(pa) pa.onclick=()=>{ ppl.push({n:'',c:'',img:''}); drawPpl(); };
+  };
+  drawPpl();
+  const wv=ov.querySelector('#ck-wv');
+  ov.querySelector('#ck-w').oninput=function(){ wv.textContent=this.value; };
+  const close=()=>ov.remove();
+  ov.onclick=e=>{ if(e.target===ov) close(); };
+  ov.querySelector('[data-a="c"]').onclick=close;
+  ov.querySelectorAll('[data-ckp]').forEach(b=>b.onclick=()=>{ insertChat(ta, '[톡@'+b.dataset.ckp+']'); close(); });
+  ov.querySelectorAll('[data-ckx]').forEach(b=>b.onclick=async()=>{
+    if(!confirm('프리셋 「'+b.dataset.ckx+'」을(를) 지울까요?')) return;
+    delete pres[b.dataset.ckx];
+    try{ await updateDoc(doc(db,'pages',st.handle),{chatPre:pres}); st.page.chatPre=pres; msg('지웠어요.'); close(); chatCfgOpen(taId); }
+    catch(e){ msg('삭제 실패 — '+e.message); } });
+  const gather=()=>{
+    const skin=ov.querySelector('#ck-skin').value;
+    const full=ov.querySelector('#ck-full').checked;
+    const w=full?0:+ov.querySelector('#ck-w').value;
+    const defc=ov.querySelector('#ck-defc').checked;
+    return { skin, w, lc:defc?'':ov.querySelector('#ck-lc').value, rc:defc?'':ov.querySelector('#ck-rc').value,
+      people: ppl.filter(q=>q.n.trim()).map(q=>({n:q.n.trim(), c:q.c&&!ov.querySelector('#ck-defc').checked===false?q.c:q.c, img:q.img||''})) };
+  };
+  ov.querySelector('[data-a="ins"]').onclick=()=>{
+    const g=gather();
+    const segs=[];
+    if(g.skin==='msgr') segs.push('메신저'); if(g.skin==='radio') segs.push('무전');
+    segs.push(g.w>0?('w='+g.w):'w=full');
+    if(g.lc) segs.push('lc='+g.lc); if(g.rc) segs.push('rc='+g.rc);
+    const names=g.people.map(q=>q.n+(q.c?'='+q.c:'')).join('/');
+    if(names) segs.push(names);
+    insertChat(ta, '[톡:'+segs.join(':')+']');
+    close();
+  };
+  ov.querySelector('[data-a="save"]').onclick=async()=>{
+    const nm=(ov.querySelector('#ck-pname').value||'').trim();
+    if(!nm){ msg('프리셋 이름을 지어주세요.'); return; }
+    if(/[\[\]@:\/]/.test(nm)){ msg('이름에 [ ] @ : / 는 쓸 수 없어요.'); return; }
+    const g=gather();
+    if(!g.people.length){ msg('인물을 한 명 이상 적어주세요.'); return; }
+    pres[nm]=g;
+    try{
+      await updateDoc(doc(db,'pages',st.handle),{chatPre:pres});
+      st.page.chatPre=pres;
+      insertChat(ta, '[톡@'+nm+']'); close(); msg('프리셋 「'+nm+'」 저장!');
+    }catch(e){ msg('저장 실패 — '+e.message); }
+  };
+}
+function insertChat(ta, headStr){
+  const st0=ta.scrollTop, s=ta.selectionStart??ta.value.length;
+  const pre=ta.value.slice(0,s), post=ta.value.slice(s);
+  const nl1=(!pre||/\n\n$/.test(pre))?'':(/\n$/.test(pre)?'\n':'\n\n');
+  const nl2=(!post||/^\n\n/.test(post))?'':(/^\n/.test(post)?'\n':'\n\n');
+  const body='이름: 대사';
+  const block=nl1+headStr+'\n'+body+'\n[/톡]'+nl2;
+  ta.value=pre+block+post;
+  const at=pre.length+nl1.length+headStr.length+1;
+  ta.setSelectionRange(at, at+body.length);
+  ta.focus(); ta.scrollTop=st0;
+}
 const bodyHTML=t=>{
   t=String(t??'').replace(/\r\n?/g,'\n');   // CRLF 정규화(phase365) — 복붙 본문의 \r가 블록·문단 인식을 통째로 깨뜨림
   /* 🧩 HTML 블록(phase359): [html]…[/html] 안은 서식 엔진을 통째로 우회해 그대로 렌더.
@@ -4752,18 +4893,7 @@ function bindFmtBar(barSel, taId){
         const at=pre.length+nl1.length+7;                     // '[html]\n' 뒤
         ta.setSelectionRange(at, at+inner.length);
         ta.focus(); ta.scrollTop=st0; return; }
-      else if(f==='ck'){                                     // 💬 대화 서식 삽입(phase368)
-        const ta=$(taId||'#w-body'); if(!ta) return;
-        const st0=ta.scrollTop, s=ta.selectionStart??ta.value.length;
-        const pre=ta.value.slice(0,s), post=ta.value.slice(s);
-        const nl1=(!pre||/\n\n$/.test(pre))?'':(/\n$/.test(pre)?'\n':'\n\n');
-        const nl2=(!post||/^\n\n/.test(post))?'':(/^\n/.test(post)?'\n':'\n\n');
-        const names='이름1/이름2';
-        const block=nl1+'[톡:'+names+']\n이름1: 대사\n이름2: 대사\n[/톡]'+nl2;
-        ta.value=pre+block+post;
-        const at=pre.length+nl1.length+4;
-        ta.setSelectionRange(at, at+names.length);
-        ta.focus(); ta.scrollTop=st0; return; }
+      else if(f==='ck'){ chatCfgOpen(taId); return; }       // 💬 설정 팝업(phase369)
       else if(f==='ac') lineMark('@c ',taId);
       else if(f==='ar') lineMark('@r ',taId);
       else if(f==='aj') lineMark('@j ',taId);
@@ -5793,7 +5923,6 @@ function fillSettings(){
   $('#s-catshape').value=catShape();
   const scs=$('#s-catsel'); if(scs) scs.value=st.page.catSel||'';
   const sqs=$('#s-quotestyle'); if(sqs) sqs.value=st.page.quoteStyle||'';
-  const sch=$('#s-chatstyle'); if(sch) sch.value=st.page.chatStyle||'';
   $('#s-galcols').value=String(galCols());
   const smc=$('#s-memocols'); if(smc) smc.value=String(memoCols());
   const smp=$('#s-mpinmax'); if(smp) smp.value=String(mpinMax());
@@ -5911,7 +6040,6 @@ async function saveSettings(){
       catShape: $('#s-catshape').value,
       catSel: $('#s-catsel')?.value||'',
       quoteStyle: $('#s-quotestyle')?.value||'',
-      chatStyle: $('#s-chatstyle')?.value||'',
       galCols: +$('#s-galcols').value||3,
       memoCols: +($('#s-memocols')?.value)||3,
       mpinMax: +($('#s-mpinmax')?.value)||3,

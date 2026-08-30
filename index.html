@@ -1765,6 +1765,15 @@ html,body{overflow-x:hidden;overflow-x:clip}
 .rx-add:hover,.rx-add:focus{opacity:.95}
 .rx-pick{display:inline-flex;gap:4px}
 .rx-pick.hidden{display:none}
+/* 💬 대화 설정 팝업·아바타 (phase369) */
+.ch-m.withav{display:flex;gap:7px;align-items:flex-end}
+.ch-m.withav.r{flex-direction:row-reverse}
+.ch-av{width:30px;height:30px;border-radius:50%;object-fit:cover;flex:none;border:1px solid var(--line)}
+.ch-avsp{width:30px;flex:none}
+.ch-mm{min-width:0}
+.ck-pre{display:inline-flex;align-items:center;gap:3px}
+.ck-pre i{cursor:pointer;color:var(--muted);font-size:10px}
+.ck-pre i:hover{color:#e08c8c}
 /* 💬 대화(말풍선) 서식 (phase368) */
 .chat-block{display:flex;flex-direction:column;gap:7px;margin:0}
 .ch-m{max-width:80%;align-self:flex-start}
@@ -2438,11 +2447,7 @@ html,body{overflow-x:hidden;overflow-x:clip}
         <select id="s-quotestyle" title="본문 인용(>) 상자의 모양">
         <option value="">인용 — 기본 (세로선)</option>
         <option value="quote">인용 — 따옴표</option>
-        <option value="letter">인용 — 편지지</option></select>
-        <select id="s-chatstyle" title="본문 대화([톡]) 말풍선의 기본 모양 — 글에서 [톡:메신저]처럼 직접 지정하면 그게 우선해요">
-        <option value="">대화 — 기본 (테마 융화)</option>
-        <option value="msgr">대화 — 메신저 (흰 박스)</option>
-        <option value="radio">대화 — 무전 로그</option></select></span></div>
+        <option value="letter">인용 — 편지지</option></select></span></div>
       <div class="trow"><span class="tl">갤러리 한 줄</span><span class="tc"><select id="s-galcols">
         <option value="1">1장 (크게)</option><option value="2">2장</option>
         <option value="3" selected>3장 (기본)</option><option value="4">4장</option></select></span></div>
@@ -2614,6 +2619,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=396"></script>
+<script type="module" src="./app.js?v=397"></script>
 </body>
 </html>
