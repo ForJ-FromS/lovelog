@@ -304,6 +304,55 @@ const bodyCore=t=>t.split(/(\n{2,})/).map(p=>{
   return `<p${cls||''}>`+inlineFmt(esc(body)).replace(/\n/g,'<br>')+'</p>';
 }).join('');
 /* [접기:제목] ~ [/접기] — 눌러서 펼치는 접은 글(phase285). 문단 분해 전에 블록을 뽑아 재귀 처리 */
+/* 💬 대화(말풍선) 서식(phase368): [톡:스킨:이름=색/이름] … [/톡]
+   · 첫 인물 왼쪽 · 둘째 오른쪽 · 셋째부터 왼쪽 · "이름:" 없는 줄 = 가운데 지문
+   · 이름을 선언하면 선언된 이름만 말풍선(콜론 있는 지문 오인 방지)
+   · 스킨: 기본 / 메신저(흰 박스) / 무전(모노 로그) — 홈 기본값은 테마의 chatStyle, 블록 지정이 우선 */
+const chatHTML=(head,inner)=>{
+  const SK={'기본':'','메신저':'msgr','무전':'radio'};
+  let skin=null; const people=[]; const colors={};
+  String(head||'').replace(/^:/,'').split(':').forEach(seg=>{
+    seg=seg.trim(); if(!seg) return;
+    if(skin===null && SK[seg]!==undefined){ skin=SK[seg]; return; }
+    seg.split('/').forEach(p2=>{ p2=p2.trim(); if(!p2) return;
+      const mm=p2.match(/^(.+?)=(#[0-9a-fA-F]{3,8})$/);
+      const nm=(mm?mm[1]:p2).trim();
+      if(nm && !people.includes(nm)) people.push(nm);
+      if(mm && nm) colors[nm]=mm[2]; });
+  });
+  if(skin===null) skin=({msgr:'msgr',radio:'radio'})[st.page?.chatStyle]||'';
+  const declared=people.length>0;
+  const seen=[...people];
+  const yiq=c=>{ try{ let h=c.slice(1); if(h.length===3) h=h.split('').map(x2=>x2+x2).join('');
+    const n=parseInt(h.slice(0,6),16);
+    return (((n>>16)&255)*.299+((n>>8)&255)*.587+(n&255)*.114)/255; }catch(e){ return .5; } };
+  const rows=[]; let prev=null;
+  String(inner).split('\n').forEach(line=>{
+    const t2=line.trim(); if(!t2){ prev=null; return; }
+    const mm=t2.match(/^([^:]{1,24}):\s?(.*)$/);
+    let nm=mm? mm[1].trim() : null;
+    if(mm && declared && !people.includes(nm)) nm=null;
+    if(nm===null){ rows.push({nar:t2}); prev=null; return; }
+    if(!seen.includes(nm)) seen.push(nm);
+    rows.push({nm, tx:mm[2], side:seen.indexOf(nm)===1?'r':'l', label:prev!==nm}); prev=nm;
+  });
+  if(!rows.some(r=>r.nm)) return null;                               // 대사가 없으면 원문 유지
+  const nar=r=>`<p class="ch-nar">${inlineFmt(esc(r.nar))}</p>`;
+  if(skin==='radio'){
+    const line=r=> r.nm==null? nar(r)
+      : `<p class="ch-ln"><span class="ch-tag"${colors[r.nm]?` style="color:${colors[r.nm]}"`:''}>[${esc(r.nm)}]</span> ${inlineFmt(esc(r.tx))}</p>`;
+    return `<div class="chat-block chat-radio"><p class="ch-hd">TRANSMISSION ▮▮▮▯</p><div class="ch-body">${rows.map(line).join('')}</div></div>`;
+  }
+  const bub=r=>{
+    const c=colors[r.nm];
+    const stl=c? ` style="background:${c};color:${yiq(c)>.55?'#15131f':'#fff'}"`:'';
+    return `<div class="ch-m ${r.side}">${r.label?`<p class="ch-n">${esc(r.nm)}</p>`:''}<div class="ch-b"${stl}>${inlineFmt(esc(r.tx))}</div></div>`;
+  };
+  const core=rows.map(r=> r.nm==null? nar(r) : bub(r)).join('');
+  return skin==='msgr'
+    ? `<div class="chat-block chat-msgr"><div class="ch-box"><p class="ch-dots">· · ·</p>${core}</div></div>`
+    : `<div class="chat-block">${core}</div>`;
+};
 const bodyHTML=t=>{
   t=String(t??'').replace(/\r\n?/g,'\n');   // CRLF 정규화(phase365) — 복붙 본문의 \r가 블록·문단 인식을 통째로 깨뜨림
   /* 🧩 HTML 블록(phase359): [html]…[/html] 안은 서식 엔진을 통째로 우회해 그대로 렌더.
@@ -316,6 +365,15 @@ const bodyHTML=t=>{
     /* 문단 분리에 딱 필요한 만큼만 개행 보충 — 원문 빈 줄(pgap)을 불리지 않게 */
     const pre = (!before || /\n\n$/.test(before)) ? '' : (/\n$/.test(before) ? '\n' : '\n\n');
     const post = (!after || /^\n\n/.test(after)) ? '' : (/^\n/.test(after) ? '\n' : '\n\n');
+    return pre+'\u0001HB'+(hbs.length-1)+'\u0001'+post;
+  });
+  t=t.replace(/^[^\S\n]*\[톡([^\]\n]*)\][^\S\n]*\n([\s\S]*?)\n[^\S\n]*\[\/톡\][^\S\n]*$/gim,(m,head,inner,off,str)=>{
+    const ch=chatHTML(head,inner);
+    if(ch==null) return m;                                          // 대사 없으면 그대로
+    hbs.push(ch);
+    const before=str.slice(0,off), after=str.slice(off+m.length);
+    const pre=(!before||/\n\n$/.test(before))?'':(/\n$/.test(before)?'\n':'\n\n');
+    const post=(!after||/^\n\n/.test(after))?'':(/^\n/.test(after)?'\n':'\n\n');
     return pre+'\u0001HB'+(hbs.length-1)+'\u0001'+post;
   });
   /* 구분선 줄 격리(phase331): ***·===·~~~가 서식 마커와 같은 문자라 spanFix가
@@ -4694,6 +4752,18 @@ function bindFmtBar(barSel, taId){
         const at=pre.length+nl1.length+7;                     // '[html]\n' 뒤
         ta.setSelectionRange(at, at+inner.length);
         ta.focus(); ta.scrollTop=st0; return; }
+      else if(f==='ck'){                                     // 💬 대화 서식 삽입(phase368)
+        const ta=$(taId||'#w-body'); if(!ta) return;
+        const st0=ta.scrollTop, s=ta.selectionStart??ta.value.length;
+        const pre=ta.value.slice(0,s), post=ta.value.slice(s);
+        const nl1=(!pre||/\n\n$/.test(pre))?'':(/\n$/.test(pre)?'\n':'\n\n');
+        const nl2=(!post||/^\n\n/.test(post))?'':(/^\n/.test(post)?'\n':'\n\n');
+        const names='이름1/이름2';
+        const block=nl1+'[톡:'+names+']\n이름1: 대사\n이름2: 대사\n[/톡]'+nl2;
+        ta.value=pre+block+post;
+        const at=pre.length+nl1.length+4;
+        ta.setSelectionRange(at, at+names.length);
+        ta.focus(); ta.scrollTop=st0; return; }
       else if(f==='ac') lineMark('@c ',taId);
       else if(f==='ar') lineMark('@r ',taId);
       else if(f==='aj') lineMark('@j ',taId);
@@ -5723,6 +5793,7 @@ function fillSettings(){
   $('#s-catshape').value=catShape();
   const scs=$('#s-catsel'); if(scs) scs.value=st.page.catSel||'';
   const sqs=$('#s-quotestyle'); if(sqs) sqs.value=st.page.quoteStyle||'';
+  const sch=$('#s-chatstyle'); if(sch) sch.value=st.page.chatStyle||'';
   $('#s-galcols').value=String(galCols());
   const smc=$('#s-memocols'); if(smc) smc.value=String(memoCols());
   const smp=$('#s-mpinmax'); if(smp) smp.value=String(mpinMax());
@@ -5840,6 +5911,7 @@ async function saveSettings(){
       catShape: $('#s-catshape').value,
       catSel: $('#s-catsel')?.value||'',
       quoteStyle: $('#s-quotestyle')?.value||'',
+      chatStyle: $('#s-chatstyle')?.value||'',
       galCols: +$('#s-galcols').value||3,
       memoCols: +($('#s-memocols')?.value)||3,
       mpinMax: +($('#s-mpinmax')?.value)||3,

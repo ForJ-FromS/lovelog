@@ -1765,6 +1765,32 @@ html,body{overflow-x:hidden;overflow-x:clip}
 .rx-add:hover,.rx-add:focus{opacity:.95}
 .rx-pick{display:inline-flex;gap:4px}
 .rx-pick.hidden{display:none}
+/* 💬 대화(말풍선) 서식 (phase368) */
+.chat-block{display:flex;flex-direction:column;gap:7px;margin:0}
+.ch-m{max-width:80%;align-self:flex-start}
+.ch-m.r{align-self:flex-end}
+.ch-n{font-size:10px;color:var(--muted);margin:0 0 3px 4px}
+.ch-m.r .ch-n{text-align:right;margin:0 4px 3px 0}
+.ch-b{background:color-mix(in srgb, var(--ink) 9%, var(--card));color:var(--ink);padding:7px 12px;
+  border-radius:13px 13px 13px 4px;font-size:.95em;line-height:1.65;width:fit-content}
+.ch-m.r .ch-b{border-radius:13px 13px 4px 13px;margin-left:auto;background:color-mix(in srgb, var(--pri) 16%, var(--card))}
+.ch-nar{text-align:center;font-size:.85em;color:var(--muted);font-style:italic;margin:4px 0}
+/* 스킨 · 메신저(흰 박스) */
+.chat-msgr .ch-box{background:#fff;border-radius:14px;padding:14px 12px;display:flex;flex-direction:column;gap:7px;
+  box-shadow:0 2px 10px rgba(0,0,0,.25)}
+.chat-msgr .ch-dots{text-align:center;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.15em;color:#b6b9c2;margin:0 0 2px}
+.chat-msgr .ch-n{color:#9a9da6}
+.chat-msgr .ch-b{background:#eef0f4;color:#2a2c33}
+.chat-msgr .ch-m.r .ch-b{background:#e4e1fb;color:#2a2c33}
+.chat-msgr .ch-nar{color:#adb0b8}
+/* 스킨 · 무전 로그 */
+.chat-radio{gap:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:color-mix(in srgb, #000 30%, var(--card))}
+.chat-radio .ch-hd{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.2em;color:var(--muted);
+  padding:7px 13px;margin:0;border-bottom:1px solid var(--line);background:color-mix(in srgb, #000 45%, var(--card))}
+.chat-radio .ch-body{padding:12px 13px;display:flex;flex-direction:column;gap:8px}
+.chat-radio .ch-ln{font-family:'IBM Plex Mono',monospace;font-size:.9em;line-height:1.7;margin:0}
+.chat-radio .ch-tag{font-size:.82em;letter-spacing:1px;color:var(--muted)}
+.chat-radio .ch-nar{font-family:'IBM Plex Mono',monospace;font-style:normal;font-size:.8em;letter-spacing:.1em}
 .note.ok{color:#7fbf7f}
 .note.bad{color:#e08585}
 .gbdot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--pri);margin-left:6px;flex:none;vertical-align:middle}
@@ -2082,6 +2108,7 @@ html,body{overflow-x:hidden;overflow-x:clip}
       <button type="button" data-fmt="ul" title="점 목록 — •">•≡</button>
       <button type="button" data-fmt="fold" title="접은 글 — [접기:제목] 내용 [/접기], 읽는 사람이 눌러서 펼쳐요">▸</button>
       <button type="button" data-fmt="hb" title="HTML 블록 — [html] 코드 [/html], 블록 안은 코드 그대로 보여요" style="width:auto;padding:0 8px;font-size:10px">HTML</button>
+      <button type="button" data-fmt="ck" title="대화(말풍선) — [톡:이름1/이름2] 이름: 대사 [/톡], 첫 인물 왼쪽 · 둘째 오른쪽 · 이름 없는 줄은 지문">💬</button>
       <button type="button" data-fmt="quote" title="인용 상자 — 문단 각 줄 앞에 > ">❝</button>
       <button type="button" data-fmt="link" title="글자에 링크 걸기 — [글자](주소)">🔗</button>
       <select data-fmtsz title="글자 크기" style="width:52px;margin:0;padding:2px 4px;font-size:11px">
@@ -2411,7 +2438,11 @@ html,body{overflow-x:hidden;overflow-x:clip}
         <select id="s-quotestyle" title="본문 인용(>) 상자의 모양">
         <option value="">인용 — 기본 (세로선)</option>
         <option value="quote">인용 — 따옴표</option>
-        <option value="letter">인용 — 편지지</option></select></span></div>
+        <option value="letter">인용 — 편지지</option></select>
+        <select id="s-chatstyle" title="본문 대화([톡]) 말풍선의 기본 모양 — 글에서 [톡:메신저]처럼 직접 지정하면 그게 우선해요">
+        <option value="">대화 — 기본 (테마 융화)</option>
+        <option value="msgr">대화 — 메신저 (흰 박스)</option>
+        <option value="radio">대화 — 무전 로그</option></select></span></div>
       <div class="trow"><span class="tl">갤러리 한 줄</span><span class="tc"><select id="s-galcols">
         <option value="1">1장 (크게)</option><option value="2">2장</option>
         <option value="3" selected>3장 (기본)</option><option value="4">4장</option></select></span></div>
@@ -2583,6 +2614,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=395"></script>
+<script type="module" src="./app.js?v=396"></script>
 </body>
 </html>
