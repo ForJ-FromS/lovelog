@@ -1765,6 +1765,17 @@ html,body{overflow-x:hidden;overflow-x:clip}
 .rx-add:hover,.rx-add:focus{opacity:.95}
 .rx-pick{display:inline-flex;gap:4px}
 .rx-pick.hidden{display:none}
+/* 팝업 입력칸 다크 통일 (phase371) — 팝업은 body 직속이라 설정 화면 입력 스타일 스코프 밖 */
+.pq-adj-card input:not([type=color]):not([type=range]):not([type=checkbox]),
+.pq-adj-card textarea{
+  background:var(--card2);border:1px solid var(--line);color:var(--ink);
+  border-radius:9px;padding:7px 10px;font-size:12px;outline:none}
+.pq-adj-card input:not([type=color]):not([type=range]):not([type=checkbox]):focus{border-color:var(--pri)}
+.pq-adj-card input::placeholder{color:var(--muted);opacity:.8}
+.pq-adj-card select{
+  background:var(--card2);border:1px solid var(--line);color:var(--ink);
+  border-radius:9px;padding:7px 9px;font-size:12px;outline:none}
+.pq-adj-card input[type=checkbox]{accent-color:var(--pri)}
 /* 💬 설정 팝업 단장 (phase370) */
 .ck-card{width:min(330px,100%)}
 .ck-row{display:flex;align-items:center;gap:8px;margin:0 0 9px;font-size:11.5px;color:var(--muted)}
@@ -2632,6 +2643,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=398"></script>
+<script type="module" src="./app.js?v=399"></script>
 </body>
 </html>
