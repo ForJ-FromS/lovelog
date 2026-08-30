@@ -2052,9 +2052,11 @@ function renderSide(){
       /* 문답 스타일(phase339): 말풍선 대신 "이름: 답" 한 줄 — 이름은 각자 색 */
       const pln=(s,nm,tx,pre='')=>`<p class="pq-pl">${pre}<span class="pq-pn" style="color:${s==='a'?(w.ac||'var(--pri)'):(w.bc||'var(--ink)')}">${esc(nm||(s==='a'?'A':'B'))}:</span>${esc(tx)}</p>`;
       const iv=w.mode==='iv';                               // 🎙 서로 인터뷰(phase374): 질문도 인물의 말
-      const row=(x,i)=> w.style==='plain'
-        ? `${x.a?pln('a',w.an,x.a):''}${x.b?pln('b',w.bn,x.b):''}`
-        : `${x.a?bub('a',w.an,w.ai,x.a):''}${x.b?bub('b',w.bn,w.bi,x.b):''}`;
+      const row=(x,i)=>{
+        const A2=w.style==='plain' ? (x.a?pln('a',w.an,x.a):'') : (x.a?bub('a',w.an,w.ai,x.a):'');
+        const B2=w.style==='plain' ? (x.b?pln('b',w.bn,x.b):'') : (x.b?bub('b',w.bn,w.bi,x.b):'');
+        return x.o==='ba' ? B2+A2 : A2+B2;                   // 답 순서(phase381) — 질문마다 지정
+      };
       const qline=(x,i)=>{
         const num=w.noNum?'':`Q${i+1}.`;                     // 번호 숨김(phase378)
         if(!iv) return `<p class="pq-q">${num?`<b>${num}</b> `:''}${esc(x.q)}</p>`;
@@ -2217,7 +2219,7 @@ function renderSide(){
         `<div class="ph-frame"><button class="ph-x" title="단말기 닫기 — 새로고침하면 다시 떠요">✕</button>`+head+
         (ls.length?`<div class="ch-box ph-list">`+ls.map(noti).join('')+`</div>`
           :'<p class="pl-empty">✎ 편집에서 알림을 추가해주세요.</p><p class="pl-ghost">👻 지금은 방문자에게 안 보이는 카드예요</p>')+
-        (stl==='term'?`<div class="ph-foot">END OF FEED ─────────</div>`:'')+
+        (stl==='term'&&!w.noFoot?`<div class="ph-foot">END OF FEED ─────────</div>`:'')+
         `</div>`;
       box.appendChild(d);
       const phx=d.querySelector('.ph-x');
@@ -3986,7 +3988,7 @@ function renderWidEdit(){
       ${w.mode==='iv'?`<select data-pqd="${i}" style="width:auto;margin-bottom:0;font-size:11px">
         <option value="" ${x.d!=='ba'?'selected':''}>${esc(w.an||'A')} 질문 → ${esc(w.bn||'B')} 답</option>
         <option value="ba" ${x.d==='ba'?'selected':''}>${esc(w.bn||'B')} 질문 → ${esc(w.an||'A')} 답</option>
-      </select>`:''}
+      </select>`:`<button class="rmv" data-pqo="${i}" style="font-size:10.5px;align-self:flex-start" title="답 순서 뒤집기">⇅ ${x.o==='ba'?esc(w.bn||'B')+' 먼저':esc(w.an||'A')+' 먼저'}</button>`}
       <div class="p-row" style="gap:6px"><input data-pqq="${i}" placeholder="질문 ${i+1}" value="${esc(x.q||'')}" style="flex:1;margin-bottom:0"><button class="rmv" data-pqdel="${i}" style="flex:none">✕</button></div>
       <input data-pqa="${i}" placeholder="${esc(w.an||'A')}의 답" value="${esc(x.a||'')}" style="margin-bottom:0">
       <input data-pqb="${i}" placeholder="${esc(w.bn||'B')}의 답" value="${esc(x.b||'')}" style="margin-bottom:0">
@@ -4350,6 +4352,7 @@ function renderWidEdit(){
     <input id="we-phlab" placeholder="위젯 제목 (비우면 표시 안 함)" value="${esc(w.label??'')}">
     <div class="p-row" style="align-items:center;font-size:11px;color:var(--muted);gap:8px">
       바탕 <input type="color" id="we-phbg" value="${w.bg||'#0b0d12'}" style="width:38px;padding:0;flex:none" title="단말기 화면 배경색 — 밝은 색도 돼요 (글자색이 자동으로 맞춰져요)">
+      <label class="chk" style="font-size:11px"><input type="checkbox" id="we-phfoot" ${w.noFoot?'':'checked'}> END OF FEED 줄</label>
       글자 <input type="color" id="we-phtc" value="${w.tc||'#eef0f6'}" style="width:38px;padding:0;flex:none" title="비우면 바탕에 맞춰 자동">
       포인트 <input type="color" id="we-phac" value="${w.ac||'#d9a614'}" style="width:38px;padding:0;flex:none" title="관제 단말의 헤더·인디케이터 색">
       <button class="rmv" id="we-phrst" style="font-size:10px;margin-left:auto" title="색·케이싱을 디자인 기본(홈 테마 추종)으로 되돌려요">기본으로</button>
@@ -4399,6 +4402,10 @@ function renderWidEdit(){
   $('#wid-edit').querySelectorAll('[data-pqd]').forEach(el=>el.addEventListener('input',()=>{
     const q2=w.qas[+el.dataset.pqd]; if(!q2) return;
     if(el.value) q2.d=el.value; else delete q2.d; }));
+  $('#wid-edit').querySelectorAll('[data-pqo]').forEach(el=>el.onclick=()=>{
+    const q2=w.qas[+el.dataset.pqo]; if(!q2) return;
+    if(q2.o==='ba') delete q2.o; else q2.o='ba';
+    renderWidEdit(); });
   // ☑ 투두리스트(phase348)
   const tdl=$('#we-tdtl'); if(tdl) tdl.addEventListener('input',()=>{ w.title=tdl.value; });
   const tds=$('#we-tdstyle'); if(tds) tds.addEventListener('input',()=>{ w.style=tds.value; });
@@ -4515,6 +4522,7 @@ function renderWidEdit(){
   const phst=$('#we-phst'); if(phst) phst.addEventListener('change',()=>{
     if(phst.value==='oled') delete w.style; else w.style=phst.value; renderWidEdit(); });
   const phbg=$('#we-phbg'); if(phbg) phbg.addEventListener('input',()=>{ w.bg=phbg.value; });
+  const phf=$('#we-phfoot'); if(phf) phf.addEventListener('change',()=>{ if(phf.checked) delete w.noFoot; else w.noFoot=true; });
   const phtc=$('#we-phtc'); if(phtc) phtc.addEventListener('input',()=>{ w.tc=phtc.value; });
   const phac=$('#we-phac'); if(phac) phac.addEventListener('input',()=>{ w.ac=phac.value; });
   const phrst=$('#we-phrst'); if(phrst) phrst.onclick=()=>{
