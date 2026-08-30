@@ -2050,7 +2050,7 @@ function renderSide(){
       const lim=one?qs.length:((+w.n>0 && qs.length>+w.n)?+w.n:qs.length);
       const bub=(s,nm,av,tx)=>`<div class="pq-row pq-${s}">${av?`<img class="pq-av" src="${av}" alt="" draggable="false" loading="lazy">`:''}<div class="pq-bub"><p class="pq-nm">${esc(nm||(s==='a'?'A':'B'))}</p><p class="pq-tx">${esc(tx)}</p></div></div>`;
       /* 문답 스타일(phase339): 말풍선 대신 "이름: 답" 한 줄 — 이름은 각자 색 */
-      const pln=(s,nm,tx,pre='')=>`<p class="pq-pl">${pre}<span class="pq-pn" style="color:${s==='a'?(w.ac||'var(--pri)'):(w.bc||'var(--ink)')}">${esc(nm||(s==='a'?'A':'B'))}:</span>${esc(tx)}</p>`;
+      const pln=(s,nm,tx,pre='')=>`<p class="pq-pl">${pre}<span class="pq-pn" style="color:${s==='a'?(w.ac||'var(--pri)'):(w.bc||'var(--ink)')}">${esc(nm||(s==='a'?'A':'B'))}:</span><span class="pq-tw">${esc(tx)}</span></p>`;
       const iv=w.mode==='iv';                               // 🎙 서로 인터뷰(phase374): 질문도 인물의 말
       const row=(x,i)=>{
         const A2=w.style==='plain' ? (x.a?pln('a',w.an,x.a):'') : (x.a?bub('a',w.an,w.ai,x.a):'');
@@ -2084,6 +2084,11 @@ function renderSide(){
         const pv=d.querySelector('.pq-pv'), nx=d.querySelector('.pq-nx');
         if(pv) pv.onclick=()=>{ ix=(ix-1+its.length)%its.length; up(); };
         if(nx) nx.onclick=()=>{ ix=(ix+1)%its.length; up(); };
+      }
+            if(w.anim){                                          // ✨ 타이핑(phase384) — 답만, 질문·이름은 바로
+        d.querySelectorAll('.pq-tx, .pq-tw').forEach(el=>{
+          const t3=el.textContent; if(t3.trim()) typeObserve(el, t3, !!w.animFix);
+        });
       }
       box.appendChild(d); return;
     }
@@ -2241,7 +2246,7 @@ function renderSide(){
       d.innerHTML=`<p class="label">${esc(w.title||'TEXT')}</p>`+
         (w.text?`<p class="tx-x">${esc(w.text).replace(/\n/g,'<br>')}</p>`
           :(st.mine?('<p class="pl-empty">✎ 편집에서 내용을 채워주세요.</p>'+(!w.title?'<p class="pl-ghost">👻 지금은 방문자에게 안 보이는 카드예요</p>':'')):''));
-      if(w.anim && (w.text||'').trim()){ const tx=d.querySelector('.tx-x'); if(tx) typeObserve(tx, w.text); }   // ✨ 타이핑 (인용구와 동일 엔진)
+      if(w.anim && (w.text||'').trim()){ const tx=d.querySelector('.tx-x'); if(tx) typeObserve(tx, w.text, !!w.animFix); }   // ✨ 타이핑 (인용구와 동일 엔진)
       box.appendChild(d); return;
     }
     if(w.t==='cnt'){
@@ -2281,7 +2286,7 @@ function renderSide(){
     if(w.t==='quote'){
       d.className+=' w-quote';
       d.innerHTML=`${w.noQm?'':'<span class="qm">❝</span>'}<p>${esc(w.text||'').replace(/\n/g,'<br>')}</p>`;
-      if(w.anim && (w.text||'').trim()) typeObserve(d.querySelector('p'), w.text);
+      if(w.anim && (w.text||'').trim()) typeObserve(d.querySelector('p'), w.text, !!w.animFix);
       box.appendChild(d); return;
     }
     if(w.t==='links'){
@@ -3958,6 +3963,8 @@ function renderWidEdit(){
         <option value="iv" ${w.mode==='iv'?'selected':''}>형식 — 서로 인터뷰 (묻고 답하기)</option>
       </select>
       <label class="chk" style="font-size:11.5px"><input type="checkbox" id="pq-nonum" ${w.noNum?'checked':''}> Q1 · Q2 번호 숨기기</label>
+      <label class="chk" style="font-size:11.5px" title="화면에 보일 때 답이 한 글자씩 타이핑되듯 나타나요"><input type="checkbox" id="pq-anim" ${w.anim?'checked':''}> ✨ 타이핑</label>
+      <label class="chk" style="font-size:11.5px" title="위젯 크기를 완성 크기로 고정하고 글자만 나타나요"><input type="checkbox" id="pq-afix" ${w.animFix?'checked':''}> 📐 크기 고정</label>
     </div>
     <div class="p-row" style="align-items:center;gap:6px">
       <input id="pq-an" placeholder="인물 A 이름" value="${esc(w.an||'')}" style="flex:1;margin-bottom:0">
@@ -4119,6 +4126,7 @@ function renderWidEdit(){
     <textarea id="we-text" placeholder="걸어둘 문장" style="min-height:90px">${w.text||''}</textarea>
     <div class="p-row" style="align-items:center">
       <label class="chk" title="화면에 보일 때 한 글자씩 타이핑되듯 나타나요"><input type="checkbox" id="we-qanim" ${w.anim?'checked':''}> ✨ 움짤 효과 (타이핑)</label>
+      <label class="chk" title="위젯 크기를 완성 크기로 고정하고 글자만 나타나요 — 끄면 글자가 늘며 위젯이 커져요"><input type="checkbox" id="we-qafix" ${w.animFix?'checked':''}> 📐 크기 고정</label>
       <label class="chk" title="문장 위의 장식 따옴표를 켜고 꺼요"><input type="checkbox" id="we-qmark" ${w.noQm?'':'checked'}> ❝ 따옴표 표시</label>
     </div>`;
   if(w.t==='nb') html+=`
@@ -4167,7 +4175,8 @@ function renderWidEdit(){
   if(w.t==='text') html+=`
     <input id="we-ntt" placeholder="위젯 제목 (선택 — 비우면 TEXT)" value="${esc(w.title||'')}">
     <textarea id="we-text" placeholder="자유롭게 쓰는 글 — 줄바꿈 그대로 표시돼요" style="min-height:130px">${w.text||''}</textarea>
-    <label class="chk" title="화면에 보일 때 글이 한 글자씩 적혀요 (인용구와 같은 효과)"><input type="checkbox" id="we-txanim" ${w.anim?'checked':''}> ✨ 타이핑 효과</label>`;
+    <label class="chk" title="화면에 보일 때 글이 한 글자씩 적혀요 (인용구와 같은 효과)"><input type="checkbox" id="we-txanim" ${w.anim?'checked':''}> ✨ 타이핑 효과</label>
+    <label class="chk" title="위젯 크기를 완성 크기로 고정하고 글자만 나타나요"><input type="checkbox" id="we-txafix" ${w.animFix?'checked':''}> 📐 크기 고정</label>`;
   if(w.t==='stamp') html+=`
     <input id="we-ntt" placeholder="위젯 제목 (선택 — 비우면 STAMP)" value="${esc(w.title||'')}">
     <input id="we-semo" placeholder="도장 이모지 — 붙여서 1~4개 (예: 🐾 또는 ❤️🐾⭐💧)" value="${esc(w.icons||'')}">
@@ -4402,6 +4411,8 @@ function renderWidEdit(){
   const pqz=$('#pq-qsz'); if(pqz) pqz.addEventListener('input',()=>{ const v=+pqz.value; if(v) w.qsz=v; else delete w.qsz; });
   const pqm=$('#pq-mode'); if(pqm) pqm.addEventListener('input',()=>{ w.mode=pqm.value; renderWidEdit(); });
   const pqnn=$('#pq-nonum'); if(pqnn) pqnn.addEventListener('change',()=>{ if(pqnn.checked) w.noNum=true; else delete w.noNum; });
+  const pqan=$('#pq-anim'); if(pqan) pqan.addEventListener('change',()=>{ if(pqan.checked) w.anim=true; else delete w.anim; });
+  const pqaf=$('#pq-afix'); if(pqaf) pqaf.addEventListener('change',()=>{ if(pqaf.checked) w.animFix=true; else delete w.animFix; });
   $('#wid-edit').querySelectorAll('[data-pqd]').forEach(el=>el.addEventListener('input',()=>{
     const q2=w.qas[+el.dataset.pqd]; if(!q2) return;
     if(el.value) q2.d=el.value; else delete q2.d; }));
@@ -4439,6 +4450,7 @@ function renderWidEdit(){
     delete w[b.dataset.pqxi==='a'?'ai':'bi']; renderWidEdit(); });
   const txan=$('#we-txanim'); if(txan) txan.addEventListener('change',()=>{
     if(txan.checked) w.anim=true; else delete w.anim; });
+  const txaf=$('#we-txafix'); if(txaf) txaf.addEventListener('change',()=>{ if(txaf.checked) w.animFix=true; else delete w.animFix; });
   const ntt=$('#we-ntt'); if(ntt) ntt.addEventListener('input',()=>{ w.title=ntt.value; });
   const semo=$('#we-semo'); if(semo) semo.addEventListener('input',()=>{ w.icons=semo.value; });
   const shint=$('#we-shint'); if(shint) shint.addEventListener('change',()=>{
@@ -4509,6 +4521,7 @@ function renderWidEdit(){
     if(sel.length) w.cats=sel; else delete w.cats;
   }));
   const qan=$('#we-qanim'); if(qan) qan.addEventListener('change',()=>{ w.anim=qan.checked; });
+  const qaf=$('#we-qafix'); if(qaf) qaf.addEventListener('change',()=>{ if(qaf.checked) w.animFix=true; else delete w.animFix; });
   const qmk=$('#we-qmark'); if(qmk) qmk.addEventListener('change',()=>{
     if(qmk.checked) delete w.noQm; else w.noQm=true; });
   const chcl=$('#we-chcl'); if(chcl) chcl.addEventListener('input',()=>{ w.cL=chcl.value; });
@@ -4871,13 +4884,24 @@ const chatIO = ('IntersectionObserver' in window)
   : null;
 function chatObserve(el){ if(chatIO) chatIO.observe(el); else chatPlay(el); }
 /* 인용구 타이핑 — 보일 때 1회, 한 글자씩 */
-function typeRun(p, text){
+function typeRun(p, text, fixed){
   if(matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const full=String(text); let i=0;
+  const nl=s2=>esc(s2).replace(/\n/g,'<br>');
+  if(fixed){
+    /* 📐 크기 고정(phase384): 전체 글이 투명하게 자리를 먼저 차지 — 위젯이 자라지 않고 글자만 나타남 */
+    const draw=()=>{ p.innerHTML=nl(full.slice(0,i))
+      +(i<full.length?`<span class="tw-cur">▍</span><span class="tw-ghost">${nl(full.slice(i))}</span>`:''); };
+    draw();
+    const tick=()=>{ i++; draw();
+      if(i<full.length) setTimeout(tick, full[i-1]==='\n'?260:62); };
+    setTimeout(tick, 350);
+    return;
+  }
   p.classList.add('typing'); p.textContent='';
   const tick=()=>{
     i++;
-    p.innerHTML=esc(full.slice(0,i)).replace(/\n/g,'<br>');
+    p.innerHTML=nl(full.slice(0,i));
     if(i<full.length) setTimeout(tick, full[i-1]==='\n'?260:62);
     else setTimeout(()=>p.classList.remove('typing'), 2600);
   };
@@ -4886,12 +4910,13 @@ function typeRun(p, text){
 const typeIO = ('IntersectionObserver' in window)
   ? new IntersectionObserver(es=>es.forEach(e=>{
       if(e.isIntersecting){ typeIO.unobserve(e.target);
-        typeRun(e.target, e.target.dataset.typetext); }
+        typeRun(e.target, e.target.dataset.typetext, e.target.dataset.typefix==='1'); }
     }),{threshold:.35})
   : null;
-function typeObserve(p, text){
+function typeObserve(p, text, fixed){
   p.dataset.typetext=text;
-  if(typeIO) typeIO.observe(p); else typeRun(p, text);
+  if(fixed) p.dataset.typefix='1';
+  if(typeIO) typeIO.observe(p); else typeRun(p, text, fixed);
 }
 
 /* 서식 툴바 — 선택한 글자를 감싸요 */
