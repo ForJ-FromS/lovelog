@@ -3985,10 +3985,13 @@ function renderWidEdit(){
       </select><span>사진은 안 넣으면 이름만 나와요 · 답을 비우면 그 사람 말풍선은 생략</span>
     </div>
     ${(w.qas||[]).map((x,i)=>`<div class="pq-card">
+      <div class="p-row" style="gap:6px;align-items:center">
       ${w.mode==='iv'?`<select data-pqd="${i}" style="width:auto;margin-bottom:0;font-size:11px">
         <option value="" ${x.d!=='ba'?'selected':''}>${esc(w.an||'A')} 질문 → ${esc(w.bn||'B')} 답</option>
         <option value="ba" ${x.d==='ba'?'selected':''}>${esc(w.bn||'B')} 질문 → ${esc(w.an||'A')} 답</option>
-      </select>`:`<button class="rmv" data-pqo="${i}" style="font-size:10.5px;align-self:flex-start" title="답 순서 뒤집기">⇅ ${x.o==='ba'?esc(w.bn||'B')+' 먼저':esc(w.an||'A')+' 먼저'}</button>`}
+      </select>`:''}
+      <button class="rmv" data-pqo="${i}" style="font-size:10.5px;flex:none" title="답 두 줄의 순서 뒤집기">⇅ ${x.o==='ba'?esc(w.bn||'B')+' 답 먼저':esc(w.an||'A')+' 답 먼저'}</button>
+      </div>
       <div class="p-row" style="gap:6px"><input data-pqq="${i}" placeholder="질문 ${i+1}" value="${esc(x.q||'')}" style="flex:1;margin-bottom:0"><button class="rmv" data-pqdel="${i}" style="flex:none">✕</button></div>
       <input data-pqa="${i}" placeholder="${esc(w.an||'A')}의 답" value="${esc(x.a||'')}" style="margin-bottom:0">
       <input data-pqb="${i}" placeholder="${esc(w.bn||'B')}의 답" value="${esc(x.b||'')}" style="margin-bottom:0">
