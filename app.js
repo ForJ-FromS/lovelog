@@ -2085,10 +2085,23 @@ function renderSide(){
         if(pv) pv.onclick=()=>{ ix=(ix-1+its.length)%its.length; up(); };
         if(nx) nx.onclick=()=>{ ix=(ix+1)%its.length; up(); };
       }
-            if(w.anim){                                          // ✨ 타이핑(phase384) — 답만, 질문·이름은 바로
-        d.querySelectorAll('.pq-tx, .pq-tw').forEach(el=>{
-          const t3=el.textContent; if(t3.trim()) typeObserve(el, t3, !!w.animFix);
+            if(w.anim){                                          // ✨ 순차 타이핑(phase385) — 답1 끝나야 답2
+        const els=[...d.querySelectorAll('.pq-tx, .pq-tw')].filter(el=>el.textContent.trim());
+        const texts=els.map(el=>el.textContent);
+        const nl2=s3=>esc(s3).replace(/\n/g,'<br>');
+        els.forEach((el,k)=>{                                // 시작 전 상태: 고정=투명 전체, 성장=빈칸
+          el.innerHTML = w.animFix ? `<span class="tw-ghost">${nl2(texts[k])}</span>` : '';
         });
+        if(els.length){
+          const kick=()=>{ let k=0;
+            const next=()=>{ if(k>=els.length) return;
+              typeRun(els[k], texts[k], !!w.animFix, ()=>{ k++; setTimeout(next, 240); }); };
+            next(); };
+          if('IntersectionObserver' in window){
+            const io2=new IntersectionObserver(es=>{ if(es.some(e=>e.isIntersecting)){ io2.disconnect(); kick(); } },{threshold:.3});
+            io2.observe(d);
+          } else kick();
+        }
       }
       box.appendChild(d); return;
     }
@@ -4884,17 +4897,20 @@ const chatIO = ('IntersectionObserver' in window)
   : null;
 function chatObserve(el){ if(chatIO) chatIO.observe(el); else chatPlay(el); }
 /* 인용구 타이핑 — 보일 때 1회, 한 글자씩 */
-function typeRun(p, text, fixed){
-  if(matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+function typeRun(p, text, fixed, cb){
   const full=String(text); let i=0;
   const nl=s2=>esc(s2).replace(/\n/g,'<br>');
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches){
+    p.innerHTML=nl(full); if(cb) cb(); return;               // 모션 최소화: 즉시 완성(순차 체인도 계속 흐르게)
+  }
   if(fixed){
     /* 📐 크기 고정(phase384): 전체 글이 투명하게 자리를 먼저 차지 — 위젯이 자라지 않고 글자만 나타남 */
     const draw=()=>{ p.innerHTML=nl(full.slice(0,i))
       +(i<full.length?`<span class="tw-cur">▍</span><span class="tw-ghost">${nl(full.slice(i))}</span>`:''); };
     draw();
     const tick=()=>{ i++; draw();
-      if(i<full.length) setTimeout(tick, full[i-1]==='\n'?260:62); };
+      if(i<full.length) setTimeout(tick, full[i-1]==='\n'?260:62);
+      else if(cb) cb(); };
     setTimeout(tick, 350);
     return;
   }
@@ -4903,7 +4919,7 @@ function typeRun(p, text, fixed){
     i++;
     p.innerHTML=nl(full.slice(0,i));
     if(i<full.length) setTimeout(tick, full[i-1]==='\n'?260:62);
-    else setTimeout(()=>p.classList.remove('typing'), 2600);
+    else{ if(cb) cb(); setTimeout(()=>p.classList.remove('typing'), 2600); }
   };
   setTimeout(tick, 350);
 }

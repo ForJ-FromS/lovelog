@@ -357,7 +357,7 @@
     animation:tCur .9s steps(1) infinite;margin-left:1px}
   @keyframes tCur{50%{opacity:0}}
   .tw-ghost{visibility:hidden}
-  .tw-cur{color:var(--pri);animation:tCur .9s steps(1) infinite;margin-left:1px}
+  .tw-cur{color:var(--pri);animation:tCur .9s steps(1) infinite;display:inline-block;width:0;white-space:nowrap;overflow:visible}   /* 폭 0 — 줄바꿈 안 밀리게(phase385) */
   /* 공지 목록 + NEW 뱃지 */
   .upd-item{padding:10px 0;border-bottom:1px dashed var(--line)}
   .upd-item:first-child{padding-top:2px}   /* 첫 공지 위 여백 제거 */
@@ -2655,6 +2655,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=412"></script>
+<script type="module" src="./app.js?v=413"></script>
 </body>
 </html>
