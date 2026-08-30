@@ -193,7 +193,7 @@
   #panel .trow input[type=color]{width:72px!important;height:32px!important;padding:2px!important;margin:0!important;flex:none;display:inline-block!important}
   /* 모서리 조절(phase299) — 전역 각지게, 원형(50%) 요소는 자동 추출 목록으로 보존 */
   body.corner-soft *{border-radius:4px!important}
-  body.corner-sharp *{border-radius:0!important}
+  body.corner-sharp *:not(.html-block):not(.html-block *):not(.html-full):not(.html-full *){border-radius:0!important}   /* 글 속 HTML 블록·HTML 모드 글은 작성자 뜻대로(phase386) */
   body.corner-soft .thumb-x .rm2, body.corner-soft .ph-chip, body.corner-soft .fab, body.corner-soft .gdel, body.corner-soft .bgm-cov, body.corner-soft .bgm-btn2, body.corner-soft .bgm-play .ic, body.corner-soft .ch-p, body.corner-soft .cst-scr, body.corner-soft .cst-reel, body.corner-soft .bgm-cst .bgm-btn2, body.corner-soft .bgm-lp .bgm-btn2, body.corner-soft .bgm-tun .bgm-btn2, body.corner-soft .lp-disc, body.corner-soft .lp-disc img,.lp-disc .mus, body.corner-soft .mm-th i, body.corner-soft .w-cal .cmemo, body.corner-soft .tl-dot, body.corner-soft .ph-x, body.corner-soft .chl-pv, body.corner-soft .gpin, body.corner-soft .gedit, body.corner-sharp .thumb-x .rm2, body.corner-sharp .ph-chip, body.corner-sharp .fab, body.corner-sharp .gdel, body.corner-sharp .bgm-cov, body.corner-sharp .bgm-btn2, body.corner-sharp .bgm-play .ic, body.corner-sharp .ch-p, body.corner-sharp .cst-scr, body.corner-sharp .cst-reel, body.corner-sharp .bgm-cst .bgm-btn2, body.corner-sharp .bgm-lp .bgm-btn2, body.corner-sharp .bgm-tun .bgm-btn2, body.corner-sharp .lp-disc, body.corner-sharp .lp-disc img,.lp-disc .mus, body.corner-sharp .mm-th i, body.corner-sharp .w-cal .cmemo, body.corner-sharp .tl-dot, body.corner-sharp .ph-x, body.corner-sharp .chl-pv, body.corner-sharp .gpin, body.corner-sharp .gedit{border-radius:50%!important}
   .head h1{text-shadow:0 0 26px hsl(var(--h) calc(60% * var(--sf,1)) 60% / .35)}
   .head .bgimg{position:absolute;inset:0;background-size:cover;background-position:center;
@@ -2655,6 +2655,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=413"></script>
+<script type="module" src="./app.js?v=414"></script>
 </body>
 </html>

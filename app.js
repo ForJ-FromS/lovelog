@@ -3148,6 +3148,7 @@ async function openPost(id, fromHome=false){
   }
   $('#pv-title').textContent=p.title;
   const pvb=$('#pv-body');
+  pvb.classList.toggle('html-full', !!(st.cur&&st.cur.html));   // HTML 모드 글 표식 — 모서리 강제 등에서 면제(phase386)
   if(st.cur && st.cur.html) body=htmlNl(body);   // HTML 위·아래에 쓴 일반 텍스트의 줄바꿈 살리기(phase280)
   /* 격리 액자는 '화면을 붙잡는' 로그에만 — 그 외 HTML 글은 홈 커스텀 CSS가 닿게 기존 경로(phase275) */
   const needsFrame = p2=>{
