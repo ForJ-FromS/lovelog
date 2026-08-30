@@ -2060,6 +2060,7 @@ function renderSide(){
           : (num?`<p class="pq-q pq-qiv"><b>${num}</b></p>`:'')+bub(qs2, qs2==='a'?w.an:w.bn, qs2==='a'?w.ai:w.bi, x.q);
       };
       if(w.style==='plain') d.className+=' pq-plain';
+      if(w.noNum) d.className+=' pq-nonum';                  // 번호 숨김이면 들여쓰기도 해제(phase379)
       if(+w.qsz) d.style.setProperty('--pqQs', (+w.qsz)+'px');   // 질문 크기(phase374)
       d.innerHTML=`<p class="pq-head">${esc(w.title||'PAIR INTERVIEW')}</p>`
         + qs.map((x,i)=>`<div class="pq-item${one?(i?' hidden':''):(i>=lim?' pq-more hidden':'')}">${qline(x,i)}${row(x,i)}</div>`).join('')
