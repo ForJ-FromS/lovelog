@@ -127,6 +127,7 @@
   #bgm-dock-x{background:none;border:none;color:var(--muted);cursor:pointer;
     font-size:12px;padding:2px 4px}
   #bgm-dock-x:hover{color:var(--ink)}
+  #bgm-dock-vol{width:64px;height:3px;margin:0 4px;accent-color:var(--pri);cursor:pointer;align-self:center}
   #bgm-dock-mn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:11px;padding:2px 5px}
   #bgm-dock-mn:hover{color:var(--ink)}
   #bgm-dock-t{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.08em;padding:0 6px;align-self:center}
@@ -1844,7 +1845,7 @@ html,body{overflow-x:hidden;overflow-x:clip}
 <body>
 
 <div id="bgphoto"></div>
-<div id="bgm-dock" class="hidden"><div id="bgm-dock-fr"></div><span id="bgm-dock-t" class="hidden">♪ BGM 재생 중</span><button id="bgm-dock-mn" title="영상 접기 — 소리는 계속 나와요">▁</button><button id="bgm-dock-x" title="재생 종료">✕</button></div>
+<div id="bgm-dock" class="hidden"><div id="bgm-dock-fr"></div><span id="bgm-dock-t" class="hidden">♪ BGM 재생 중</span><input type="range" id="bgm-dock-vol" min="0" max="100" step="5" value="100" title="브금 소리 크기 — 이 기기에 기억돼요"><button id="bgm-dock-mn" title="영상 접기 — 소리는 계속 나와요">▁</button><button id="bgm-dock-x" title="재생 종료">✕</button></div>
 <div class="seal"><span id="seal-txt">LOVELOG</span><a id="seal-mut" class="hidden" title="이웃 전용 메모" style="cursor:pointer">🔒</a><a id="seal-my" class="hidden" title="내 홈으로 돌아가기" style="cursor:pointer">MY ⌂</a><a href="/guide.html" style="text-decoration:none;color:inherit">GUIDE</a><a id="seal-auth"></a></div>
 <div id="homes"><div class="homes-box">
   <p class="p-h" style="margin:0 0 12px">◈ HOMES — 공개된 러브로그</p>
@@ -2655,6 +2656,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=414"></script>
+<script type="module" src="./app.js?v=416"></script>
 </body>
 </html>

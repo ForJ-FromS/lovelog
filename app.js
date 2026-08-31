@@ -1530,7 +1530,7 @@ async function nbInfo(h){
   }catch(e){ nbCache[h]=null; }
   return nbCache[h];
 }
-let bgmCur='', bgmHandle='', bgmNowVid='', bgmEar=null;
+let bgmCur='', bgmHandle='', bgmNowVid='', bgmEar=null, bgmBase=100;
 /* 🎵 유튜브 iframe API 수신(phase376): listening 핸드셰이크 후 infoDelivery에서 현재 videoId를 받음 */
 window.addEventListener('message', e=>{
   if(!/^https:\/\/www\.youtube(-nocookie)?\.com$/.test(e.origin)) return;
@@ -1538,12 +1538,22 @@ window.addEventListener('message', e=>{
   const v2=d2&&d2.info&&d2.info.videoData&&d2.info.videoData.video_id;
   if(v2 && v2!==bgmNowVid){ bgmNowVid=v2; try{ renderSide(); }catch(err){} }
 });
+/* 🔊 소리 크기(phase387): 유튜브 API setVolume — 이 기기에 기억 */
+function bgmVol(){                                           // 방문자가 이 홈에서 조절한 값 > 주인이 위젯에 정한 기본
+  const v=parseInt(localStorage.getItem('lv-bgm-vol-'+bgmHandle));
+  return isNaN(v)? bgmBase : Math.max(0,Math.min(100,v));
+}
+function bgmVolApply(){
+  const fr=document.querySelector('#bgm-dock-fr iframe'); if(!fr) return;
+  try{ fr.contentWindow.postMessage(JSON.stringify({event:'command', func:'setVolume', args:[bgmVol()]}), '*'); }catch(err){}
+}
 function bgmListen(){
   clearInterval(bgmEar);
   bgmEar=setInterval(()=>{
     const fr=document.querySelector('#bgm-dock-fr iframe');
     if(!fr){ clearInterval(bgmEar); return; }
     try{ fr.contentWindow.postMessage(JSON.stringify({event:'listening', id:'lv', channel:'widget'}), '*'); }catch(err){}
+    bgmVolApply();                                            // 준비 전 보낸 명령이 버려질 수 있어 틱마다 재적용
   }, 1200);
 }
 /* ▁ 영상 접기(phase375): 화면만 접고 소리는 유지 — 선택은 이 기기에 기억 */
@@ -1551,14 +1561,20 @@ function bgmMinApply(){
   $('#bgm-dock').classList.toggle('min', localStorage.getItem('lv-bgm-min')==='1');
 }
 const bgmPlaying=()=>!!document.querySelector('#bgm-dock-fr iframe');
-function bgmStart(src){ bgmCur=src; bgmHandle=st.handle; bgmNowVid='';
+function bgmStart(src, baseVol){ bgmCur=src; bgmHandle=st.handle; bgmNowVid=''; bgmBase=(baseVol==null||isNaN(+baseVol))?100:Math.max(0,Math.min(100,+baseVol));
   src+=(src.includes('?')?'&':'?')+'enablejsapi=1&origin='+encodeURIComponent(location.origin);
   $('#bgm-dock-fr').innerHTML=`<iframe style="width:200px;height:112px;border:0;border-radius:9px;display:block" src="${src}" allow="autoplay; encrypted-media"></iframe>`;
-  $('#bgm-dock').classList.remove('hidden'); bgmMinApply(); bgmListen(); }
+  $('#bgm-dock').classList.remove('hidden'); bgmMinApply(); bgmListen();
+  const ve=$('#bgm-dock-vol'); if(ve) ve.value=bgmVol(); }
 function bgmStop(){ bgmCur=''; bgmHandle='';
   $('#bgm-dock-fr').innerHTML=''; $('#bgm-dock').classList.add('hidden');
   bgmNowVid=''; clearInterval(bgmEar); }
 $('#bgm-dock-x').onclick=()=>{ bgmStop(); renderSide(); };
+const bgmVolEl=$('#bgm-dock-vol');
+if(bgmVolEl){
+  bgmVolEl.value=bgmVol();
+  bgmVolEl.oninput=()=>{ try{ localStorage.setItem('lv-bgm-vol-'+bgmHandle, bgmVolEl.value); }catch(e){} bgmVolApply(); };
+}
 $('#bgm-dock-mn').onclick=()=>{
   const on=localStorage.getItem('lv-bgm-min')==='1';
   try{ localStorage.setItem('lv-bgm-min', on?'0':'1'); }catch(e){}
@@ -1763,7 +1779,7 @@ function renderSide(){
           const i=+b2.dataset.tk; bgmTrk[wi]=i;
           const s2=srcFrom(i);
           const isCur=bgmPlaying() && (bgmNowVid ? ytId(trks[i].url)===bgmNowVid : bgmCur===s2);
-          if(isCur) bgmStop(); else bgmStart(s2);
+          if(isCur) bgmStop(); else bgmStart(s2, w.vol);
           renderSide(); });
       }
       box.appendChild(d);
@@ -1777,7 +1793,7 @@ function renderSide(){
       const on=mine2||(bgmPlaying()&&bgmCur===src);
       btn.textContent=on?'❚❚':'▶'; d.classList.toggle('playing',on);
       btn.onclick=()=>{
-        if(on) bgmStop(); else bgmStart(src);
+        if(on) bgmStop(); else bgmStart(src, w.vol);
         renderSide(); };
       return;
     }
@@ -4256,6 +4272,9 @@ function renderWidEdit(){
     </div>
     <div class="p-row" style="align-items:center;font-size:11px;color:var(--muted);gap:8px">
       바탕 <input type="color" id="we-bgbg" value="${w.bg||'#14161e'}" style="width:38px;padding:0;flex:none" title="플레이어 몸체 색 — 밝은 홈에서 탁해 보이면 여기서 조절 (글자색 자동 대비)">
+      <span style="font-size:11px;color:var(--muted)">🔊 시작 소리</span>
+      <input type="range" id="we-bgvol" min="0" max="100" step="5" value="${w.vol==null?100:+w.vol}" style="width:90px;flex:none;margin:0" title="이 플레이어의 기본 소리 크기 — 방문자는 브금 창에서 자기 기기 기준으로 더 조절할 수 있어요">
+      <b id="we-bgvolv" style="font-size:11px;min-width:26px">${w.vol==null?100:+w.vol}</b>
       글자 <input type="color" id="we-bgtc" value="${w.tc||'#eef0f6'}" style="width:38px;padding:0;flex:none" title="비우면 바탕에 맞춰 자동">
       포인트 <input type="color" id="we-bgac" value="${w.ac||'#d9a614'}" style="width:38px;padding:0;flex:none" title="튜너 바늘·카세트 릴·LP 톤암 색">
       <button class="rmv" id="we-bgrst" style="font-size:10px;margin-left:auto" title="색을 디자인 기본(홈 테마 추종)으로 되돌려요">기본으로</button>
@@ -4750,6 +4769,7 @@ function renderWidEdit(){
   const bgsub=$('#we-bgsub'); if(bgsub) bgsub.addEventListener('input',()=>{
     if(bgsub.value.trim()) w.sub=bgsub.value; else delete w.sub; });
   const bgbg=$('#we-bgbg'); if(bgbg) bgbg.addEventListener('input',()=>{ w.bg=bgbg.value; });
+  const bgv=$('#we-bgvol'); if(bgv) bgv.addEventListener('input',()=>{ const v=+bgv.value; if(v>=100) delete w.vol; else w.vol=v; const vv=$('#we-bgvolv'); if(vv) vv.textContent=v; });
   const bgtc=$('#we-bgtc'); if(bgtc) bgtc.addEventListener('input',()=>{ w.tc=bgtc.value; });
   const bgac=$('#we-bgac'); if(bgac) bgac.addEventListener('input',()=>{ w.ac=bgac.value; });
   const bgrst=$('#we-bgrst'); if(bgrst) bgrst.onclick=()=>{
