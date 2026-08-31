@@ -875,6 +875,8 @@ async function enterPage(){
   if(st.page.catSel) document.body.classList.add('catsel-'+st.page.catSel);
   document.body.classList.remove('qs-quote','qs-letter');                // 인용 스킨(phase361)
   if(st.page.quoteStyle) document.body.classList.add('qs-'+st.page.quoteStyle);
+  if(+st.page.postFs) document.body.style.setProperty('--postFs', st.page.postFs+'px');   // 본문 글자 크기(phase389)
+  else document.body.style.removeProperty('--postFs');
   document.body.classList.toggle('side-left', p.sidePos==='left');
   document.body.classList.toggle('side-both', p.sidePos==='both');
   document.documentElement.style.setProperty('--dim', (p.bgDim??78)/100);
@@ -6084,6 +6086,7 @@ function fillSettings(){
   $('#s-catshape').value=catShape();
   const scs=$('#s-catsel'); if(scs) scs.value=st.page.catSel||'';
   const sqs=$('#s-quotestyle'); if(sqs) sqs.value=st.page.quoteStyle||'';
+  const spf=$('#s-postfs'); if(spf) spf.value=st.page.postFs||'';
   $('#s-galcols').value=String(galCols());
   const smc=$('#s-memocols'); if(smc) smc.value=String(memoCols());
   const smp=$('#s-mpinmax'); if(smp) smp.value=String(mpinMax());
@@ -6201,6 +6204,7 @@ async function saveSettings(){
       catShape: $('#s-catshape').value,
       catSel: $('#s-catsel')?.value||'',
       quoteStyle: $('#s-quotestyle')?.value||'',
+      postFs: (()=>{ const v=parseFloat($('#s-postfs')?.value); return (v>=11&&v<=20)?v:''; })(),
       galCols: +$('#s-galcols').value||3,
       memoCols: +($('#s-memocols')?.value)||3,
       mpinMax: +($('#s-mpinmax')?.value)||3,
