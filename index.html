@@ -35,6 +35,10 @@
       radial-gradient(ellipse 50% 45% at 90% 90%, hsl(var(--h) calc(50% * var(--sf,1)) 90% / .7), transparent 65%)}
   a{text-decoration:none;color:inherit}
   input,textarea,select,button{font-family:inherit;font-size:14px}
+  /* 셀렉트 펼침 목록 가독성(phase390) — 옵션이 조상의 회색을 물려받아 흐릿해지던 것 차단 */
+  select{color:var(--ink)}
+  select option{color:var(--ink);background:var(--card2)}
+  select option:disabled{color:var(--muted)}
   b,strong{font-weight:700}  /* 본문 300에서 UA 기본 bolder는 400로 계산됨 — 단일 웨이트 폰트에서 볼드 무효였던 근본 원인(phase251) */
   .mono{font-family:'IBM Plex Mono',monospace}
   .hidden{display:none!important}
@@ -2199,7 +2203,7 @@ html,body{overflow-x:hidden;overflow-x:clip}
         <option value="profile">프로필 사진 카드</option>
         <option value="pin">📌 고정글 (최신글과 분리해 따로 두는 카드)</option>
         <option value="char">캐릭터 프로필 (1인)</option>
-        <option value="pair">페어 프로필 (2인 — 가운데 이모지)</option>
+        <option value="pair">페어 프로필 (2인)</option>
         <option value="pairqa">페어 인터뷰 (질문마다 두 사람 말풍선)</option>
         <option value="todo">투두리스트 (홈에서 바로 체크)</option>
         <option value="cal">달력 (날짜 마킹 · 기간 줄 · 메모 점)</option>
@@ -2659,6 +2663,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=417"></script>
+<script type="module" src="./app.js?v=418"></script>
 </body>
 </html>
