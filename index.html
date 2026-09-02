@@ -1436,9 +1436,11 @@
   /* 스트립 — 요일 라벨 붙은 카드 (주간) */
   .cal-strip .cal-wd{display:none}
   .cal-strip .cal-gr{gap:4px}
-  .cal-strip .cd{min-height:44px;padding:6px 0 5px;border-radius:9px;border:1px solid transparent;gap:2px}
+  .cal-strip .cd{min-height:52px;padding:7px 0 9px;border-radius:9px;border:1px solid transparent;gap:4px}
   .cal-strip .cd .cwd{font-style:normal;font-size:7.5px;letter-spacing:.1em;color:var(--muted);order:-1}
   .cal-strip .cd i{width:auto;height:auto;font-size:13px}
+  .cal-strip .ce{margin-top:3px}
+  .cal-strip .cmemo{bottom:4px}
   .cal-strip .cd.today{background:var(--pri)}
   .cal-strip .cd.today i{color:#15131f;font-weight:700} .cal-strip .cd.today .cwd{color:#3a3020}
   .cal-strip .cd.today i::after{display:none}
@@ -1450,6 +1452,9 @@
   .cal-leaf .cal-day .cdd{font-family:'Noto Serif KR',serif;font-size:58px;font-weight:600;line-height:1;margin:4px 0 2px}
   .cal-leaf .cal-day .cdd::after{content:'';display:block;width:28px;height:1px;background:var(--pri);margin:10px auto 0}
   .cal-leaf .cal-day .cdl span{font-size:11.5px}
+  /* 아래 장식 끄기 (phase401) */
+  .cal-nofoot.cal-term::after,.cal-nofoot .cal-tk,.cal-nofoot .cal-dcnt{display:none}
+  .cal-nofoot.cal-term .cal-gr{border-bottom:none}
   .w-cal .cal-day .cdw{font-style:normal;font-size:9px;letter-spacing:.3em;color:var(--muted);font-family:'IBM Plex Mono',monospace}
   .w-cal .cal-day .cdl{display:flex;flex-direction:column;gap:3px;margin-top:7px;align-items:center}
   .w-cal .cal-day .cdl span{font-size:11.5px;color:var(--ink)}
@@ -2825,6 +2830,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=428"></script>
+<script type="module" src="./app.js?v=429"></script>
 </body>
 </html>

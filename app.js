@@ -1961,7 +1961,7 @@ function renderSide(){
       box.appendChild(d); return;
     }
     if(w.t==='cal'){
-      d.className+=' w-cal'+(({desk:' cal-desk',term:' cal-term',poster:' cal-poster',dots:' cal-dots',ticket:' cal-ticket',strip:' cal-strip',leaf:' cal-leaf'})[w.skin]||'');   // 스킨(phase396·400)
+      d.className+=' w-cal'+(({desk:' cal-desk',term:' cal-term',poster:' cal-poster',dots:' cal-dots',ticket:' cal-ticket',strip:' cal-strip',leaf:' cal-leaf'})[w.skin]||'')+(w.noFoot?' cal-nofoot':'');   // 스킨(phase396·400) · 하단 장식 끄기(phase401)
       const now=new Date();
       const view = w.view==='w'||w.view==='d' ? w.view : 'm';   // 먼슬리/위클리/데일리(phase243)
       let [cy,cm] = w.ym ? w.ym.split('-').map(Number) : [now.getFullYear(), now.getMonth()+1];
@@ -4163,6 +4163,7 @@ function renderWidEdit(){
         <option value="strip" ${w.skin==='strip'?'selected':''}>스킨 — 스트립 카드 (주간 전용)</option>
         <option value="leaf" ${w.skin==='leaf'?'selected':''}>스킨 — 일력 (일간 전용)</option>
       </select>
+      <label class="chk" style="font-size:11px" title="터미널의 > _ 커서, 티켓의 표시일 목록, 도트의 표시일 수 같은 아래쪽 장식을 숨겨요"><input type="checkbox" id="we-calfoot" ${w.noFoot?'':'checked'}> 아래 장식</label>
       ${w.skin==='poster'?`<label class="filelab" style="font-size:11px">🖼 포스터 사진 ${w.pimg?'(있음)':''} <input type="file" id="we-calpimg" accept="image/*"></label>${w.pimg?`<button class="rmv" id="we-calpimgx" style="font-size:10px">제거</button>`:''}`:''}
       <select id="we-calview" style="width:auto;margin-bottom:0">
         <option value="m" ${!w.view||w.view==='m'?'selected':''}>먼슬리 (월간)</option>
@@ -4732,6 +4733,7 @@ function renderWidEdit(){
   const cpi=$('#we-calpimg'); if(cpi) cpi.addEventListener('change',async()=>{ const f=cpi.files[0]; if(!f) return;
     try{ w.pimg=await compress(f, 640, .8); renderWidEdit(); }catch(e){ msg('사진 처리 실패'); } });
   const cpx=$('#we-calpimgx'); if(cpx) cpx.onclick=()=>{ delete w.pimg; renderWidEdit(); };
+  const cft=$('#we-calfoot'); if(cft) cft.addEventListener('change',()=>{ if(cft.checked) delete w.noFoot; else w.noFoot=true; });
   const cvw=$('#we-calview'); if(cvw) cvw.addEventListener('change',()=>{
     if(cvw.value==='m') delete w.view; else w.view=cvw.value; });
   const cym=$('#we-calym'); if(cym) cym.addEventListener('change',()=>{
