@@ -185,6 +185,55 @@
     width:16px;height:16px;border:1.5px solid hsl(var(--h) calc(40% * var(--sf,1)) 62% / .8)}
   .head::before{left:11px;top:11px;border-right:none;border-bottom:none;border-radius:4px 0 0 0}
   .head::after{right:11px;bottom:11px;border-left:none;border-top:none;border-radius:0 0 4px 0}
+  /* ═══ 헤더 배치 프리셋 (phase392) — 데이터는 그대로, 배치만 ═══ */
+  body.hl-center .head{flex-direction:column;align-items:center;justify-content:center}
+  body.hl-center .head .in{text-align:center;padding:34px 24px 6px}
+  body.hl-center .head .dday{position:relative;right:auto;bottom:auto;text-align:center;padding-bottom:26px}
+  body.hl-center .head .dday .n,body.hl-center .head .dday .t{display:inline}
+  body.hl-center .head .dday .n{font-size:14px}
+  body.hl-center .head .dday .t{margin-left:8px;font-size:9px}
+  body.hl-card .head{align-items:flex-end}
+  body.hl-card .head .in{margin:0 16px;width:auto;flex:1;background:var(--card);border:1px solid var(--line);border-bottom:0;
+    border-radius:12px 12px 0 0;padding:14px 18px 12px;padding-right:120px}
+  body.hl-card .head .dday{right:34px;bottom:14px}
+  body.hl-card .head .dday .n{font-size:17px}
+  body.hl-split .head{align-items:stretch}
+  body.hl-split .head .bgimg,body.hl-split .head .shade{left:46%}
+  body.hl-split .head .in{width:46%;flex:none;background:var(--card);border-right:1px solid var(--line);
+    display:flex;flex-direction:column;justify-content:center;padding:22px 22px 56px}
+  body.hl-split .head .dday{left:22px;right:auto;bottom:16px;text-align:left}
+  body.hl-minimal .head{flex-direction:column;align-items:center;justify-content:center;min-height:0;
+    background:transparent}
+  body.hl-minimal .head .bgimg,body.hl-minimal .head .shade{display:none}
+  body.hl-minimal .head .in{text-align:center;padding:36px 20px 8px}
+  body.hl-minimal .head h1{letter-spacing:.2em;text-shadow:none}
+  body.hl-minimal .head .in::after{content:'';display:block;width:36px;height:1px;background:var(--pri);margin:12px auto 0}
+  body.hl-minimal .head .dday{position:relative;right:auto;bottom:auto;text-align:center;padding-bottom:30px}
+  body.hl-minimal .head .dday .n,body.hl-minimal .head .dday .t{display:inline;font-size:10px;letter-spacing:.25em}
+  body.hl-minimal .head .dday .t{margin-left:8px}
+  body.hl-mag .head h1{font-family:'Noto Serif KR',serif;font-size:clamp(34px,7vw,58px);font-weight:700;
+    letter-spacing:-.01em;line-height:1.02;text-shadow:0 2px 14px rgba(0,0,0,.45)}
+  body.hl-mag .head .in{padding-bottom:16px;padding-right:70px}
+  body.hl-mag .head .dday{top:16px;bottom:auto;right:16px;writing-mode:vertical-rl;text-align:left}
+  body.hl-mag .head .dday .n{font-size:12px;letter-spacing:.15em}
+  body.hl-mag .head .dday .t{margin-top:8px}
+  /* ═══ 헤더 액자 장식 (phase392) — 코너 규칙을 대체 ═══ */
+  body.hd-none .head::before,body.hd-none .head::after{display:none}
+  body.hd-band .head::before{left:0;top:0;right:0;width:auto;height:3px;border:none;border-radius:0;background:var(--pri)}
+  body.hd-band .head::after{content:attr(data-band);left:14px;top:10px;right:auto;bottom:auto;width:auto;height:auto;border:none;
+    font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.3em;color:var(--pri)}
+  body.hd-dbl .head::before{inset:8px;width:auto;height:auto;border:1px solid color-mix(in srgb, var(--pri) 70%, transparent);border-radius:8px;pointer-events:none}
+  body.hd-dbl .head::after{inset:12px;width:auto;height:auto;border:.5px solid color-mix(in srgb, var(--pri) 35%, transparent);border-radius:6px;pointer-events:none}
+  body.hd-film .head::before,body.hd-film .head::after{left:0;right:0;width:auto;height:12px;border:none;border-radius:0;
+    background-color:#0b0b0e;background-image:repeating-linear-gradient(90deg,transparent 0 10px,#2b2b33 10px 16px);background-position:6px 0}
+  body.hd-film .head::before{top:0} body.hd-film .head::after{bottom:0}
+  body.hd-film .head .in{padding-bottom:30px} body.hd-film .head .dday{bottom:28px}
+  body.hd-stamp .head::before{inset:7px;width:auto;height:auto;border:1.5px dashed color-mix(in srgb, var(--ink) 45%, transparent);border-radius:4px;pointer-events:none}
+  body.hd-stamp .head::after{display:none}
+  body.hd-scan .head::before{inset:0;width:auto;height:auto;border:none;border-radius:0;pointer-events:none;
+    background:repeating-linear-gradient(0deg,rgba(0,0,0,.26) 0 1px,transparent 1px 3px)}
+  body.hd-scan .head::after{content:attr(data-band);right:14px;top:10px;left:auto;bottom:auto;width:auto;height:auto;border:none;
+    font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.25em;color:var(--pri)}
   .head .over .osym{font-style:normal;color:var(--pri)}   /* 도형·라벨 분리(phase298c) — 도형은 포인트색 */
   /* 테마 구획 정렬(phase300b) */
   #panel .trows{display:flex;flex-direction:column;gap:9px;margin:4px 0 10px}
@@ -483,9 +532,9 @@
   #cats .x:hover{color:hsl(6 60% 66%)}
   .cat-add{margin-top:8px;font-size:11px;color:var(--muted);cursor:pointer;text-align:center}
   .cat-add:hover{color:var(--pri)}
-  .dd-item{display:flex;justify-content:space-between;align-items:baseline;padding:3px 0}
-  .dd-item .t{font-size:11.5px;color:var(--body)}
-  .dd-item .n{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--pri)}
+  .dd-item{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:3px 0}
+  .dd-item .t{font-size:var(--ddT, 11.5px);color:var(--body);flex:1;min-width:0;word-break:keep-all}
+  .dd-item .n{font-family:'IBM Plex Mono',monospace;font-size:var(--ddN, 13px);color:var(--pri);flex:none;white-space:nowrap}   /* 제목이 길어도 숫자는 제자리(phase391) */
   .bgm-w{display:flex;gap:12px;align-items:center}
   .bgm-cov{width:56px;height:56px;border-radius:50%;overflow:hidden;flex:none;
     border:2px solid var(--line);position:relative;background:var(--card2)}
@@ -2485,6 +2534,23 @@ html,body{overflow-x:hidden;overflow-x:clip}
         <option value="">선택 표시 — 기본</option>
         <option value="soft">선택 표시 — 연하게 (글자색만)</option>
         <option value="off">선택 표시 — 없음</option></select>
+        <select id="s-headlayout" title="헤더 배치 — 제목 · 디데이가 놓이는 방식">
+        <option value="">헤더 배치 — 기본 (좌하단 제목)</option>
+        <option value="center">헤더 배치 — 센터</option>
+        <option value="card">헤더 배치 — 명함 (겹친 카드)</option>
+        <option value="split">헤더 배치 — 스플릿 (정보 | 사진)</option>
+        <option value="minimal">헤더 배치 — 미니멀 (배너 없이)</option>
+        <option value="mag">헤더 배치 — 매거진 (큰 제목)</option></select>
+        <select id="s-headdeco" title="헤더 액자 장식">
+        <option value="">헤더 장식 — 코너 「 」 (기본)</option>
+        <option value="none">헤더 장식 — 없음</option>
+        <option value="band">헤더 장식 — 상단 띠 + 라벨</option>
+        <option value="dbl">헤더 장식 — 이중선</option>
+        <option value="film">헤더 장식 — 필름</option>
+        <option value="stamp">헤더 장식 — 스탬프 (점선)</option>
+        <option value="scan">헤더 장식 — 스캔라인</option></select>
+        <input id="s-headband" placeholder="띠 · 스캔 라벨 (예: ● REC  CH.900)" maxlength="40" style="width:190px"
+        title="상단 띠 · 스캔라인 장식에 적히는 작은 글자 — 비우면 장식만">
         <select id="s-quotestyle" title="본문 인용(>) 상자의 모양">
         <option value="">인용 — 기본 (세로선)</option>
         <option value="quote">인용 — 따옴표</option>
@@ -2663,6 +2729,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=418"></script>
+<script type="module" src="./app.js?v=420"></script>
 </body>
 </html>

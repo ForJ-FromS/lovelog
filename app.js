@@ -241,6 +241,11 @@ function hslToHex(hh,sp,lp){
 function hexFromHue(hh){ return hslToHex(hh,60,62); }
 const ytId=u=>{ const m=String(u||'').match(/(?:youtu\.be\/|v=|shorts\/|embed\/)([A-Za-z0-9_-]{11})/); return m?m[1]:null; };
 const ytList=u=>{ const m=String(u||'').match(/[?&]list=([A-Za-z0-9_-]+)/); return m?m[1]:null; };
+const ddHeadItem=arr=>(arr||[]).find(x=>x&&x.date&&x.hd!==false)||null;   // 헤더에 걸 디데이(phase391): 헤더 체크된 첫 항목
+const ddSideW=()=>(st.page?.side||[]).find(w=>w&&w.t==='dday')||{};
+const ddHeadHTML=(arr)=>{ const d0=ddHeadItem(arr); if(!d0) return '';
+  const w=ddSideW(); const st2=+w.hs?` style="font-size:${+w.hs}px"`:'';
+  return `<p class="n"${st2}>${esc(dday(d0.date,d0.z0))}</p><p class="t">${esc(d0.title)}</p>`; };
 function dday(dstr,z0){ const d=new Date(dstr+'T00:00:00'), n=new Date(); n.setHours(0,0,0,0);
   const f=Math.round((n-d)/86400000);                       /* z0: 당일=0으로 세는 경과일식(phase316) — 기본은 첫날=1(커플식) */
   return f>=0?'D+'+(f+(z0?0:1)):'D'+f; }
@@ -849,9 +854,7 @@ async function enterPage(){
       showEl.style.opacity=1; hideEl.style.opacity=0; front=!front;
     }, 5000);
   }
-  const dd0=(p.ddays||[])[0];
-  $('#pg-dday-main').innerHTML = (dd0 && p.ddHead!==false)
-    ? `<p class="n">${esc(dday(dd0.date,dd0.z0))}</p><p class="t">${esc(dd0.title)}</p>` : '';
+  $('#pg-dday-main').innerHTML = (p.ddHead!==false) ? ddHeadHTML(p.ddays) : '';
   // 레이아웃 · 테마
   document.body.classList.toggle('light', !!p.light);
   document.body.classList.toggle('corner-soft', p.corner==='soft');     // 모서리(phase299)
@@ -873,6 +876,13 @@ async function enterPage(){
   document.body.classList.add('catsh-'+catShape());
   document.body.classList.remove('catsel-soft','catsel-off');            // 선택 표시 3태(phase326)
   if(st.page.catSel) document.body.classList.add('catsel-'+st.page.catSel);
+  /* 헤더 배치·장식(phase392) */
+  ['hl-center','hl-card','hl-split','hl-minimal','hl-mag','hd-none','hd-band','hd-dbl','hd-film','hd-stamp','hd-scan']
+    .forEach(c=>document.body.classList.remove(c));
+  if(st.page.headLayout) document.body.classList.add('hl-'+st.page.headLayout);
+  if(st.page.headDeco) document.body.classList.add('hd-'+st.page.headDeco);
+  { const hb=st.page.headBand||(st.page.headDeco==='scan'?'SIGNAL ▮▮▮▯':(st.page.headDeco==='band'?'● REC':''));
+    const he=document.querySelector('.head'); if(he) he.dataset.band=hb; }
   document.body.classList.remove('qs-quote','qs-letter');                // 인용 스킨(phase361)
   if(st.page.quoteStyle) document.body.classList.add('qs-'+st.page.quoteStyle);
   if(+st.page.postFs) document.body.style.setProperty('--postFs', st.page.postFs+'px');   // 본문 글자 크기(phase389)
@@ -1676,7 +1686,11 @@ function renderSide(){
         if(st.mine){ d.innerHTML=`<p class="label">D-DAY</p><p style="font-size:11px;color:var(--muted)">✦ 꾸미기 → 위젯 → 디데이 ✎에서 날짜를 추가하세요</p>`; box.appendChild(d); }
         return;
       }
-      d.innerHTML=`<p class="label">D-DAY</p>`+p.ddays.map(x=> x.img
+      const sdList=p.ddays.filter(x=>x.sd!==false);          // 사이드 체크 항목만(phase391)
+      if(!sdList.length){ if(!st.mine) return; }
+      if(+w.ts) d.style.setProperty('--ddT', (+w.ts)+'px');
+      if(+w.ns) d.style.setProperty('--ddN', (+w.ns)+'px');
+      d.innerHTML=`<p class="label">D-DAY</p>`+sdList.map(x=> x.img
         ? `<div class="dd-card" style="background-image:url(${x.img})">
              <div class="in2"><span class="t">${esc(x.title)}</span><span class="n">${esc(dday(x.date,x.z0))}</span></div></div>`
         : `<div class="dd-item"><span class="t">${esc(x.title)}</span><span class="n">${esc(dday(x.date,x.z0))}</span></div>`).join('');
@@ -4235,13 +4249,21 @@ function renderWidEdit(){
         <option value="0" ${d.z0?'selected':''}>당일=0일</option>
       </select>
       ${d.img?`<button class="rmv" data-dximg="${i}" style="font-size:10px">사진 제거</button>`:''}
+      <label class="chk" style="font-size:11px" title="이 디데이를 헤더에 걸어요 (헤더는 한 개만 — 체크된 것 중 맨 위)"><input type="checkbox" data-dhd="${i}" ${d.hd===false?'':'checked'}> 헤더</label>
+      <label class="chk" style="font-size:11px" title="이 디데이를 사이드 카드에 보여요"><input type="checkbox" data-dsd="${i}" ${d.sd===false?'':'checked'}> 사이드</label>
     </div>`).join('')+
     `<div class="p-row" style="align-items:center;margin-bottom:2px">
       <label class="chk" title="끄면 사이드의 D-DAY 카드가 숨겨져요 (날짜·헤더 표시는 유지)"><input type="checkbox" id="we-ddcard" ${w.off?'':'checked'}> 사이드 카드 표시</label>
-      <label class="chk" title="끄면 헤더 오른쪽의 D+ 표시가 숨겨져요 (첫 번째 디데이 기준)"><input type="checkbox" id="we-ddhead" ${pdraft.ddHead===false?'':'checked'}> 헤더에 표시</label>
+      <label class="chk" title="끄면 헤더 오른쪽의 D+ 표시가 숨겨져요"><input type="checkbox" id="we-ddhead" ${pdraft.ddHead===false?'':'checked'}> 헤더에 표시</label>
+    </div>
+    <div class="p-row" style="gap:6px;align-items:center;font-size:11px;color:var(--muted)">크기
+      <input type="number" id="we-ddts" min="9" max="24" placeholder="제목" value="${+w.ts||''}" title="사이드 카드 제목 글자 크기(px)" style="width:68px;margin-bottom:0">
+      <input type="number" id="we-ddns" min="9" max="40" placeholder="숫자" value="${+w.ns||''}" title="사이드 카드 D+ 숫자 크기(px)" style="width:68px;margin-bottom:0">
+      <input type="number" id="we-ddhs" min="12" max="80" placeholder="헤더 숫자" value="${+w.hs||''}" title="헤더의 D+ 숫자 크기(px)" style="width:84px;margin-bottom:0">
+      <span>비우면 기본</span>
     </div>
     <button class="btn" id="we-ddadd" style="font-size:12px">+ 디데이 추가</button>
-    <p class="note">첫 번째 디데이는 대문에도 표시돼요. 사진을 넣으면 이미지 카드가 됩니다.</p>`;
+    <p class="note">헤더에는 〈헤더〉 체크된 디데이 중 맨 위 하나가 걸려요. 사진을 넣으면 이미지 카드가 됩니다.</p>`;
   if(w.t==='bgm') html+=`
     <div class="p-row" style="align-items:center;margin-bottom:6px">
       <label class="filelab" style="font-size:11px">🖼 커버 이미지 ${w.cov?'(있음)':''} <input type="file" id="we-bcov" accept="image/*"></label>
@@ -4756,6 +4778,9 @@ function renderWidEdit(){
   $('#wid-edit').querySelectorAll('[data-dt]').forEach(i=>i.addEventListener('input',()=>{ pdraft.ddays[i.dataset.dt].title=i.value; }));
   $('#wid-edit').querySelectorAll('[data-dd]').forEach(i=>i.addEventListener('change',()=>{ pdraft.ddays[i.dataset.dd].date=i.value; }));
   $('#wid-edit').querySelectorAll('[data-dr]').forEach(b=>b.onclick=()=>{ pdraft.ddays.splice(+b.dataset.dr,1); renderWidEdit(); });
+  $('#wid-edit').querySelectorAll('[data-dhd]').forEach(i=>i.addEventListener('change',()=>{ const q=pdraft.ddays[+i.dataset.dhd]; if(!q) return; if(i.checked) delete q.hd; else q.hd=false; }));
+  $('#wid-edit').querySelectorAll('[data-dsd]').forEach(i=>i.addEventListener('change',()=>{ const q=pdraft.ddays[+i.dataset.dsd]; if(!q) return; if(i.checked) delete q.sd; else q.sd=false; }));
+  [['we-ddts','ts'],['we-ddns','ns'],['we-ddhs','hs']].forEach(([id,k])=>{ const el=$('#'+id); if(el) el.addEventListener('input',()=>{ const v=+el.value; if(v) w[k]=v; else delete w[k]; }); });
   $('#wid-edit').querySelectorAll('[data-dz0]').forEach(i=>i.addEventListener('change',()=>{
     if(i.value==='0') pdraft.ddays[i.dataset.dz0].z0=true; else delete pdraft.ddays[i.dataset.dz0].z0; }));
   $('#wid-edit').querySelectorAll('[data-dimg]').forEach(inp=>inp.addEventListener('change',async e=>{
@@ -4838,7 +4863,7 @@ $('#wid-save').onclick=async()=>{
     st.page.side=JSON.parse(JSON.stringify(draft));
     st.page.ddays=dd; st.page.bgm={...pdraft.bgm};
     const d0=dd[0];
-    $('#pg-dday-main').innerHTML = d0?`<p class="n">${esc(dday(d0.date,d0.z0))}</p><p class="t">${esc(d0.title)}</p>`:'';
+    $('#pg-dday-main').innerHTML = (pdraft.ddHead!==false) ? ddHeadHTML(dd) : '';
     widSnap=JSON.stringify({d:draft,p:pdraft});   // 저장됨 — dirty 해제
     renderSide(); msg('위젯 구성 저장 완료!');
   }catch(e){ msg('오류: '+e.message); alert('저장 실패: '+e.message); }
@@ -6086,6 +6111,9 @@ function fillSettings(){
   $('#s-catshape').value=catShape();
   const scs=$('#s-catsel'); if(scs) scs.value=st.page.catSel||'';
   const sqs=$('#s-quotestyle'); if(sqs) sqs.value=st.page.quoteStyle||'';
+  const shl=$('#s-headlayout'); if(shl) shl.value=st.page.headLayout||'';
+  const shd=$('#s-headdeco'); if(shd) shd.value=st.page.headDeco||'';
+  const shb=$('#s-headband'); if(shb) shb.value=st.page.headBand||'';
   const spf=$('#s-postfs'); if(spf) spf.value=st.page.postFs||'';
   $('#s-galcols').value=String(galCols());
   const smc=$('#s-memocols'); if(smc) smc.value=String(memoCols());
@@ -6204,6 +6232,9 @@ async function saveSettings(){
       catShape: $('#s-catshape').value,
       catSel: $('#s-catsel')?.value||'',
       quoteStyle: $('#s-quotestyle')?.value||'',
+      headLayout: $('#s-headlayout')?.value||'',
+      headDeco: $('#s-headdeco')?.value||'',
+      headBand: ($('#s-headband')?.value||'').trim().slice(0,40),
       postFs: (()=>{ const v=parseFloat($('#s-postfs')?.value); return (v>=11&&v<=20)?v:''; })(),
       galCols: +$('#s-galcols').value||3,
       memoCols: +($('#s-memocols')?.value)||3,
