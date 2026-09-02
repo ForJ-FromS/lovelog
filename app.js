@@ -795,6 +795,12 @@ async function loadPage(handle){
   const snap=await getDoc(doc(db,'pages',handle));
   if(!snap.exists()){ show('view-page');
     $('#pg-name').textContent='없는 페이지예요'; $('#pg-sub').textContent='@'+handle; return; }
+  if(snap.data().movedTo){                                   // 🚚 주소 변경 표지판(phase406): 새 주소로 안내 후 이동
+    const to=String(snap.data().movedTo);
+    show('view-page');
+    $('#pg-name').textContent='이사했어요 → @'+to; $('#pg-sub').textContent='잠시 후 새 주소로 이동해요';
+    setTimeout(()=>{ location.href=urlFor(to, pm0||undefined); }, 900);
+    return; }
   if(snap.data().unlisted && !(st.me && snap.data().owner===st.me.uid)){   // 🕶 홈 비공개(phase264) — 존재 자체를 숨김
     show('view-page');
     $('#pg-name').textContent='없는 페이지예요'; $('#pg-sub').textContent='@'+handle; return; }
@@ -1530,9 +1536,12 @@ async function ensureMutual(){
   if(!st.me || !st.myHandle) return false;
   if(st._mutual!==undefined) return st._mutual;
   try{
-    if(!linkedSetOf(st.page).has(st.myHandle)) return st._mutual=false;   // 이 홈이 나를 걸었나
     const my=(await getDoc(doc(db,'pages',st.myHandle))).data()||{};
-    st._mutual=linkedSetOf(my).has(st.handle);                            // 나도 이 홈을 걸었나
+    const mine=[st.myHandle, ...(my.prevHandles||[])];                    // 내 옛 주소도 나(phase406)
+    const theirs=[st.handle, ...(st.page.prevHandles||[])];
+    const A=linkedSetOf(st.page), B=linkedSetOf(my);
+    if(!mine.some(h=>A.has(h))) return st._mutual=false;                  // 이 홈이 나를 걸었나
+    st._mutual=theirs.some(h=>B.has(h));                                  // 나도 이 홈을 걸었나
   }catch(e){ st._mutual=false; }
   return st._mutual;
 }
@@ -6435,6 +6444,8 @@ const RESERVED = new Set(['guide','index','404','app','api','admin','root','syst
   'home','main','www','mail','blog','help','about','support','contact','terms','privacy',
   'lovelog','luvlog','test','demo','null','undefined','new','edit','delete','search',
   'gallery','guestbook','archive','all','post','posts','tag','tags']);
+const STUB_DAYS=7;
+const stubExpired=d=> !!(d && d.movedTo && (+d.movedAt||0) < Date.now()-STUB_DAYS*86400000);   // 표지판 7일 지나면 주소 해제(phase409)
 /* ⚡ 주소 실시간 확인(phase324): 형식→예약어→실존 순, 500ms 디바운스로 읽기 최소화 */
 let hcTimer=null, hcSeq=0;
 function hookHandleCheck(){
@@ -6451,7 +6462,8 @@ function hookHandleCheck(){
     hcTimer=setTimeout(async()=>{
       try{
         /* 예약어도 '이미 사용 중'과 같은 문구·타이밍으로 — 예약 여부를 티내지 않음(phase325) */
-        const taken = RESERVED.has(h) || (await getDoc(doc(db,'pages',h))).exists();
+        const pd=await getDoc(doc(db,'pages',h));
+        const taken = RESERVED.has(h) || (pd.exists() && !stubExpired(pd.data()));   // 만료 표지판은 빈 주소 취급(phase408)
         if(seq!==hcSeq) return;                          // 늦게 도착한 옛 응답 무시
         if(taken){ out.textContent='✗ 이미 사용 중인 주소예요.'; out.className='note bad'; }
         else { out.textContent='✓ 사용할 수 있는 주소예요!'; out.className='note ok'; }
@@ -6508,6 +6520,7 @@ async function signup(){
   try{
     await runTransaction(db,async tx=>{
       const iv=code?doc(db,'invites',code):null, pg=doc(db,'pages',handle), us=doc(db,'users',st.me.uid);
+  try{ const pre=await getDoc(pg); if(pre.exists() && stubExpired(pre.data())) await deleteDoc(pg); }catch(e){}   // 만료 표지판 정리(phase408) — 규칙 허용 필요
       const [a,b,c]=await Promise.all([iv?tx.get(iv):Promise.resolve(null),tx.get(pg),tx.get(us)]);
       let id=null, multi=false;
       if(code){
@@ -6519,7 +6532,7 @@ async function signup(){
         if(typeof id.max==='number' && (id.count||0)>=id.max)
           throw new Error('초대 인원이 가득 찼어요.');
       }
-      if(b.exists()) throw new Error('이미 쓰는 주소예요.');
+      if(b.exists() && !stubExpired(b.data())) throw new Error('이미 쓰는 주소예요.');
       if(c.exists()) throw new Error('이 계정의 페이지가 이미 있어요.');
       tx.set(pg,{owner:st.me.uid,name,sub:'',cats:['archive','ooc'],hue:222,createdAt:serverTimestamp(),ref:codeRef||refH});
       tx.set(us,{handle,createdAt:serverTimestamp()});
@@ -6892,6 +6905,63 @@ $('#s-exp-json').onclick=()=>{
 /* ---------- 복원 (백업에서 불러오기, phase208) ---------- */
 const POST_KEYS=['title','cat','date','ts','secret','pinned','cmtOff','priv','excerpt','html','imgs','raw','enc','body','feat','mpin','encRaw','encImgs'];
 let bkData=null;
+/* 🏠 홈 주소(핸들) 변경(phase406) — 사진은 u/{uid}/ 에 있어 복사 불필요.
+   새 주소에 홈 문서·글(댓글 포함)·방명록·갤러리·앨범·이미지·통계·반응을 복사 → 계정 핸들 갱신 → 옛 주소엔 표지판.
+   하트(likes)는 규칙상 남의 uid를 대신 쓸 수 없어 초기화. 30일에 한 번. 중간에 끊겨도 다시 누르면 덮어쓰며 이어짐 */
+async function renameHandle(newH){
+  if(!st.mine || !st.me) return;
+  newH=(newH||'').trim().toLowerCase();
+  if(!/^[a-z0-9-]{2,20}$/.test(newH)){ msg('영문 소문자·숫자·하이픈 2~20자예요.'); return; }
+  if(newH===st.handle){ msg('지금 주소와 같아요.'); return; }
+  const ex=await getDoc(doc(db,'pages',newH));
+  if(RESERVED.has(newH) || (ex.exists() && !stubExpired(ex.data()))){ msg('이미 사용 중인 주소예요.'); return; }   // 본인도 옛 주소 복귀 불가(phase408)
+  if(ex.exists()) await deleteDoc(doc(db,'pages',newH));      // 만료된 표지판이면 비우고 사용
+  const last=+st.page.renamedAt||0, D30=30*86400000;
+  if(last && Date.now()-last<D30){ msg(`주소 변경은 30일에 한 번이에요 — ${Math.ceil((last+D30-Date.now())/86400000)}일 뒤에 가능`); return; }
+  if(!confirm(`홈 주소를 @${st.handle} → @${newH} 로 바꿀까요?\n\n· 옛 주소는 7일간 "이사했어요" 안내판으로 남아 링크가 자동으로 넘어가고, 그 뒤엔 해제돼 다른 분이 쓸 수 있어요 (본인도 다시 못 써요)\n· 서로 이웃 관계는 그대로 유지돼요\n· 하트(♥) 수는 초기화돼요 (규칙상 복사 불가)\n· 30일에 한 번만 바꿀 수 있어요\n\n진행 전에 현재 홈이 자동 백업돼요.`)) return;
+  dlFile(`lovelog-${st.handle}-before-rename-${expStamp()}.json`, JSON.stringify(buildBackup(true,true),null,2), 'application/json');
+  const old=st.handle; let n=0, fail=0;
+  const put=async(path,data)=>{ try{ await setDoc(doc(db,...path), data); n++; }catch(e){ fail++; console.warn('[rename]',path.join('/'),e.message); } };
+  const copyCol=async(name, sub)=>{
+    const qs=await getDocs(collection(db,'pages',old,name));
+    for(const d2 of qs.docs){
+      await put(['pages',newH,name,d2.id], d2.data());
+      if(sub){ const cs=await getDocs(collection(db,'pages',old,name,d2.id,sub));
+        for(const c2 of cs.docs) await put(['pages',newH,name,d2.id,sub,c2.id], c2.data()); }
+      msg(`이사 중... ${name} ${n}건`);
+    }
+  };
+  try{
+    msg('이사 시작 — 홈 문서');
+    const pg={...(await getDoc(doc(db,'pages',old))).data()};
+    delete pg.movedTo; delete pg.movedAt;
+    pg.prevHandles=[...new Set([...(pg.prevHandles||[]), old])];
+    pg.renamedAt=Date.now();
+    await setDoc(doc(db,'pages',newH), pg);                    // 규칙: owner==uid 로 생성 ✓ (내 표지판이면 덮어써 복귀) — 이후 isOwner(newH) 성립
+    await copyCol('posts','comments');
+    for(const c of ['guest','gallery','albums','imgs','stats','rx']) await copyCol(c);
+    await updateDoc(doc(db,'users',st.me.uid),{handle:newH});
+    /* 원본 비우기(phase408): 30일 뒤 주소가 해제됐을 때 옛 글이 새 주인 홈에 남지 않게.
+       likes는 규칙에 삭제가 없어 남지만 글이 없으면 무의미. stats는 삭제 대신 0으로(키 화이트리스트 규칙) */
+    const wipeCol=async(name,sub)=>{
+      const qs=await getDocs(collection(db,'pages',old,name));
+      for(const d2 of qs.docs){
+        if(sub){ const cs=await getDocs(collection(db,'pages',old,name,d2.id,sub));
+          for(const c2 of cs.docs){ try{ await deleteDoc(c2.ref); }catch(e){} } }
+        try{ await deleteDoc(d2.ref); }catch(e){ fail++; }
+      }
+      msg(`옛 주소 비우는 중... ${name}`);
+    };
+    await wipeCol('posts','comments');
+    for(const c of ['guest','gallery','albums','imgs','rx']) await wipeCol(c);
+    try{ await setDoc(doc(db,'pages',old,'stats','counter'),{total:0,day:'',today:0}); }catch(e){}
+    try{ await setDoc(doc(db,'pages',old,'stats','stamps'),{s0:0,s1:0,s2:0,s3:0}); }catch(e){}
+    await setDoc(doc(db,'pages',old),{owner:st.me.uid, name:pg.name||'', movedTo:newH, movedAt:Date.now()});   // 표지판만 남김
+    st.myHandle=newH;
+    alert(`주소 변경 완료! (${n}건 복사${fail?', '+fail+'건 실패 — 다시 누르면 이어서 복사돼요':''})\n새 주소로 이동합니다.`);
+    location.href=urlFor(newH);
+  }catch(e){ msg('이사 실패 — '+e.message); alert('이사 중 오류: '+e.message+'\n같은 새 주소로 다시 누르면 이어서 진행돼요.'); }
+}
 /* 🚚 교차 판정(phase405, 러브인포 v130 역이식): 백업의 handle이 없으면(구형)
    저장소 주소 u%2F{uid}%2F 에 박힌 uid로 "다른 사람 홈인지" 유추 — 핸들 개명과 무관하게 정확 */
 function bkOwner(j){
@@ -6902,6 +6972,9 @@ function bkOwner(j){
   return { handle:j.handle||'', uids:[...uids], other: j.handle ? j.handle!==st.handle : others.length>0,
            label: j.handle ? '@'+j.handle : (others.length?'다른 계정':'이 계정') };
 }
+$('#hr-go')?.addEventListener('click', ()=>renameHandle($('#hr-new')?.value));
+$('#hr-new')?.addEventListener('input', ()=>{ const v=$('#hr-new').value.trim().toLowerCase();
+  $('#hr-note').textContent = !v ? '' : (/^[a-z0-9-]{2,20}$/.test(v) ? (v===st.handle?'지금 주소와 같아요':'') : '영문 소문자·숫자·하이픈 2~20자'); });
 $('#bk-file')?.addEventListener('change', async e=>{
   bkData=null; $('#bk-scope').hidden=true;
   const f=e.target.files[0]; if(!f) return;
