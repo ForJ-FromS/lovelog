@@ -262,11 +262,12 @@
   body.head-lightgrad .head .shade{background:linear-gradient(180deg,
     hsl(var(--h) calc(10% * var(--sf,1)) 97% / .08) 30%,
     hsl(var(--h) calc(10% * var(--sf,1)) 97% / .8))}   /* 흰색 그라데이션 */
-  .head .over{font-family:'IBM Plex Mono',monospace;font-size:9px;
+  .head.hd-noname h1,.head.hd-noover .over,.head.hd-nosub .sub{display:none}   /* 헤더 요소 숨김(phase403) */
+  .head .over{font-family:'IBM Plex Mono',monospace;font-size:var(--hdO, 9px);
     letter-spacing:.4em;color:var(--muted)}
-  .head h1{font-family:'IBM Plex Mono',monospace;font-size:clamp(21px,4vw,29px);
+  .head h1{font-family:'IBM Plex Mono',monospace;font-size:var(--hdN, clamp(21px,4vw,29px));
     font-weight:600;letter-spacing:.12em;color:var(--ink);line-height:1.4}
-  .head .sub{font-size:12px;color:var(--body);margin-top:2px}
+  .head .sub{font-size:var(--hdS, 12px);color:var(--body);margin-top:2px}
   .head .dday{position:absolute;right:24px;bottom:18px;text-align:right}
   .head .dday .n{font-family:'IBM Plex Mono',monospace;font-size:20px;color:var(--pri)}
   .head .dday .t{font-family:'IBM Plex Mono',monospace;font-size:8px;
@@ -2641,7 +2642,16 @@ html,body{overflow-x:hidden;overflow-x:clip}
         <option value="stamp">헤더 장식 — 스탬프 (점선)</option>
         <option value="scan">헤더 장식 — 스캔라인</option></select>
         <input id="s-headband" placeholder="띠 · 스캔 라벨 (예: ● REC  CH.900)" maxlength="40" style="width:190px"
-        title="상단 띠 · 스캔라인 장식에 적히는 작은 글자 — 비우면 장식만"></span></div>
+        title="상단 띠 · 스캔라인 장식에 적히는 작은 글자 — 비우면 장식만">
+        <span class="tl2">표시</span>
+        <label class="chk" style="font-size:11.5px"><input type="checkbox" id="s-hdname" checked> 홈 이름</label>
+        <label class="chk" style="font-size:11.5px" title="이름 위의 작은 줄 (PRIVATE HOME · @계정 등)"><input type="checkbox" id="s-hdover" checked> 계정 줄</label>
+        <label class="chk" style="font-size:11.5px"><input type="checkbox" id="s-hdsub" checked> 부제</label>
+        <span class="tl2">크기</span>
+        <input type="number" id="s-hdnamefs" min="12" max="72" placeholder="29" title="홈 이름 글자 크기(px) — 기본 29 (화면 좁으면 자동 축소)" style="width:62px">
+        <input type="number" id="s-hdoverfs" min="7" max="20" placeholder="9" title="계정 줄 글자 크기(px) — 기본 9" style="width:56px">
+        <input type="number" id="s-hdsubfs" min="9" max="24" placeholder="12" title="부제 글자 크기(px) — 기본 12" style="width:56px">
+        <span class="tl2">px · 비우면 기본</span></span></div>
       <div class="trow"><span class="tl">카테고리</span><span class="tc"><select id="s-catstyle">
         <option value="bar">상단 알약 바</option><option value="widget">사이드 위젯</option></select>
         <select id="s-catshape">
@@ -2830,6 +2840,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=430"></script>
+<script type="module" src="./app.js?v=431"></script>
 </body>
 </html>

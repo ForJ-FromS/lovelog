@@ -897,7 +897,12 @@ async function enterPage(){
   if(st.page.headLayout) document.body.classList.add('hl-'+st.page.headLayout);
   if(st.page.headDeco) document.body.classList.add('hd-'+st.page.headDeco);
   { const hb=st.page.headBand||(st.page.headDeco==='scan'?'SIGNAL ▮▮▮▯':(st.page.headDeco==='band'?'● REC':''));
-    const he=document.querySelector('.head'); if(he) he.dataset.band=hb; }
+    const he=document.querySelector('.head'); if(he){ he.dataset.band=hb;
+      he.classList.toggle('hd-noname', st.page.hdName===false);          // 헤더 요소 표시·크기(phase403)
+      he.classList.toggle('hd-noover', st.page.hdOver===false);
+      he.classList.toggle('hd-nosub',  st.page.hdSub===false);
+      [['--hdN','hdNameFs'],['--hdO','hdOverFs'],['--hdS','hdSubFs']].forEach(([v,k])=>{
+        if(+st.page[k]) he.style.setProperty(v, (+st.page[k])+'px'); else he.style.removeProperty(v); }); } }
   document.body.classList.remove('qs-quote','qs-letter');                // 인용 스킨(phase361)
   if(st.page.quoteStyle) document.body.classList.add('qs-'+st.page.quoteStyle);
   if(+st.page.postFs) document.body.style.setProperty('--postFs', st.page.postFs+'px');   // 본문 글자 크기(phase389)
@@ -6188,6 +6193,8 @@ function fillSettings(){
   const shl=$('#s-headlayout'); if(shl) shl.value=st.page.headLayout||'';
   const shd=$('#s-headdeco'); if(shd) shd.value=st.page.headDeco||'';
   const shb=$('#s-headband'); if(shb) shb.value=st.page.headBand||'';
+  [['s-hdname','hdName'],['s-hdover','hdOver'],['s-hdsub','hdSub']].forEach(([id,k])=>{ const el=$('#'+id); if(el) el.checked=st.page[k]!==false; });
+  [['s-hdnamefs','hdNameFs'],['s-hdoverfs','hdOverFs'],['s-hdsubfs','hdSubFs']].forEach(([id,k])=>{ const el=$('#'+id); if(el) el.value=st.page[k]||''; });
   const spf=$('#s-postfs'); if(spf) spf.value=st.page.postFs||'';
   $('#s-galcols').value=String(galCols());
   const smc=$('#s-memocols'); if(smc) smc.value=String(memoCols());
@@ -6309,6 +6316,8 @@ async function saveSettings(){
       headLayout: $('#s-headlayout')?.value||'',
       headDeco: $('#s-headdeco')?.value||'',
       headBand: ($('#s-headband')?.value||'').trim().slice(0,40),
+      hdName: $('#s-hdname')?.checked!==false, hdOver: $('#s-hdover')?.checked!==false, hdSub: $('#s-hdsub')?.checked!==false,
+      hdNameFs: +($('#s-hdnamefs')?.value)||'', hdOverFs: +($('#s-hdoverfs')?.value)||'', hdSubFs: +($('#s-hdsubfs')?.value)||'',
       postFs: (()=>{ const v=parseFloat($('#s-postfs')?.value); return (v>=11&&v<=20)?v:''; })(),
       galCols: +$('#s-galcols').value||3,
       memoCols: +($('#s-memocols')?.value)||3,
