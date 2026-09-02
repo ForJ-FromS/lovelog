@@ -1961,7 +1961,7 @@ function renderSide(){
       box.appendChild(d); return;
     }
     if(w.t==='cal'){
-      d.className+=' w-cal'+(w.skin==='desk'?' cal-desk':w.skin==='term'?' cal-term':'');   // 스킨(phase396)
+      d.className+=' w-cal'+(({desk:' cal-desk',term:' cal-term',poster:' cal-poster',dots:' cal-dots',ticket:' cal-ticket',strip:' cal-strip',leaf:' cal-leaf'})[w.skin]||'');   // 스킨(phase396·400)
       const now=new Date();
       const view = w.view==='w'||w.view==='d' ? w.view : 'm';   // 먼슬리/위클리/데일리(phase243)
       let [cy,cm] = w.ym ? w.ym.split('-').map(Number) : [now.getFullYear(), now.getMonth()+1];
@@ -2025,13 +2025,38 @@ function renderSide(){
             </div>`;
           nav=dir=>cur.setDate(cur.getDate()+dir);
         }
+        const MON=['January','February','March','April','May','June','July','August','September','October','November','December'];
+        const WD3=['SUN','MON','TUE','WED','THU','FRI','SAT'];
+        const inRange=(lo,hi)=>marks.filter(m=>m.d&&(m.d2||m.d)>=lo&&m.d<=hi).sort((a,b)=>a.d<b.d?-1:1);
+        const listHTML=arr=>arr.length?`<div class="cal-tk">${arr.map(m=>`<p><b>${esc(m.d.slice(5).replace('-','.'))}${m.d2&&m.d2!==m.d?'~'+esc(m.d2.slice(5).replace('-','.')):''}</b>${m.e?' '+esc(m.e):''} ${esc(m.t||'')}</p>`).join('')}</div>`:'';
         if(w.skin==='desk'){                                 // 🗓 탁상 달력: 링 제본 띠 + 큰 월 숫자(월간 뷰)
-          const lab=d.querySelector('.label');
           const ring=document.createElement('div'); ring.className='cal-ring'; ring.innerHTML='<i></i><i></i>';
           d.insertBefore(ring, d.firstChild);
           if(view==='m'){ const hd=d.querySelector('.cal-hd');
             if(hd){ const big=document.createElement('div'); big.className='cal-big';
               big.innerHTML=`<b>${pad2(cm)}</b><small>${cy}</small>`; hd.insertAdjacentElement('beforebegin', big); } }
+        }
+        if(w.skin==='poster'){                               // 🖼 포스터: 그달 사진 + 세리프 월 이름
+          const mIdx=(view==='m'?cm:cur.getMonth()+1)-1, yy=view==='m'?cy:cur.getFullYear();
+          const po=document.createElement('div'); po.className='cal-po';
+          if(w.pimg) po.style.backgroundImage=`url("${w.pimg}")`;
+          po.innerHTML=`<b>${MON[mIdx]}</b><small>${yy}</small>`;
+          d.insertBefore(po, d.firstChild);
+        }
+        if(w.skin==='dots' && view==='m'){                   // ● 도트 미니: 숫자 없이 점 — 표시일 수 안내
+          const lo=`${cy}-${pad2(cm)}-01`, hi=`${cy}-${pad2(cm)}-31`;
+          const n=inRange(lo,hi).length;
+          const hd=d.querySelector('.cal-hd'); if(hd) hd.insertAdjacentHTML('beforeend', `<small class="cal-dcnt">● ${n} 표시일</small>`);
+        }
+        if(w.skin==='ticket'){                               // 🎟 티켓: 절취선 아래 표시일 목록
+          let arr=[];
+          if(view==='m') arr=inRange(`${cy}-${pad2(cm)}-01`,`${cy}-${pad2(cm)}-31`);
+          else if(view==='w'){ const base=new Date(cur); base.setDate(cur.getDate()-cur.getDay()); const e2=new Date(base); e2.setDate(base.getDate()+6); arr=inRange(dsOf(base),dsOf(e2)); }
+          if(view!=='d') d.insertAdjacentHTML('beforeend', listHTML(arr)||'<div class="cal-tk"><p class="cal-tk-e">— 표시일 없음 —</p></div>');
+        }
+        if(w.skin==='strip' && view==='w'){                  // ▭ 스트립: 요일 라벨 붙은 카드
+          d.querySelectorAll('.cd').forEach(el=>{ const t2=new Date(el.dataset.cd+'T00:00:00');
+            el.insertAdjacentHTML('afterbegin', `<em class="cwd">${WD3[t2.getDay()]}</em>`); });
         }
         after();
       };
@@ -4131,8 +4156,14 @@ function renderWidEdit(){
       <select id="we-calskin" style="width:auto;margin-bottom:0" title="달력 모양">
         <option value="" ${!w.skin?'selected':''}>스킨 — 기본</option>
         <option value="desk" ${w.skin==='desk'?'selected':''}>스킨 — 탁상 달력 (링 제본)</option>
-        <option value="term" ${w.skin==='term'?'selected':''}>스킨 — 터미널 (모노)</option>
+        <option value="term" ${w.skin==='term'?'selected':''}>스킨 — 터미널 (단말기)</option>
+        <option value="poster" ${w.skin==='poster'?'selected':''}>스킨 — 포스터 (그달 사진)</option>
+        <option value="dots" ${w.skin==='dots'?'selected':''}>스킨 — 도트 미니 (월간 전용)</option>
+        <option value="ticket" ${w.skin==='ticket'?'selected':''}>스킨 — 티켓 (절취선 + 목록)</option>
+        <option value="strip" ${w.skin==='strip'?'selected':''}>스킨 — 스트립 카드 (주간 전용)</option>
+        <option value="leaf" ${w.skin==='leaf'?'selected':''}>스킨 — 일력 (일간 전용)</option>
       </select>
+      ${w.skin==='poster'?`<label class="filelab" style="font-size:11px">🖼 포스터 사진 ${w.pimg?'(있음)':''} <input type="file" id="we-calpimg" accept="image/*"></label>${w.pimg?`<button class="rmv" id="we-calpimgx" style="font-size:10px">제거</button>`:''}`:''}
       <select id="we-calview" style="width:auto;margin-bottom:0">
         <option value="m" ${!w.view||w.view==='m'?'selected':''}>먼슬리 (월간)</option>
         <option value="w" ${w.view==='w'?'selected':''}>위클리 (한 주 한 줄)</option>
@@ -4697,7 +4728,10 @@ function renderWidEdit(){
     renderWidEdit(); }));
   const cprl=$('#we-cprel'); if(cprl) cprl.addEventListener('input',()=>{
     if(cprl.value.trim()) w.rel=cprl.value; else delete w.rel; });
-  const csk=$('#we-calskin'); if(csk) csk.addEventListener('change',()=>{ if(csk.value) w.skin=csk.value; else delete w.skin; });
+  const csk=$('#we-calskin'); if(csk) csk.addEventListener('change',()=>{ if(csk.value) w.skin=csk.value; else delete w.skin; renderWidEdit(); });
+  const cpi=$('#we-calpimg'); if(cpi) cpi.addEventListener('change',async()=>{ const f=cpi.files[0]; if(!f) return;
+    try{ w.pimg=await compress(f, 640, .8); renderWidEdit(); }catch(e){ msg('사진 처리 실패'); } });
+  const cpx=$('#we-calpimgx'); if(cpx) cpx.onclick=()=>{ delete w.pimg; renderWidEdit(); };
   const cvw=$('#we-calview'); if(cvw) cvw.addEventListener('change',()=>{
     if(cvw.value==='m') delete w.view; else w.view=cvw.value; });
   const cym=$('#we-calym'); if(cym) cym.addEventListener('change',()=>{

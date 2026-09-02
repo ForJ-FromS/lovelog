@@ -1336,12 +1336,12 @@
     color:var(--muted);letter-spacing:.06em;margin-bottom:4px;font-family:'IBM Plex Mono',monospace}
   .w-cal .cal-gr{display:grid;grid-template-columns:repeat(7,1fr);row-gap:3px}
   .w-cal .cd{position:relative;min-height:34px;display:flex;flex-direction:column;align-items:center;
-    padding-top:3px;font-size:10.5px;border-radius:7px}
-  .w-cal .cd i{font-style:normal;color:var(--ink);opacity:.82;line-height:1.2;position:relative;z-index:1}
+    padding-top:2px;font-size:10.5px;border-radius:7px}
+  .w-cal .cd i{font-style:normal;color:var(--ink);opacity:.82;line-height:1;position:relative;z-index:1;
+    display:flex;align-items:center;justify-content:center;width:20px;height:20px}   /* 숫자 박스 20×20 — 링이 여기 정확히 겹침(phase399) */
   .w-cal .cd.off{visibility:hidden}
   .w-cal .cd.today i{color:var(--pri);font-weight:700;opacity:1}
-  .w-cal .cd.today::after{content:'';position:absolute;top:1px;left:50%;transform:translateX(-50%);
-    width:20px;height:20px;border:1px solid color-mix(in srgb, var(--pri) 55%, transparent);border-radius:50%}
+  .w-cal .cd.today i::after{content:'';position:absolute;inset:0;border:1px solid color-mix(in srgb, var(--pri) 55%, transparent);border-radius:50%}
   .w-cal .ce{font-size:11px;line-height:1;margin-top:1px;position:relative;z-index:1}
   .w-cal .cmemo{position:absolute;bottom:3px;left:50%;transform:translateX(-50%);
     width:4px;height:4px;border-radius:50%;background:var(--pri)}
@@ -1374,23 +1374,82 @@
   .cal-desk .cal-big{float:left;text-align:center;margin:0 12px 4px 0;line-height:1}
   .cal-desk .cal-big b{display:block;font-family:'Noto Serif KR',serif;font-size:34px;font-weight:600;color:var(--ink)}
   .cal-desk .cal-big small{display:block;font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.2em;color:var(--muted);margin-top:3px}
-  .cal-desk .cal-hd{justify-content:flex-end;font-size:11px;color:var(--muted)}
+  .cal-desk .cal-hd{font-size:11px;color:var(--muted)}
+  .cal-desk:has(.cal-big) .cal-hd{justify-content:flex-end}   /* 큰 월 숫자가 있을 때만 오른쪽(phase400) */
   .cal-desk .cal-wd,.cal-desk .cal-gr{clear:none}
   .cal-desk .cal-gr{clear:both}
-  /* 터미널 — 모노 · 오늘 [01] · 표시일 * */
-  .cal-term{background:color-mix(in srgb, #000 30%, var(--card));font-family:'IBM Plex Mono',monospace}
-  .cal-term .label{color:var(--muted)}
-  .cal-term .cal-hd,.cal-term .cal-wd span,.cal-term .cd i,.cal-term .cal-day .cdd,.cal-term .cal-day .cdw{font-family:'IBM Plex Mono',monospace}
-  .cal-term .cal-hd{font-size:11px;letter-spacing:.15em}
-  .cal-term .cal-hd b::before{content:'CAL // '}
-  .cal-term .cd i{color:color-mix(in srgb, var(--ink) 60%, transparent);font-size:10.5px}
-  .cal-term .cd.today i{color:var(--ink);background:color-mix(in srgb, var(--ink) 12%, transparent);border-radius:2px;padding:0 2px}
+  /* 터미널 — 단말기 화면(phase400): 검은 CRT · 상태 바 · 스캔라인 · 프롬프트 커서 */
+  .cal-term{background:#0b0c0e;border-color:#26282c;border-radius:6px;font-family:'IBM Plex Mono',monospace;
+    --tk:#c9ccd1;--tkd:#5d6168;color:var(--tk);padding-top:0}
+  .cal-term::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:2;
+    background:repeating-linear-gradient(0deg,rgba(0,0,0,.22) 0 1px,transparent 1px 3px)}
+  .cal-term .label{background:#15171b;margin:0 -17px 12px;padding:7px 17px;font-size:8.5px;letter-spacing:.3em;color:var(--tkd);
+    border-bottom:1px solid #26282c}
+  .cal-term .label::before{content:'[SYS] ';color:var(--pri)}
+  .cal-term .label::after{content:' — READY';color:var(--tkd)}
+  .cal-term .cal-hd{font-size:10.5px;letter-spacing:.2em;color:var(--tk);justify-content:flex-start;gap:10px}
+  .cal-term .cal-hd b::before{content:'> cal ';color:var(--pri)}
+  .cal-term .cnav{color:var(--tkd)} .cal-term .cnav:hover{color:var(--pri)}
+  .cal-term .cal-wd span{font-size:8px;letter-spacing:.15em;color:var(--tkd)}
+  .cal-term .cal-gr{border-top:1px dashed #26282c;border-bottom:1px dashed #26282c;padding:4px 0}
+  .cal-term .cd{border-radius:0}
+  .cal-term .cd i{color:var(--tkd);font-size:10.5px;opacity:1}
+  .cal-term .cd.today i{color:#0b0c0e;background:var(--pri);border-radius:1px;font-weight:600}
   .cal-term .cd.today i::before{content:'['} .cal-term .cd.today i::after{content:']'}
-  .cal-term .cd.today::after{display:none}
-  .cal-term .cd:has(.ce) i{color:var(--pri)}
-  .cal-term .cd:has(.ce) i::after{content:'*'}
-  .cal-term .cd .ce{font-size:9px;opacity:.85}
-  .cal-term .cd.rg{background:color-mix(in srgb, var(--pri) 14%, transparent);border-radius:0}
+  .cal-term .cd.today i::after{position:static;border:none;width:auto;height:auto}
+  .cal-term .cd:has(.ce) i{color:var(--pri);text-decoration:underline;text-underline-offset:2px}
+  .cal-term .ce{display:none}
+  .cal-term .cmemo{background:var(--pri);border-radius:0;width:5px;height:2px}
+  .cal-term .cd.rg::before{background:color-mix(in srgb, var(--pri) 22%, transparent);border-radius:0;top:6px;height:14px}
+  .cal-term .cd.rs::before,.cal-term .cd.re::before{border-radius:0}
+  .cal-term::after{content:'> _';display:block;margin-top:8px;font-size:10px;color:var(--pri);animation:tCur 1s steps(1) infinite}
+  .cal-term .cal-day .cdd,.cal-term .cal-day .cdw{color:var(--tk)} .cal-term .cal-day .cdd.now{color:var(--pri)}
+  .cal-term .cal-day .cdl span{color:var(--tk)}
+  .cal-term .cal-tip{font-family:inherit}
+  /* 포스터 — 그달 사진 + 세리프 월 이름 */
+  .cal-poster{padding-top:0}
+  .cal-poster .cal-po{height:86px;margin:0 -17px 10px;position:relative;background:linear-gradient(135deg, color-mix(in srgb, var(--pri) 55%, #222), color-mix(in srgb, var(--pri) 15%, #111));
+    background-size:cover;background-position:center}
+  .cal-poster .cal-po::after{content:'';position:absolute;inset:0;background:linear-gradient(to top, rgba(0,0,0,.55), transparent 60%)}
+  .cal-poster .cal-po b{position:absolute;left:16px;bottom:9px;z-index:1;font-family:'Noto Serif KR',serif;font-size:21px;font-weight:600;letter-spacing:.04em;color:#f4f4f7}
+  .cal-poster .cal-po small{position:absolute;right:16px;bottom:11px;z-index:1;font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.25em;color:var(--pri)}
+  .cal-poster .label{display:none}
+  /* 도트 미니 — 숫자 없이 점만 (월간) */
+  .cal-dots .cal-wd{display:none}
+  .cal-dots .cal-gr{row-gap:7px;padding:4px 0 2px}
+  .cal-dots .cd{min-height:0;padding:0;justify-content:center}
+  .cal-dots .cd i{font-size:0;width:7px;height:7px;border-radius:50%;background:var(--line)}
+  .cal-dots .cd.today i{width:9px;height:9px;background:var(--pri);box-shadow:0 0 0 2px color-mix(in srgb, var(--pri) 30%, transparent)}
+  .cal-dots .cd.today i::before,.cal-dots .cd.today i::after{content:none;display:none}
+  .cal-dots .cd:has(.ce) i{background:var(--pri)}
+  .cal-dots .ce,.cal-dots .cmemo{display:none}
+  .cal-dots .cd.rg::before{top:1px;height:5px;border-radius:0}
+  .cal-dots .cal-hd{font-size:9px;letter-spacing:.2em;color:var(--muted);gap:10px}
+  .cal-dots .cal-dcnt{font-size:8.5px;letter-spacing:.1em;color:var(--pri);margin-left:6px}
+  /* 티켓 — 절취선 + 표시일 목록 */
+  .cal-ticket .cal-tk{position:relative;margin:12px -17px -15px;padding:10px 17px 13px;border-top:1.5px dashed var(--line);font-family:'IBM Plex Mono',monospace;font-size:10px}
+  .cal-ticket .cal-tk::before,.cal-ticket .cal-tk::after{content:'';position:absolute;top:-8px;width:14px;height:14px;border-radius:50%;background:var(--bg);border:1px solid var(--line)}
+  .cal-ticket .cal-tk::before{left:-8px} .cal-ticket .cal-tk::after{right:-8px}
+  .cal-ticket .cal-tk p{margin:0 0 3px;color:var(--body)} .cal-ticket .cal-tk p b{color:var(--pri);margin-right:6px;font-weight:600}
+  .cal-ticket .cal-tk .cal-tk-e{color:var(--muted);text-align:center}
+  .cal-ticket .label::before{content:'ADMIT ONE · '}
+  /* 스트립 — 요일 라벨 붙은 카드 (주간) */
+  .cal-strip .cal-wd{display:none}
+  .cal-strip .cal-gr{gap:4px}
+  .cal-strip .cd{min-height:44px;padding:6px 0 5px;border-radius:9px;border:1px solid transparent;gap:2px}
+  .cal-strip .cd .cwd{font-style:normal;font-size:7.5px;letter-spacing:.1em;color:var(--muted);order:-1}
+  .cal-strip .cd i{width:auto;height:auto;font-size:13px}
+  .cal-strip .cd.today{background:var(--pri)}
+  .cal-strip .cd.today i{color:#15131f;font-weight:700} .cal-strip .cd.today .cwd{color:#3a3020}
+  .cal-strip .cd.today i::after{display:none}
+  .cal-strip .cd:has(.ce):not(.today){border-color:var(--pri)}
+  .cal-strip .cd.rg::before{display:none}
+  /* 일력 — 세리프 큰 숫자 + 얇은 선 (일간) */
+  .cal-leaf .cal-day{gap:4px}
+  .cal-leaf .cal-day .cdw{order:-1;font-size:8.5px;letter-spacing:.3em;color:var(--muted)}
+  .cal-leaf .cal-day .cdd{font-family:'Noto Serif KR',serif;font-size:58px;font-weight:600;line-height:1;margin:4px 0 2px}
+  .cal-leaf .cal-day .cdd::after{content:'';display:block;width:28px;height:1px;background:var(--pri);margin:10px auto 0}
+  .cal-leaf .cal-day .cdl span{font-size:11.5px}
   .w-cal .cal-day .cdw{font-style:normal;font-size:9px;letter-spacing:.3em;color:var(--muted);font-family:'IBM Plex Mono',monospace}
   .w-cal .cal-day .cdl{display:flex;flex-direction:column;gap:3px;margin-top:7px;align-items:center}
   .w-cal .cal-day .cdl span{font-size:11.5px;color:var(--ink)}
@@ -2766,6 +2825,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=426"></script>
+<script type="module" src="./app.js?v=428"></script>
 </body>
 </html>
