@@ -237,7 +237,8 @@
   .head .over .osym{font-style:normal;color:var(--pri)}   /* 도형·라벨 분리(phase298c) — 도형은 포인트색 */
   /* 테마 구획 정렬(phase300b) */
   #panel .trows{display:flex;flex-direction:column;gap:9px;margin:4px 0 10px}
-  #panel .trow{display:grid!important;grid-template-columns:118px 1fr;align-items:center;gap:9px}
+  #panel .trow{display:grid!important;grid-template-columns:118px 1fr;align-items:start;gap:9px}
+  #panel .trow .tl{padding-top:9px}   /* 컨트롤 첫 줄 중앙과 라벨 맞춤(phase393) */
   #panel .trow .tc{display:flex!important;align-items:center;gap:9px;flex-wrap:wrap;min-width:0}
   #panel .trow .tc>*{flex:0 0 auto;width:auto!important;display:inline-flex!important;align-items:center}   /* 홈 커스텀 방어(300e) — #panel 격상으로 id+!important 커스텀도 서열 제압 */
   #panel .trow .tl{font-size:12.5px}
@@ -1355,6 +1356,41 @@
     background:color-mix(in srgb, var(--ink) 3%, transparent)}
   .w-cal .cal-day .cdd{font-size:34px;line-height:1;color:var(--ink);font-family:'IBM Plex Mono',monospace}
   .w-cal .cal-day .cdd.now{color:var(--pri)}
+  /* 📝 달력 메모 툴팁 (phase397) */
+  .cal-tip{position:absolute;z-index:60;max-width:220px;background:var(--card);border:1px solid var(--line);border-radius:9px;
+    padding:8px 11px;font-size:11.5px;line-height:1.6;color:var(--body);box-shadow:0 6px 22px rgba(0,0,0,.28);
+    opacity:0;pointer-events:none;transition:opacity .12s;white-space:pre-wrap;word-break:keep-all}
+  .cal-tip.on{opacity:1}
+  .cal-tip b{display:block;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.2em;color:var(--pri);margin-bottom:3px}
+  .cal-tip span{display:block}
+  .w-cal .cd[data-tip]{cursor:help}
+  /* ═══ 달력 스킨 (phase396) ═══ */
+  /* 탁상 달력 — 링 제본 띠 + 큰 월 숫자 */
+  .cal-desk{padding-top:0}
+  .cal-desk .cal-ring{height:20px;margin:0 -17px 12px;background:var(--pri);position:relative}
+  .cal-desk .cal-ring i{position:absolute;top:5px;width:10px;height:10px;border-radius:50%;background:var(--card);
+    box-shadow:inset 0 0 0 2px color-mix(in srgb, #000 35%, var(--pri))}
+  .cal-desk .cal-ring i:first-child{left:20px} .cal-desk .cal-ring i:last-child{right:20px}
+  .cal-desk .cal-big{float:left;text-align:center;margin:0 12px 4px 0;line-height:1}
+  .cal-desk .cal-big b{display:block;font-family:'Noto Serif KR',serif;font-size:34px;font-weight:600;color:var(--ink)}
+  .cal-desk .cal-big small{display:block;font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.2em;color:var(--muted);margin-top:3px}
+  .cal-desk .cal-hd{justify-content:flex-end;font-size:11px;color:var(--muted)}
+  .cal-desk .cal-wd,.cal-desk .cal-gr{clear:none}
+  .cal-desk .cal-gr{clear:both}
+  /* 터미널 — 모노 · 오늘 [01] · 표시일 * */
+  .cal-term{background:color-mix(in srgb, #000 30%, var(--card));font-family:'IBM Plex Mono',monospace}
+  .cal-term .label{color:var(--muted)}
+  .cal-term .cal-hd,.cal-term .cal-wd span,.cal-term .cd i,.cal-term .cal-day .cdd,.cal-term .cal-day .cdw{font-family:'IBM Plex Mono',monospace}
+  .cal-term .cal-hd{font-size:11px;letter-spacing:.15em}
+  .cal-term .cal-hd b::before{content:'CAL // '}
+  .cal-term .cd i{color:color-mix(in srgb, var(--ink) 60%, transparent);font-size:10.5px}
+  .cal-term .cd.today i{color:var(--ink);background:color-mix(in srgb, var(--ink) 12%, transparent);border-radius:2px;padding:0 2px}
+  .cal-term .cd.today i::before{content:'['} .cal-term .cd.today i::after{content:']'}
+  .cal-term .cd.today::after{display:none}
+  .cal-term .cd:has(.ce) i{color:var(--pri)}
+  .cal-term .cd:has(.ce) i::after{content:'*'}
+  .cal-term .cd .ce{font-size:9px;opacity:.85}
+  .cal-term .cd.rg{background:color-mix(in srgb, var(--pri) 14%, transparent);border-radius:0}
   .w-cal .cal-day .cdw{font-style:normal;font-size:9px;letter-spacing:.3em;color:var(--muted);font-family:'IBM Plex Mono',monospace}
   .w-cal .cal-day .cdl{display:flex;flex-direction:column;gap:3px;margin-top:7px;align-items:center}
   .w-cal .cal-day .cdl span{font-size:11.5px;color:var(--ink)}
@@ -2524,16 +2560,7 @@ html,body{overflow-x:hidden;overflow-x:clip}
         <option value="right">오른쪽</option><option value="left">왼쪽</option><option value="both">양쪽</option></select></span></div>
       <div class="trow"><span class="tl">헤더</span><span class="tc"><select id="s-headmode">
         <option value="wide">가로 (상단 와이드)</option>
-        <option value="side">세로 (사이드 프로필형)</option></select></span></div>
-      <div class="trow"><span class="tl">카테고리</span><span class="tc"><select id="s-catstyle">
-        <option value="bar">상단 알약 바</option><option value="widget">사이드 위젯</option></select>
-        <select id="s-catshape">
-        <option value="list">모양 — 기본</option><option value="pill">모양 — 알약</option>
-        <option value="text">모양 — 글씨만</option><option value="box">모양 — 네모</option></select>
-        <select id="s-catsel" title="지금 보고 있는 카테고리를 어떻게 표시할지">
-        <option value="">선택 표시 — 기본</option>
-        <option value="soft">선택 표시 — 연하게 (글자색만)</option>
-        <option value="off">선택 표시 — 없음</option></select>
+        <option value="side">세로 (사이드 프로필형)</option></select>
         <select id="s-headlayout" title="헤더 배치 — 제목 · 디데이가 놓이는 방식">
         <option value="">헤더 배치 — 기본 (좌하단 제목)</option>
         <option value="center">헤더 배치 — 센터</option>
@@ -2550,7 +2577,17 @@ html,body{overflow-x:hidden;overflow-x:clip}
         <option value="stamp">헤더 장식 — 스탬프 (점선)</option>
         <option value="scan">헤더 장식 — 스캔라인</option></select>
         <input id="s-headband" placeholder="띠 · 스캔 라벨 (예: ● REC  CH.900)" maxlength="40" style="width:190px"
-        title="상단 띠 · 스캔라인 장식에 적히는 작은 글자 — 비우면 장식만">
+        title="상단 띠 · 스캔라인 장식에 적히는 작은 글자 — 비우면 장식만"></span></div>
+      <div class="trow"><span class="tl">카테고리</span><span class="tc"><select id="s-catstyle">
+        <option value="bar">상단 알약 바</option><option value="widget">사이드 위젯</option></select>
+        <select id="s-catshape">
+        <option value="list">모양 — 기본</option><option value="pill">모양 — 알약</option>
+        <option value="text">모양 — 글씨만</option><option value="box">모양 — 네모</option></select>
+        <select id="s-catsel" title="지금 보고 있는 카테고리를 어떻게 표시할지">
+        <option value="">선택 표시 — 기본</option>
+        <option value="soft">선택 표시 — 연하게 (글자색만)</option>
+        <option value="off">선택 표시 — 없음</option></select></span></div>
+      <div class="trow"><span class="tl">본문</span><span class="tc">
         <select id="s-quotestyle" title="본문 인용(>) 상자의 모양">
         <option value="">인용 — 기본 (세로선)</option>
         <option value="quote">인용 — 따옴표</option>
@@ -2729,6 +2766,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=420"></script>
+<script type="module" src="./app.js?v=426"></script>
 </body>
 </html>

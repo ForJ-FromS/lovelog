@@ -241,6 +241,21 @@ function hslToHex(hh,sp,lp){
 function hexFromHue(hh){ return hslToHex(hh,60,62); }
 const ytId=u=>{ const m=String(u||'').match(/(?:youtu\.be\/|v=|shorts\/|embed\/)([A-Za-z0-9_-]{11})/); return m?m[1]:null; };
 const ytList=u=>{ const m=String(u||'').match(/[?&]list=([A-Za-z0-9_-]+)/); return m?m[1]:null; };
+/* 📝 달력 메모 툴팁(phase397) — 한 개의 떠 있는 상자를 재사용 */
+let calTipEl=null, calTipPin=false;
+function calTip(el, pin){
+  if(!calTipEl){ calTipEl=document.createElement('div'); calTipEl.className='cal-tip'; document.body.appendChild(calTipEl);
+    document.addEventListener('click',()=>{ if(calTipPin){ calTipPin=false; calTipHide(); } }); }
+  calTipPin=!!pin;
+  const ds=el.dataset.cd||'';
+  calTipEl.innerHTML=`<b>${esc(ds.slice(5).replace('-','.'))}</b>`+esc(el.dataset.tip||'').split('\n').map(s2=>`<span>${s2}</span>`).join('');
+  calTipEl.classList.add('on');
+  const r=el.getBoundingClientRect(), tw=calTipEl.offsetWidth, th=calTipEl.offsetHeight;
+  let x=r.left+r.width/2-tw/2, y=r.top-th-8;
+  x=Math.max(8, Math.min(window.innerWidth-tw-8, x)); if(y<8) y=r.bottom+8;
+  calTipEl.style.left=(x+window.scrollX)+'px'; calTipEl.style.top=(y+window.scrollY)+'px';
+}
+function calTipHide(){ if(calTipEl && !calTipPin) calTipEl.classList.remove('on'); }
 const ddHeadItem=arr=>(arr||[]).find(x=>x&&x.date&&x.hd!==false)||null;   // 헤더에 걸 디데이(phase391): 헤더 체크된 첫 항목
 const ddSideW=()=>(st.page?.side||[]).find(w=>w&&w.t==='dday')||{};
 const ddHeadHTML=(arr)=>{ const d0=ddHeadItem(arr); if(!d0) return '';
@@ -1946,7 +1961,7 @@ function renderSide(){
       box.appendChild(d); return;
     }
     if(w.t==='cal'){
-      d.className+=' w-cal';
+      d.className+=' w-cal'+(w.skin==='desk'?' cal-desk':w.skin==='term'?' cal-term':'');   // 스킨(phase396)
       const now=new Date();
       const view = w.view==='w'||w.view==='d' ? w.view : 'm';   // 먼슬리/위클리/데일리(phase243)
       let [cy,cm] = w.ym ? w.ym.split('-').map(Number) : [now.getFullYear(), now.getMonth()+1];
@@ -1963,13 +1978,18 @@ function renderSide(){
         const single=mk.find(m=>!(m.d2&&m.d2!==m.d));
         const range=mk.find(m=>m.d2&&m.d2!==m.d);
         const rCls=range?(' rg'+(ds===range.d?' rs':'')+(ds===(range.d2||range.d)?' re':'')):'';
-        return `<span class="cd${ds===tod?' today':''}${rCls}" ${mk.length&&mk[0].t?`title="${esc(mk[0].t)}"`:''} data-cd="${ds}">
+        const tip=mk.filter(m=>m.t||m.e).map(m=>[m.e, m.t, (m.d2&&m.d2!==m.d)?`(${m.d.slice(5).replace('-','.')}~${m.d2.slice(5).replace('-','.')})`:''].filter(Boolean).join(' ')).join('\n');
+        return `<span class="cd${ds===tod?' today':''}${rCls}"${tip?` data-tip="${esc(tip)}"`:''} data-cd="${ds}">
           <i>${+ds.slice(8)}</i>${single&&single.e?`<b class="ce">${esc(single.e)}</b>`:''}${range&&ds===range.d&&range.e?`<b class="ce">${esc(range.e)}</b>`:''}${memoDates.has(ds)?'<u class="cmemo"></u>':''}</span>`;
       };
       const WD7=['S','M','T','W','T','F','S'];
       let nav=()=>{};
       const after=()=>{
         d.querySelectorAll('[data-cn]').forEach(el=>el.onclick=()=>{ nav(+el.dataset.cn); draw(); });
+        d.querySelectorAll('.cd[data-tip]').forEach(el=>{                       // 📝 메모 툴팁(phase397): 즉시·전부·폰은 탭
+          el.addEventListener('mouseenter',()=>calTip(el)); el.addEventListener('mouseleave',calTipHide);
+          el.addEventListener('click',e=>{ if(matchMedia('(hover:none)').matches){ e.stopPropagation(); calTip(el,true); } });
+        });
         if(w.memoDot) d.querySelectorAll('.cd').forEach(el=>{
           if(el.querySelector('.cmemo')) el.onclick=()=>openMemoOf(el.dataset.cd); });
       };
@@ -2004,6 +2024,14 @@ function renderSide(){
               ${memoDates.has(ds)?`<span class="cd" data-cd="${ds}" style="min-height:0;cursor:pointer"><u class="cmemo" style="position:static;transform:none"></u><em class="cml">메모 열기</em></span>`:''}
             </div>`;
           nav=dir=>cur.setDate(cur.getDate()+dir);
+        }
+        if(w.skin==='desk'){                                 // 🗓 탁상 달력: 링 제본 띠 + 큰 월 숫자(월간 뷰)
+          const lab=d.querySelector('.label');
+          const ring=document.createElement('div'); ring.className='cal-ring'; ring.innerHTML='<i></i><i></i>';
+          d.insertBefore(ring, d.firstChild);
+          if(view==='m'){ const hd=d.querySelector('.cal-hd');
+            if(hd){ const big=document.createElement('div'); big.className='cal-big';
+              big.innerHTML=`<b>${pad2(cm)}</b><small>${cy}</small>`; hd.insertAdjacentElement('beforebegin', big); } }
         }
         after();
       };
@@ -4001,7 +4029,8 @@ function renderWidEdit(){
   if(w.t==='pairqa') html+=`
     <div class="p-row" style="gap:6px">
       <input id="pq-title" placeholder="위젯 제목 (비우면 PAIR INTERVIEW)" value="${esc(w.title||'')}" style="flex:1;min-width:0;margin-bottom:0">
-      <input type="number" id="pq-qsz" min="8" max="30" placeholder="질문 크기" value="${+w.qsz||''}" title="질문 글자 크기(px) — 비우면 기본" style="width:88px;flex:none;margin-bottom:0">
+      <span style="font-size:11px;color:var(--muted);flex:none">질문 크기</span>
+      <input type="number" id="pq-qsz" min="8" max="30" placeholder="11" value="${+w.qsz||''}" title="질문 글자 크기(px) — 기본 11" style="width:64px;flex:none;margin-bottom:0">
     </div>
     <div class="p-row" style="align-items:center;gap:8px;font-size:11.5px;color:var(--muted)">
       <select id="pq-mode" style="width:auto;margin-bottom:0" title="서로 인터뷰: 질문도 인물의 말로 — 질문마다 누가 묻는지 고를 수 있어요">
@@ -4063,12 +4092,12 @@ function renderWidEdit(){
     </div>
     <div class="p-row" style="gap:6px">
       <input id="we-tdtl" placeholder="제목" value="${esc(w.title||'')}" style="flex:1;min-width:0;margin-bottom:0" title="비우면 TO-DO">
-      <input type="number" id="we-tdts" min="8" max="40" placeholder="크기" value="${+w.ts||''}" title="제목 글자 크기(px) — 비우면 스킨 기본" style="width:78px;flex:none;margin-bottom:0">
+      <input type="number" id="we-tdts" min="8" max="40" placeholder="${({memo:15,grid:17,ribbon:14})[w.skin]||9}" value="${+w.ts||''}" title="제목 글자 크기(px) — 연하게 보이는 숫자가 이 스킨의 기본값" style="width:78px;flex:none;margin-bottom:0">
       <input id="we-tdemo" placeholder="이모지" value="${esc(w.emo ?? (w.style==='ribbon'?'🎀':''))}" style="width:64px;flex:none;margin-bottom:0" title="제목 앞 이모지 — 비우면 없음">
     </div>
     <div class="p-row" style="gap:6px">
       <input id="we-tdsub" placeholder="부제 줄 (선택)" value="${esc(w.sub||'')}" style="flex:1;min-width:0;margin-bottom:0" title="예: Date. 8/27 · 이번 주">
-      <input type="number" id="we-tdss" min="8" max="40" placeholder="크기" value="${+w.ss||''}" title="부제 글자 크기(px) — 비우면 스킨 기본" style="width:78px;flex:none;margin-bottom:0">
+      <input type="number" id="we-tdss" min="8" max="40" placeholder="${({memo:9.5,grid:12,ribbon:10})[w.skin]||11}" value="${+w.ss||''}" title="부제 글자 크기(px) — 연하게 보이는 숫자가 이 스킨의 기본값" style="width:78px;flex:none;margin-bottom:0">
     </div>
     <div class="p-row" style="align-items:center;gap:6px;font-size:11.5px;color:var(--muted)">제목
       <select id="we-tdtf" style="width:auto;margin-bottom:0">
@@ -4099,6 +4128,11 @@ function renderWidEdit(){
     <p class="note">체크·해제는 홈 화면에서 바로 눌러요 — 방문자에게는 보기만 됩니다.</p>`;
   if(w.t==='cal') html+=`
     <div class="p-row" style="align-items:center;gap:8px;font-size:11.5px;color:var(--muted)">
+      <select id="we-calskin" style="width:auto;margin-bottom:0" title="달력 모양">
+        <option value="" ${!w.skin?'selected':''}>스킨 — 기본</option>
+        <option value="desk" ${w.skin==='desk'?'selected':''}>스킨 — 탁상 달력 (링 제본)</option>
+        <option value="term" ${w.skin==='term'?'selected':''}>스킨 — 터미널 (모노)</option>
+      </select>
       <select id="we-calview" style="width:auto;margin-bottom:0">
         <option value="m" ${!w.view||w.view==='m'?'selected':''}>먼슬리 (월간)</option>
         <option value="w" ${w.view==='w'?'selected':''}>위클리 (한 주 한 줄)</option>
@@ -4114,10 +4148,11 @@ function renderWidEdit(){
         <span style="font-size:11px;color:var(--muted)">~</span>
         <input type="date" data-cmd2="${mi}" value="${esc(m.d2||'')}" title="기간 마킹이면 끝 날짜 — 하루면 비워두세요" style="width:auto;margin-bottom:0">
         <input data-cme="${mi}" value="${esc(m.e||'')}" placeholder="이모지" style="width:64px;flex:none;margin-bottom:0">
-        <input data-cmt="${mi}" value="${esc(m.t||'')}" placeholder="라벨 (선택)" style="margin-bottom:0">
+        <input data-cmt="${mi}" value="${esc(m.t||'')}" placeholder="내용 (예: 첫 만남 · 검진) — 마우스 올리면 보여요" style="margin-bottom:0">
         <button class="rmv" data-cmx="${mi}">✕</button>
       </div>`).join('')}
-    <button class="btn" id="we-caladd" style="font-size:11.5px">＋ 날짜 마킹</button>`;
+    <p class="note" style="margin:8px 0 4px">기념일 · 일정은 여기서 직접 적어요 — 위의 메모 연동과는 별개예요</p>
+    <button class="btn" id="we-caladd" style="font-size:11.5px">＋ 기념일 · 일정 추가</button>`;
   if(w.t==='habit') html+=`
     <div class="p-row" style="align-items:center;gap:8px;font-size:11.5px;color:var(--muted)">
       <select id="we-hbmode" style="width:auto;margin-bottom:0">
@@ -4257,10 +4292,10 @@ function renderWidEdit(){
       <label class="chk" title="끄면 헤더 오른쪽의 D+ 표시가 숨겨져요"><input type="checkbox" id="we-ddhead" ${pdraft.ddHead===false?'':'checked'}> 헤더에 표시</label>
     </div>
     <div class="p-row" style="gap:6px;align-items:center;font-size:11px;color:var(--muted)">크기
-      <input type="number" id="we-ddts" min="9" max="24" placeholder="제목" value="${+w.ts||''}" title="사이드 카드 제목 글자 크기(px)" style="width:68px;margin-bottom:0">
-      <input type="number" id="we-ddns" min="9" max="40" placeholder="숫자" value="${+w.ns||''}" title="사이드 카드 D+ 숫자 크기(px)" style="width:68px;margin-bottom:0">
-      <input type="number" id="we-ddhs" min="12" max="80" placeholder="헤더 숫자" value="${+w.hs||''}" title="헤더의 D+ 숫자 크기(px)" style="width:84px;margin-bottom:0">
-      <span>비우면 기본</span>
+      제목 <input type="number" id="we-ddts" min="9" max="24" placeholder="11.5" value="${+w.ts||''}" title="사이드 카드 제목 글자 크기(px) — 기본 11.5" style="width:62px;margin-bottom:0">
+      숫자 <input type="number" id="we-ddns" min="9" max="40" placeholder="13" value="${+w.ns||''}" title="사이드 카드 D+ 숫자 크기(px) — 기본 13" style="width:62px;margin-bottom:0">
+      헤더 숫자 <input type="number" id="we-ddhs" min="12" max="80" placeholder="20" value="${+w.hs||''}" title="헤더의 D+ 숫자 크기(px) — 기본 20" style="width:62px;margin-bottom:0">
+      <span>px · 비우면 기본값</span>
     </div>
     <button class="btn" id="we-ddadd" style="font-size:12px">+ 디데이 추가</button>
     <p class="note">헤더에는 〈헤더〉 체크된 디데이 중 맨 위 하나가 걸려요. 사진을 넣으면 이미지 카드가 됩니다.</p>`;
@@ -4662,6 +4697,7 @@ function renderWidEdit(){
     renderWidEdit(); }));
   const cprl=$('#we-cprel'); if(cprl) cprl.addEventListener('input',()=>{
     if(cprl.value.trim()) w.rel=cprl.value; else delete w.rel; });
+  const csk=$('#we-calskin'); if(csk) csk.addEventListener('change',()=>{ if(csk.value) w.skin=csk.value; else delete w.skin; });
   const cvw=$('#we-calview'); if(cvw) cvw.addEventListener('change',()=>{
     if(cvw.value==='m') delete w.view; else w.view=cvw.value; });
   const cym=$('#we-calym'); if(cym) cym.addEventListener('change',()=>{
