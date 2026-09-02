@@ -6892,6 +6892,16 @@ $('#s-exp-json').onclick=()=>{
 /* ---------- 복원 (백업에서 불러오기, phase208) ---------- */
 const POST_KEYS=['title','cat','date','ts','secret','pinned','cmtOff','priv','excerpt','html','imgs','raw','enc','body','feat','mpin','encRaw','encImgs'];
 let bkData=null;
+/* 🚚 교차 판정(phase405, 러브인포 v130 역이식): 백업의 handle이 없으면(구형)
+   저장소 주소 u%2F{uid}%2F 에 박힌 uid로 "다른 사람 홈인지" 유추 — 핸들 개명과 무관하게 정확 */
+function bkOwner(j){
+  const s=JSON.stringify(j);
+  const uids=new Set(); const rx=/\/u%2F([A-Za-z0-9]{10,})%2F|\/u\/([A-Za-z0-9]{10,})\//g; let m;   // /o/u%2F{uid}%2F… 또는 /u/{uid}/…
+  while((m=rx.exec(s))) uids.add(m[1]||m[2]);
+  const others=[...uids].filter(u=>u!==st.me?.uid);
+  return { handle:j.handle||'', uids:[...uids], other: j.handle ? j.handle!==st.handle : others.length>0,
+           label: j.handle ? '@'+j.handle : (others.length?'다른 계정':'이 계정') };
+}
 $('#bk-file')?.addEventListener('change', async e=>{
   bkData=null; $('#bk-scope').hidden=true;
   const f=e.target.files[0]; if(!f) return;
@@ -6904,7 +6914,8 @@ $('#bk-file')?.addEventListener('change', async e=>{
     $('#rs-deco').checked=hasD; $('#rs-deco').disabled=!hasD;
     $('#rs-posts').checked=hasP; $('#rs-posts').disabled=!hasP;
     $('#bk-scope').hidden=false;
-    msg(`백업 확인 — ${j.handle?'@'+j.handle+' · ':''}${hasD?'꾸미기 ✓ ':''}${hasP?'글 '+j.posts.length+'편 ✓':''}`);
+    const own=bkOwner(j), when=(j.exported||'').slice(0,10);
+    msg(`백업 확인 — ${own.label}${when?' · '+when:''} · ${hasD?'꾸미기 ✓ ':''}${hasP?'글 '+j.posts.length+'편 ✓':''}${own.other&&!j.handle?' · 구형 백업(주소로 판정)':''}`);
   }catch(err){ msg('읽기 실패 — '+err.message); e.target.value=''; }
 });
 $('#bk-restore')?.addEventListener('click', async ()=>{
@@ -6912,14 +6923,19 @@ $('#bk-restore')?.addEventListener('click', async ()=>{
   const rd=$('#rs-deco').checked && bkData.deco;
   const rp=$('#rs-posts').checked && Array.isArray(bkData.posts);
   if(!rd && !rp){ msg('복원할 항목을 골라주세요.'); return; }
-  if(bkData.handle && bkData.handle!==st.handle &&
-     !confirm(`이 백업은 @${bkData.handle}의 것이에요. 이 홈(@${st.handle})에 입힐까요?`)) return;
+  const own=bkOwner(bkData);
+  if(own.other){
+    const parts=[]; if(rp) parts.push('글 '+bkData.posts.length+'편'); if(rd) parts.push('꾸미기');
+    if(Array.isArray(bkData.gallery)&&bkData.gallery.length) parts.push('갤러리 '+bkData.gallery.length+'장');
+    const when=(bkData.exported||'').slice(0,10);
+    if(!confirm(`이 백업은 ${own.label}의 것이에요${when?' ('+when+')':''}.\n이 홈(@${st.handle})으로 ${parts.join(' · ')||'선택 항목'}을 전부 이사할까요?\n(사진은 내 저장소로 복사돼 옛 홈이 지워져도 안 깨져요)`)) return;
+  }
   if(!confirm('복원을 시작할까요? 진행 전에 현재 상태가 자동으로 백업 저장됩니다.')) return;
   dlFile(`lovelog-${st.handle}-before-restore-${expStamp()}.json`,
     JSON.stringify(buildBackup(true,true),null,2), 'application/json');   // 안전망
   /* 🚚 사진 이사(phase209): 다른 홈 백업이면 사진을 내 스토리지로 복사해 URL 교체
      — 옛 홈이 지워져도 새 홈 사진이 안 깨지게. 실패한 사진은 원 주소 유지 */
-  const cross = bkData.handle && bkData.handle!==st.handle;
+  const cross = own.other;                                    // 구형 백업도 uid 판정으로 이사(phase405)
   const migMap=new Map(); let migOk=0, migFail=0;
   const RX_STG=/https:\/\/firebasestorage\.googleapis\.com\/v0\/b\/[^"\\]+/g;
   async function migUrl(u){
