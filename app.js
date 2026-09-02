@@ -4163,17 +4163,19 @@ function renderWidEdit(){
         <option value="strip" ${w.skin==='strip'?'selected':''}>스킨 — 스트립 카드 (주간 전용)</option>
         <option value="leaf" ${w.skin==='leaf'?'selected':''}>스킨 — 일력 (일간 전용)</option>
       </select>
-      <label class="chk" style="font-size:11px" title="터미널의 > _ 커서, 티켓의 표시일 목록, 도트의 표시일 수 같은 아래쪽 장식을 숨겨요"><input type="checkbox" id="we-calfoot" ${w.noFoot?'':'checked'}> 아래 장식</label>
       ${w.skin==='poster'?`<label class="filelab" style="font-size:11px">🖼 포스터 사진 ${w.pimg?'(있음)':''} <input type="file" id="we-calpimg" accept="image/*"></label>${w.pimg?`<button class="rmv" id="we-calpimgx" style="font-size:10px">제거</button>`:''}`:''}
       <select id="we-calview" style="width:auto;margin-bottom:0">
         <option value="m" ${!w.view||w.view==='m'?'selected':''}>먼슬리 (월간)</option>
         <option value="w" ${w.view==='w'?'selected':''}>위클리 (한 주 한 줄)</option>
         <option value="d" ${w.view==='d'?'selected':''}>데일리 (하루 크게)</option>
       </select>
-      <input type="month" id="we-calym" value="${esc(w.ym||'')}" style="width:auto;margin-bottom:0">
-      <span>— 비우면 이번 달을 따라 흘러가요, 정하면 그 달에 고정</span>
+      <input type="month" id="we-calym" value="${esc(w.ym||'')}" style="width:auto;min-width:150px;margin-bottom:0" title="비우면 이번 달을 따라 흘러가요 · 정하면 그 달에 고정">
+      <span style="white-space:nowrap">← 비우면 이번 달</span>
     </div>
-    <label class="chk" style="font-size:11.5px"><input type="checkbox" id="we-calmemo" ${w.memoDot?'checked':''}> 메모 연동 — 메모가 있는 날짜에 점이 찍히고, 누르면 그 메모가 열려요</label>
+    <div class="p-row" style="gap:16px;align-items:center;flex-wrap:wrap">
+      <label class="chk" style="font-size:11.5px"><input type="checkbox" id="we-calmemo" ${w.memoDot?'checked':''}> 메모 연동 — 메모 있는 날짜에 점, 누르면 열려요</label>
+      <label class="chk" style="font-size:11.5px" title="터미널의 > _ 커서, 티켓의 표시일 목록, 도트의 표시일 수 같은 아래쪽 장식"><input type="checkbox" id="we-calfoot" ${w.noFoot?'':'checked'}> 아래 장식 표시</label>
+    </div>
     ${(w.marks||[]).map((m,mi)=>`
       <div class="p-row" style="gap:6px;align-items:center">
         <input type="date" data-cmd="${mi}" value="${esc(m.d||'')}" style="width:auto;margin-bottom:0">
