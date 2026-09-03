@@ -347,6 +347,17 @@
     padding:11px 8px;border-bottom:1px solid hsl(var(--h) calc(12% * var(--sf,1)) 15%);cursor:pointer;
     border-left:2px solid transparent;transition:border-color .15s,background .15s}
   .row:hover{border-left-color:var(--pri);background:hsl(var(--h) calc(20% * var(--sf,1)) 50% / .05)}
+  /* ☑ 선택 삭제 모드 (phase419) */
+  .row.selrow{cursor:pointer}
+  .row.selrow .rsel{width:14px;height:14px;margin:0 8px 0 0;accent-color:var(--pri);flex:none;pointer-events:none}
+  .row.selon{background:color-mix(in srgb, var(--pri) 10%, transparent);border-radius:8px}
+  .sel-bar{display:flex;align-items:center;gap:8px;margin-top:12px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;
+    background:var(--card2);font-size:12px;color:var(--muted);position:sticky;bottom:12px;z-index:5}
+  .sel-bar span{flex:1}
+  .gal-grid.gal-sel a{cursor:pointer}
+  .gal-grid a .gsel{position:absolute;left:6px;top:6px;font-size:16px;line-height:1;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.7)}
+  .gal-grid a.gselon{outline:3px solid var(--pri);outline-offset:-3px}
+  .gal-grid a.gselon img{opacity:.75}
   .row.has-th{grid-template-columns:58px 1fr auto auto 46px}
   .row .th{width:46px;height:46px;object-fit:cover;border-radius:7px;
     border:1px solid var(--line);background:var(--card2)}
@@ -2140,7 +2151,7 @@ html,body{overflow-x:hidden;overflow-x:clip}
     <div class="cols hidden" id="board">
       <main>
         <div id="list-view">
-          <div class="sec-head"><h2 id="v-label">RECENT</h2><span style="display:flex;gap:14px"><span class="en hidden" id="board-write" style="cursor:pointer">✎ WRITE</span><span class="en" id="go-home" style="cursor:pointer">‹ HOME</span></span></div>
+          <div class="sec-head"><h2 id="v-label">RECENT</h2><span style="display:flex;gap:14px"><span class="en hidden" id="board-sel" style="cursor:pointer" title="글을 여러 개 골라 한 번에 삭제">☑ 선택</span><span class="en hidden" id="board-write" style="cursor:pointer">✎ WRITE</span><span class="en" id="go-home" style="cursor:pointer">‹ HOME</span></span></div>
           <div id="tag-slot"></div>
           <div id="pin-slot"></div>
           <ul id="rows"></ul>
@@ -2894,6 +2905,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=446"></script>
+<script type="module" src="./app.js?v=448"></script>
 </body>
 </html>

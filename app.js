@@ -2612,6 +2612,11 @@ function updateBoardWrite(){
   const c=st.cat;
   const ok = st.mine && c!=='home' && c!=='__gb';
   b.classList.toggle('hidden', !ok);
+  { const sb=$('#board-sel');                                   // ☑ 선택 삭제 모드(phase419) — 글 목록에서만
+    const okSel = ok && !isA(c);                                  // 글 목록 + 갤러리(phase420) — 사진첩은 폴더 단위라 제외
+    if(sb){ sb.classList.toggle('hidden', !okSel); sb.textContent = st.selMode ? '✕ 선택 끝' : '☑ 선택';
+      sb.onclick=()=>{ st.selMode=!st.selMode; st.selIds=new Set(); renderList(); }; }
+    if(!okSel && st.selMode){ st.selMode=false; st.selIds=new Set(); } }
   if(!ok) return;
   b.textContent = isA(c) ? '＋ ADD' : '✎ WRITE';               // 사진첩 탭은 추가 버튼(phase288c)
   b.onclick=()=>{
@@ -2734,13 +2739,40 @@ function renderList(){
     const gper = galCols()*5;
     renderPager(all.length, gper);
     const items = all.slice(((st.pg||1)-1)*gper, (st.pg||1)*gper);
+    if(st.selMode) st.selIds ??= new Set();
     $('#rows').innerHTML = (items.length
-      ? `<div class="gal-grid">`+items.map(g=>
-          `<a data-gg="${g.id}"><img src="${g.img}" alt="" draggable="false" loading="lazy"${galPos(g)}>${g.priv?'<i class="gpriv">🔏</i>':''}${st.mine?
+      ? `<div class="gal-grid${st.selMode?' gal-sel':''}">`+items.map(g=>
+          `<a data-gg="${g.id}" class="${st.selMode&&st.selIds.has(g.id)?'gselon':''}"><img src="${g.img}" alt="" draggable="false" loading="lazy"${galPos(g)}>${st.selMode?`<i class="gsel">${st.selIds.has(g.id)?'☑':'☐'}</i>`:''}${g.priv?'<i class="gpriv">🔏</i>':''}${st.mine&&!st.selMode?
             `<i class="gdel" data-gx="${g.id}">✕</i><i class="gedit" data-ge="${g.id}" title="제목·카테고리·사진 수정">✎</i><i class="gpin${galPins().includes(g.id)?' on':''}" data-gp="${g.id}" title="대문 갤러리에 고정">★</i>`:''}</a>`).join('')+`</div>`
         +(st.mine?`<p class="note" style="margin-top:10px">★를 누르면 대문(홈) 갤러리에 걸려요 — 카테고리 탭에서 '대문: ★로 고른 사진'을 선택해야 적용돼요.</p>`:'')
       : '<p class="pl-empty">아직 이미지가 없습니다.</p>');
     $('#more-btn').style.display='none';
+    document.querySelector('.sel-bar')?.remove();
+    if(st.selMode){                                             /* ☑ 사진 선택 삭제(phase420) */
+      const ids=items.map(g=>g.id);
+      const bar=document.createElement('div'); bar.className='sel-bar';
+      const draw=()=>{ const n=st.selIds.size;
+        bar.innerHTML=`<span>${n}장 선택</span>
+          <button class="rmv" id="sel-all" style="font-size:11px">${ids.every(i=>st.selIds.has(i))?'페이지 선택 해제':'이 페이지 전체 선택'}</button>
+          <button class="btn" id="sel-del" style="font-size:11.5px;${n?'':'opacity:.4'}" ${n?'':'disabled'}>🗑 선택 삭제</button>
+          <button class="rmv" id="sel-off" style="font-size:11px">취소</button>`;
+        $('#sel-all').onclick=()=>{ const all=ids.every(i=>st.selIds.has(i)); ids.forEach(i=>all?st.selIds.delete(i):st.selIds.add(i)); renderList(); };
+        $('#sel-off').onclick=()=>{ st.selMode=false; st.selIds=new Set(); renderList(); };
+        $('#sel-del').onclick=async()=>{
+          const pick=st.gallery.filter(g=>st.selIds.has(g.id)); if(!pick.length) return;
+          if(!confirm(`선택한 사진 ${pick.length}장을 삭제할까요?\n되돌릴 수 없어요.`)) return;
+          let ok=0, fail=0;
+          for(const g of pick){ try{ await deleteDoc(doc(db,'pages',st.handle,'gallery',g.id)); ok++; st.gallery=st.gallery.filter(x=>x.id!==g.id); }catch(e){ fail++; } msg(`삭제 중... ${ok}/${pick.length}`); }
+          st.selMode=false; st.selIds=new Set();
+          renderGal(); renderList(); renderSide(); msg(`사진 ${ok}장 삭제${fail?' · '+fail+'장 실패':''}`);
+        };
+      };
+      draw(); $('#rows').insertAdjacentElement('afterend', bar);
+      document.querySelectorAll('[data-gg]').forEach(el=>el.onclick=e=>{ e.preventDefault();
+        const id=el.dataset.gg; if(st.selIds.has(id)) st.selIds.delete(id); else st.selIds.add(id);
+        el.classList.toggle('gselon', st.selIds.has(id)); const m2=el.querySelector('.gsel'); if(m2) m2.textContent=st.selIds.has(id)?'☑':'☐'; draw(); });
+      return;
+    }
     document.querySelectorAll('[data-gg]').forEach(el=>el.onclick=e=>{
       if(e.target.dataset.gx){ e.stopPropagation(); delGal(e.target.dataset.gx); return; }
       if(e.target.dataset.gp){ e.stopPropagation(); togglePin(e.target.dataset.gp); return; }
@@ -2804,7 +2836,8 @@ function renderList(){
   const shown=rest.slice(((st.pg||1)-1)*PER, (st.pg||1)*PER);
   const canFt = st.mine && sideCfg().some(w2=>w2.t==='feat'&&!w2.hid);   // ★ 대표글 위젯을 둔 주인에게만 토글 노출
   const rowHTML=p=>{ const t=postThumb(p); return `
-    <li class="row ${t?'has-th':''}" data-id="${p.id}">
+    <li class="row ${t?'has-th':''}${st.selMode?' selrow':''}${st.selMode&&st.selIds?.has(p.id)?' selon':''}" data-id="${p.id}">
+      ${st.selMode?`<input type="checkbox" class="rsel" data-rs="${p.id}" ${st.selIds?.has(p.id)?'checked':''}>`:''}
       <span class="d">${esc((p.date||'').slice(5))}</span>
       <span class="t">${esc(p.title)} ${p.secret?'<span class="k">🔒</span>':''}${p.priv?'<span class="k" title="비공개 — 나만 보여요">🔏</span>':''}${+p.schedAt>Date.now()?'<span class="k" title="예약 발행 — 시각이 되면 공개돼요">⏰</span>':''}${p.mut===true?'<span class="k" title="이웃 공개 — 서로 이웃에게만 보여요">🤝</span>':''}${canFt?`<button class="ft-star${p.feat?' on':''}" data-ft="${p.id}" title="★ 대표글 위젯에 전시 (다시 누르면 해제)">${p.feat?'★':'☆'}</button>`:''}</span>
       ${(st.page.rowTag!==false && p.tags&&p.tags[0])
@@ -2814,6 +2847,34 @@ function renderList(){
   $('#rows').innerHTML = shown.length?shown.map(rowHTML).join('')
     :'<p class="pl-empty">아직 글이 없습니다.</p>';
   $('#more-btn').style.display='none';
+  /* ☑ 선택 삭제 모드(phase419): 행 클릭 = 체크 토글, 하단 바에서 한 번에 삭제 */
+  if(st.selMode){
+    const ids=shown.map(p=>p.id); st.selIds ??= new Set();
+    const bar=document.createElement('div'); bar.className='sel-bar';
+    const draw=()=>{ const n=st.selIds.size;
+      bar.innerHTML=`<span>${n}개 선택</span>
+        <button class="rmv" id="sel-all" style="font-size:11px">${ids.every(i=>st.selIds.has(i))?'페이지 선택 해제':'이 페이지 전체 선택'}</button>
+        <button class="btn" id="sel-del" style="font-size:11.5px;${n?'':'opacity:.4'}" ${n?'':'disabled'}>🗑 선택 삭제</button>
+        <button class="rmv" id="sel-off" style="font-size:11px">취소</button>`;
+      $('#sel-all').onclick=()=>{ const all=ids.every(i=>st.selIds.has(i)); ids.forEach(i=>all?st.selIds.delete(i):st.selIds.add(i)); renderList(); };
+      $('#sel-off').onclick=()=>{ st.selMode=false; st.selIds=new Set(); renderList(); };
+      $('#sel-del').onclick=async()=>{
+        const pick=st.posts.filter(p=>st.selIds.has(p.id)); if(!pick.length) return;
+        if(!confirm(`선택한 글 ${pick.length}개를 삭제할까요?\n${pick.slice(0,5).map(p=>'· '+p.title).join('\n')}${pick.length>5?'\n· …':''}\n\n되돌릴 수 없어요.`)) return;
+        let ok=0, fail=0;
+        for(const p of pick){ try{ await deleteDoc(doc(db,'pages',st.handle,'posts',p.id)); ok++; st.posts=st.posts.filter(x=>x.id!==p.id); }catch(e){ fail++; } msg(`삭제 중... ${ok}/${pick.length}`); }
+        st.selMode=false; st.selIds=new Set();
+        renderWidgets(); renderList(); msg(`글 ${ok}개 삭제${fail?' · '+fail+'개 실패':''}`);
+      };
+    };
+    draw(); $('#rows').insertAdjacentElement('afterend', bar);
+    document.querySelectorAll('#rows .selrow').forEach(el=>el.onclick=e=>{
+      if(e.target.dataset.ft){ e.stopPropagation(); return; }
+      const id=el.dataset.id; if(st.selIds.has(id)) st.selIds.delete(id); else st.selIds.add(id);
+      el.classList.toggle('selon', st.selIds.has(id)); const cb=el.querySelector('.rsel'); if(cb) cb.checked=st.selIds.has(id); draw(); });
+    return;
+  }
+  document.querySelector('.sel-bar')?.remove();
   document.querySelectorAll('[data-id]').forEach(el=>el.onclick=e=>{
     if(e.target.dataset.ft){ e.stopPropagation(); toggleFeat(e.target.dataset.ft); return; }
     openPost(el.dataset.id); });
