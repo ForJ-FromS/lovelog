@@ -865,6 +865,11 @@
   .ch-p{width:30px;height:30px;border-radius:50%;object-fit:cover;flex:none;
     border:1px solid var(--line)}
   .ch-b{max-width:80%}
+  /* 말풍선 모서리 개별 지정(phase418) — 테마의 corner-sharp(!important·0-1-1)보다 특이성 높게 */
+  .w-chat.chb-round .ch-b p{border-radius:14px!important}
+  .w-chat.chb-round .ch-line.l .ch-b p{border-bottom-left-radius:4px!important}
+  .w-chat.chb-round .ch-line.r .ch-b p{border-bottom-right-radius:4px!important}
+  .w-chat.chb-sharp .ch-b p{border-radius:0!important}
   .ch-n{display:block;font-size:10px;color:var(--chNm,var(--muted));opacity:.85;margin:0 0 3px 2px}
   .ch-line.r .ch-n{text-align:right;margin:0 2px 3px 0}
   .ch-b p{margin:0;font-size:var(--chFs,12.5px);font-family:var(--chFf,inherit);
@@ -2889,6 +2894,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=445"></script>
+<script type="module" src="./app.js?v=446"></script>
 </body>
 </html>

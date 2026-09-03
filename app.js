@@ -1690,7 +1690,7 @@ function renderSide(){
     const d=document.createElement('div'); d.className='side sw-'+w.t+(w.mhide?' w-mhide':'');
     d.dataset.wi=wi; if(!flw) bindDrag(d);   // 띄운 위젯은 컬럼 순서 드래그 대상이 아님
     if(w.t==='search'){
-      d.innerHTML=`<p class="label">SEARCH</p>
+      d.innerHTML=`<p class="label">${esc(w.label||'SEARCH')}</p>
         <div class="s-search">⌕ <input id="q" placeholder="search"></div>`;
       box.appendChild(d);
       d.querySelector('#q').addEventListener('input',e=>{
@@ -1701,7 +1701,7 @@ function renderSide(){
       if(catStyle()==='bar') return;   // 알약 바 모드에선 사이드 카테고리 숨김
       const cnt=c=> isG(c) ? st.gallery.filter(x=>x.cat===c).length
                            : st.posts.filter(x=>x.cat===c).length;
-      d.innerHTML=`<p class="label">CATEGORY</p><ul id="cats">`+
+      d.innerHTML=`<p class="label">${esc(w.label||'CATEGORY')}</p><ul id="cats">`+
         cats().map(c=>`<li><a data-c="${esc(c)}" class="${st.cat===c?'on':''}">
           <span>${esc(c)}</span>
           <span class="n">${cnt(c)}</span></a></li>`).join('')+
@@ -1715,14 +1715,14 @@ function renderSide(){
     if(w.t==='dday'){
       if(w.off) return;                             // 카드 숨김(헤더만 모드)
       if(!(p.ddays&&p.ddays.length)){
-        if(st.mine){ d.innerHTML=`<p class="label">D-DAY</p><p style="font-size:11px;color:var(--muted)">✦ 꾸미기 → 위젯 → 디데이 ✎에서 날짜를 추가하세요</p>`; box.appendChild(d); }
+        if(st.mine){ d.innerHTML=`<p class="label">${esc(w.label||'D-DAY')}</p><p style="font-size:11px;color:var(--muted)">✦ 꾸미기 → 위젯 → 디데이 ✎에서 날짜를 추가하세요</p>`; box.appendChild(d); }
         return;
       }
       const sdList=p.ddays.filter(x=>x.sd!==false);          // 사이드 체크 항목만(phase391)
       if(!sdList.length){ if(!st.mine) return; }
       if(+w.ts) d.style.setProperty('--ddT', (+w.ts)+'px');
       if(+w.ns) d.style.setProperty('--ddN', (+w.ns)+'px');
-      d.innerHTML=`<p class="label">D-DAY</p>`+sdList.map(x=> x.img
+      d.innerHTML=`<p class="label">${esc(w.label||'D-DAY')}</p>`+sdList.map(x=> x.img
         ? `<div class="dd-card" style="background-image:url(${x.img})">
              <div class="in2"><span class="t">${esc(x.title)}</span><span class="n">${esc(dday(x.date,x.z0))}</span></div></div>`
         : `<div class="dd-item"><span class="t">${esc(x.title)}</span><span class="n">${esc(dday(x.date,x.z0))}</span></div>`).join('');
@@ -1743,7 +1743,7 @@ function renderSide(){
       const bsrc = trks.length ? {url:trks[tcur].url, title:trks[tcur].title||''} : {};
       const vid=ytId(bsrc.url), list=ytList(bsrc.url);
       if(!vid && !list){
-        if(st.mine){ d.innerHTML=`<p class="label">BGM</p><p style="font-size:11px;color:var(--muted)">✦ 꾸미기 → 위젯 → BGM ✎에 유튜브 영상/플레이리스트 링크를 넣으세요</p>`; box.appendChild(d); }
+        if(st.mine){ d.innerHTML=`<p class="label">${esc(w.label||'BGM')}</p><p style="font-size:11px;color:var(--muted)">✦ 꾸미기 → 위젯 → BGM ✎에 유튜브 영상/플레이리스트 링크를 넣으세요</p>`; box.appendChild(d); }
         return;
       }
       const ccov=(trks[tcur]&&trks[tcur].cov)||w.cov||'';   // 커버 우선순위: 곡별 > 위젯 > 유튜브(phase279/281)
@@ -1764,7 +1764,7 @@ function renderSide(){
       if(sv.length) d.setAttribute('style', sv.join(';')); }
       if(bst==='cst'){
         d.className+=' bgm-cst';
-        d.innerHTML=`<p class="label">NOW PLAYING</p>
+        d.innerHTML=`<p class="label">${esc(w.label||'NOW PLAYING')}</p>
           <div class="cst-body">
             <span class="cst-scr s1"></span><span class="cst-scr s2"></span><span class="cst-scr s3"></span><span class="cst-scr s4"></span>
             <div class="cst-lbl${ccov?' has-cv':''}">${ccov?`<img class="bcv" src="${ccov}" alt=""><i class="cst-lt"><span>${esc(w.sub||'SIDE A')}</span><b>${btit}</b></i>`:`<span>${esc(w.sub||'SIDE A')}</span><b>${btit}</b>`}</div>
@@ -1773,7 +1773,7 @@ function renderSide(){
           </div><div class="bgm-fr"></div>`;
       }else if(bst==='lp'){
         d.className+=' bgm-lp';
-        d.innerHTML=`<p class="label">NOW PLAYING</p>
+        d.innerHTML=`<p class="label">${esc(w.label||'NOW PLAYING')}</p>
           <div class="lp-row">
             <span class="lp-wrap"><span class="lp-disc">${cover}</span><span class="lp-arm"></span></span>
             <span class="lp-meta"><b>${btit}</b><span>${esc(w.sub||'33⅓ RPM · SIDE A')}</span></span>
@@ -1781,7 +1781,7 @@ function renderSide(){
           </div><div class="bgm-fr"></div>`;
       }else if(bst==='tun'){
         d.className+=' bgm-tun';
-        d.innerHTML=`<p class="label">NOW PLAYING</p>
+        d.innerHTML=`<p class="label">${esc(w.label||'NOW PLAYING')}</p>
           <div class="tun-body">
             <div class="tun-band"><i></i></div>
             <div class="tun-nums"><span>88</span><span>90</span><span>92</span><span>96</span><span>102</span><span>108</span></div>
@@ -1792,7 +1792,7 @@ function renderSide(){
             </div>
           </div><div class="bgm-fr"></div>`;
       }else{
-        d.innerHTML=`<p class="label">NOW PLAYING</p>
+        d.innerHTML=`<p class="label">${esc(w.label||'NOW PLAYING')}</p>
           <div class="bgm-w">
             <span class="bgm-cov">${cover}</span>
             <span class="bgm-meta"><b>${btit}</b>
@@ -2208,6 +2208,7 @@ function renderSide(){
       box.appendChild(d); return;
     }
     if(w.t==='chat'){
+      if(w.bub==='round') d.classList.add('chb-round'); else if(w.bub==='sharp') d.classList.add('chb-sharp');   // 말풍선 모서리(phase418)
       const ls=(w.lines||[]).filter(l=>l.text||l.name);
       if(!ls.length && !st.mine) return;
       d.className+=' w-chat ch-'+(w.style||'msg');
@@ -2233,7 +2234,7 @@ function renderSide(){
       if(w.font==='mono') sv.push(`--chFf:'IBM Plex Mono',monospace`);
       if(sv.length) d.setAttribute('style', sv.join(';'));   // ⚠ 색 변수는 여기서 통째로 씌우므로, --chMax는 반드시 이 다음에
       if(+w.maxH>0){ d.className+=' ch-scroll'; d.style.setProperty('--chMax', (+w.maxH)+'px'); }
-      d.innerHTML=`<p class="label">CHAT</p>`+(ls.length?`<div class="ch-box">`+ls.map((l,li)=>`
+      d.innerHTML=`<p class="label">${esc(w.label||'CHAT')}</p>`+(ls.length?`<div class="ch-box">`+ls.map((l,li)=>`
         <div class="ch-line ${l.side==='r'?'r':'l'}">
           ${imgs&&l.img?`<img class="ch-p" src="${l.img}" alt="" draggable="false">`:''}
           <div class="ch-b">${l.name?`<span class="ch-n">${esc(l.name)}</span>`:''}<p>${esc(l.text)}</p></div>
@@ -2366,7 +2367,7 @@ function renderSide(){
     }
     if(w.t==='cnt'){
       d.className+=' w-cnt';
-      d.innerHTML=`<p class="label">COUNT</p>
+      d.innerHTML=`<p class="label">${esc(w.label||'COUNT')}</p>
         <div class="cnt-row"><span>TODAY <b id="cnt-today">–</b></span><span>TOTAL <b id="cnt-total">–</b></span></div>`;
       box.appendChild(d); fillCounter(); return;
     }
@@ -2392,7 +2393,7 @@ function renderSide(){
     if(w.t==='notice'){
       if(!w.title && !w.text && !st.mine) return;
       d.className+=' w-notice';
-      d.innerHTML=`<p class="label">NOTICE</p>
+      d.innerHTML=`<p class="label">${esc(w.label||'NOTICE')}</p>
         ${w.title?`<p class="nt-t">${esc(w.title)}</p>`:''}
         ${w.text?`<p class="nt-x">${esc(w.text).replace(/\n/g,'<br>')}</p>`
           :(!w.title&&st.mine?'<p class="pl-empty">✎ 편집에서 내용을 채워주세요.</p><p class="pl-ghost">👻 지금은 방문자에게 안 보이는 카드예요</p>':'')}`;
@@ -2406,7 +2407,7 @@ function renderSide(){
     }
     if(w.t==='links'){
       d.className+=' w-links';
-      d.innerHTML=`<p class="label">LINKS</p>`+(w.items||[]).map(l=>
+      d.innerHTML=`<p class="label">${esc(w.label||'LINKS')}</p>`+(w.items||[]).map(l=>
         `<a href="${esc(l.url)}" target="_blank" rel="noopener"><span>${esc(l.label)}</span><span>↗</span></a>`).join('');
       box.appendChild(d); return;
     }
@@ -3845,7 +3846,7 @@ function renderWidList(){
       <span class="nm"><span class="t">${WNAME[w.t]||w.t}${w.t==='links'?` (${(w.items||[]).length})`:''}${w.t==='banner'?` (${(w.items||[]).length})`:''}</span>${w.float?'<span class="wbdg pri">📌</span>':''}</span>
       <button class="wst st-${wCls(w)}" data-st="${i}" title="이 위젯을 어디에 보여줄지 — 눌러서 조합 선택">${wLbl(w)} ▾</button>
       ${w.t!=='latest'?`<button data-f="${i}" title="컬럼에서 떼어 화면에 자유 배치 (PC 전용)"${w.float?' style="color:var(--pri)"':''}>📌</button>`:''}
-      ${['profile','quote','links','banner','dday','bgm','notice','chat','phone','img','nb','text','stamp','latest','tl','feat','char','pair','cal','habit','pairqa','todo'].includes(w.t)?`<button data-e="${i}">✎</button>`:'<button class="wl-ph" disabled>✎</button>'}
+      ${['profile','quote','links','banner','dday','bgm','notice','chat','phone','img','nb','text','stamp','latest','tl','feat','char','pair','cal','habit','pairqa','todo','search','category','cnt'].includes(w.t)?`<button data-e="${i}">✎</button>`:'<button class="wl-ph" disabled>✎</button>'}
       ${!['search','category','cnt','bgm','stamp','pin','feat'].includes(w.t)?`<button data-c2="${i}" title="이 위젯을 설정 그대로 복사해 하나 더">⧉</button>`:'<button class="wl-ph" disabled>⧉</button>'}
       <button data-u="${i}">↑</button><button data-d="${i}">↓</button><button data-x="${i}">✕</button>
     </div>${wstOpen===i?`
@@ -3998,6 +3999,11 @@ function renderWidEdit(){
   const mt=$('#we-mtitle'); if(mt) mt.textContent=(WNAME[w.t]||w.t)+' 편집';       // 구 index 캐시(스큐) 내성(306b)
   $('#we-modal')?.classList.remove('hidden');
   let html=mt?'':`<p class="p-h">${WNAME[w.t]} 편집</p>`;
+  if(!['pairqa','phone','banner','feat','img','nb','notice','stamp','text','tl','todo'].includes(w.t)) html+=`   // 자체 제목 칸이 있는 위젯은 제외(phase418)
+    <div class="p-row" style="align-items:center;gap:8px;margin-bottom:6px">
+      <span style="font-size:11px;color:var(--muted);flex:none">위젯 제목</span>
+      <input id="we-wlabel" placeholder="비우면 기본 제목" value="${esc(w.label||'')}" maxlength="30" style="flex:1;margin-bottom:0" title="위젯 머리에 뜨는 제목 — 비우면 원래 이름">
+    </div>`;
   if(w.t==='profile') html+=`
     <div class="p-row"><label class="filelab">사진 <input type="file" id="we-img" accept="image/*"></label></div>
     <div class="p-row" style="align-items:center">
@@ -4434,6 +4440,11 @@ function renderWidEdit(){
     <p class="note">'러브로그 홈 걸기'는 핸들만 적으면 그 홈의 대표 이미지가 배너로 걸려요 — 이미지를 직접 올리면 그게 우선이에요.</p>`;
   if(w.t==='chat') html+=`
     <div class="p-row" style="align-items:center">
+      <select id="we-chbub" style="width:auto" title="말풍선 모서리 — 테마의 뾰족/둥근 설정과 따로 정해요">
+        <option value="" ${!w.bub?'selected':''}>모서리 — 테마 따름</option>
+        <option value="round" ${w.bub==='round'?'selected':''}>모서리 — 둥글게</option>
+        <option value="sharp" ${w.bub==='sharp'?'selected':''}>모서리 — 뾰족하게</option>
+      </select>
       <select id="we-chst" style="flex:1">
         <option value="msg" ${(w.style||'msg')==='msg'?'selected':''}>메신저 말풍선</option>
         <option value="retro" ${w.style==='retro'?'selected':''}>레트로 창 (Win98풍)</option>
@@ -4550,6 +4561,7 @@ function renderWidEdit(){
     const key=inp.dataset.pqq!==undefined?['pqq','q']:inp.dataset.pqa!==undefined?['pqa','a']:['pqb','b'];
     inp.addEventListener('input',()=>{ (w.qas??=[])[+inp.dataset[key[0]]][key[1]]=inp.value; }); });
   const pqadd=$('#pq-addq'); if(pqadd) pqadd.onclick=()=>{ (w.qas??=[]).push({q:'',a:'',b:''}); renderWidEdit(); };
+  const wlab=$('#we-wlabel'); if(wlab) wlab.addEventListener('input',()=>{ if(wlab.value.trim()) w.label=wlab.value.trim(); else delete w.label; });   // 위젯 제목(phase418)
   const pqt=$('#pq-title'); if(pqt) pqt.addEventListener('input',()=>{ w.title=pqt.value; });
   const pqz=$('#pq-qsz'); if(pqz) pqz.addEventListener('input',()=>{ const v=+pqz.value; if(v) w.qsz=v; else delete w.qsz; });
   const pqm=$('#pq-mode'); if(pqm) pqm.addEventListener('input',()=>{ w.mode=pqm.value; renderWidEdit(); });
@@ -4648,6 +4660,7 @@ function renderWidEdit(){
     msg('사진 반영됨 — [위젯 구성 저장]까지!'); });
   const iimgx=$('#we-iimgx'); if(iimgx) iimgx.onclick=()=>{ delete w.img; renderWidEdit(); };
   const chst=$('#we-chst'); if(chst) chst.addEventListener('change',()=>{ w.style=chst.value; });
+  const chb=$('#we-chbub'); if(chb) chb.addEventListener('change',()=>{ if(chb.value) w.bub=chb.value; else delete w.bub; });
   const chan=$('#we-chanim'); if(chan) chan.addEventListener('change',()=>{ if(chan.checked) w.anim='pop'; else delete w.anim; });
   const chlp=$('#we-chloop'); if(chlp) chlp.addEventListener('change',()=>{ if(chlp.checked) w.loop=true; else delete w.loop; });
   const chfd=$('#we-chfold'); if(chfd) chfd.addEventListener('change',()=>{ if(chfd.checked) w.fold=true; else delete w.fold; });
@@ -4937,7 +4950,7 @@ $('#wid-add').onclick=()=>{
     : t==='char'?{t,p:{items:[]}} : t==='pair'?{t,a:{items:[]},b:{items:[]}} : t==='pairqa'?{t,qas:[]} : t==='todo'?{t,items:[]}
     : t==='cal'?{t,marks:[]} : t==='habit'?{t,habits:[]} : {t});
   editIdx=draft.length-1; renderWidList();
-  if(['profile','quote','links','banner','dday','bgm','notice','chat','phone','img','nb','text','stamp','tl','feat','latest','char','pair','cal','habit','pairqa','todo'].includes(t)) renderWidEdit();
+  if(['profile','quote','links','banner','dday','bgm','notice','chat','phone','img','nb','text','stamp','tl','feat','latest','char','pair','cal','habit','pairqa','todo','search','category','cnt'].includes(t)) renderWidEdit();
 };
 $('#wid-save').onclick=async()=>{
   if(editIdx>=0 && draft[editIdx]) syncWid(draft[editIdx]);
