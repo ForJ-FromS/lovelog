@@ -1792,10 +1792,9 @@
   body.catsh-dots #catbar a{background:none;border:none;border-radius:0;padding:6px 12px;color:var(--muted);position:relative}
   body.catsh-dots #catbar a:not(:last-child)::after{content:'·';position:absolute;right:-4px;top:50%;transform:translateY(-50%);color:var(--pri);text-indent:0;letter-spacing:0}
   body.catsh-dots #catbar a.on,body.catsh-dots #catbar a:hover{background:none;color:var(--ink);font-weight:600}
-  body.catsh-dots #cats{display:flex;flex-wrap:wrap;justify-content:center;gap:0 4px}
-  body.catsh-dots #cats a{border:none;padding:4px 8px;color:var(--muted);gap:4px}
-  body.catsh-dots #cats li:not(:last-child) a::after{content:'·';color:var(--pri);margin-left:8px}
+  body.catsh-dots #cats a{border:none;padding:6px 2px 6px 14px;color:var(--muted);position:relative}   /* 사이드: 세로 목록 + 현재 항목 옆 점(phase417) */
   body.catsh-dots #cats a.on{color:var(--ink);font-weight:600}
+  body.catsh-dots #cats a.on::before{content:'●';position:absolute;left:0;top:50%;transform:translateY(-50%);font-size:8px;color:var(--pri)}
   /* 세로 목차 — 사이드 전용, 상단 바는 글씨만 톤 */
   body.catsh-toc #catbar{gap:2px 22px}
   body.catsh-toc #catbar a{background:none;border:none;border-radius:0;padding:6px 2px}
@@ -2890,6 +2889,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=444"></script>
+<script type="module" src="./app.js?v=445"></script>
 </body>
 </html>
