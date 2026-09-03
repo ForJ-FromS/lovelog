@@ -1563,10 +1563,27 @@ function ownHandle(raw){
   }catch(e){}
   return '';
 }
-async function nbInfo(h){
+/* 🏠 이사 간 이웃 자동 갱신(phase424): 위젯 주인이 자기 홈을 열었을 때 항목의 옛 주소를 새 주소로 바꿔 저장 —
+   7일 뒤 표지판이 사라져도 링크가 안 죽게. 문자열 항목은 객체로 승격 */
+let nbHealT=null, nbHealN=0;
+function nbHeal(w, item, key, to){
+  if(!st.mine || !w || !item) return;
+  const items=w.items||[]; const i=items.indexOf(item); if(i<0) return;
+  if(key===null) items[i]=to; else if((item[key]||'').toLowerCase()!==to) item[key]=to; else return;
+  nbHealN++;
+  clearTimeout(nbHealT);
+  nbHealT=setTimeout(async()=>{ try{ await updateDoc(doc(db,'pages',st.handle),{side:st.page.side}); msg(`이사 간 이웃 ${nbHealN}곳의 주소를 새 주소로 갱신했어요.`); }catch(e){} nbHealN=0; }, 800);
+}
+async function nbInfo(h, hop){
   if(nbCache[h]!==undefined) return nbCache[h];
   try{ const s=await getDoc(doc(db,'pages',h));
-    const dd=s.exists()?s.data():null;
+    let dd=s.exists()?s.data():null;
+    if(dd && dd.movedTo && !hop){                              // 🏠 주소 변경 표지판 따라가기(phase424) — 1단만
+      const to=String(dd.movedTo).toLowerCase();
+      const inf2=await nbInfo(to, true);
+      nbCache[h] = inf2 ? {...inf2, movedTo:to} : null;
+      return nbCache[h];
+    }
     nbCache[h] = dd ? {name:dd.name||h, sub:dd.sub||'',
       img: dd.cardImg || (dd.heroImgs||[])[0]?.img || dd.heroImg || '',
       banner: dd.bannerImg || '',
@@ -1872,6 +1889,7 @@ function renderSide(){
         if(nbUrl(x)) return;
         const hh=nbH(x), own=nbImg(x);
         const inf=await nbInfo(hh); const el=d.querySelector(`[data-nb="${hh}"]`); if(!el) return;
+        if(inf&&inf.movedTo){ el.href=urlFor(inf.movedTo); nbHeal(w, x, typeof x==='string'?null:'h', inf.movedTo); }   // 이사 간 이웃(phase424)
         if(!inf){ el.querySelector('i').textContent='(없는 주소)'; return; }
         el.querySelector('b').textContent=inf.name;
         el.querySelector('i').textContent='@'+hh;
@@ -2425,6 +2443,8 @@ function renderSide(){
         const hh=(b.h||'').trim().toLowerCase(); if(!hh) return;
         const slot=d.querySelector(`[data-bnslot="${bi}"]`); if(!slot) return;
         const inf=await nbInfo(hh);
+        if(inf&&inf.movedTo){ const a2=d.querySelector(`[data-bnh="${bi}"]`); if(a2){ a2.href=urlFor(inf.movedTo); a2.title='@'+inf.movedTo; }
+          nbHeal(w, b, 'h', inf.movedTo); }                    // 이사 간 이웃 → 새 주소로(phase424)
         const wide = b.img || (inf&&inf.banner) || '';   // 가로형 배너
         const sq   = (inf&&inf.img) || '';               // 정사각 대표/헤더
         const nm   = inf ? inf.name : '@'+hh;
