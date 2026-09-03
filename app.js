@@ -2756,9 +2756,9 @@ function renderList(){
           <button class="rmv" id="sel-all" style="font-size:11px">${ids.every(i=>st.selIds.has(i))?'페이지 선택 해제':'이 페이지 전체 선택'}</button>
           <button class="btn" id="sel-del" style="font-size:11.5px;${n?'':'opacity:.4'}" ${n?'':'disabled'}>🗑 선택 삭제</button>
           <button class="rmv" id="sel-off" style="font-size:11px">취소</button>`;
-        $('#sel-all').onclick=()=>{ const all=ids.every(i=>st.selIds.has(i)); ids.forEach(i=>all?st.selIds.delete(i):st.selIds.add(i)); renderList(); };
-        $('#sel-off').onclick=()=>{ st.selMode=false; st.selIds=new Set(); renderList(); };
-        $('#sel-del').onclick=async()=>{
+        bar.querySelector('#sel-all').onclick=()=>{ const all=ids.every(i=>st.selIds.has(i)); ids.forEach(i=>all?st.selIds.delete(i):st.selIds.add(i)); renderList(); };
+        bar.querySelector('#sel-off').onclick=()=>{ st.selMode=false; st.selIds=new Set(); renderList(); };
+        bar.querySelector('#sel-del').onclick=async()=>{
           const pick=st.gallery.filter(g=>st.selIds.has(g.id)); if(!pick.length) return;
           if(!confirm(`선택한 사진 ${pick.length}장을 삭제할까요?\n되돌릴 수 없어요.`)) return;
           let ok=0, fail=0;
@@ -2767,7 +2767,7 @@ function renderList(){
           renderGal(); renderList(); renderSide(); msg(`사진 ${ok}장 삭제${fail?' · '+fail+'장 실패':''}`);
         };
       };
-      draw(); $('#rows').insertAdjacentElement('afterend', bar);
+      $('#rows').insertAdjacentElement('afterend', bar); draw();
       $('#rows').onclick=e=>{                                   // 위임 클릭(phase421): 개별 핸들러 덮어쓰기와 무관하게 동작
         const el=e.target.closest('[data-gg]'); if(!el) return;
         e.preventDefault(); e.stopPropagation();
@@ -2860,9 +2860,9 @@ function renderList(){
         <button class="rmv" id="sel-all" style="font-size:11px">${ids.every(i=>st.selIds.has(i))?'페이지 선택 해제':'이 페이지 전체 선택'}</button>
         <button class="btn" id="sel-del" style="font-size:11.5px;${n?'':'opacity:.4'}" ${n?'':'disabled'}>🗑 선택 삭제</button>
         <button class="rmv" id="sel-off" style="font-size:11px">취소</button>`;
-      $('#sel-all').onclick=()=>{ const all=ids.every(i=>st.selIds.has(i)); ids.forEach(i=>all?st.selIds.delete(i):st.selIds.add(i)); renderList(); };
-      $('#sel-off').onclick=()=>{ st.selMode=false; st.selIds=new Set(); renderList(); };
-      $('#sel-del').onclick=async()=>{
+      bar.querySelector('#sel-all').onclick=()=>{ const all=ids.every(i=>st.selIds.has(i)); ids.forEach(i=>all?st.selIds.delete(i):st.selIds.add(i)); renderList(); };
+      bar.querySelector('#sel-off').onclick=()=>{ st.selMode=false; st.selIds=new Set(); renderList(); };
+      bar.querySelector('#sel-del').onclick=async()=>{
         const pick=st.posts.filter(p=>st.selIds.has(p.id)); if(!pick.length) return;
         if(!confirm(`선택한 글 ${pick.length}개를 삭제할까요?\n${pick.slice(0,5).map(p=>'· '+p.title).join('\n')}${pick.length>5?'\n· …':''}\n\n되돌릴 수 없어요.`)) return;
         let ok=0, fail=0;
@@ -2871,7 +2871,7 @@ function renderList(){
         renderWidgets(); renderList(); msg(`글 ${ok}개 삭제${fail?' · '+fail+'개 실패':''}`);
       };
     };
-    draw(); $('#rows').insertAdjacentElement('afterend', bar);
+    $('#rows').insertAdjacentElement('afterend', bar); draw();
     $('#rows').onclick=e=>{
       if(e.target.dataset.ft){ e.stopPropagation(); return; }
       const el=e.target.closest('.selrow'); if(!el) return;
