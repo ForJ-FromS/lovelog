@@ -2768,11 +2768,15 @@ function renderList(){
         };
       };
       draw(); $('#rows').insertAdjacentElement('afterend', bar);
-      document.querySelectorAll('[data-gg]').forEach(el=>el.onclick=e=>{ e.preventDefault();
+      $('#rows').onclick=e=>{                                   // 위임 클릭(phase421): 개별 핸들러 덮어쓰기와 무관하게 동작
+        const el=e.target.closest('[data-gg]'); if(!el) return;
+        e.preventDefault(); e.stopPropagation();
         const id=el.dataset.gg; if(st.selIds.has(id)) st.selIds.delete(id); else st.selIds.add(id);
-        el.classList.toggle('gselon', st.selIds.has(id)); const m2=el.querySelector('.gsel'); if(m2) m2.textContent=st.selIds.has(id)?'☑':'☐'; draw(); });
+        el.classList.toggle('gselon', st.selIds.has(id)); const m2=el.querySelector('.gsel'); if(m2) m2.textContent=st.selIds.has(id)?'☑':'☐'; draw(); };
+      document.querySelectorAll('[data-gg]').forEach(el=>{ el.onclick=null; });
       return;
     }
+    $('#rows').onclick=null;
     document.querySelectorAll('[data-gg]').forEach(el=>el.onclick=e=>{
       if(e.target.dataset.gx){ e.stopPropagation(); delGal(e.target.dataset.gx); return; }
       if(e.target.dataset.gp){ e.stopPropagation(); togglePin(e.target.dataset.gp); return; }
@@ -2868,12 +2872,16 @@ function renderList(){
       };
     };
     draw(); $('#rows').insertAdjacentElement('afterend', bar);
-    document.querySelectorAll('#rows .selrow').forEach(el=>el.onclick=e=>{
+    $('#rows').onclick=e=>{
       if(e.target.dataset.ft){ e.stopPropagation(); return; }
+      const el=e.target.closest('.selrow'); if(!el) return;
+      e.preventDefault();
       const id=el.dataset.id; if(st.selIds.has(id)) st.selIds.delete(id); else st.selIds.add(id);
-      el.classList.toggle('selon', st.selIds.has(id)); const cb=el.querySelector('.rsel'); if(cb) cb.checked=st.selIds.has(id); draw(); });
+      el.classList.toggle('selon', st.selIds.has(id)); const cb=el.querySelector('.rsel'); if(cb) cb.checked=st.selIds.has(id); draw(); };
+    document.querySelectorAll('#rows .selrow').forEach(el=>{ el.onclick=null; });
     return;
   }
+  $('#rows').onclick=null;
   document.querySelector('.sel-bar')?.remove();
   document.querySelectorAll('[data-id]').forEach(el=>el.onclick=e=>{
     if(e.target.dataset.ft){ e.stopPropagation(); toggleFeat(e.target.dataset.ft); return; }
