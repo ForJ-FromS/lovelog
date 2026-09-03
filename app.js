@@ -807,6 +807,8 @@ async function loadPage(handle){
   st.page=snap.data(); st._mutual=undefined;
   await resolveImgs(st.page);
   st.mine = st.me && st.page.owner===st.me.uid;
+  document.body.classList.toggle('img-protect', st.page.protectImg!==false && !st.mine);   // 사진 보호 CSS(phase411): 설정 켜짐 + 방문자일 때만
+  if(st.mine && (st.page.prevHandles||[]).length) finishRenameIfNeeded();   // 끊긴 이사 마무리(phase410) — 비동기, 화면은 계속
   applyColor(st.page.hue ?? 222, st.page.sat, st.page.lum);
   initPet();
   setTimeout(checkInqReply, 1800); setTimeout(checkNotes, 2400); setTimeout(checkGbReply, 2600);
@@ -893,8 +895,9 @@ async function enterPage(){
   const mh=MH[st.page.memoH]||MH.m;
   document.documentElement.style.setProperty('--memoLc', mh[0]);
   document.documentElement.style.setProperty('--memoMh', mh[1]);
-  document.body.classList.remove('catsh-list','catsh-pill','catsh-text','catsh-box');
+  document.body.classList.remove('catsh-list','catsh-pill','catsh-text','catsh-box','catsh-tab','catsh-bracket','catsh-dots','catsh-toc');
   document.body.classList.add('catsh-'+catShape());
+  document.body.classList.toggle('cat-nocnt', st.page.catCnt===false);   // 글 수 표시(phase416)
   document.body.classList.remove('catsel-soft','catsel-off');            // 선택 표시 3태(phase326)
   if(st.page.catSel) document.body.classList.add('catsel-'+st.page.catSel);
   /* 헤더 배치·장식(phase392) */
@@ -1505,11 +1508,11 @@ document.addEventListener('mousemove',e=>{
   }
 });
 document.addEventListener('contextmenu',e=>{
-  if(!st.page || st.page.protectImg===false) return;
+  if(!st.page || st.page.protectImg===false || st.mine) return;   // 주인은 항상 저장 가능(phase411)
   if(e.target.closest('img,#pg-hero,#pg-hero2,.g-item,.stk,.pin')) e.preventDefault();
 });
 document.addEventListener('dragstart',e=>{
-  if(!st.page || st.page.protectImg===false) return;
+  if(!st.page || st.page.protectImg===false || st.mine) return;
   if(e.target.tagName==='IMG' && !e.target.closest('[draggable="true"]')) e.preventDefault();
 });
 let gatePreview=false;
@@ -6197,6 +6200,7 @@ function fillSettings(){
   $('#s-glass').value=p.glass?'glass':'';
   $('#s-catstyle').value=catStyle();
   $('#s-catshape').value=catShape();
+  const scc=$('#s-catcnt'); if(scc) scc.checked=st.page.catCnt!==false;
   const scs=$('#s-catsel'); if(scs) scs.value=st.page.catSel||'';
   const sqs=$('#s-quotestyle'); if(sqs) sqs.value=st.page.quoteStyle||'';
   const shl=$('#s-headlayout'); if(shl) shl.value=st.page.headLayout||'';
@@ -6320,6 +6324,7 @@ async function saveSettings(){
       glass: $('#s-glass').value==='glass',
       catStyle: $('#s-catstyle').value,
       catShape: $('#s-catshape').value,
+      catCnt: $('#s-catcnt')?.checked!==false,
       catSel: $('#s-catsel')?.value||'',
       quoteStyle: $('#s-quotestyle')?.value||'',
       headLayout: $('#s-headlayout')?.value||'',
@@ -6908,14 +6913,48 @@ let bkData=null;
 /* 🏠 홈 주소(핸들) 변경(phase406) — 사진은 u/{uid}/ 에 있어 복사 불필요.
    새 주소에 홈 문서·글(댓글 포함)·방명록·갤러리·앨범·이미지·통계·반응을 복사 → 계정 핸들 갱신 → 옛 주소엔 표지판.
    하트(likes)는 규칙상 남의 uid를 대신 쓸 수 없어 초기화. 30일에 한 번. 중간에 끊겨도 다시 누르면 덮어쓰며 이어짐 */
+/* 원본 비우기 + 표지판(phase408·410): 주소 해제 뒤 옛 글이 새 주인 홈에 남지 않게.
+   likes는 규칙에 삭제가 없어 남지만 글이 없으면 무의미. stats는 삭제 대신 0으로(키 화이트리스트 규칙) */
+async function wipeOldHome(old, newH, name){
+  let fail=0;
+  const wipeCol=async(cname,sub)=>{
+    const qs=await getDocs(collection(db,'pages',old,cname));
+    for(const d2 of qs.docs){
+      if(sub){ const cs=await getDocs(collection(db,'pages',old,cname,d2.id,sub));
+        for(const c2 of cs.docs){ try{ await deleteDoc(c2.ref); }catch(e){} } }
+      try{ await deleteDoc(d2.ref); }catch(e){ fail++; }
+    }
+    msg(`옛 주소 비우는 중... ${cname}`);
+  };
+  await wipeCol('posts','comments');
+  for(const c of ['guest','gallery','albums','imgs','rx']) await wipeCol(c);
+  try{ await setDoc(doc(db,'pages',old,'stats','counter'),{total:0,day:'',today:0}); }catch(e){}
+  try{ await setDoc(doc(db,'pages',old,'stats','stamps'),{s0:0,s1:0,s2:0,s3:0}); }catch(e){}
+  await setDoc(doc(db,'pages',old),{owner:st.me.uid, name:name||'', movedTo:newH, movedAt:Date.now()});   // 표지판만 남김
+  return fail;
+}
+/* 이사 마무리 점검(phase410): 내 홈에 들어왔을 때 옛 주소가 표지판 없이 남아 있으면(중간에 끊김) 조용히 비우고 표지판 */
+async function finishRenameIfNeeded(){
+  if(!st.mine || !st.me) return;
+  for(const h of (st.page.prevHandles||[])){
+    if(h===st.handle) continue;
+    try{ const s2=await getDoc(doc(db,'pages',h));
+      if(s2.exists() && s2.data().owner===st.me.uid && !s2.data().movedTo){
+        msg('지난 주소 변경을 마무리하는 중...');
+        await wipeOldHome(h, st.handle, st.page.name||'');
+        msg('옛 주소 정리 완료 — 이제 안내판만 남았어요.');
+      } }catch(e){ console.warn('[rename-finish]',h,e.message); }
+  }
+}
 async function renameHandle(newH){
   if(!st.mine || !st.me) return;
   newH=(newH||'').trim().toLowerCase();
   if(!/^[a-z0-9-]{2,20}$/.test(newH)){ msg('영문 소문자·숫자·하이픈 2~20자예요.'); return; }
   if(newH===st.handle){ msg('지금 주소와 같아요.'); return; }
   const ex=await getDoc(doc(db,'pages',newH));
-  if(RESERVED.has(newH) || (ex.exists() && !stubExpired(ex.data()))){ msg('이미 사용 중인 주소예요.'); return; }   // 본인도 옛 주소 복귀 불가(phase408)
-  if(ex.exists()) await deleteDoc(doc(db,'pages',newH));      // 만료된 표지판이면 비우고 사용
+  const resume = ex.exists() && ex.data().owner===st.me.uid && !ex.data().movedTo;   // 중단된 내 이사 → 이어가기(phase410)
+  if(RESERVED.has(newH) || (ex.exists() && !resume && !stubExpired(ex.data()))){ msg('이미 사용 중인 주소예요.'); return; }   // 본인도 옛 주소 복귀 불가(phase408)
+  if(ex.exists() && !resume) await deleteDoc(doc(db,'pages',newH));      // 만료된 표지판이면 비우고 사용
   const last=+st.page.renamedAt||0, D30=30*86400000;
   if(last && Date.now()-last<D30){ msg(`주소 변경은 30일에 한 번이에요 — ${Math.ceil((last+D30-Date.now())/86400000)}일 뒤에 가능`); return; }
   if(!confirm(`홈 주소를 @${st.handle} → @${newH} 로 바꿀까요?\n\n· 옛 주소는 7일간 "이사했어요" 안내판으로 남아 링크가 자동으로 넘어가고, 그 뒤엔 해제돼 다른 분이 쓸 수 있어요 (본인도 다시 못 써요)\n· 서로 이웃 관계는 그대로 유지돼요\n· 하트(♥) 수는 초기화돼요 (규칙상 복사 불가)\n· 30일에 한 번만 바꿀 수 있어요\n\n진행 전에 현재 홈이 자동 백업돼요.`)) return;
@@ -6941,26 +6980,11 @@ async function renameHandle(newH){
     await copyCol('posts','comments');
     for(const c of ['guest','gallery','albums','imgs','stats','rx']) await copyCol(c);
     await updateDoc(doc(db,'users',st.me.uid),{handle:newH});
-    /* 원본 비우기(phase408): 30일 뒤 주소가 해제됐을 때 옛 글이 새 주인 홈에 남지 않게.
-       likes는 규칙에 삭제가 없어 남지만 글이 없으면 무의미. stats는 삭제 대신 0으로(키 화이트리스트 규칙) */
-    const wipeCol=async(name,sub)=>{
-      const qs=await getDocs(collection(db,'pages',old,name));
-      for(const d2 of qs.docs){
-        if(sub){ const cs=await getDocs(collection(db,'pages',old,name,d2.id,sub));
-          for(const c2 of cs.docs){ try{ await deleteDoc(c2.ref); }catch(e){} } }
-        try{ await deleteDoc(d2.ref); }catch(e){ fail++; }
-      }
-      msg(`옛 주소 비우는 중... ${name}`);
-    };
-    await wipeCol('posts','comments');
-    for(const c of ['guest','gallery','albums','imgs','rx']) await wipeCol(c);
-    try{ await setDoc(doc(db,'pages',old,'stats','counter'),{total:0,day:'',today:0}); }catch(e){}
-    try{ await setDoc(doc(db,'pages',old,'stats','stamps'),{s0:0,s1:0,s2:0,s3:0}); }catch(e){}
-    await setDoc(doc(db,'pages',old),{owner:st.me.uid, name:pg.name||'', movedTo:newH, movedAt:Date.now()});   // 표지판만 남김
+    fail+=await wipeOldHome(old, newH, pg.name||'');           // 원본 비우기 + 표지판(phase408·410)
     st.myHandle=newH;
     alert(`주소 변경 완료! (${n}건 복사${fail?', '+fail+'건 실패 — 다시 누르면 이어서 복사돼요':''})\n새 주소로 이동합니다.`);
     location.href=urlFor(newH);
-  }catch(e){ msg('이사 실패 — '+e.message); alert('이사 중 오류: '+e.message+'\n같은 새 주소로 다시 누르면 이어서 진행돼요.'); }
+  }catch(e){ msg('이사 실패 — '+e.message); alert('이사 중 오류: '+e.message+'\n이 화면에서 같은 새 주소로 [주소 변경]을 다시 누르면 이어서 진행돼요.\n(새 주소로 이미 넘어갔다면 그 홈에 들어갈 때 자동으로 마무리돼요)'); }
 }
 /* 🚚 교차 판정(phase405, 러브인포 v130 역이식): 백업의 handle이 없으면(구형)
    저장소 주소 u%2F{uid}%2F 에 박힌 uid로 "다른 사람 홈인지" 유추 — 핸들 개명과 무관하게 정확 */

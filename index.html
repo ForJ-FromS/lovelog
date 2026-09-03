@@ -491,8 +491,8 @@
     border-radius:50%;background:rgba(8,9,14,.75);color:#fff;font-size:11px;
     font-style:normal;display:flex;align-items:center;justify-content:center;cursor:pointer}
   .gdel:hover{background:hsl(6 60% 45%)}
-  .gal-grid img{width:100%;height:100%;object-fit:cover;display:block;
-    user-select:none;-webkit-user-drag:none;-webkit-touch-callout:none}
+  .gal-grid img{width:100%;height:100%;object-fit:cover;display:block}
+  body.img-protect .gal-grid img{user-select:none;-webkit-user-drag:none;-webkit-touch-callout:none}   /* 보호는 설정+방문자에게만(phase411) */
   .pv-actions{margin-top:24px;padding-top:14px;border-top:1px solid var(--line);
     display:flex;gap:8px}
   .pv-actions button{border:1px solid var(--line);background:none;color:var(--muted);
@@ -601,8 +601,8 @@
     display:none;align-items:center;justify-content:center;padding:26px}
   #lb.show{display:flex}
   #lb img{max-width:94vw;max-height:86vh;border-radius:10px}
-  #lb::after{content:'';position:absolute;inset:0}
-  #gal img,#lb img{user-select:none;-webkit-user-select:none;
+  body.img-protect #lb::after{content:'';position:absolute;inset:0}
+  body.img-protect #gal img,body.img-protect #lb img{user-select:none;-webkit-user-select:none;
     -webkit-user-drag:none;-webkit-touch-callout:none}
 
   /* ── 관리 패널 ── */
@@ -1769,6 +1769,43 @@
     color:hsl(var(--h) calc(30% * var(--sf,1)) 12%)}
   body.catsh-pill #cats a.on .n{color:hsl(var(--h) 30% 30%)}
   #catbar a.pillimg{padding:0;border:none;background:none;border-radius:10px;overflow:hidden}
+  /* ── 카테고리 모양 4종 추가 (phase416) ── */
+  /* 탭 폴더 */
+  body.catsh-tab #catbar{gap:3px;align-items:flex-end;border-bottom:1px solid var(--line);padding:0 8px}
+  body.catsh-tab #catbar a{border-radius:8px 8px 0 0;border-bottom:none;background:color-mix(in srgb, var(--card) 70%, var(--bg));
+    padding:7px 16px 8px;position:relative;top:1px;color:var(--muted)}
+  body.catsh-tab #catbar a.on,body.catsh-tab #catbar a:hover{background:var(--card);color:var(--ink);border-color:var(--line);
+    box-shadow:inset 0 2px 0 var(--pri);padding-top:8px;top:1px}
+  body.catsh-tab #cats a{border-radius:8px 8px 0 0;border:1px solid var(--line);border-bottom:none;margin-top:4px;padding:8px 12px;
+    background:color-mix(in srgb, var(--card) 70%, var(--bg))}
+  body.catsh-tab #cats a.on{background:var(--card);color:var(--ink);box-shadow:inset 0 2px 0 var(--pri)}
+  /* 브래킷 */
+  body.catsh-bracket #catbar{gap:2px 18px}
+  body.catsh-bracket #catbar a{background:none;border:none;border-radius:0;padding:6px 2px;color:var(--muted)}
+  body.catsh-bracket #catbar a.on,body.catsh-bracket #catbar a:hover{background:none;color:var(--pri)}
+  body.catsh-bracket #catbar a.on::before{content:'[ '} body.catsh-bracket #catbar a.on::after{content:' ]'}
+  body.catsh-bracket #cats a{background:none;border:none;padding:6px 2px;color:var(--muted)}
+  body.catsh-bracket #cats a.on{color:var(--pri)}
+  body.catsh-bracket #cats a.on span:first-child::before{content:'[ '} body.catsh-bracket #cats a.on span:first-child::after{content:' ]'}
+  /* 점 구분 */
+  body.catsh-dots #catbar{gap:0;justify-content:center}
+  body.catsh-dots #catbar a{background:none;border:none;border-radius:0;padding:6px 12px;color:var(--muted);position:relative}
+  body.catsh-dots #catbar a:not(:last-child)::after{content:'·';position:absolute;right:-4px;top:50%;transform:translateY(-50%);color:var(--pri);text-indent:0;letter-spacing:0}
+  body.catsh-dots #catbar a.on,body.catsh-dots #catbar a:hover{background:none;color:var(--ink);font-weight:600}
+  body.catsh-dots #cats{display:flex;flex-wrap:wrap;justify-content:center;gap:0 4px}
+  body.catsh-dots #cats a{border:none;padding:4px 8px;color:var(--muted);gap:4px}
+  body.catsh-dots #cats li:not(:last-child) a::after{content:'·';color:var(--pri);margin-left:8px}
+  body.catsh-dots #cats a.on{color:var(--ink);font-weight:600}
+  /* 세로 목차 — 사이드 전용, 상단 바는 글씨만 톤 */
+  body.catsh-toc #catbar{gap:2px 22px}
+  body.catsh-toc #catbar a{background:none;border:none;border-radius:0;padding:6px 2px}
+  body.catsh-toc #catbar a.on,body.catsh-toc #catbar a:hover{background:none;color:var(--pri);border-bottom:1px solid var(--pri)}
+  body.catsh-toc #cats a{border:none;border-left:2px solid transparent;padding:6px 0 6px 10px;
+    font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;color:var(--muted);margin-bottom:2px}
+  body.catsh-toc #cats a.on{border-left-color:var(--pri);color:var(--ink)}
+  body.catsh-toc #cats a:hover{color:var(--ink)}
+  /* 글 수 표시 끄기 (phase416) */
+  body.cat-nocnt #cats .n{display:none}
   #catbar a.pillimg img{height:38px;display:block;border-radius:10px;
     -webkit-user-drag:none}
   #catbar a.pillimg.on{outline:2px solid var(--pri);outline-offset:2px}
@@ -2666,7 +2703,10 @@ html,body{overflow-x:hidden;overflow-x:clip}
         <option value="bar">상단 알약 바</option><option value="widget">사이드 위젯</option></select>
         <select id="s-catshape">
         <option value="list">모양 — 기본</option><option value="pill">모양 — 알약</option>
-        <option value="text">모양 — 글씨만</option><option value="box">모양 — 네모</option></select>
+        <option value="text">모양 — 글씨만</option><option value="box">모양 — 네모</option>
+        <option value="tab">모양 — 탭 폴더</option><option value="bracket">모양 — 브래킷 [ ]</option>
+        <option value="dots">모양 — 점 구분 ·</option><option value="toc">모양 — 세로 목차 (사이드)</option></select>
+        <label class="chk" style="font-size:11.5px" title="사이드 카테고리 목록의 글 수 표시"><input type="checkbox" id="s-catcnt" checked> 글 수</label>
         <select id="s-catsel" title="지금 보고 있는 카테고리를 어떻게 표시할지">
         <option value="">선택 표시 — 기본</option>
         <option value="soft">선택 표시 — 연하게 (글자색만)</option>
@@ -2733,7 +2773,7 @@ html,body{overflow-x:hidden;overflow-x:clip}
         <div class="trow"><span class="tl">배경 도트</span><span class="tc">
           <select id="s-dots"><option value="on">켜기</option><option value="">끄기</option></select></span></div>
         <div class="trow"><span class="tl">이미지 저장 방지</span><span class="tc">
-          <select id="s-protect"><option value="on">켜기</option><option value="">끄기</option></select></span></div>
+          <select id="s-protect" title="방문자의 우클릭 · 드래그 · 길게 눌러 저장을 막아요 — 주인은 항상 저장할 수 있어요"><option value="on">켜기</option><option value="">끄기</option></select></span></div>
       </div>
     <p class="p-h">꾸밈 효과</p>
     <div class="trows">
@@ -2850,6 +2890,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=437"></script>
+<script type="module" src="./app.js?v=444"></script>
 </body>
 </html>
