@@ -6577,7 +6577,7 @@ function hookHandleCheck(){
         const pd=await getDoc(doc(db,'pages',h));
         const taken = RESERVED.has(h) || await isConsoleReserved(h) || (pd.exists() && !stubExpired(pd.data()));   // 콘솔 예약 포함(phase425)
         if(seq!==hcSeq) return;                          // 늦게 도착한 옛 응답 무시
-        if(taken){ out.textContent='✗ 이미 사용 중인 주소예요.'; out.className='note bad'; }
+        if(taken){ out.textContent='✗ 사용할 수 없는 주소예요.'; out.className='note bad'; }
         else { out.textContent='✓ 사용할 수 있는 주소예요!'; out.className='note ok'; }
       }catch(e){ if(seq===hcSeq) out.textContent=''; }
     },500);
@@ -6589,7 +6589,7 @@ async function signup(){
         name=$('#in-name').value.trim(), err=$('#signup-err');
   err.textContent='';
   if(!/^[a-z0-9-]{2,20}$/.test(handle)){ err.textContent='주소 형식을 확인해 주세요.'; return; }
-  if(RESERVED.has(handle)){ err.textContent='이미 사용 중인 주소예요. 다른 주소를 골라주세요.'; return; }
+  if(RESERVED.has(handle)){ err.textContent='사용할 수 없는 주소예요. 다른 주소를 골라주세요.'; return; }
   // 가입 개방 상태 확인 (콘솔 config/signup 문서로 제어)
   let mode='open', notice='';
   try{
@@ -6625,7 +6625,7 @@ async function signup(){
   }
   try{
     if(await isConsoleReserved(handle)){                    // 공백·대문자 관대 헬퍼로 통일(phase427)
-      err.textContent='이미 사용 중인 주소예요. 다른 주소를 골라주세요.'; return; }
+      err.textContent='사용할 수 없는 주소예요. 다른 주소를 골라주세요.'; return; }
   }catch(e){}
   if(!name){ err.textContent='홈 이름을 입력해 주세요.'; return; }
   try{
@@ -6643,7 +6643,7 @@ async function signup(){
         if(typeof id.max==='number' && (id.count||0)>=id.max)
           throw new Error('초대 인원이 가득 찼어요.');
       }
-      if(b.exists() && !stubExpired(b.data())) throw new Error('이미 쓰는 주소예요.');
+      if(b.exists() && !stubExpired(b.data())) throw new Error('사용할 수 없는 주소예요.');
       if(c.exists()) throw new Error('이 계정의 페이지가 이미 있어요.');
       tx.set(pg,{owner:st.me.uid,name,sub:'',cats:['archive','ooc'],hue:222,createdAt:serverTimestamp(),ref:codeRef||refH});
       tx.set(us,{handle,createdAt:serverTimestamp()});
@@ -7059,7 +7059,7 @@ async function renameHandle(newH){
   if(newH===st.handle){ msg('지금 주소와 같아요.'); return; }
   const ex=await getDoc(doc(db,'pages',newH));
   const resume = ex.exists() && ex.data().owner===st.me.uid && !ex.data().movedTo;   // 중단된 내 이사 → 이어가기(phase410)
-  if(RESERVED.has(newH) || await isConsoleReserved(newH) || (ex.exists() && !resume && !stubExpired(ex.data()))){ msg('이미 사용 중인 주소예요.'); return; }   // 콘솔 예약 목록도 검사(phase425)
+  if(RESERVED.has(newH) || await isConsoleReserved(newH) || (ex.exists() && !resume && !stubExpired(ex.data()))){ msg('사용할 수 없는 주소예요.'); return; }   // 콘솔 예약 목록도 검사(phase425)
   if(ex.exists() && !resume) await deleteDoc(doc(db,'pages',newH));      // 만료된 표지판이면 비우고 사용
   const last=+st.page.renamedAt||0, D30=30*86400000;
   if(last && Date.now()-last<D30){ msg(`주소 변경은 30일에 한 번이에요 — ${Math.ceil((last+D30-Date.now())/86400000)}일 뒤에 가능`); return; }
@@ -7114,7 +7114,7 @@ $('#hr-new')?.addEventListener('input', ()=>{ const v=$('#hr-new').value.trim().
     const pd=await getDoc(doc(db,'pages',v));
     const resume=pd.exists() && pd.data().owner===st.me?.uid && !pd.data().movedTo;
     const taken=RESERVED.has(v) || await isConsoleReserved(v) || (pd.exists() && !resume && !stubExpired(pd.data()));
-    out.textContent = taken ? '✗ 이미 사용 중인 주소예요' : '✓ 사용할 수 있는 주소예요';
+    out.textContent = taken ? '✗ 사용할 수 없는 주소예요' : '✓ 사용할 수 있는 주소예요';
   }catch(e){ out.textContent=''; } }, 450); });
 $('#bk-file')?.addEventListener('change', async e=>{
   bkData=null; $('#bk-scope').hidden=true;

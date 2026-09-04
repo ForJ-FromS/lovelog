@@ -348,8 +348,9 @@
     border-left:2px solid transparent;transition:border-color .15s,background .15s}
   .row:hover{border-left-color:var(--pri);background:hsl(var(--h) calc(20% * var(--sf,1)) 50% / .05)}
   /* ☑ 선택 삭제 모드 (phase419) */
-  .row.selrow{cursor:pointer}
-  .row.selrow .rsel{appearance:none;-webkit-appearance:none;width:17px;height:17px;margin:0 10px 0 0;flex:none;pointer-events:none;
+  .row.selrow{cursor:pointer;grid-template-columns:22px 58px 1fr auto auto}          /* 체크 칸 추가(phase429) */
+  .row.selrow.has-th{grid-template-columns:22px 58px 1fr auto auto 46px}
+  .row.selrow .rsel{appearance:none;-webkit-appearance:none;width:17px;height:17px;margin:0;flex:none;pointer-events:none;justify-self:center;
     border:1.5px solid var(--line);border-radius:6px;background:var(--card2);position:relative;transition:all .12s}
   .row.selrow .rsel:checked{background:var(--pri);border-color:var(--pri)}
   .row.selrow .rsel:checked::after{content:'';position:absolute;left:5px;top:2px;width:4px;height:8px;
@@ -2914,6 +2915,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=455"></script>
+<script type="module" src="./app.js?v=457"></script>
 </body>
 </html>
