@@ -4179,7 +4179,8 @@ function renderWidEdit(){
   const mt=$('#we-mtitle'); if(mt) mt.textContent=(WNAME[w.t]||w.t)+' 편집';       // 구 index 캐시(스큐) 내성(306b)
   $('#we-modal')?.classList.remove('hidden');
   let html=mt?'':`<p class="p-h">${WNAME[w.t]} 편집</p>`;
-  if(!['pairqa','phone','banner','feat','img','nb','notice','stamp','text','tl','todo'].includes(w.t)) html+=`   // 자체 제목 칸이 있는 위젯은 제외(phase418)
+  // 자체 제목 칸이 있는 위젯은 공통 제목 칸 제외(phase418)
+  if(!['pairqa','phone','banner','feat','img','nb','notice','stamp','text','tl','todo'].includes(w.t)) html+=`
     <div class="p-row" style="align-items:center;gap:8px;margin-bottom:6px">
       <span style="font-size:11px;color:var(--muted);flex:none">위젯 제목</span>
       <input id="we-wlabel" placeholder="비우면 기본 제목" value="${esc(w.label||'')}" maxlength="30" style="flex:1;margin-bottom:0" title="위젯 머리에 뜨는 제목 — 비우면 원래 이름">
