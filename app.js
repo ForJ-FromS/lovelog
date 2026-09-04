@@ -4485,8 +4485,9 @@ function renderWidEdit(){
       <button class="rmv" id="we-bgrst" style="font-size:10px;margin-left:auto" title="색을 디자인 기본(홈 테마 추종)으로 되돌려요">기본으로</button>
     </div>`;
   if(w.t==='links') html+=(w.items||[]).map((l,i)=>`
-    <div class="p-row"><input data-ll="${i}" placeholder="이름" value="${l.label||''}">
-    <input data-lu="${i}" placeholder="https://..." value="${l.url||''}"></div>`).join('')+
+    <div class="p-row" style="align-items:center;gap:6px"><input data-ll="${i}" placeholder="이름" value="${esc(l.label||'')}" style="flex:1;min-width:0;margin-bottom:0">
+    <input data-lu="${i}" placeholder="https://..." value="${esc(l.url||'')}" style="flex:1.4;min-width:0;margin-bottom:0">
+    <button class="rmv" data-lup="${i}" title="위로" style="font-size:10px">↑</button><button class="rmv" data-ldn="${i}" title="아래로" style="font-size:10px">↓</button><button class="rmv" data-lx="${i}" title="삭제" style="font-size:10px">✕</button></div>`).join('')+
     `<button class="btn" id="we-add" style="font-size:12px">+ 링크 줄 추가</button>`;
   if(w.t==='banner') html+=((w.items||[]).length?'' :
     `<p class="note" style="margin:0 0 8px">이미지를 추가하면 배너마다 이동할 링크 주소 · ↑↓ 순서 · ✕ 삭제가 생겨요.</p>`)
@@ -4670,13 +4671,13 @@ function renderWidEdit(){
   const tdb=$('#we-tdsub'); if(tdb) tdb.addEventListener('input',()=>{ w.sub=tdb.value; });
   [['we-tdts','ts'],['we-tdss','ss']].forEach(([id,k])=>{
     const el=$('#'+id); if(el) el.addEventListener('input',()=>{ const v=+el.value; if(v) w[k]=v; else delete w[k]; }); });
-  const tdc=$('#we-tdc'); if(tdc) tdc.addEventListener('input',()=>{ w.c=tdc.value; renderWidEdit(); });
+  const tdc=$('#we-tdc'); if(tdc){ tdc.addEventListener('input',()=>{ w.c=tdc.value; }); tdc.addEventListener('change',()=>renderWidEdit()); }   // 선택 창 열린 동안 재렌더 금지(phase431)
   const tdcx=$('#we-tdcx'); if(tdcx) tdcx.onclick=()=>{ delete w.c; renderWidEdit(); };
   const tde=$('#we-tdemo'); if(tde) tde.addEventListener('input',()=>{ w.emo=tde.value.trim(); });
   [['we-tdtf','tf'],['we-tdif','if']].forEach(([id,k])=>{
     const el=$('#'+id); if(el) el.addEventListener('input',()=>{ if(el.value) w[k]=el.value; else delete w[k]; }); });
   [['we-tdtc','tc','we-tdtcx'],['we-tdic','ic','we-tdicx']].forEach(([id,k,xid])=>{
-    const el=$('#'+id); if(el) el.addEventListener('input',()=>{ w[k]=el.value; renderWidEdit(); });
+    const el=$('#'+id); if(el){ el.addEventListener('input',()=>{ w[k]=el.value; }); el.addEventListener('change',()=>renderWidEdit()); }
     const xb=$('#'+xid); if(xb) xb.onclick=()=>{ delete w[k]; renderWidEdit(); }; });
   $('#wid-edit').querySelectorAll('[data-tdt]').forEach(inp=>inp.addEventListener('input',()=>{ (w.items??=[])[+inp.dataset.tdt].t=inp.value; }));
   $('#wid-edit').querySelectorAll('[data-tdx]').forEach(b=>b.onclick=()=>{ w.items.splice(+b.dataset.tdx,1); renderWidEdit(); });
@@ -5016,6 +5017,10 @@ function renderWidEdit(){
     w.tracks.splice(+b2.dataset.bx,1); renderWidEdit(); });
   $('#wid-edit').querySelectorAll('[data-ll]').forEach(i=>i.addEventListener('input',()=>{ w.items[i.dataset.ll].label=i.value; }));
   $('#wid-edit').querySelectorAll('[data-lu]').forEach(i=>i.addEventListener('input',()=>{ w.items[i.dataset.lu].url=i.value.trim(); }));
+  const lmv=(i,d2)=>{ const j=i+d2; if(j<0||j>=w.items.length) return; [w.items[i],w.items[j]]=[w.items[j],w.items[i]]; renderWidEdit(); };   // 링크 순서(phase431)
+  $('#wid-edit').querySelectorAll('[data-lup]').forEach(b=>b.onclick=()=>lmv(+b.dataset.lup,-1));
+  $('#wid-edit').querySelectorAll('[data-ldn]').forEach(b=>b.onclick=()=>lmv(+b.dataset.ldn,1));
+  $('#wid-edit').querySelectorAll('[data-lx]').forEach(b=>b.onclick=()=>{ w.items.splice(+b.dataset.lx,1); renderWidEdit(); });
   $('#wid-edit').querySelectorAll('[data-bu]').forEach(i=>i.addEventListener('input',()=>{ w.items[i.dataset.bu].url=i.value.trim(); }));
   $('#wid-edit').querySelectorAll('[data-br]').forEach(b=>b.onclick=()=>{ w.items.splice(+b.dataset.br,1); renderWidEdit(); renderWidList(); });
   $('#wid-edit').querySelectorAll('[data-bup]').forEach(b=>b.onclick=()=>{
