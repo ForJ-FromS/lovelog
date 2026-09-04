@@ -912,7 +912,7 @@
   @keyframes cgRoll{0%{transform:translateY(-100%)}100%{transform:translateY(0)}}
   .cnt-gauge .cg-sub{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.2em;color:var(--wtc,var(--muted))} .cnt-gauge .cg-sub b{color:var(--wac,var(--pri))}
   .cnt-stamp .cs-wrap{display:flex;justify-content:center}
-  .cnt-stamp .cs-ring{width:108px;height:108px;border:2px solid var(--wac,var(--pri));border-radius:50%;display:grid;place-content:center;text-align:center;transform:rotate(-8deg);opacity:.9;
+  .cnt-stamp .cs-ring{width:108px;height:108px;flex:none;box-sizing:border-box;aspect-ratio:1;border:2px solid var(--wac,var(--pri));border-radius:50%;display:grid;place-content:center;text-align:center;opacity:.9;
     font-family:'IBM Plex Mono',monospace;color:var(--wac,var(--pri))}
   .cnt-stamp .cs-ring small{display:block;font-size:7px;letter-spacing:.2em} .cnt-stamp .cs-ring b{display:block;font-size:var(--wts,22px);line-height:1.1}
   .cnt-stamp .cs-ring em{display:block;font-style:normal;font-size:6.5px;margin-top:3px;opacity:.8}
@@ -922,9 +922,9 @@
   .cnt-term .ct-cur{color:var(--wac,var(--pri));animation:tCur 1s steps(1) infinite}
   /* 이웃 홈 */
   .w-nb .nb-list{font-family:var(--wtf,inherit)} .w-nb .nb-t b{color:var(--wtc,var(--ink));font-size:var(--wts,12.5px)}
-  .nb-ring .nb-list{flex-direction:row;flex-wrap:wrap;gap:12px 10px}
-  .nb-ring .nb{flex-direction:column;width:52px;padding:0;gap:5px;text-align:center;background:none!important}
-  .nb-ring .nb-th{width:46px;height:46px;border-radius:50%;box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--line)}
+  .nb-ring .nb-list{display:grid;grid-template-columns:repeat(var(--nbCols,4),1fr);gap:10px 8px}   /* 한 줄 개수·간격(phase433) */
+  .nb-ring .nb{flex-direction:column;width:auto;padding:0;gap:5px;text-align:center;background:none!important}
+  .nb-ring .nb-th{width:calc(100% - 8px);max-width:72px;aspect-ratio:1;height:auto;border-radius:50%;margin:4px auto 0;box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--line)}
   .nb-ring .nb.mutual .nb-th{box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--wac,var(--pri))}
   .nb-ring .nb-t{align-items:center;width:100%} .nb-ring .nb-t b{font-size:var(--wts,9px);font-weight:500;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .nb-ring .nb-t i{display:none} .nb-ring .nb.mutual .nb-t b::after{content:none}
@@ -3007,6 +3007,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=460"></script>
+<script type="module" src="./app.js?v=461"></script>
 </body>
 </html>

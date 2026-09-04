@@ -1790,8 +1790,16 @@ function renderSide(){
         const now=Date.now();
         d.innerHTML=head+sdList.map(x=>{
           const end=new Date(x.date+'T00:00:00').getTime(); const from=x.from?new Date(x.from+'T00:00:00').getTime():null;
-          let pct=null; if(from&&end>from) pct=Math.max(0,Math.min(100,Math.round((now-from)/(end-from)*100)));
-          return `<div class="dd-bar"><div class="dd-bt"><span class="t">${esc(x.title)}</span><span class="n">${esc(dday(x.date,x.z0))}</span></div>${pct!==null?`<i><b style="width:${pct}%"></b></i>`:'<small>시작일을 적으면 바가 차요</small>'}</div>`; }).join('');
+          let pct=null, note='';
+          if(end<=now){                                       // 지난 날짜(D+): 지난 기념일 → 다음 기념일 구간 자동(phase433)
+            const d0=new Date(x.date+'T00:00:00'); const nowD=new Date(now);
+            let last=new Date(nowD.getFullYear(), d0.getMonth(), d0.getDate()); if(last.getTime()>now) last.setFullYear(last.getFullYear()-1);
+            const next=new Date(last); next.setFullYear(next.getFullYear()+1);
+            const yrs=next.getFullYear()-d0.getFullYear();
+            pct=Math.max(0,Math.min(100,Math.round((now-last.getTime())/(next.getTime()-last.getTime())*100)));
+            note=`다음 ${yrs}주년까지 ${Math.ceil((next.getTime()-now)/86400000)}일`;
+          } else if(from&&end>from) pct=Math.max(0,Math.min(100,Math.round((now-from)/(end-from)*100)));
+          return `<div class="dd-bar"><div class="dd-bt"><span class="t">${esc(x.title)}</span><span class="n">${esc(dday(x.date,x.z0))}</span></div>${pct!==null?`<i><b style="width:${pct}%"></b></i>${note?`<small>${note}</small>`:''}`:'<small>시작일을 적으면 바가 차요 (지난 날짜는 다음 기념일까지 자동)</small>'}</div>`; }).join('');
       } else d.innerHTML=head+sdList.map(row).join('');
       box.appendChild(d); return;
     }
@@ -1919,7 +1927,7 @@ function renderSide(){
       box.appendChild(d); return;
     }
     if(w.t==='nb'){
-      if(w.skin==='ring') d.className+=' nb-ring'; else if(w.skin==='toc') d.className+=' nb-toc';   // 스킨(phase432)
+      if(w.skin==='ring'){ d.className+=' nb-ring'; d.style.setProperty('--nbCols', String(+w.cols||4)); } else if(w.skin==='toc') d.className+=' nb-toc';   // 스킨(phase432·433)
       applyTypo(d,w);
       let hs=(w.items||[]).filter(x=>nbH(x)||nbUrl(x));
       const lim=+w.max||0; const total=hs.length;
@@ -4302,6 +4310,8 @@ function renderWidEdit(){
       <select id="nb-skin" style="width:auto;margin-bottom:0">
         <option value="" ${!w.skin?'selected':''}>스킨 — 목록</option><option value="ring" ${w.skin==='ring'?'selected':''}>스킨 — 아바타 링 (서로 이웃은 포인트색 링)</option>
         <option value="toc" ${w.skin==='toc'?'selected':''}>스킨 — 텍스트 목차 (사진 없이)</option></select>
+      ${w.skin==='ring'?`<span style="font-size:11px;color:var(--muted)">한 줄에</span><select id="nb-cols" style="width:auto;margin-bottom:0">
+        ${[3,4,5,6].map(n=>`<option value="${n}" ${(+w.cols||4)===n?'selected':''}>${n}개</option>`).join('')}</select>`:''}
     </div>`+typoRowHTML(w,'11.5');
   if(w.t==='text') html+=`
     <div class="p-row" style="gap:6px;align-items:center;flex-wrap:wrap">
@@ -5138,6 +5148,7 @@ function renderWidEdit(){
   [['cnt-skin','skin'],['nb-skin','skin'],['tx-skin','skin'],['dd-skin','skin'],['tx-pc','pc'],['tx-tilt','tilt']].forEach(([id,k])=>{
     const el=$('#'+id); if(el) el.addEventListener('change',()=>{ if(el.value) w[k]=el.value; else delete w[k]; renderWidEdit(); }); });
   const cdg=$('#cnt-dg'); if(cdg) cdg.addEventListener('input',()=>{ const v=+cdg.value; if(v) w.dg=v; else delete w.dg; });
+  const nbc=$('#nb-cols'); if(nbc) nbc.addEventListener('change',()=>{ w.cols=+nbc.value; });
   const txs=$('#tx-sign'); if(txs) txs.addEventListener('input',()=>{ if(txs.value.trim()) w.sign=txs.value; else delete w.sign; });
   const txc=$('#tx-cur'); if(txc) txc.addEventListener('change',()=>{ if(txc.checked) delete w.noCur; else w.noCur=true; });
   if(['links','cnt','nb','text','dday'].includes(w.t)) bindTypo(w);   // 공통 타이포(phase432)
