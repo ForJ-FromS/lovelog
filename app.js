@@ -6553,7 +6553,7 @@ const RESERVED = new Set(['guide','index','404','app','api','admin','root','syst
   'gallery','guestbook','archive','all','post','posts','tag','tags']);
 /* 콘솔 예약 목록(config/reserved.list) 확인 — 가입·주소 변경·실시간 표시가 같은 기준을 보게(phase425) */
 async function isConsoleReserved(h){
-  try{ const rs=await getDoc(doc(db,'config','reserved')); return rs.exists() && (rs.data().list||[]).map(x=>String(x).toLowerCase()).includes(h); }
+  try{ const rs=await getDoc(doc(db,'config','reserved')); return rs.exists() && (rs.data().list||[]).map(x=>String(x).trim().toLowerCase()).includes(String(h).trim().toLowerCase()); }   // 공백·대문자 관대(phase427)
   catch(e){ return false; }
 }
 const STUB_DAYS=7;
@@ -6624,8 +6624,7 @@ async function signup(){
     }catch(e){ err.textContent='1차 핸들 확인에 실패했어요 — 잠시 후 다시 시도해주세요.'; return; }
   }
   try{
-    const rs=await getDoc(doc(db,'config','reserved'));
-    if(rs.exists() && (rs.data().list||[]).includes(handle)){
+    if(await isConsoleReserved(handle)){                    // 공백·대문자 관대 헬퍼로 통일(phase427)
       err.textContent='이미 사용 중인 주소예요. 다른 주소를 골라주세요.'; return; }
   }catch(e){}
   if(!name){ err.textContent='홈 이름을 입력해 주세요.'; return; }
