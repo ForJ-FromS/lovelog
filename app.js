@@ -256,6 +256,35 @@ function calTip(el, pin){
   calTipEl.style.left=(x+window.scrollX)+'px'; calTipEl.style.top=(y+window.scrollY)+'px';
 }
 function calTipHide(){ if(calTipEl && !calTipPin) calTipEl.classList.remove('on'); }
+/* 🎨 위젯 공통 타이포(phase432): 폰트·글자색·포인트색·크기 → CSS 변수 --wtf/--wtc/--wac/--wts.
+   위젯 CSS는 var(--wtc, 기본) 식으로 읽어서 안 정하면 테마를 따름 */
+const WFONT={sans:'inherit', serif:"'Noto Serif KR',serif", hand:"'Gaegu',cursive", mono:"'IBM Plex Mono',monospace"};
+function applyTypo(d,w){
+  if(w.tf && WFONT[w.tf]) d.style.setProperty('--wtf', WFONT[w.tf]);
+  if(/^#[0-9a-fA-F]{3,8}$/.test(w.tc||'')) d.style.setProperty('--wtc', w.tc);
+  if(/^#[0-9a-fA-F]{3,8}$/.test(w.ac||'')) d.style.setProperty('--wac', w.ac);
+  if(+w.tsz) d.style.setProperty('--wts', (+w.tsz)+'px');
+}
+function typoRowHTML(w, base){                                 // base: 기본 크기 placeholder
+  return `<div class="p-row" style="gap:8px;align-items:center;font-size:11px;color:var(--muted);flex-wrap:wrap">
+    <span style="flex:none">글꼴</span>
+    <select id="wt-tf" style="width:auto;margin-bottom:0">
+      <option value="" ${!w.tf?'selected':''}>테마 따름</option><option value="sans" ${w.tf==='sans'?'selected':''}>고딕</option>
+      <option value="serif" ${w.tf==='serif'?'selected':''}>명조</option><option value="hand" ${w.tf==='hand'?'selected':''}>손글씨</option>
+      <option value="mono" ${w.tf==='mono'?'selected':''}>모노</option></select>
+    <span style="flex:none">글자색</span><input type="color" id="wt-tc" class="ck-color" value="${w.tc||'#cccccc'}"><button class="rmv" id="wt-tcx" style="font-size:10px" title="테마색으로">기본</button>
+    <span style="flex:none">포인트</span><input type="color" id="wt-ac" class="ck-color" value="${w.ac||'#c9b27a'}"><button class="rmv" id="wt-acx" style="font-size:10px" title="테마 포인트색으로">기본</button>
+    <span style="flex:none">크기</span><input type="number" id="wt-ts" min="8" max="60" placeholder="${base||''}" value="${+w.tsz||''}" style="width:60px;margin-bottom:0" title="px · 비우면 기본">
+  </div>`;
+}
+function bindTypo(w){
+  const tf=$('#wt-tf'); if(tf) tf.addEventListener('change',()=>{ if(tf.value) w.tf=tf.value; else delete w.tf; });
+  const tc=$('#wt-tc'); if(tc){ tc.addEventListener('input',()=>{ w.tc=tc.value; }); }
+  const tcx=$('#wt-tcx'); if(tcx) tcx.onclick=()=>{ delete w.tc; renderWidEdit(); };
+  const ac=$('#wt-ac'); if(ac){ ac.addEventListener('input',()=>{ w.ac=ac.value; }); }
+  const acx=$('#wt-acx'); if(acx) acx.onclick=()=>{ delete w.ac; renderWidEdit(); };
+  const ts=$('#wt-ts'); if(ts) ts.addEventListener('input',()=>{ const v=+ts.value; if(v) w.tsz=v; else delete w.tsz; });
+}
 const ddHeadItem=arr=>(arr||[]).find(x=>x&&x.date&&x.hd!==false)||null;   // 헤더에 걸 디데이(phase391): 헤더 체크된 첫 항목
 const ddSideW=()=>(st.page?.side||[]).find(w=>w&&w.t==='dday')||{};
 const ddHeadHTML=(arr)=>{ const d0=ddHeadItem(arr); if(!d0) return '';
@@ -1297,8 +1326,14 @@ async function bumpCounter(){
 function fillCounter(){
   const a=$('#cnt-today'), b=$('#cnt-total'); if(!a||!b) return;
   const c=st.cnt||{}, t=today();
-  a.textContent = c.day===t ? (c.today||0) : 0;
-  b.textContent = c.total||0;
+  const tv=c.day===t ? (c.today||0) : 0, tot=c.total||0;
+  a.textContent = tv;
+  if(b.dataset.dg){                                           // 계기판(phase432): 자릿수 맞춰 한 칸씩
+    const dg=+b.dataset.dg, s2=String(tot).padStart(dg,'0').slice(-dg);
+    [...b.children].forEach((sp,i)=>{ if(sp.textContent!==s2[i]){ sp.textContent=s2[i]; sp.classList.remove('roll'); void sp.offsetWidth; sp.classList.add('roll'); } });
+  } else if(b.closest('.cnt-term')) b.textContent=String(tot).padStart(6,'0');
+  else b.textContent = tot;
+  if(a.closest('.cnt-term')) a.textContent=String(tv).padStart(6,'0');
 }
 const DEFCOL={search:'l',category:'l',profile:'l',latest:'c',tl:'r',feat:'r',quote:'c',notice:'c',chat:'c',phone:'c',img:'l',nb:'r',
   dday:'r',bgm:'r',links:'r',banner:'r',text:'c',cnt:'l',char:'r',pair:'c',cal:'r',habit:'r'};
@@ -1739,10 +1774,25 @@ function renderSide(){
       if(!sdList.length){ if(!st.mine) return; }
       if(+w.ts) d.style.setProperty('--ddT', (+w.ts)+'px');
       if(+w.ns) d.style.setProperty('--ddN', (+w.ns)+'px');
-      d.innerHTML=`<p class="label">${esc(w.label||'D-DAY')}</p>`+sdList.map(x=> x.img
+      const sk=w.skin||''; if(sk) d.className+=' dd-'+sk; applyTypo(d,w);
+      const row=x=> x.img
         ? `<div class="dd-card" style="background-image:url(${x.img})">
              <div class="in2"><span class="t">${esc(x.title)}</span><span class="n">${esc(dday(x.date,x.z0))}</span></div></div>`
-        : `<div class="dd-item"><span class="t">${esc(x.title)}</span><span class="n">${esc(dday(x.date,x.z0))}</span></div>`).join('');
+        : `<div class="dd-item"><span class="t">${esc(x.title)}</span><span class="n">${esc(dday(x.date,x.z0))}</span></div>`;
+      const head=`<p class="label">${esc(w.label||'D-DAY')}</p>`;
+      if(sk==='big'||sk==='ticket'){
+        const [f,...rest]=sdList;
+        d.innerHTML=head+(f?`<div class="dd-main"><b class="n">${esc(dday(f.date,f.z0))}</b><span class="t">${esc(f.title)}</span></div>`:'')
+          +(rest.length?`<div class="dd-rest">${rest.map(row).join('')}</div>`:'');
+      } else if(sk==='strip'){
+        d.innerHTML=head+`<div class="dd-strip">${sdList.map((x,i)=>`<div class="dd-sc${i===0?' first':''}"><b class="n">${esc(dday(x.date,x.z0))}</b><span class="t">${esc(x.title)}</span></div>`).join('')}</div>`;
+      } else if(sk==='bar'){
+        const now=Date.now();
+        d.innerHTML=head+sdList.map(x=>{
+          const end=new Date(x.date+'T00:00:00').getTime(); const from=x.from?new Date(x.from+'T00:00:00').getTime():null;
+          let pct=null; if(from&&end>from) pct=Math.max(0,Math.min(100,Math.round((now-from)/(end-from)*100)));
+          return `<div class="dd-bar"><div class="dd-bt"><span class="t">${esc(x.title)}</span><span class="n">${esc(dday(x.date,x.z0))}</span></div>${pct!==null?`<i><b style="width:${pct}%"></b></i>`:'<small>시작일을 적으면 바가 차요</small>'}</div>`; }).join('');
+      } else d.innerHTML=head+sdList.map(row).join('');
       box.appendChild(d); return;
     }
     if(w.t==='bgm'){
@@ -1869,6 +1919,8 @@ function renderSide(){
       box.appendChild(d); return;
     }
     if(w.t==='nb'){
+      if(w.skin==='ring') d.className+=' nb-ring'; else if(w.skin==='toc') d.className+=' nb-toc';   // 스킨(phase432)
+      applyTypo(d,w);
       let hs=(w.items||[]).filter(x=>nbH(x)||nbUrl(x));
       const lim=+w.max||0; const total=hs.length;
       const cut = w.cut===true;                    // true=잘라내기, 기본=스크롤
@@ -2376,17 +2428,31 @@ function renderSide(){
     }
     if(w.t==='text'){
       if(!w.title && !w.text && !st.mine) return;
-      d.className+=' w-text';
-      d.innerHTML=`<p class="label">${esc(w.title||'TEXT')}</p>`+
-        (w.text?`<p class="tx-x">${esc(w.text).replace(/\n/g,'<br>')}</p>`
+      const sk=w.skin||''; d.className+=' w-text'+(sk?' tx-'+sk:'')+(sk==='postit'?' pc-'+(w.pc||'yellow')+' tilt-'+(w.tilt||'l'):'');
+      applyTypo(d,w);
+      d.innerHTML=(sk==='letter'||sk==='postit'?'':`<p class="label">${esc(w.title||'TEXT')}</p>`)+
+        (w.text?`<p class="tx-x">${esc(w.text).replace(/\n/g,'<br>')}${sk==='type'&&!w.noCur?'<span class="tx-cur">▍</span>':''}</p>${sk==='letter'&&w.sign?`<p class="tx-sign">${esc(w.sign)}</p>`:''}`
           :(st.mine?('<p class="pl-empty">✎ 편집에서 내용을 채워주세요.</p>'+(!w.title?'<p class="pl-ghost">👻 지금은 방문자에게 안 보이는 카드예요</p>':'')):''));
       if(w.anim && (w.text||'').trim()){ const tx=d.querySelector('.tx-x'); if(tx) typeObserve(tx, w.text, !!w.animFix); }   // ✨ 타이핑 (인용구와 동일 엔진)
       box.appendChild(d); return;
     }
     if(w.t==='cnt'){
-      d.className+=' w-cnt';
-      d.innerHTML=`<p class="label">${esc(w.label||'COUNT')}</p>
-        <div class="cnt-row"><span>TODAY <b id="cnt-today">–</b></span><span>TOTAL <b id="cnt-total">–</b></span></div>`;
+      const sk=w.skin||''; d.className+=' w-cnt'+(sk?' cnt-'+sk:''); applyTypo(d,w);
+      if(sk==='gauge'){                                       // 계기판: 자릿수 고정, 숫자판
+        const dg=Math.min(8,Math.max(4,+w.dg||6));
+        d.innerHTML=`<p class="label">${esc(w.label||'COUNT')}</p>
+          <div class="cg-wrap"><div class="cg-dg" id="cnt-total" data-dg="${dg}">${'<span>0</span>'.repeat(dg)}</div>
+          <div class="cg-sub">TOTAL &nbsp;·&nbsp; TODAY <b id="cnt-today">–</b></div></div>`;
+      } else if(sk==='stamp'){
+        d.innerHTML=`<p class="label">${esc(w.label||'COUNT')}</p>
+          <div class="cs-wrap"><div class="cs-ring"><small>VISITED</small><b id="cnt-total">–</b><small>TODAY <span id="cnt-today">–</span></small><em>${today().replace(/-/g,'.')}</em></div></div>`;
+      } else if(sk==='term'){
+        d.innerHTML=`<p class="label">${esc(w.label||'VISITORS')}</p>
+          <div class="ct-body"><p><span class="ct-p">&gt;</span> total &nbsp;&nbsp; <b id="cnt-total">–</b></p><p><span class="ct-p">&gt;</span> today &nbsp;&nbsp; <b id="cnt-today">–</b></p><p class="ct-cur">&gt; _</p></div>`;
+      } else {
+        d.innerHTML=`<p class="label">${esc(w.label||'COUNT')}</p>
+          <div class="cnt-row"><span>TODAY <b id="cnt-today">–</b></span><span>TOTAL <b id="cnt-total">–</b></span></div>`;
+      }
       box.appendChild(d); fillCounter(); return;
     }
     if(w.t==='stamp'){
@@ -2424,9 +2490,17 @@ function renderSide(){
       box.appendChild(d); return;
     }
     if(w.t==='links'){
-      d.className+=' w-links';
-      d.innerHTML=`<p class="label">${esc(w.label||'LINKS')}</p>`+(w.items||[]).map(l=>
-        `<a href="${esc(l.url)}" target="_blank" rel="noopener"><span>${esc(l.label)}</span><span>↗</span></a>`).join('');
+      const sk=w.skin||''; d.className+=' w-links'+(sk?' lk-'+sk:''); applyTypo(d,w);
+      const items=(w.items||[]);
+      let body='';
+      if(sk==='tree'){                                        // 이름 "폴더/이름" → 폴더 묶음
+        const groups=[]; items.forEach(l=>{ const m=String(l.label||'').split('/'); const g=m.length>1?m[0].trim():''; const nm=m.length>1?m.slice(1).join('/').trim():l.label;
+          let G=groups.find(x=>x.g===g); if(!G){ G={g,ls:[]}; groups.push(G); } G.ls.push({...l,nm}); });
+        body=groups.map(G=>(G.g?`<p class="lk-dir">📁 ${esc(G.g)}</p>`:'')+G.ls.map((l,i)=>`<a href="${esc(l.url)}" target="_blank" rel="noopener" class="${l.hl?'hl':''}"><span class="lk-br">${i===G.ls.length-1?'└──':'├──'}</span> ${esc(l.nm)}</a>`).join('')).join('');
+      } else {
+        body=items.map(l=>`<a href="${esc(l.url)}" target="_blank" rel="noopener" class="${l.hl?'hl':''}">${sk==='card'&&l.e?`<span class="lk-e">${esc(l.e)}</span>`:''}<span class="lk-t"><b>${esc(l.label)}</b>${sk==='card'&&l.d?`<i>${esc(l.d)}</i>`:''}</span>${sk===''||sk==='card'?'<span class="lk-ar">↗</span>':''}</a>`).join('');
+      }
+      d.innerHTML=`<p class="label">${esc(w.label||'LINKS')}</p><div class="lk-body">${body}</div>`;
       box.appendChild(d); return;
     }
     if(w.t==='banner'){
@@ -4216,6 +4290,37 @@ function renderWidEdit(){
       <input data-pqb="${i}" placeholder="${esc(w.bn||'B')}의 답" value="${esc(x.b||'')}" style="margin-bottom:0">
     </div>`).join('')}
     <button class="btn" id="pq-addq" style="font-size:12px">+ 질문 추가</button>`;
+  if(w.t==='cnt') html+=`
+    <div class="p-row" style="gap:6px;align-items:center">
+      <select id="cnt-skin" style="width:auto;margin-bottom:0">
+        <option value="" ${!w.skin?'selected':''}>스킨 — 기본</option><option value="gauge" ${w.skin==='gauge'?'selected':''}>스킨 — 계기판 (옛날 카운터)</option>
+        <option value="stamp" ${w.skin==='stamp'?'selected':''}>스킨 — 스탬프 (소인)</option><option value="term" ${w.skin==='term'?'selected':''}>스킨 — 터미널</option></select>
+      ${w.skin==='gauge'?`<span style="font-size:11px;color:var(--muted)">자릿수</span><input type="number" id="cnt-dg" min="4" max="8" placeholder="6" value="${+w.dg||''}" style="width:56px;margin-bottom:0">`:''}
+    </div>`+typoRowHTML(w,'11');
+  if(w.t==='nb') html+=`
+    <div class="p-row" style="gap:6px;align-items:center">
+      <select id="nb-skin" style="width:auto;margin-bottom:0">
+        <option value="" ${!w.skin?'selected':''}>스킨 — 목록</option><option value="ring" ${w.skin==='ring'?'selected':''}>스킨 — 아바타 링 (서로 이웃은 포인트색 링)</option>
+        <option value="toc" ${w.skin==='toc'?'selected':''}>스킨 — 텍스트 목차 (사진 없이)</option></select>
+    </div>`+typoRowHTML(w,'11.5');
+  if(w.t==='text') html+=`
+    <div class="p-row" style="gap:6px;align-items:center;flex-wrap:wrap">
+      <select id="tx-skin" style="width:auto;margin-bottom:0">
+        <option value="" ${!w.skin?'selected':''}>스킨 — 기본 카드</option><option value="letter" ${w.skin==='letter'?'selected':''}>스킨 — 편지지 (줄 노트 · 명조)</option>
+        <option value="postit" ${w.skin==='postit'?'selected':''}>스킨 — 포스트잇</option><option value="type" ${w.skin==='type'?'selected':''}>스킨 — 타자기 (종이 · 모노)</option></select>
+      ${w.skin==='letter'?`<input id="tx-sign" placeholder="서명 (예: — nine)" value="${esc(w.sign||'')}" style="width:150px;margin-bottom:0">`:''}
+      ${w.skin==='postit'?`<select id="tx-pc" style="width:auto;margin-bottom:0"><option value="" ${!w.pc?'selected':''}>노랑</option><option value="pink" ${w.pc==='pink'?'selected':''}>분홍</option><option value="mint" ${w.pc==='mint'?'selected':''}>민트</option><option value="sky" ${w.pc==='sky'?'selected':''}>하늘</option></select>
+        <select id="tx-tilt" style="width:auto;margin-bottom:0"><option value="" ${!w.tilt?'selected':''}>기울기 — 살짝 왼쪽</option><option value="r" ${w.tilt==='r'?'selected':''}>살짝 오른쪽</option><option value="0" ${w.tilt==='0'?'selected':''}>똑바로</option></select>`:''}
+      ${w.skin==='type'?`<label class="chk" style="font-size:11px"><input type="checkbox" id="tx-cur" ${w.noCur?'':'checked'}> 커서 ▍</label>`:''}
+    </div>`+typoRowHTML(w,'12.5');
+  if(w.t==='dday') html+=`
+    <div class="p-row" style="gap:6px;align-items:center;flex-wrap:wrap">
+      <select id="dd-skin" style="width:auto;margin-bottom:0">
+        <option value="" ${!w.skin?'selected':''}>스킨 — 목록</option><option value="big" ${w.skin==='big'?'selected':''}>스킨 — 빅 넘버 (첫 디데이 크게)</option>
+        <option value="ticket" ${w.skin==='ticket'?'selected':''}>스킨 — 티켓</option><option value="strip" ${w.skin==='strip'?'selected':''}>스킨 — 스트립 (가로 카드)</option>
+        <option value="bar" ${w.skin==='bar'?'selected':''}>스킨 — 진행 바 (시작일 있는 항목)</option></select>
+      <span class="note" style="margin:0">${w.skin==='bar'?'각 디데이의 〈시작일〉을 적어야 바가 차요':''}</span>
+    </div>`+typoRowHTML(w,'');
   if(w.t==='todo') html+=`
     <div class="p-row" style="align-items:center;gap:6px">
       <select id="we-tdstyle" style="width:auto;margin-bottom:0">
@@ -4432,6 +4537,7 @@ function renderWidEdit(){
       ${d.img?`<button class="rmv" data-dximg="${i}" style="font-size:10px">사진 제거</button>`:''}
       <label class="chk" style="font-size:11px" title="이 디데이를 헤더에 걸어요 (헤더는 한 개만 — 체크된 것 중 맨 위)"><input type="checkbox" data-dhd="${i}" ${d.hd===false?'':'checked'}> 헤더</label>
       <label class="chk" style="font-size:11px" title="이 디데이를 사이드 카드에 보여요"><input type="checkbox" data-dsd="${i}" ${d.sd===false?'':'checked'}> 사이드</label>
+      ${w.skin==='bar'?`<span style="font-size:11px;color:var(--muted)">시작일</span><input type="date" data-dfrom="${i}" value="${esc(d.from||'')}" style="width:auto;margin-bottom:0;font-size:11px" title="진행 바의 시작점">`:''}
     </div>`).join('')+
     `<div class="p-row" style="align-items:center;margin-bottom:2px">
       <label class="chk" title="끄면 사이드의 D-DAY 카드가 숨겨져요 (날짜·헤더 표시는 유지)"><input type="checkbox" id="we-ddcard" ${w.off?'':'checked'}> 사이드 카드 표시</label>
@@ -4484,9 +4590,16 @@ function renderWidEdit(){
       포인트 <input type="color" id="we-bgac" value="${w.ac||'#d9a614'}" style="width:38px;padding:0;flex:none" title="튜너 바늘·카세트 릴·LP 톤암 색">
       <button class="rmv" id="we-bgrst" style="font-size:10px;margin-left:auto" title="색을 디자인 기본(홈 테마 추종)으로 되돌려요">기본으로</button>
     </div>`;
-  if(w.t==='links') html+=(w.items||[]).map((l,i)=>`
-    <div class="p-row" style="align-items:center;gap:6px"><input data-ll="${i}" placeholder="이름" value="${esc(l.label||'')}" style="flex:1;min-width:0;margin-bottom:0">
-    <input data-lu="${i}" placeholder="https://..." value="${esc(l.url||'')}" style="flex:1.4;min-width:0;margin-bottom:0">
+  if(w.t==='links') html+=`
+    <div class="p-row" style="gap:6px;align-items:center">
+      <select id="lk-skin" style="width:auto;margin-bottom:0">
+        <option value="" ${!w.skin?'selected':''}>스킨 — 목록</option><option value="pill" ${w.skin==='pill'?'selected':''}>스킨 — 알약 버튼</option>
+        <option value="card" ${w.skin==='card'?'selected':''}>스킨 — 아이콘 카드</option><option value="tree" ${w.skin==='tree'?'selected':''}>스킨 — 트리 (이름을 "폴더/이름"으로)</option>
+        <option value="ltree" ${w.skin==='ltree'?'selected':''}>스킨 — 링크트리 (큰 버튼)</option></select>
+      <span class="note" style="margin:0">${w.skin==='card'?'링크마다 이모지 · 설명을 적을 수 있어요':w.skin==='ltree'?'★ 체크한 링크는 포인트색으로 채워져요':''}</span>
+    </div>`+typoRowHTML(w,'12.5')+(w.items||[]).map((l,i)=>`
+    <div class="p-row" style="align-items:center;gap:6px">${w.skin==='card'?`<input data-le="${i}" placeholder="🔗" value="${esc(l.e||'')}" style="width:40px;text-align:center;margin-bottom:0" maxlength="4">`:''}<input data-ll="${i}" placeholder="이름" value="${esc(l.label||'')}" style="flex:1;min-width:0;margin-bottom:0">
+    <input data-lu="${i}" placeholder="https://..." value="${esc(l.url||'')}" style="flex:1.4;min-width:0;margin-bottom:0">${w.skin==='card'?`<input data-ld="${i}" placeholder="설명" value="${esc(l.d||'')}" style="flex:1;min-width:0;margin-bottom:0">`:''}${w.skin==='ltree'?`<label class="chk" title="강조"><input type="checkbox" data-lh="${i}" ${l.hl?'checked':''}>★</label>`:''}
     <button class="rmv" data-lup="${i}" title="위로" style="font-size:10px">↑</button><button class="rmv" data-ldn="${i}" title="아래로" style="font-size:10px">↓</button><button class="rmv" data-lx="${i}" title="삭제" style="font-size:10px">✕</button></div>`).join('')+
     `<button class="btn" id="we-add" style="font-size:12px">+ 링크 줄 추가</button>`;
   if(w.t==='banner') html+=((w.items||[]).length?'' :
@@ -4974,6 +5087,7 @@ function renderWidEdit(){
   $('#wid-edit').querySelectorAll('[data-dr]').forEach(b=>b.onclick=()=>{ pdraft.ddays.splice(+b.dataset.dr,1); renderWidEdit(); });
   $('#wid-edit').querySelectorAll('[data-dhd]').forEach(i=>i.addEventListener('change',()=>{ const q=pdraft.ddays[+i.dataset.dhd]; if(!q) return; if(i.checked) delete q.hd; else q.hd=false; }));
   $('#wid-edit').querySelectorAll('[data-dsd]').forEach(i=>i.addEventListener('change',()=>{ const q=pdraft.ddays[+i.dataset.dsd]; if(!q) return; if(i.checked) delete q.sd; else q.sd=false; }));
+  $('#wid-edit').querySelectorAll('[data-dfrom]').forEach(i=>i.addEventListener('change',()=>{ const q=pdraft.ddays[+i.dataset.dfrom]; if(!q) return; if(i.value) q.from=i.value; else delete q.from; }));
   [['we-ddts','ts'],['we-ddns','ns'],['we-ddhs','hs']].forEach(([id,k])=>{ const el=$('#'+id); if(el) el.addEventListener('input',()=>{ const v=+el.value; if(v) w[k]=v; else delete w[k]; }); });
   $('#wid-edit').querySelectorAll('[data-dz0]').forEach(i=>i.addEventListener('change',()=>{
     if(i.value==='0') pdraft.ddays[i.dataset.dz0].z0=true; else delete pdraft.ddays[i.dataset.dz0].z0; }));
@@ -5017,6 +5131,16 @@ function renderWidEdit(){
     w.tracks.splice(+b2.dataset.bx,1); renderWidEdit(); });
   $('#wid-edit').querySelectorAll('[data-ll]').forEach(i=>i.addEventListener('input',()=>{ w.items[i.dataset.ll].label=i.value; }));
   $('#wid-edit').querySelectorAll('[data-lu]').forEach(i=>i.addEventListener('input',()=>{ w.items[i.dataset.lu].url=i.value.trim(); }));
+  $('#wid-edit').querySelectorAll('[data-le]').forEach(i=>i.addEventListener('input',()=>{ w.items[i.dataset.le].e=i.value.trim(); }));
+  $('#wid-edit').querySelectorAll('[data-ld]').forEach(i=>i.addEventListener('input',()=>{ w.items[i.dataset.ld].d=i.value; }));
+  $('#wid-edit').querySelectorAll('[data-lh]').forEach(i=>i.addEventListener('change',()=>{ if(i.checked) w.items[i.dataset.lh].hl=true; else delete w.items[i.dataset.lh].hl; }));
+  const lks=$('#lk-skin'); if(lks) lks.addEventListener('change',()=>{ if(lks.value) w.skin=lks.value; else delete w.skin; renderWidEdit(); });
+  [['cnt-skin','skin'],['nb-skin','skin'],['tx-skin','skin'],['dd-skin','skin'],['tx-pc','pc'],['tx-tilt','tilt']].forEach(([id,k])=>{
+    const el=$('#'+id); if(el) el.addEventListener('change',()=>{ if(el.value) w[k]=el.value; else delete w[k]; renderWidEdit(); }); });
+  const cdg=$('#cnt-dg'); if(cdg) cdg.addEventListener('input',()=>{ const v=+cdg.value; if(v) w.dg=v; else delete w.dg; });
+  const txs=$('#tx-sign'); if(txs) txs.addEventListener('input',()=>{ if(txs.value.trim()) w.sign=txs.value; else delete w.sign; });
+  const txc=$('#tx-cur'); if(txc) txc.addEventListener('change',()=>{ if(txc.checked) delete w.noCur; else w.noCur=true; });
+  if(['links','cnt','nb','text','dday'].includes(w.t)) bindTypo(w);   // 공통 타이포(phase432)
   const lmv=(i,d2)=>{ const j=i+d2; if(j<0||j>=w.items.length) return; [w.items[i],w.items[j]]=[w.items[j],w.items[i]]; renderWidEdit(); };   // 링크 순서(phase431)
   $('#wid-edit').querySelectorAll('[data-lup]').forEach(b=>b.onclick=()=>lmv(+b.dataset.lup,-1));
   $('#wid-edit').querySelectorAll('[data-ldn]').forEach(b=>b.onclick=()=>lmv(+b.dataset.ldn,1));
