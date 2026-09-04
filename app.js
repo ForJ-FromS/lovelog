@@ -1797,7 +1797,7 @@ function renderSide(){
             const next=new Date(last); next.setFullYear(next.getFullYear()+1);
             const yrs=next.getFullYear()-d0.getFullYear();
             pct=Math.max(0,Math.min(100,Math.round((now-last.getTime())/(next.getTime()-last.getTime())*100)));
-            note=`다음 ${yrs}주년까지 ${Math.ceil((next.getTime()-now)/86400000)}일`;
+            if(!w.noNote) note=`다음 ${yrs}주년까지 ${Math.ceil((next.getTime()-now)/86400000)}일`;   // 안내 줄 끄기(phase434)
           } else if(from&&end>from) pct=Math.max(0,Math.min(100,Math.round((now-from)/(end-from)*100)));
           return `<div class="dd-bar"><div class="dd-bt"><span class="t">${esc(x.title)}</span><span class="n">${esc(dday(x.date,x.z0))}</span></div>${pct!==null?`<i><b style="width:${pct}%"></b></i>${note?`<small>${note}</small>`:''}`:'<small>시작일을 적으면 바가 차요 (지난 날짜는 다음 기념일까지 자동)</small>'}</div>`; }).join('');
       } else d.innerHTML=head+sdList.map(row).join('');
@@ -4329,7 +4329,8 @@ function renderWidEdit(){
         <option value="" ${!w.skin?'selected':''}>스킨 — 목록</option><option value="big" ${w.skin==='big'?'selected':''}>스킨 — 빅 넘버 (첫 디데이 크게)</option>
         <option value="ticket" ${w.skin==='ticket'?'selected':''}>스킨 — 티켓</option><option value="strip" ${w.skin==='strip'?'selected':''}>스킨 — 스트립 (가로 카드)</option>
         <option value="bar" ${w.skin==='bar'?'selected':''}>스킨 — 진행 바 (시작일 있는 항목)</option></select>
-      <span class="note" style="margin:0">${w.skin==='bar'?'각 디데이의 〈시작일〉을 적어야 바가 차요':''}</span>
+      ${w.skin==='bar'?`<label class="chk" style="font-size:11px"><input type="checkbox" id="dd-note" ${w.noNote?'':'checked'}> "다음 N주년까지 M일" 안내 줄</label>`:''}
+      <span class="note" style="margin:0">${w.skin==='bar'?'지난 날짜는 다음 기념일까지 자동 · 미래 날짜는 〈시작일〉을 적어야 바가 차요':''}</span>
     </div>`+typoRowHTML(w,'');
   if(w.t==='todo') html+=`
     <div class="p-row" style="align-items:center;gap:6px">
@@ -5149,6 +5150,7 @@ function renderWidEdit(){
     const el=$('#'+id); if(el) el.addEventListener('change',()=>{ if(el.value) w[k]=el.value; else delete w[k]; renderWidEdit(); }); });
   const cdg=$('#cnt-dg'); if(cdg) cdg.addEventListener('input',()=>{ const v=+cdg.value; if(v) w.dg=v; else delete w.dg; });
   const nbc=$('#nb-cols'); if(nbc) nbc.addEventListener('change',()=>{ w.cols=+nbc.value; });
+  const ddn=$('#dd-note'); if(ddn) ddn.addEventListener('change',()=>{ if(ddn.checked) delete w.noNote; else w.noNote=true; });
   const txs=$('#tx-sign'); if(txs) txs.addEventListener('input',()=>{ if(txs.value.trim()) w.sign=txs.value; else delete w.sign; });
   const txc=$('#tx-cur'); if(txc) txc.addEventListener('change',()=>{ if(txc.checked) delete w.noCur; else w.noCur=true; });
   if(['links','cnt','nb','text','dday'].includes(w.t)) bindTypo(w);   // 공통 타이포(phase432)
