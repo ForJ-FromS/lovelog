@@ -1934,9 +1934,15 @@ function renderSide(){
       const cut = w.cut===true;                    // true=잘라내기, 기본=스크롤
       if(lim>0 && cut) hs=hs.slice(0,lim);
       if(lim>0 && !cut) d.style.setProperty('--nbH', (lim*55-7)+'px');
-      if(w.skin==='ring' && lim>0 && !cut){                     // 링 스킨: 표시 개수만큼의 줄 높이(줄당 ≈100px)로 세로 스크롤(phase436)
+      if(w.skin==='ring' && lim>0 && !cut){                     // 링 스킨: 표시 개수만큼의 줄 높이 — 실제 첫 줄을 재서 정확히(phase437)
         const cols=+w.cols||4, rows=Math.max(1,Math.ceil(lim/cols));
-        d.style.setProperty('--nbRH', (rows*100-10)+'px'); }
+        const fit=()=>{ const first=d.querySelector('.nb'); const list=d.querySelector('.nb-list'); if(!first||!list) return;
+          const gap=parseFloat(getComputedStyle(list).rowGap)||10;
+          const rh=first.getBoundingClientRect().height;             // 실제 렌더된 한 줄(링+이름) 높이
+          if(rh>0) list.style.maxHeight=(rows*rh+(rows-1)*gap+8)+'px'; };
+        requestAnimationFrame(fit);
+        if('ResizeObserver' in window){ const ro=new ResizeObserver(fit); const f0=d.querySelector('.nb'); if(f0) ro.observe(f0); ro.observe(d); }   // 폰트 로딩·창 크기 변화에도 재계산
+        if(document.fonts&&document.fonts.ready) document.fonts.ready.then(fit); }
       if(!hs.length){ if(st.mine){ d.innerHTML=`<p class="label">${esc(w.label||'NEIGHBORS')}</p><p class="pl-empty">✎ 편집에서 이웃 주소를 추가하세요.</p><p class="pl-ghost">👻 지금은 방문자에게 안 보이는 카드예요</p>`; box.appendChild(d); } return; }
       d.innerHTML=`<p class="label">${esc(w.label||'NEIGHBORS')}</p><div class="nb-list">`+
         hs.map(x=>{ const hh=nbH(x), ur=nbUrl(x), im=nbImg(x);
