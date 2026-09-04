@@ -922,9 +922,11 @@
   .cnt-term .ct-cur{color:var(--wac,var(--pri));animation:tCur 1s steps(1) infinite}
   /* 이웃 홈 */
   .w-nb .nb-list{font-family:var(--wtf,inherit)} .w-nb .nb-t b{color:var(--wtc,var(--ink));font-size:var(--wts,12.5px)}
-  .nb-ring .nb-list{display:grid;grid-template-columns:repeat(var(--nbCols,4),1fr);gap:10px 8px}   /* 한 줄 개수·간격(phase433) */
-  .nb-ring .nb{flex-direction:column;width:auto;padding:0;gap:5px;text-align:center;background:none!important}
-  .nb-ring .nb-th{width:calc(100% - 8px);max-width:72px;aspect-ratio:1;height:auto;border-radius:50%;margin:4px auto 0;box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--line)}
+  .nb-ring .nb-list{display:grid;grid-template-columns:repeat(var(--nbCols,4),minmax(0,1fr));gap:10px 8px;
+    max-height:none!important;height:auto!important;overflow:visible!important;padding:4px 0 2px}   /* 링 스킨: 스크롤 없이 칸에 맞춰 줄어듦(phase435) */
+  .nb-ring .nb{flex-direction:column;width:auto;min-width:0;padding:0;gap:5px;text-align:center;background:none!important}
+  .nb-ring .nb-th{width:calc(100% - 10px);max-width:72px;aspect-ratio:1;height:auto;border-radius:50%;margin:4px auto 0;box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--line)}
+  .nb-ring .nb-more{grid-column:1/-1}
   .nb-ring .nb.mutual .nb-th{box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--wac,var(--pri))}
   .nb-ring .nb-t{align-items:center;width:100%} .nb-ring .nb-t b{font-size:var(--wts,9px);font-weight:500;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .nb-ring .nb-t i{display:none} .nb-ring .nb.mutual .nb-t b::after{content:none}
@@ -3007,6 +3009,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=462"></script>
+<script type="module" src="./app.js?v=463"></script>
 </body>
 </html>
