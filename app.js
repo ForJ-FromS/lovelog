@@ -1934,6 +1934,9 @@ function renderSide(){
       const cut = w.cut===true;                    // true=잘라내기, 기본=스크롤
       if(lim>0 && cut) hs=hs.slice(0,lim);
       if(lim>0 && !cut) d.style.setProperty('--nbH', (lim*55-7)+'px');
+      if(w.skin==='ring' && lim>0 && !cut){                     // 링 스킨: 표시 개수만큼의 줄 높이(줄당 ≈100px)로 세로 스크롤(phase436)
+        const cols=+w.cols||4, rows=Math.max(1,Math.ceil(lim/cols));
+        d.style.setProperty('--nbRH', (rows*100-10)+'px'); }
       if(!hs.length){ if(st.mine){ d.innerHTML=`<p class="label">${esc(w.label||'NEIGHBORS')}</p><p class="pl-empty">✎ 편집에서 이웃 주소를 추가하세요.</p><p class="pl-ghost">👻 지금은 방문자에게 안 보이는 카드예요</p>`; box.appendChild(d); } return; }
       d.innerHTML=`<p class="label">${esc(w.label||'NEIGHBORS')}</p><div class="nb-list">`+
         hs.map(x=>{ const hh=nbH(x), ur=nbUrl(x), im=nbImg(x);
