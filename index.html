@@ -94,7 +94,7 @@
   #view-gate.gs-hole #gate-pw-wrap{max-width:220px;position:relative}
   #view-gate.gs-hole #gate-pw{background:transparent;border:none;border-bottom:1px solid var(--gtC,rgba(255,255,255,.55));border-radius:0;padding:8px 28px 8px 22px;text-align:left;letter-spacing:.3em}
   #view-gate.gs-hole #gate-pw-wrap::before{content:'🔒';position:absolute;left:0;top:50%;transform:translateY(-50%);font-size:12px;opacity:.85}
-  #view-gate.gs-hole #gate-go{background:none;border:none;box-shadow:none;padding:4px 0;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.35em;color:var(--gtBtn,var(--pri));border-bottom:1px solid currentColor;border-radius:0}
+  #view-gate.gs-hole #gate-go{background:none;border:none;box-shadow:none;padding:4px 0;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.35em;color:var(--gtBc,var(--pri));border-bottom:1px solid currentColor;border-radius:0}
   #view-gate.gs-hole #gate-go::after{content:' →'}
   /* 카드: 반투명 유리 상자 */
   #view-gate.gs-card .enter-box{background:rgba(20,20,26,.5);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.18);border-radius:16px;padding:22px 28px;max-width:min(360px,88vw)}
@@ -106,12 +106,12 @@
   #view-gate.gs-term .enter-over{color:#6f7379;letter-spacing:.2em}
   #view-gate.gs-term .enter-over::before{content:'[SYS] '} #view-gate.gs-term .enter-over::after{content:' — ACCESS CONTROL'}
   #view-gate.gs-term .enter-box h1{font-size:14px;letter-spacing:.15em;color:#c9ccd1;text-shadow:none;font-weight:500}
-  #view-gate.gs-term .enter-box h1::before{content:'> ';color:var(--gtBtn,var(--pri))}
-  #view-gate.gs-term .enter-text{font-size:11px;color:#c9ccd1;text-shadow:none} #view-gate.gs-term .enter-text:not(:empty)::before{content:'> ';color:var(--gtBtn,var(--pri))}
+  #view-gate.gs-term .enter-box h1::before{content:'> ';color:var(--gtBc,var(--pri))}
+  #view-gate.gs-term .enter-text{font-size:11px;color:#c9ccd1;text-shadow:none} #view-gate.gs-term .enter-text:not(:empty)::before{content:'> ';color:var(--gtBc,var(--pri))}
   #view-gate.gs-term #gate-pw-wrap{max-width:none;width:100%;display:flex;align-items:center;gap:6px;color:#c9ccd1;font-size:11px}
-  #view-gate.gs-term #gate-pw-wrap::before{content:'> passcode:';color:var(--gtBtn,var(--pri));flex:none}
+  #view-gate.gs-term #gate-pw-wrap::before{content:'> passcode:';color:var(--gtBc,var(--pri));flex:none}
   #view-gate.gs-term #gate-pw{background:transparent;border:none;color:#c9ccd1;letter-spacing:.25em;padding:4px 0;font-family:inherit}
-  #view-gate.gs-term #gate-go{background:transparent;border:1px solid var(--gtBtn,var(--pri));color:var(--gtBtn,var(--pri));border-radius:0;padding:5px 14px;font-family:inherit;font-size:10px;letter-spacing:.2em;box-shadow:none;margin-top:4px}
+  #view-gate.gs-term #gate-go{background:transparent;border:1px solid var(--gtBc,var(--pri));color:var(--gtBc,var(--pri));border-radius:0;padding:5px 14px;font-family:inherit;font-size:10px;letter-spacing:.2em;box-shadow:none;margin-top:4px}
   #view-gate.gs-term #gate-go::before{content:'[ '} #view-gate.gs-term #gate-go::after{content:' ]'}
   #view-gate.gs-term #gate-login{color:#6f7379}
   /* 티켓: 입장권 */
@@ -121,7 +121,7 @@
   #view-gate.gs-ticket .enter-text{color:#5a554a;text-shadow:none;font-size:12px}
   #view-gate.gs-ticket .enter-text::after{content:'';display:block;border-top:1.5px dashed #b8b0a0;margin:10px -22px 0}
   #view-gate.gs-ticket #gate-pw-wrap{max-width:none;width:100%} #view-gate.gs-ticket #gate-pw{background:#fff;border:1px solid #b8b0a0;color:#2b2822;border-radius:4px;text-align:center;letter-spacing:.3em}
-  #view-gate.gs-ticket #gate-go{width:100%;background:#2b2822;color:#f4efe4;border-radius:3px;padding:9px 0;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.2em;box-shadow:none}
+  #view-gate.gs-ticket #gate-go{width:100%;background:var(--gtBc,#2b2822);color:var(--gtBt,#f4efe4);border-radius:3px;padding:9px 0;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.2em;box-shadow:none}
   #view-gate.gs-ticket #gate-login{color:#8a8478} #view-gate.gs-ticket .err{color:#b04a3a}
   .enter-over{font-family:'IBM Plex Mono',monospace;font-size:9px;
     letter-spacing:.4em;color:var(--gtC,hsl(var(--h) calc(30% * var(--sf,1)) 90% / .85))}
@@ -2666,7 +2666,7 @@ html,body{overflow-x:hidden;overflow-x:clip}
         <option value="card">대문 모양 — 카드 (반투명 상자)</option>
         <option value="term">대문 모양 — 터미널 (프롬프트)</option>
         <option value="ticket">대문 모양 — 티켓 (입장권)</option></select>
-      <select id="s-gatepos" style="width:auto;margin-bottom:0" title="대문 요소가 놓이는 위치">
+      <select id="s-gatepos" style="width:auto;margin-bottom:0" title="대문 요소가 놓이는 위치 — 폰에서도 그대로 적용되지만, 화면이 좁아 왼쪽 · 오른쪽 차이는 작게 보여요">
         <option value="">배치 — 아래 가운데 (기본)</option>
         <option value="c">배치 — 정중앙</option>
         <option value="t">배치 — 위 가운데</option>
@@ -2897,7 +2897,7 @@ html,body{overflow-x:hidden;overflow-x:clip}
           <span class="tl2">디데이</span><select id="s-hddpos" title="헤더 D+ 블록이 놓이는 자리">
             <option value="">오른쪽 아래 (기본)</option><option value="tl">왼쪽 위</option><option value="tc">가운데 위</option><option value="tr">오른쪽 위</option>
             <option value="ml">왼쪽 중앙</option><option value="mc">정중앙</option><option value="mr">오른쪽 중앙</option><option value="bl">왼쪽 아래</option><option value="bc">가운데 아래</option></select>
-          <span class="tl2">— 헤더 배치가 〈기본〉일 때 적용</span></span></div>
+          <span class="tl2" title="폰에서도 그대로 적용되지만, 화면이 좁아 왼쪽 · 오른쪽 차이는 작게 보여요">— 헤더 배치가 〈기본〉일 때 적용 · 폰에선 좌우 차이가 작아요</span></span></div>
       <div class="trow"><span class="tl">카테고리</span><span class="tc"><select id="s-catstyle">
         <option value="bar">상단 알약 바</option><option value="widget">사이드 위젯</option></select>
         <select id="s-catshape">
@@ -3086,6 +3086,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=471"></script>
+<script type="module" src="./app.js?v=473"></script>
 </body>
 </html>
