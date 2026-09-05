@@ -855,10 +855,7 @@ async function loadPage(handle){
     $('#enter-over').textContent = '@'+handle.toUpperCase();
     $('#gate-name').textContent = st.page.name || handle;
     $('#enter-text').textContent = st.page.enterText || '';
-    { const DEF={hole:'ENTER',card:'입장하기',term:'ENTER',ticket:'TEAR HERE ✂'};
-      $('#gate-go').textContent = st.page.gateBtn || DEF[st.page.gateSkin] || '입 장'; }
-    { const vg=$('#view-gate'); ['gs-hole','gs-card','gs-term','gs-ticket','gp-c','gp-t','gp-tl','gp-tr','gp-bl','gp-br'].forEach(c=>vg.classList.remove(c));
-      if(st.page.gateSkin) vg.classList.add('gs-'+st.page.gateSkin); if(st.page.gatePos) vg.classList.add('gp-'+st.page.gatePos); }   // 대문 스킨·배치(phase440)
+    applyGateSkin(st.page.gateSkin, st.page.gatePos, st.page.gateBtn);   // 대문 스킨·배치(phase440·442)
     document.documentElement.style.setProperty('--gtC', st.page.gateColor || '');
     applyGateBtnC(st.page.gateBtnC||'');
     $('#view-gate').classList.toggle('nograd', st.page.gateGrad===false);
@@ -6046,17 +6043,24 @@ $('#view-gate').addEventListener('click',()=>{               // 아무 데나 �
   if(gatePreview) endGatePreview(); });
 document.addEventListener('keydown',e=>{                     // ESC
   if(e.key==='Escape' && gatePreview) endGatePreview(); });
+/* 대문 스킨·배치 적용(phase442) — 실제 진입과 미리보기가 같은 함수 */
+function applyGateSkin(skin, pos, btnTxt){
+  const DEF={hole:'ENTER',card:'입장하기',term:'ENTER',ticket:'TEAR HERE ✂'};
+  $('#gate-go').textContent = btnTxt || DEF[skin] || '입 장';
+  const vg=$('#view-gate'); ['gs-hole','gs-card','gs-term','gs-ticket','gp-c','gp-t','gp-tl','gp-tr','gp-bl','gp-br'].forEach(c=>vg.classList.remove(c));
+  if(skin) vg.classList.add('gs-'+skin); if(pos) vg.classList.add('gp-'+pos);
+}
 $('#s-gate-pv').onclick=()=>{
   const cover = (egateNew ?? st.page.enterImg) || heroObjs()[0]?.img || '';
   setGateCover(cover);
   $('#enter-over').textContent='@'+st.handle.toUpperCase();
   $('#gate-name').textContent=$('#s-name').value.trim()||st.page.name||st.handle;
   $('#enter-text').textContent=$('#s-enter').value.trim();
-  $('#gate-go').textContent=$('#s-gatebtn').value.trim()||'입 장';
+  applyGateSkin($('#s-gateskin')?.value||'', $('#s-gatepos')?.value||'', $('#s-gatebtn').value.trim());   // 미리보기도 스킨·배치 반영(phase442)
   document.documentElement.style.setProperty('--gtC', gateColVal ?? st.page.gateColor ?? '');
   applyGateBtnC(gateBtnCVal ?? st.page.gateBtnC ?? '');
   $('#view-gate').classList.toggle('nograd', !$('#s-gategrad').checked);
-  $('#gate-pw-wrap').classList.add('hidden'); $('#gate-err').textContent='';
+  $('#gate-pw-wrap').classList.toggle('hidden', !st.page.gate); $('#gate-pw').value=''; $('#gate-err').textContent='';   // 비번 홈이면 칸 모양도 미리보기(phase442)
   $('#gate-login').classList.add('hidden');
   $('#panel').classList.add('hidden');
   gatePreview=true; document.body.classList.add('gate-pv'); show('view-gate');

@@ -2884,6 +2884,20 @@ html,body{overflow-x:hidden;overflow-x:clip}
         <input type="number" id="s-hdoverfs" min="7" max="20" placeholder="9" title="계정 줄 글자 크기(px) — 기본 9" style="width:56px">
         <input type="number" id="s-hdsubfs" min="9" max="24" placeholder="12" title="부제 글자 크기(px) — 기본 12" style="width:56px">
         <span class="tl2">px · 비우면 기본</span></span></div>
+        <div class="trow"><span class="tl">헤더 글씨색</span><span class="tc">
+          <span class="tl2">홈 이름</span><input type="color" id="s-title" value="#eeeeee" title="홈 이름 글씨색">
+          <button class="rmv" id="s-title-reset" style="font-size:11px">기본색으로</button>
+          <span class="tl2">계정 줄</span><input type="color" id="s-hdoc" class="ck-color" value="#aaaaaa" title="이름 위 작은 줄 색"><button class="rmv" data-hdcx="hdOverC" style="font-size:11px">기본</button>
+          <span class="tl2">부제</span><input type="color" id="s-hdsc" class="ck-color" value="#cccccc" title="부제 글씨색"><button class="rmv" data-hdcx="hdSubC" style="font-size:11px">기본</button>
+          <span class="tl2">디데이</span><input type="color" id="s-hddc" class="ck-color" value="#c9b27a" title="헤더 D+ 숫자·제목 색"><button class="rmv" data-hdcx="hdDdC" style="font-size:11px">기본</button></span></div>
+        <div class="trow"><span class="tl">헤더 위치</span><span class="tc">
+          <span class="tl2">이름 블록</span><select id="s-hdtpos" title="홈 이름 · 계정 줄 · 부제가 놓이는 자리 (헤더 배치가 기본일 때)">
+            <option value="">왼쪽 아래 (기본)</option><option value="tl">왼쪽 위</option><option value="tc">가운데 위</option><option value="tr">오른쪽 위</option>
+            <option value="ml">왼쪽 중앙</option><option value="mc">정중앙</option><option value="mr">오른쪽 중앙</option><option value="bc">가운데 아래</option><option value="br">오른쪽 아래</option></select>
+          <span class="tl2">디데이</span><select id="s-hddpos" title="헤더 D+ 블록이 놓이는 자리">
+            <option value="">오른쪽 아래 (기본)</option><option value="tl">왼쪽 위</option><option value="tc">가운데 위</option><option value="tr">오른쪽 위</option>
+            <option value="ml">왼쪽 중앙</option><option value="mc">정중앙</option><option value="mr">오른쪽 중앙</option><option value="bl">왼쪽 아래</option><option value="bc">가운데 아래</option></select>
+          <span class="tl2">— 헤더 배치가 〈기본〉일 때 적용</span></span></div>
       <div class="trow"><span class="tl">카테고리</span><span class="tc"><select id="s-catstyle">
         <option value="bar">상단 알약 바</option><option value="widget">사이드 위젯</option></select>
         <select id="s-catshape">
@@ -2947,20 +2961,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
         <div class="trow"><span class="tl">포인트 색</span><span class="tc">
           <input type="color" id="s-pri" title="강조·버튼·라벨 색 — 테마 색에서 자동으로 정해지는데 직접 고를 수도 있어요">
           <button class="rmv" id="s-pri-auto" style="font-size:11px">자동으로</button></span></div>
-        <div class="trow"><span class="tl">헤더 글씨색</span><span class="tc">
-          <span class="tl2">홈 이름</span><input type="color" id="s-title" value="#eeeeee" title="홈 이름 글씨색">
-          <button class="rmv" id="s-title-reset" style="font-size:11px">기본색으로</button>
-          <span class="tl2">계정 줄</span><input type="color" id="s-hdoc" class="ck-color" value="#aaaaaa" title="이름 위 작은 줄 색"><button class="rmv" data-hdcx="hdOverC" style="font-size:11px">기본</button>
-          <span class="tl2">부제</span><input type="color" id="s-hdsc" class="ck-color" value="#cccccc" title="부제 글씨색"><button class="rmv" data-hdcx="hdSubC" style="font-size:11px">기본</button>
-          <span class="tl2">디데이</span><input type="color" id="s-hddc" class="ck-color" value="#c9b27a" title="헤더 D+ 숫자·제목 색"><button class="rmv" data-hdcx="hdDdC" style="font-size:11px">기본</button></span></div>
-        <div class="trow"><span class="tl">헤더 위치</span><span class="tc">
-          <span class="tl2">이름 블록</span><select id="s-hdtpos" title="홈 이름 · 계정 줄 · 부제가 놓이는 자리 (헤더 배치가 기본일 때)">
-            <option value="">왼쪽 아래 (기본)</option><option value="tl">왼쪽 위</option><option value="tc">가운데 위</option><option value="tr">오른쪽 위</option>
-            <option value="ml">왼쪽 중앙</option><option value="mc">정중앙</option><option value="mr">오른쪽 중앙</option><option value="bc">가운데 아래</option><option value="br">오른쪽 아래</option></select>
-          <span class="tl2">디데이</span><select id="s-hddpos" title="헤더 D+ 블록이 놓이는 자리">
-            <option value="">오른쪽 아래 (기본)</option><option value="tl">왼쪽 위</option><option value="tc">가운데 위</option><option value="tr">오른쪽 위</option>
-            <option value="ml">왼쪽 중앙</option><option value="mc">정중앙</option><option value="mr">오른쪽 중앙</option><option value="bl">왼쪽 아래</option><option value="bc">가운데 아래</option></select>
-          <span class="tl2">— 헤더 배치가 〈기본〉일 때 적용</span></span></div>
         <div class="trow"><span class="tl">카드</span><span class="tc">
           <select id="s-glass"><option value="">기본</option><option value="glass">투명 (유리)</option></select></span></div>
         <div class="trow"><span class="tl">카드 색</span><span class="tc">
@@ -3086,6 +3086,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=469"></script>
+<script type="module" src="./app.js?v=471"></script>
 </body>
 </html>
