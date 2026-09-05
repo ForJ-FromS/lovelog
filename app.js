@@ -1940,7 +1940,7 @@ function renderSide(){
       box.appendChild(d); return;
     }
     if(w.t==='nb'){
-      if(w.skin==='ring'){ d.className+=' nb-ring'; d.style.setProperty('--nbCols', String(+w.cols||4)); } else if(w.skin==='toc') d.className+=' nb-toc';   // 스킨(phase432·433)
+      if(w.skin==='ring'){ d.className+=' nb-ring'+(w.rsq?' nb-sq':''); d.style.setProperty('--nbCols', String(+w.cols||4)); }   // 네모 링(phase456) else if(w.skin==='toc') d.className+=' nb-toc';   // 스킨(phase432·433)
       applyTypo(d,w);
       let hs=(w.items||[]).filter(x=>nbH(x)||nbUrl(x));
       const lim=+w.max||0; const total=hs.length;
@@ -4351,7 +4351,8 @@ function renderWidEdit(){
         <option value="" ${!w.skin?'selected':''}>스킨 — 목록</option><option value="ring" ${w.skin==='ring'?'selected':''}>스킨 — 아바타 링 (서로 이웃은 포인트색 링)</option>
         <option value="toc" ${w.skin==='toc'?'selected':''}>스킨 — 텍스트 목차 (사진 없이)</option></select>
       ${w.skin==='ring'?`<span style="font-size:11px;color:var(--muted)">한 줄에</span><select id="nb-cols" style="width:auto;margin-bottom:0">
-        ${[3,4,5,6].map(n=>`<option value="${n}" ${(+w.cols||4)===n?'selected':''}>${n}개</option>`).join('')}</select>`:''}
+        ${[3,4,5,6].map(n=>`<option value="${n}" ${(+w.cols||4)===n?'selected':''}>${n}개</option>`).join('')}</select>
+        <select id="nb-rsh" style="width:auto;margin-bottom:0" title="링 모양"><option value="" ${!w.rsq?'selected':''}>동그라미</option><option value="1" ${w.rsq?'selected':''}>둥근 네모</option></select>`:''}
     </div>`+typoRowHTML(w,'11.5');
   if(w.t==='text') html+=`
     <div class="p-row" style="gap:6px;align-items:center;flex-wrap:wrap">
@@ -5190,6 +5191,7 @@ function renderWidEdit(){
     const el=$('#'+id); if(el) el.addEventListener('change',()=>{ if(el.value) w[k]=el.value; else delete w[k]; renderWidEdit(); }); });
   const cdg=$('#cnt-dg'); if(cdg) cdg.addEventListener('input',()=>{ const v=+cdg.value; if(v) w.dg=v; else delete w.dg; });
   const nbc=$('#nb-cols'); if(nbc) nbc.addEventListener('change',()=>{ w.cols=+nbc.value; });
+  const nrs=$('#nb-rsh'); if(nrs) nrs.addEventListener('change',()=>{ if(nrs.value) w.rsq=true; else delete w.rsq; });
   const ddn=$('#dd-note'); if(ddn) ddn.addEventListener('change',()=>{ if(ddn.checked) delete w.noNote; else w.noNote=true; });
   const txs=$('#tx-sign'); if(txs) txs.addEventListener('input',()=>{ if(txs.value.trim()) w.sign=txs.value; else delete w.sign; });
   const txc=$('#tx-cur'); if(txc) txc.addEventListener('change',()=>{ if(txc.checked) delete w.noCur; else w.noCur=true; });

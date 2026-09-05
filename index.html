@@ -983,8 +983,10 @@
   .nb-ring .nb-list{display:grid;grid-template-columns:repeat(var(--nbCols,4),minmax(0,1fr));gap:10px 8px;
     max-height:var(--nbRH,none);overflow-y:auto;overflow-x:hidden;padding:4px 3px 2px 0}   /* 링 스킨: 세로 스크롤 유지 · 가로는 칸에 맞춰 줄어듦(phase436) */
   .nb-ring .nb{flex-direction:column;width:auto;min-width:0;padding:0;gap:5px;text-align:center;background:none!important}
-  .nb-ring .nb-th{width:calc(100% - 10px);max-width:72px;aspect-ratio:1;height:auto;border-radius:50%;margin:4px auto 0;box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--line)}
+  .nb-ring .nb-th{width:calc(100% - 10px);aspect-ratio:1;height:auto;border-radius:50%;margin:4px auto 0;box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--line)}   /* 상한 없이 칸 폭에 맞춤(phase457) */
   .nb-ring .nb-more{grid-column:1/-1}
+  .nb-ring.nb-sq .nb-th{border-radius:14px}   /* 둥근 네모 링(phase456) */
+  body.corner-sharp .nb-ring.nb-sq .nb-th{border-radius:0}
   .nb-ring .nb.mutual .nb-th{box-shadow:0 0 0 2px var(--card),0 0 0 4px var(--wac,var(--pri))}
   .nb-ring .nb-t{align-items:center;width:100%} .nb-ring .nb-t b{font-size:var(--wts,9px);font-weight:500;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .nb-ring .nb-t i{display:none} .nb-ring .nb.mutual .nb-t b::after{content:none}
@@ -3095,6 +3097,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=483"></script>
+<script type="module" src="./app.js?v=485"></script>
 </body>
 </html>
