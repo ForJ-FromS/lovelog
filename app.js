@@ -855,7 +855,10 @@ async function loadPage(handle){
     $('#enter-over').textContent = '@'+handle.toUpperCase();
     $('#gate-name').textContent = st.page.name || handle;
     $('#enter-text').textContent = st.page.enterText || '';
-    $('#gate-go').textContent = st.page.gateBtn || '입 장';
+    { const DEF={hole:'ENTER',card:'입장하기',term:'ENTER',ticket:'TEAR HERE ✂'};
+      $('#gate-go').textContent = st.page.gateBtn || DEF[st.page.gateSkin] || '입 장'; }
+    { const vg=$('#view-gate'); ['gs-hole','gs-card','gs-term','gs-ticket','gp-c','gp-t','gp-tl','gp-tr','gp-bl','gp-br'].forEach(c=>vg.classList.remove(c));
+      if(st.page.gateSkin) vg.classList.add('gs-'+st.page.gateSkin); if(st.page.gatePos) vg.classList.add('gp-'+st.page.gatePos); }   // 대문 스킨·배치(phase440)
     document.documentElement.style.setProperty('--gtC', st.page.gateColor || '');
     applyGateBtnC(st.page.gateBtnC||'');
     $('#view-gate').classList.toggle('nograd', st.page.gateGrad===false);
@@ -883,6 +886,10 @@ async function enterPage(){
   document.title=(p.name||h)+' — luvlog';
   $('#pg-name').textContent=p.name||h;
   $('#pg-name').style.color = p.titleColor||'';
+  { const he=document.querySelector('.head');                   // 헤더 색 3종 + 자유 위치(phase441)
+    [['--hdOc','hdOverC'],['--hdSc','hdSubC'],['--hdDc','hdDdC']].forEach(([v,k])=>{ if(/^#[0-9a-fA-F]{3,8}$/.test(p[k]||'')) he.style.setProperty(v,p[k]); else he.style.removeProperty(v); });
+    ['ht-tl','ht-tc','ht-tr','ht-ml','ht-mc','ht-mr','ht-bc','ht-br','hd9-tl','hd9-tc','hd9-tr','hd9-ml','hd9-mc','hd9-mr','hd9-bl','hd9-bc'].forEach(c=>he.classList.remove(c));
+    if(!p.headLayout){ if(p.hdTextPos) he.classList.add('ht-'+p.hdTextPos); if(p.hdDdPos) he.classList.add('hd9-'+p.hdDdPos); } }
   $('#pg-sub').textContent=p.sub||'';
   { const sym=(st.page.overSym||'').trim()||'◈';             // 도형·라벨 분리(phase298c) — 각각 비우면 기본
     const ot=(st.page.overTxt||'').trim()||('@'+h.toUpperCase());
@@ -5857,6 +5864,13 @@ let heroNew=null; let bgNew=null;
 let heroDraft=[]; let egateNew=null; let titleVal=null;
 $('#s-title').addEventListener('input',e=>{ titleVal=e.target.value;
   $('#pg-name').style.color=titleVal; });
+let hdC={};                                                  // 헤더 색 3종 임시값(phase441)
+[['s-hdoc','hdOverC','--hdOc','.head .over'],['s-hdsc','hdSubC','--hdSc','.head .sub'],['s-hddc','hdDdC','--hdDc','.head .dday .n']].forEach(([id,k,v])=>{
+  const el=$('#'+id); if(!el) return;
+  el.addEventListener('input',()=>{ hdC[k]=el.value; document.querySelector('.head')?.style.setProperty(v, el.value); });
+});
+$('#panel').querySelectorAll('[data-hdcx]').forEach(b=>b.onclick=()=>{ const k=b.dataset.hdcx; hdC[k]=''; const v={hdOverC:'--hdOc',hdSubC:'--hdSc',hdDdC:'--hdDc'}[k];
+  document.querySelector('.head')?.style.removeProperty(v); msg('기본색으로 — [설정 저장]으로 확정.'); });
 $('#s-title-reset').onclick=()=>{ titleVal='';
   $('#pg-name').style.color=''; msg('기본색으로 — [설정 저장]으로 확정.'); };
 function renderEgate(){
@@ -6492,6 +6506,7 @@ function fillSettings(){
   renderStkList();
   $('#s-dim').value=p.bgDim??78; $('#s-dots').value=p.dots!==false?'on':''; $('#s-protect').value=p.protectImg!==false?'on':''; $('#s-stkm').checked=!!p.stkHideM; $('#s-stkhome').checked=!!p.stkHome; $('#s-stkoff').checked=p.stkOff!==true; $('#s-fx').value=p.fx ?? (p.sparkle?'sparkle':''); $('#s-fxc').value=p.fxC||'#ffb3c8'; fxCVal=null; $('#s-postpage').value=p.postPage?'on':''; $('#s-corner').value=p.corner||''; $('#s-cardc').value=p.cardC||'#1a1c26'; cardCVal=null; $('#s-rowtag').value=p.rowTag!==false?'on':''; const sts=$('#s-tagshape'); if(sts) sts.value=p.tagShape||'';
   $('#s-gatebtn').value=p.gateBtn||''; $('#s-listed').checked=!!p.listed; cardNew=null; bnrNew=null; renderCard(); renderBnr(); $('#s-lbicon').value=p.labelIcon??'◈'; gateColVal=null;
+  const sgs=$('#s-gateskin'); if(sgs) sgs.value=st.page.gateSkin||''; const sgp=$('#s-gatepos'); if(sgp) sgp.value=st.page.gatePos||'';
   $('#s-gatecolor').value=p.gateColor||'#ffffff';
   const gsk=$('#s-gateskip'); if(gsk) gsk.checked=p.gateSkipPost===true;
   const cw=$('#s-cmtwho'); if(cw) cw.value=p.cmtWho||'';
@@ -6507,6 +6522,8 @@ function fillSettings(){
   $('#s-enter').value=p.enterText||'';
   egateNew=null; renderEgate();
   titleVal=null; $('#s-title').value=p.titleColor||'#eeeeee';
+  hdC={}; const hoc=$('#s-hdoc'); if(hoc) hoc.value=p.hdOverC||'#aaaaaa'; const hsc=$('#s-hdsc'); if(hsc) hsc.value=p.hdSubC||'#cccccc'; const hdc=$('#s-hddc'); if(hdc) hdc.value=p.hdDdC||'#c9b27a';
+  const htp=$('#s-hdtpos'); if(htp) htp.value=p.hdTextPos||''; const hdp=$('#s-hddpos'); if(hdp) hdp.value=p.hdDdPos||'';
   const sf=$('#s-font');
   if(sf && !sf.dataset.full){
     sf.innerHTML=Object.entries(FONTS).map(([k,f])=>`<option value="${k}">${f.label}</option>`).join('');
@@ -6562,6 +6579,8 @@ async function saveSettings(){
       enterText: $('#s-enter').value.trim(),
       enterImg: enterUrl, enterRef,
       titleColor: titleVal ?? st.page.titleColor ?? '',
+      hdOverC: hdC.hdOverC ?? st.page.hdOverC ?? '', hdSubC: hdC.hdSubC ?? st.page.hdSubC ?? '', hdDdC: hdC.hdDdC ?? st.page.hdDdC ?? '',   // 헤더 색 3종(phase441)
+      hdTextPos: $('#s-hdtpos')?.value||'', hdDdPos: $('#s-hddpos')?.value||'',
       bgImg: bgUrl, bgRef,
       priColor: priVal ?? st.page.priColor ?? '',
       hue: hexToHsl($('#s-color').value)[0],
@@ -6611,6 +6630,7 @@ async function saveSettings(){
       rowTag: $('#s-rowtag').value==='on',
       tagShape: $('#s-tagshape')?.value||'',
       gateBtn: $('#s-gatebtn').value.trim(),
+      gateSkin: $('#s-gateskin')?.value||'', gatePos: $('#s-gatepos')?.value||'',
       listed: $('#s-listed').checked,
       cardImg: cardNew ?? st.page.cardImg ?? '',
       bannerImg: bnrNew ?? st.page.bannerImg ?? '',
@@ -6661,6 +6681,7 @@ const RESET={
   layout:{homeStyle:'grid',headMode:'wide',headH:380,headFit:'cover',headGrad:'dark',headText:true,sidePos:'right',catStyle:'bar',catShape:'list',
     galOn:true,stripOn:true,
     headLayout:'',headDeco:'',headBand:'',hdName:true,hdOver:true,hdSub:true,hdNameFs:'',hdOverFs:'',hdSubFs:'',   // 헤더 프리셋·표시(phase430) — 초기화 누락 수리
+    hdOverC:'',hdSubC:'',hdDdC:'',hdTextPos:'',hdDdPos:'',
     catSel:'',catCnt:true,quoteStyle:'',postFs:''},
   media:{heroImgs:[],heroImg:'',enterImg:'',enterRef:'',enterText:'',
     cardImg:'',bannerImg:'',catImgs:{},gate:'',gateBtn:'',gateColor:'',gateBtnC:'',galName:'',gbName:''}

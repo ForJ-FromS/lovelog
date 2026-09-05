@@ -81,6 +81,48 @@
     background:linear-gradient(180deg, hsl(var(--h) calc(30% * var(--sf,1)) 8% / .15) 30%, hsl(var(--h) calc(30% * var(--sf,1)) 8% / .82))}
   .enter-box{position:relative;text-align:center;display:flex;
     flex-direction:column;align-items:center;gap:10px;padding:0 20px}
+  /* ═══ 대문 배치 7곳 (phase440) ═══ */
+  #view-gate.gp-c{align-items:center;padding-bottom:0}
+  #view-gate.gp-t{align-items:flex-start;padding-top:11vh;padding-bottom:0}
+  #view-gate.gp-tl,#view-gate.gp-bl{justify-content:flex-start;padding-left:6vw}
+  #view-gate.gp-tr,#view-gate.gp-br{justify-content:flex-end;padding-right:6vw}
+  #view-gate.gp-tl,#view-gate.gp-tr{align-items:flex-start;padding-top:9vh;padding-bottom:0}
+  #view-gate.gp-tl .enter-box,#view-gate.gp-bl .enter-box{text-align:left;align-items:flex-start}
+  #view-gate.gp-tr .enter-box,#view-gate.gp-br .enter-box{text-align:right;align-items:flex-end}
+  /* ═══ 대문 스킨 (phase440) — 문구·색은 기존 설정 그대로, 모양만 ═══ */
+  /* 열쇠 구멍: 밑줄 칸 + → */
+  #view-gate.gs-hole #gate-pw-wrap{max-width:220px;position:relative}
+  #view-gate.gs-hole #gate-pw{background:transparent;border:none;border-bottom:1px solid var(--gtC,rgba(255,255,255,.55));border-radius:0;padding:8px 28px 8px 22px;text-align:left;letter-spacing:.3em}
+  #view-gate.gs-hole #gate-pw-wrap::before{content:'🔒';position:absolute;left:0;top:50%;transform:translateY(-50%);font-size:12px;opacity:.85}
+  #view-gate.gs-hole #gate-go{background:none;border:none;box-shadow:none;padding:4px 0;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.35em;color:var(--gtBtn,var(--pri));border-bottom:1px solid currentColor;border-radius:0}
+  #view-gate.gs-hole #gate-go::after{content:' →'}
+  /* 카드: 반투명 유리 상자 */
+  #view-gate.gs-card .enter-box{background:rgba(20,20,26,.5);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.18);border-radius:16px;padding:22px 28px;max-width:min(360px,88vw)}
+  #view-gate.gs-card .enter-box h1{text-shadow:none}
+  #view-gate.gs-card #gate-pw-wrap{width:100%} #view-gate.gs-card #gate-go{width:100%;border-radius:10px;letter-spacing:.15em;padding:11px 0}
+  body.corner-sharp #view-gate.gs-card .enter-box{border-radius:0}
+  /* 터미널: 프롬프트 */
+  #view-gate.gs-term .enter-box{align-items:flex-start;text-align:left;background:#0b0c0e;border:1px solid #26282c;padding:18px 22px 16px;font-family:'IBM Plex Mono',monospace;max-width:min(380px,90vw);width:100%;gap:6px;border-radius:6px}
+  #view-gate.gs-term .enter-over{color:#6f7379;letter-spacing:.2em}
+  #view-gate.gs-term .enter-over::before{content:'[SYS] '} #view-gate.gs-term .enter-over::after{content:' — ACCESS CONTROL'}
+  #view-gate.gs-term .enter-box h1{font-size:14px;letter-spacing:.15em;color:#c9ccd1;text-shadow:none;font-weight:500}
+  #view-gate.gs-term .enter-box h1::before{content:'> ';color:var(--gtBtn,var(--pri))}
+  #view-gate.gs-term .enter-text{font-size:11px;color:#c9ccd1;text-shadow:none} #view-gate.gs-term .enter-text:not(:empty)::before{content:'> ';color:var(--gtBtn,var(--pri))}
+  #view-gate.gs-term #gate-pw-wrap{max-width:none;width:100%;display:flex;align-items:center;gap:6px;color:#c9ccd1;font-size:11px}
+  #view-gate.gs-term #gate-pw-wrap::before{content:'> passcode:';color:var(--gtBtn,var(--pri));flex:none}
+  #view-gate.gs-term #gate-pw{background:transparent;border:none;color:#c9ccd1;letter-spacing:.25em;padding:4px 0;font-family:inherit}
+  #view-gate.gs-term #gate-go{background:transparent;border:1px solid var(--gtBtn,var(--pri));color:var(--gtBtn,var(--pri));border-radius:0;padding:5px 14px;font-family:inherit;font-size:10px;letter-spacing:.2em;box-shadow:none;margin-top:4px}
+  #view-gate.gs-term #gate-go::before{content:'[ '} #view-gate.gs-term #gate-go::after{content:' ]'}
+  #view-gate.gs-term #gate-login{color:#6f7379}
+  /* 티켓: 입장권 */
+  #view-gate.gs-ticket .enter-box{background:#f4efe4;color:#2b2822;border-radius:8px;padding:16px 22px 14px;width:min(300px,86vw);gap:6px;position:relative}
+  #view-gate.gs-ticket .enter-over{color:#8a8478;text-shadow:none} #view-gate.gs-ticket .enter-over::before{content:'ADMIT ONE · '}
+  #view-gate.gs-ticket .enter-box h1{font-family:'Noto Serif KR',serif;color:#2b2822;text-shadow:none;font-size:20px;letter-spacing:.06em;font-weight:600}
+  #view-gate.gs-ticket .enter-text{color:#5a554a;text-shadow:none;font-size:12px}
+  #view-gate.gs-ticket .enter-text::after{content:'';display:block;border-top:1.5px dashed #b8b0a0;margin:10px -22px 0}
+  #view-gate.gs-ticket #gate-pw-wrap{max-width:none;width:100%} #view-gate.gs-ticket #gate-pw{background:#fff;border:1px solid #b8b0a0;color:#2b2822;border-radius:4px;text-align:center;letter-spacing:.3em}
+  #view-gate.gs-ticket #gate-go{width:100%;background:#2b2822;color:#f4efe4;border-radius:3px;padding:9px 0;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.2em;box-shadow:none}
+  #view-gate.gs-ticket #gate-login{color:#8a8478} #view-gate.gs-ticket .err{color:#b04a3a}
   .enter-over{font-family:'IBM Plex Mono',monospace;font-size:9px;
     letter-spacing:.4em;color:var(--gtC,hsl(var(--h) calc(30% * var(--sf,1)) 90% / .85))}
   .enter-box h1{font-family:'IBM Plex Mono',monospace;font-size:clamp(22px,4vw,30px);
@@ -185,6 +227,14 @@
     width:16px;height:16px;border:1.5px solid hsl(var(--h) calc(40% * var(--sf,1)) 62% / .8)}
   .head::before{left:11px;top:11px;border-right:none;border-bottom:none;border-radius:4px 0 0 0}
   .head::after{right:11px;bottom:11px;border-left:none;border-top:none;border-radius:0 0 4px 0}
+  /* ═══ 헤더 자유 위치 9방향 (phase441) — 배치 프리셋이 기본일 때 · 이름 블록(ht-*) · 디데이(hd9-*) ═══ */
+  .head[class*="ht-"] .in{position:absolute;width:auto;max-width:70%;padding:0}
+  .head.ht-tl .in{left:28px;top:24px} .head.ht-tc .in{left:50%;top:24px;transform:translateX(-50%);text-align:center} .head.ht-tr .in{right:28px;top:24px;text-align:right}
+  .head.ht-ml .in{left:28px;top:50%;transform:translateY(-50%)} .head.ht-mc .in{left:50%;top:50%;transform:translate(-50%,-50%);text-align:center} .head.ht-mr .in{right:28px;top:50%;transform:translateY(-50%);text-align:right}
+  .head.ht-bc .in{left:50%;bottom:20px;transform:translateX(-50%);text-align:center} .head.ht-br .in{right:28px;bottom:20px;text-align:right}
+  .head.hd9-tl .dday{left:24px;right:auto;top:18px;bottom:auto;text-align:left} .head.hd9-tc .dday{left:50%;right:auto;top:18px;bottom:auto;transform:translateX(-50%);text-align:center} .head.hd9-tr .dday{top:18px;bottom:auto}
+  .head.hd9-ml .dday{left:24px;right:auto;top:50%;bottom:auto;transform:translateY(-50%);text-align:left} .head.hd9-mc .dday{left:50%;right:auto;top:50%;bottom:auto;transform:translate(-50%,-50%);text-align:center} .head.hd9-mr .dday{top:50%;bottom:auto;transform:translateY(-50%)}
+  .head.hd9-bl .dday{left:24px;right:auto;text-align:left} .head.hd9-bc .dday{left:50%;right:auto;transform:translateX(-50%);text-align:center}
   /* ═══ 헤더 배치 프리셋 (phase392) — 데이터는 그대로, 배치만 ═══ */
   body.hl-center .head{flex-direction:column;align-items:center;justify-content:center}
   body.hl-center .head .in{text-align:center;padding:34px 24px 6px}
@@ -263,13 +313,13 @@
     hsl(var(--h) calc(10% * var(--sf,1)) 97% / .08) 30%,
     hsl(var(--h) calc(10% * var(--sf,1)) 97% / .8))}   /* 흰색 그라데이션 */
   .head.hd-noname h1,.head.hd-noover .over,.head.hd-nosub .sub{display:none}   /* 헤더 요소 숨김(phase403) */
-  .head .over{font-family:'IBM Plex Mono',monospace;font-size:var(--hdO, 9px);
+  .head .over{color:var(--hdOc, inherit);font-family:'IBM Plex Mono',monospace;font-size:var(--hdO, 9px);
     letter-spacing:.4em;color:var(--muted)}
   .head h1{font-family:'IBM Plex Mono',monospace;font-size:var(--hdN, clamp(21px,4vw,29px));
     font-weight:600;letter-spacing:.12em;color:var(--ink);line-height:1.4}
-  .head .sub{font-size:var(--hdS, 12px);color:var(--body);margin-top:2px}
+  .head .sub{font-size:var(--hdS, 12px);color:var(--hdSc, var(--body));margin-top:2px}
   .head .dday{position:absolute;right:24px;bottom:18px;text-align:right}
-  .head .dday .n{font-family:'IBM Plex Mono',monospace;font-size:20px;color:var(--pri)}
+  .head .dday .n{font-family:'IBM Plex Mono',monospace;font-size:20px;color:var(--hdDc, var(--pri))}
   .head .dday .t{font-family:'IBM Plex Mono',monospace;font-size:8px;
     letter-spacing:.2em;color:var(--muted)}
 
@@ -2609,6 +2659,22 @@ html,body{overflow-x:hidden;overflow-x:clip}
       <button class="rmv" id="s-egate-clear" style="font-size:11px">제거</button>
     </div>
     <div class="p-row" id="s-egate-list"></div>
+    <div class="p-row" style="align-items:center;gap:8px">
+      <select id="s-gateskin" style="width:auto;margin-bottom:0" title="대문의 비밀번호 칸 · 입장 버튼 모양">
+        <option value="">대문 모양 — 기본 (알약 버튼)</option>
+        <option value="hole">대문 모양 — 열쇠 구멍 (밑줄 칸 · →)</option>
+        <option value="card">대문 모양 — 카드 (반투명 상자)</option>
+        <option value="term">대문 모양 — 터미널 (프롬프트)</option>
+        <option value="ticket">대문 모양 — 티켓 (입장권)</option></select>
+      <select id="s-gatepos" style="width:auto;margin-bottom:0" title="대문 요소가 놓이는 위치">
+        <option value="">배치 — 아래 가운데 (기본)</option>
+        <option value="c">배치 — 정중앙</option>
+        <option value="t">배치 — 위 가운데</option>
+        <option value="tl">배치 — 왼쪽 위</option>
+        <option value="tr">배치 — 오른쪽 위</option>
+        <option value="bl">배치 — 왼쪽 아래</option>
+        <option value="br">배치 — 오른쪽 아래</option></select>
+    </div>
     <div class="p-row" style="align-items:center">
       <input id="s-gatebtn" placeholder="입장 버튼 문구 (기본: 입 장 · 예: ENTER)" style="flex:1.4">
       <span style="font-size:11px;color:var(--muted)">글씨색</span>
@@ -2881,9 +2947,20 @@ html,body{overflow-x:hidden;overflow-x:clip}
         <div class="trow"><span class="tl">포인트 색</span><span class="tc">
           <input type="color" id="s-pri" title="강조·버튼·라벨 색 — 테마 색에서 자동으로 정해지는데 직접 고를 수도 있어요">
           <button class="rmv" id="s-pri-auto" style="font-size:11px">자동으로</button></span></div>
-        <div class="trow"><span class="tl">타이틀 글씨색</span><span class="tc">
-          <input type="color" id="s-title" value="#eeeeee" title="홈 이름 글씨색">
-          <button class="rmv" id="s-title-reset" style="font-size:11px">기본색으로</button></span></div>
+        <div class="trow"><span class="tl">헤더 글씨색</span><span class="tc">
+          <span class="tl2">홈 이름</span><input type="color" id="s-title" value="#eeeeee" title="홈 이름 글씨색">
+          <button class="rmv" id="s-title-reset" style="font-size:11px">기본색으로</button>
+          <span class="tl2">계정 줄</span><input type="color" id="s-hdoc" class="ck-color" value="#aaaaaa" title="이름 위 작은 줄 색"><button class="rmv" data-hdcx="hdOverC" style="font-size:11px">기본</button>
+          <span class="tl2">부제</span><input type="color" id="s-hdsc" class="ck-color" value="#cccccc" title="부제 글씨색"><button class="rmv" data-hdcx="hdSubC" style="font-size:11px">기본</button>
+          <span class="tl2">디데이</span><input type="color" id="s-hddc" class="ck-color" value="#c9b27a" title="헤더 D+ 숫자·제목 색"><button class="rmv" data-hdcx="hdDdC" style="font-size:11px">기본</button></span></div>
+        <div class="trow"><span class="tl">헤더 위치</span><span class="tc">
+          <span class="tl2">이름 블록</span><select id="s-hdtpos" title="홈 이름 · 계정 줄 · 부제가 놓이는 자리 (헤더 배치가 기본일 때)">
+            <option value="">왼쪽 아래 (기본)</option><option value="tl">왼쪽 위</option><option value="tc">가운데 위</option><option value="tr">오른쪽 위</option>
+            <option value="ml">왼쪽 중앙</option><option value="mc">정중앙</option><option value="mr">오른쪽 중앙</option><option value="bc">가운데 아래</option><option value="br">오른쪽 아래</option></select>
+          <span class="tl2">디데이</span><select id="s-hddpos" title="헤더 D+ 블록이 놓이는 자리">
+            <option value="">오른쪽 아래 (기본)</option><option value="tl">왼쪽 위</option><option value="tc">가운데 위</option><option value="tr">오른쪽 위</option>
+            <option value="ml">왼쪽 중앙</option><option value="mc">정중앙</option><option value="mr">오른쪽 중앙</option><option value="bl">왼쪽 아래</option><option value="bc">가운데 아래</option></select>
+          <span class="tl2">— 헤더 배치가 〈기본〉일 때 적용</span></span></div>
         <div class="trow"><span class="tl">카드</span><span class="tc">
           <select id="s-glass"><option value="">기본</option><option value="glass">투명 (유리)</option></select></span></div>
         <div class="trow"><span class="tl">카드 색</span><span class="tc">
@@ -3009,6 +3086,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=467"></script>
+<script type="module" src="./app.js?v=469"></script>
 </body>
 </html>
