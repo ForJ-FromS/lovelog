@@ -6763,7 +6763,7 @@ function hookHandleCheck(){
     const h=inp.value.trim().toLowerCase();
     out.className='note';
     if(!h){ out.textContent=''; return; }
-    if(!/^[a-z0-9-]{2,20}$/.test(h)){ out.textContent='영문 소문자·숫자·하이픈 2~20자예요.'; return; }
+    if(!/^[a-z0-9-]{1,20}$/.test(h)){ out.textContent='영문 소문자·숫자·하이픈 1~20자예요.'; return; }
     out.textContent='확인 중...';
     const seq=++hcSeq;
     hcTimer=setTimeout(async()=>{
@@ -6783,7 +6783,7 @@ async function signup(){
         handle=$('#in-handle').value.trim().toLowerCase(),
         name=$('#in-name').value.trim(), err=$('#signup-err');
   err.textContent='';
-  if(!/^[a-z0-9-]{2,20}$/.test(handle)){ err.textContent='주소 형식을 확인해 주세요.'; return; }
+  if(!/^[a-z0-9-]{1,20}$/.test(handle)){ err.textContent='주소 형식을 확인해 주세요.'; return; }
   if(RESERVED.has(handle)){ err.textContent='사용할 수 없는 주소예요. 다른 주소를 골라주세요.'; return; }
   // 가입 개방 상태 확인 (콘솔 config/signup 문서로 제어)
   let mode='open', notice='';
@@ -6811,7 +6811,7 @@ async function signup(){
   if(!codeRef){
     refH=ref.toLowerCase().replace(/^(https?:\/\/)?(www\.)?luvlog\.me\//,'').replace(/^https?:\/\/[^/]*\//,'').replace(/^@/,'').replace(/\/.*$/,'').trim();
     if(!refH){ err.textContent='1차 핸들(초대해 준 분의 러브로그 주소)을 적어주세요.'; return; }
-    if(!/^[a-z0-9-]{2,20}$/.test(refH) || refH===handle){
+    if(!/^[a-z0-9-]{1,20}$/.test(refH) || refH===handle){
       err.textContent='1차 핸들 형식이 이상해요 — luvlog.me/ 뒤의 주소만 적어주세요.'; return; }
     try{
       const rp=await getDoc(doc(db,'pages',refH));
@@ -7146,7 +7146,7 @@ $('#adm-make').onclick=async()=>{
   const kind=$('#adm-kind').value;
   /* 1차 지정(phase321): 심으면 이 코드 가입자는 핸들 칸을 비워도 되고, 이 값이 1차로 기록됨 */
   const refPin=($('#adm-ref')?.value||'').trim().replace(/^@/,'');
-  if(refPin && /^[a-z0-9-]{2,20}$/.test(refPin.toLowerCase())){
+  if(refPin && /^[a-z0-9-]{1,20}$/.test(refPin.toLowerCase())){
     try{
       const rp=await getDoc(doc(db,'pages',refPin.toLowerCase()));
       if(!rp.exists() && !confirm('러브로그에 없는 핸들이에요 — 자유 표기로 그대로 심을까요?')){ admMsg('취소했어요.'); return; }
@@ -7251,7 +7251,7 @@ async function finishRenameIfNeeded(){
 async function renameHandle(newH){
   if(!st.mine || !st.me) return;
   newH=(newH||'').trim().toLowerCase();
-  if(!/^[a-z0-9-]{2,20}$/.test(newH)){ msg('영문 소문자·숫자·하이픈 2~20자예요.'); return; }
+  if(!/^[a-z0-9-]{1,20}$/.test(newH)){ msg('영문 소문자·숫자·하이픈 1~20자예요.'); return; }
   if(newH===st.handle){ msg('지금 주소와 같아요.'); return; }
   const ex=await getDoc(doc(db,'pages',newH));
   const resume = ex.exists() && ex.data().owner===st.me.uid && !ex.data().movedTo;   // 중단된 내 이사 → 이어가기(phase410)
@@ -7303,7 +7303,7 @@ let hrT=null;
 $('#hr-new')?.addEventListener('input', ()=>{ const v=$('#hr-new').value.trim().toLowerCase(); const out=$('#hr-note');
   clearTimeout(hrT);
   if(!v){ out.textContent=''; return; }
-  if(!/^[a-z0-9-]{2,20}$/.test(v)){ out.textContent='영문 소문자·숫자·하이픈 2~20자'; return; }
+  if(!/^[a-z0-9-]{1,20}$/.test(v)){ out.textContent='영문 소문자·숫자·하이픈 1~20자'; return; }
   if(v===st.handle){ out.textContent='지금 주소와 같아요'; return; }
   out.textContent='확인 중...';
   hrT=setTimeout(async()=>{ try{
