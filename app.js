@@ -3416,6 +3416,13 @@ async function openPost(id, fromHome=false){
     st.curImgs = null;
     if(p.encImgs){ try{ st.curImgs = JSON.parse(await decTxt(pw, p.encImgs)); }catch(e){} }   // 사진 목록 복호(보안점검 3b)
   } else { body=p.body; st.curRaw=null; st.curImgs=null; }
+  /* 원문으로 다시 그리기(phase455): 글은 발행 시점의 렌더 결과를 저장하므로 서식 수리가 옛 글에 안 먹던 문제 해소.
+     일반 글은 p.raw, 비밀글은 복호한 원문 — HTML 모드 글은 그대로(코드 변형 방지) */
+  if(!p.html){
+    const rawX = p.secret ? st.curRaw : p.raw;
+    const imgsX = p.secret ? (st.curImgs||[]) : (p.imgs||[]);
+    if(rawX){ try{ let h2=bodyHTML(rawX); imgsX.forEach((im,i)=>{ h2=h2.split(`[사진${i+1}]`).join(`<img src="${im}" alt="">`); }); body=h2; }catch(e){} }
+  }
   st.cur=p; st.curBody=body;
   $('#pv-meta').textContent=p.cat+' · '+p.date+(p.secret?' · SECRET':'')+(p.priv?' · 🔏 비공개':'')+(p.mut===true?' · 🤝 이웃 공개':'')+((+p.schedAt>Date.now())?' · ⏰ '+new Date(+p.schedAt).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})+' 공개 예약':'');
   buildToc();                                                   // 📑 목차(phase343)
