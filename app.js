@@ -6045,10 +6045,11 @@ document.addEventListener('keydown',e=>{                     // ESC
   if(e.key==='Escape' && gatePreview) endGatePreview(); });
 /* 대문 스킨·배치 적용(phase442) — 실제 진입과 미리보기가 같은 함수 */
 function applyGateSkin(skin, pos, btnTxt){
-  const DEF={hole:'ENTER',card:'입장하기',term:'ENTER',ticket:'TEAR HERE ✂'};
+  const DEF={hole:'ENTER',card:'입장하기',term:'ENTER',termx:'ENTER',ticket:'TEAR HERE ✂'};
   $('#gate-go').textContent = btnTxt || DEF[skin] || '입 장';
-  const vg=$('#view-gate'); ['gs-hole','gs-card','gs-term','gs-ticket','gp-c','gp-t','gp-tl','gp-tr','gp-bl','gp-br'].forEach(c=>vg.classList.remove(c));
-  if(skin) vg.classList.add('gs-'+skin); if(pos) vg.classList.add('gp-'+pos);
+  const vg=$('#view-gate'); ['gs-hole','gs-card','gs-term','gs-bare','gs-ticket','gp-c','gp-t','gp-tl','gp-tr','gp-bl','gp-br'].forEach(c=>vg.classList.remove(c));
+  if(skin==='termx'){ vg.classList.add('gs-term','gs-bare'); } else if(skin) vg.classList.add('gs-'+skin);   // 창 없는 터미널 = 터미널 + bare(phase447)
+  if(pos) vg.classList.add('gp-'+pos);
 }
 $('#s-gate-pv').onclick=()=>{
   const cover = (egateNew ?? st.page.enterImg) || heroObjs()[0]?.img || '';

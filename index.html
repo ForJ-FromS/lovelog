@@ -117,6 +117,11 @@
   #view-gate.gs-term #gate-go{background:transparent;border:1px solid var(--gtBc,var(--pri));color:var(--gtBc,var(--pri));border-radius:0;padding:6px 14px!important;letter-spacing:.2em!important;font-family:inherit;font-size:10px;letter-spacing:.2em;box-shadow:none;margin-top:4px}
   #view-gate.gs-term #gate-go::before{content:'[ '} #view-gate.gs-term #gate-go::after{content:' ]'}
   #view-gate.gs-term #gate-login{color:#6f7379}
+  /* 터미널 · 창 없이(phase447): 상자·테두리 없이 프롬프트만 사진 위에 */
+  #view-gate.gs-bare .enter-box{background:transparent;border:none;padding:0;text-shadow:0 1px 8px rgba(0,0,0,.7)}
+  #view-gate.gs-bare .enter-box h1,#view-gate.gs-bare .enter-text,#view-gate.gs-bare #gate-pw-wrap{color:var(--gtC,#e8e9ee)}
+  #view-gate.gs-bare .enter-box h1{color:var(--gtC,#e8e9ee)} #view-gate.gs-bare .enter-over{color:var(--gtC,rgba(232,233,238,.7))}
+  #view-gate.gs-bare #gate-pw{color:var(--gtC,#e8e9ee)} #view-gate.gs-bare #gate-go{background:rgba(0,0,0,.25)}
   /* 티켓: 입장권 */
   #view-gate.gs-ticket .enter-box{background:#f4efe4;color:#2b2822;border-radius:8px;padding:16px 22px 14px;width:min(300px,86vw);gap:6px;position:relative}
   #view-gate.gs-ticket .enter-over{color:#8a8478;text-shadow:none} #view-gate.gs-ticket .enter-over::before{content:'ADMIT ONE · '}
@@ -2667,7 +2672,8 @@ html,body{overflow-x:hidden;overflow-x:clip}
         <option value="">대문 모양 — 기본 (알약 버튼)</option>
         <option value="hole">대문 모양 — 열쇠 구멍 (밑줄 칸 · →)</option>
         <option value="card">대문 모양 — 카드 (반투명 상자)</option>
-        <option value="term">대문 모양 — 터미널 (프롬프트)</option>
+        <option value="term">대문 모양 — 터미널 (검은 창)</option>
+        <option value="termx">대문 모양 — 터미널 (창 없이 사진 위에 바로)</option>
         <option value="ticket">대문 모양 — 티켓 (입장권)</option></select>
       <select id="s-gatepos" style="width:auto;margin-bottom:0" title="대문 요소가 놓이는 위치 — 폰에서도 그대로 적용되지만, 화면이 좁아 왼쪽 · 오른쪽 차이는 작게 보여요">
         <option value="">배치 — 아래 가운데 (기본)</option>
@@ -3089,6 +3095,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=474"></script>
+<script type="module" src="./app.js?v=475"></script>
 </body>
 </html>
