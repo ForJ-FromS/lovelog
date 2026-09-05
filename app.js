@@ -1611,14 +1611,16 @@ function nbHeal(w, item, key, to){
   if(key===null) items[i]=to; else if((item[key]||'').toLowerCase()!==to) item[key]=to; else return;
   nbHealN++;
   clearTimeout(nbHealT);
-  nbHealT=setTimeout(async()=>{ try{ await updateDoc(doc(db,'pages',st.handle),{side:st.page.side}); msg(`이사 간 이웃 ${nbHealN}곳의 주소를 새 주소로 갱신했어요.`); }catch(e){} nbHealN=0; }, 800);
+  try{ localStorage.removeItem('lv-nbc-'+(key===null?item:item[key])); }catch(e){}
+  nbHealT=setTimeout(async()=>{ try{ await updateDoc(doc(db,'pages',st.handle),{side:st.page.side}); msg(`이사 간 이웃 ${nbHealN}곳의 주소를 새 주소로 갱신했어요.`); renderSide(); }catch(e){} nbHealN=0; }, 800);
 }
 const NB_TTL=6*3600*1000;                                     // 이웃 정보 기기 캐시 6시간(phase448) — 읽기 비용 절감
 function nbStoreGet(h){ try{ const j=JSON.parse(localStorage.getItem('lv-nbc-'+h)||'null'); return (j&&Date.now()-j.t<NB_TTL)? j.v : undefined; }catch(e){ return undefined; } }
 function nbStoreSet(h,v){ try{ const s=JSON.stringify({t:Date.now(),v}); if(s.length<20000) localStorage.setItem('lv-nbc-'+h, s); }catch(e){} }   // 큰 사진(dataURL)은 저장 생략
 async function nbInfo(h, hop){
   if(nbCache[h]!==undefined) return nbCache[h];
-  const cached=nbStoreGet(h); if(cached!==undefined && !hop){ nbCache[h]=cached; return cached; }
+  const cached=st.mine ? undefined : nbStoreGet(h);            // 주인이 자기 홈을 볼 땐 항상 새로(이사 감지·자동 갱신 자리, phase450)
+  if(cached!==undefined && !hop){ nbCache[h]=cached; return cached; }
   try{ const s=await getDoc(doc(db,'pages',h));
     let dd=s.exists()?s.data():null;
     if(dd && dd.movedTo && !hop){                              // 🏠 주소 변경 표지판 따라가기(phase424) — 1단만
