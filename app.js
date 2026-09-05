@@ -302,7 +302,7 @@ const inlineFmt=s=>s
   .replace(/__([^_]+)__/g,'<u>$1</u>')
   .replace(/~~([^~]+)~~/g,'<s>$1</s>')
   .replace(/==([^=]+)==/g,'<mark>$1</mark>')
-  .replace(/\{\{(\d{2}):([^}]+)\}\}/g,(m,n,x)=>{ n=Math.min(44,Math.max(10,+n));   /* {{18:크게}} 글자 크기(phase265) */
+  .replace(/\{\{(\d{1,3}):([^}]+)\}\}/g,(m,n,x)=>{ n=Math.min(72,Math.max(8,+n));   /* {{18:크게}} 글자 크기(phase265) — 1~3자리, 8~72px(phase453) */
     return `<span style="font-size:${n}px">${x}</span>`; })
   .replace(/\{\{(#(?:[0-9a-fA-F]{3}){1,2}):([^}]+)\}\}/g,'<span style="color:$1">$2</span>')   /* {{#f00:빨강}} */
   .replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)/g,'<a class="ext-link" href="$2" target="_blank" rel="noopener">$1</a>');   /* [글자](주소) 링크(phase286) */
@@ -565,6 +565,8 @@ function insertChat(ta, headStr){
 }
 const bodyHTML=t=>{
   t=String(t??'').replace(/\r\n?/g,'\n');   // CRLF 정규화(phase365) — 복붙 본문의 \r가 블록·문단 인식을 통째로 깨뜨림
+  /* 문단을 넘는 크기·색 서식(phase454): {{14:a\n\nb}} → {{14:a}}\n\n{{14:b}} 로 쪼개 문단마다 적용 */
+  t=t.replace(/\{\{(\d{1,3}|#(?:[0-9a-fA-F]{3}){1,2}):([\s\S]*?)\}\}/g,(m,k,x)=> x.includes('\n\n') ? x.split(/\n{2,}/).map(p2=>p2.trim()?`{{${k}:${p2}}}`:p2).join('\n\n') : m);
   /* 🧩 HTML 블록(phase359): [html]…[/html] 안은 서식 엔진을 통째로 우회해 그대로 렌더.
      새니타이저는 HTML 모드와 동일(cleanHTML) — 정책 일관 */
   const hbs=[];
