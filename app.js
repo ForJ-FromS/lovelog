@@ -1974,7 +1974,7 @@ function renderSide(){
         el.querySelector('b').textContent=inf.name;
         el.querySelector('i').textContent='@'+hh;
         if(!own && inf.img) el.querySelector('.nb-th').style.backgroundImage=`url(${inf.img})`;
-        if((inf.nbs||[]).includes(st.handle)) el.classList.add('mutual');
+        if((inf.nbs||[]).some(h2=>[st.handle,...(st.page.prevHandles||[])].includes(h2))) el.classList.add('mutual');
       });
       return;
     }
