@@ -94,7 +94,10 @@
   #view-gate.gs-hole #gate-pw-wrap{max-width:220px;position:relative}
   #view-gate.gs-hole #gate-pw{background:transparent;border:none;border-bottom:1px solid var(--gtC,rgba(255,255,255,.55));border-radius:0;padding:8px 28px 8px 22px;text-align:left;letter-spacing:.3em}
   #view-gate.gs-hole #gate-pw-wrap::before{content:'🔒';position:absolute;left:0;top:50%;transform:translateY(-50%);font-size:12px;opacity:.85}
-  #view-gate.gs-hole #gate-go{background:none;border:none;box-shadow:none;padding:4px 0;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.35em;color:var(--gtBc,var(--pri));border-bottom:1px solid currentColor;border-radius:0}
+  #view-gate.gs-hole #gate-go{background:none;border:none;box-shadow:none;padding:6px 2px!important;margin-top:10px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.35em!important;color:var(--gtBc,var(--pri));border-bottom:1px solid currentColor;border-radius:0;width:auto;align-self:inherit}
+  #view-gate.gs-hole #gate-login,#view-gate.gs-term #gate-login{margin-top:22px}
+  #view-gate.gs-card #gate-login,#view-gate.gs-ticket #gate-login{margin-top:10px}
+  #view-gate.gs-hole #gate-pw-wrap{margin-top:6px}
   #view-gate.gs-hole #gate-go::after{content:' →'}
   /* 카드: 반투명 유리 상자 */
   #view-gate.gs-card .enter-box{background:rgba(20,20,26,.5);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.18);border-radius:16px;padding:22px 28px;max-width:min(360px,88vw)}
@@ -111,7 +114,7 @@
   #view-gate.gs-term #gate-pw-wrap{max-width:none;width:100%;display:flex;align-items:center;gap:6px;color:#c9ccd1;font-size:11px}
   #view-gate.gs-term #gate-pw-wrap::before{content:'> passcode:';color:var(--gtBc,var(--pri));flex:none}
   #view-gate.gs-term #gate-pw{background:transparent;border:none;color:#c9ccd1;letter-spacing:.25em;padding:4px 0;font-family:inherit}
-  #view-gate.gs-term #gate-go{background:transparent;border:1px solid var(--gtBc,var(--pri));color:var(--gtBc,var(--pri));border-radius:0;padding:5px 14px;font-family:inherit;font-size:10px;letter-spacing:.2em;box-shadow:none;margin-top:4px}
+  #view-gate.gs-term #gate-go{background:transparent;border:1px solid var(--gtBc,var(--pri));color:var(--gtBc,var(--pri));border-radius:0;padding:6px 14px!important;letter-spacing:.2em!important;font-family:inherit;font-size:10px;letter-spacing:.2em;box-shadow:none;margin-top:4px}
   #view-gate.gs-term #gate-go::before{content:'[ '} #view-gate.gs-term #gate-go::after{content:' ]'}
   #view-gate.gs-term #gate-login{color:#6f7379}
   /* 티켓: 입장권 */
@@ -3086,6 +3089,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=473"></script>
+<script type="module" src="./app.js?v=474"></script>
 </body>
 </html>
