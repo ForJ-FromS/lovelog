@@ -1051,12 +1051,12 @@ async function enterPage(){
 async function loadContent(){
   /* 컬렉션별 격리: 예전엔 Promise.all이라 셋 중 하나만 규칙 오류가 나도
      글·갤러리·방명록이 통째로 빈 홈이 됐음(비로그인만 막히는 규칙 실수 때 특히) */
-  const [ps,gs,gb,ab]=await Promise.allSettled([
+  const [ps,gs,gb]=await Promise.allSettled([
     getDocs(query(collection(db,'pages',st.handle,'posts'),orderBy('ts','desc'))),
     getDocs(query(collection(db,'pages',st.handle,'gallery'),orderBy('ts','desc'))),
-    getDocs(query(collection(db,'pages',st.handle,'guest'),orderBy('ts','desc'))),
-    getDocs(query(collection(db,'pages',st.handle,'albums'),orderBy('ts','desc')))
+    getDocs(query(collection(db,'pages',st.handle,'guest'),orderBy('ts','desc')))
   ]);
+  const ab={status:'fulfilled', value:{docs:[]}}; st.albumsLoaded=false;   // 📚 앨범은 사진첩 탭 열 때 로드(phase448)
   const take=(r,name)=>{
     if(r.status==='fulfilled') return r.value.docs.map(d=>({id:d.id,...d.data()}));
     console.log('[lovelog] '+name+' 불러오기 실패 —', r.reason?.message||r.reason);
@@ -1613,20 +1613,25 @@ function nbHeal(w, item, key, to){
   clearTimeout(nbHealT);
   nbHealT=setTimeout(async()=>{ try{ await updateDoc(doc(db,'pages',st.handle),{side:st.page.side}); msg(`이사 간 이웃 ${nbHealN}곳의 주소를 새 주소로 갱신했어요.`); }catch(e){} nbHealN=0; }, 800);
 }
+const NB_TTL=6*3600*1000;                                     // 이웃 정보 기기 캐시 6시간(phase448) — 읽기 비용 절감
+function nbStoreGet(h){ try{ const j=JSON.parse(localStorage.getItem('lv-nbc-'+h)||'null'); return (j&&Date.now()-j.t<NB_TTL)? j.v : undefined; }catch(e){ return undefined; } }
+function nbStoreSet(h,v){ try{ const s=JSON.stringify({t:Date.now(),v}); if(s.length<20000) localStorage.setItem('lv-nbc-'+h, s); }catch(e){} }   // 큰 사진(dataURL)은 저장 생략
 async function nbInfo(h, hop){
   if(nbCache[h]!==undefined) return nbCache[h];
+  const cached=nbStoreGet(h); if(cached!==undefined && !hop){ nbCache[h]=cached; return cached; }
   try{ const s=await getDoc(doc(db,'pages',h));
     let dd=s.exists()?s.data():null;
     if(dd && dd.movedTo && !hop){                              // 🏠 주소 변경 표지판 따라가기(phase424) — 1단만
       const to=String(dd.movedTo).toLowerCase();
       const inf2=await nbInfo(to, true);
-      nbCache[h] = inf2 ? {...inf2, movedTo:to} : null;
+      nbCache[h] = inf2 ? {...inf2, movedTo:to} : null; nbStoreSet(h, nbCache[h]);
       return nbCache[h];
     }
     nbCache[h] = dd ? {name:dd.name||h, sub:dd.sub||'',
       img: dd.cardImg || (dd.heroImgs||[])[0]?.img || dd.heroImg || '',
       banner: dd.bannerImg || '',
       nbs:[...linkedSetOf(dd)]} : null;   // 이웃+배너 어디에 걸었든 '서로' 판정(♥)
+    nbStoreSet(h, nbCache[h]);
   }catch(e){ nbCache[h]=null; }
   return nbCache[h];
 }
@@ -2846,7 +2851,9 @@ function renderList(){
   $('#guest-view').classList.add('hidden');
   $('#list-view').classList.remove('hidden');
   { const ts0=$('#tag-slot'); if(ts0) ts0.innerHTML=''; }      // 🏷 글 분기에서만 다시 채움(phase292)
-  if(st.cat!=='recent' && st.cat!=='home' && isA(st.cat)){ renderAlbumBoard(); return; }   // 📚 사진첩(phase288)
+  if(st.cat!=='recent' && st.cat!=='home' && isA(st.cat)){
+    if(!st.albumsLoaded){ loadAlbums().then(()=>{ if(isA(st.cat)) renderAlbumBoard(); }); $('#rows').innerHTML='<p class="pl-empty">불러오는 중…</p>'; return; }
+    renderAlbumBoard(); return; }   // 📚 사진첩(phase288) — 지연 로드(phase448)
   if(st.cat==='__gal' || (st.cat!=='recent' && st.cat!=='home' && isG(st.cat))){
     $('#v-label').textContent = st.cat==='__gal' ? galNm() : st.cat.toUpperCase();
     $('#pin-slot').innerHTML='';
@@ -3157,6 +3164,14 @@ async function delGal(id){
 $('#gal-more').onclick=()=>goBoard('__gal');
 /* ---------- 📚 사진첩(묶음) — phase288 ---------- */
 const AB_VIEWS={vert:'세로로 쭉 (웹툰식)', sq:'정사각형 그리드', tile:'타일 (2열)', slide:'슬라이드 (한 장씩)'};
+async function loadAlbums(){                                  // 📚 앨범 지연 로드(phase448)
+  if(st.albumsLoaded) return st.albums;
+  try{ const ab=await getDocs(query(collection(db,'pages',st.handle,'albums'),orderBy('ts','desc')));
+    st.albums=ab.docs.map(d=>({id:d.id,...d.data()}));
+    if(!st.mine) st.albums=st.albums.filter(a=>!a.priv);
+  }catch(e){ st.albums=[]; }
+  st.albumsLoaded=true; return st.albums;
+}
 function albumsOf(c){ return (st.albums||[]).filter(a=>a.cat===c); }
 function abDate(a){                                          // 'YYYY.MM.DD' — date 없는 옛 폴더는 ts에서(phase289b)
   if(a.date) return a.date;
@@ -7177,6 +7192,7 @@ function decoSnap(){                                             // st.page에�
   return o;
 }
 function buildBackup(withDeco, withPosts){
+  if(withPosts && !st.albumsLoaded) console.warn('[lovelog] 백업: 앨범 미로드 — 사진첩 탭을 한 번 연 뒤 백업하면 앨범도 담겨요');
   const data={ exported:new Date().toISOString(), service:'lovelog', handle:st.handle,
     home:{ name:st.page.name||'', sub:st.page.sub||'' } };
   if(withDeco) data.deco=decoSnap();
