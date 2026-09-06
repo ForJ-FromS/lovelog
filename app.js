@@ -934,6 +934,7 @@ async function enterPage(){
   document.body.classList.add('catsh-'+catShape());
   document.body.classList.toggle('cat-nocnt', st.page.catCnt===false);   // 글 수 표시(phase416)
   document.body.classList.remove('btn-box','btn-text'); if(st.page.btnStyle) document.body.classList.add('btn-'+st.page.btnStyle);   // 버튼 모양(phase458)
+  document.body.classList.remove('pg-pill','pg-box','pg-text','pg-dots'); if(st.page.pgStyle) document.body.classList.add('pg-'+st.page.pgStyle);   // 페이지 번호 모양(phase460)
   document.body.classList.remove('catsel-soft','catsel-off');            // 선택 표시 3태(phase326)
   if(st.page.catSel) document.body.classList.add('catsel-'+st.page.catSel);
   /* 헤더 배치·장식(phase392) */
@@ -6503,7 +6504,7 @@ function fillSettings(){
   $('#s-catstyle').value=catStyle();
   $('#s-catshape').value=catShape();
   const scc=$('#s-catcnt'); if(scc) scc.checked=st.page.catCnt!==false;
-  const spp=$('#s-perpage'); if(spp) spp.value=String(+st.page.perPage||12); const sbs=$('#s-btnstyle'); if(sbs) sbs.value=st.page.btnStyle||'';
+  const spp=$('#s-perpage'); if(spp) spp.value=String(+st.page.perPage||12); const sbs=$('#s-btnstyle'); if(sbs) sbs.value=st.page.btnStyle||''; const sps=$('#s-pgstyle'); if(sps) sps.value=st.page.pgStyle||'';
   const scs=$('#s-catsel'); if(scs) scs.value=st.page.catSel||'';
   const sqs=$('#s-quotestyle'); if(sqs) sqs.value=st.page.quoteStyle||'';
   const shl=$('#s-headlayout'); if(shl) shl.value=st.page.headLayout||'';
@@ -6633,7 +6634,7 @@ async function saveSettings(){
       catStyle: $('#s-catstyle').value,
       catShape: $('#s-catshape').value,
       catCnt: $('#s-catcnt')?.checked!==false,
-      perPage: Math.min(100,Math.max(3,+($('#s-perpage')?.value)||12)), btnStyle: $('#s-btnstyle')?.value||'',   // 한 페이지 글 수 · 버튼 모양(phase458)
+      perPage: Math.min(100,Math.max(3,+($('#s-perpage')?.value)||12)), btnStyle: $('#s-btnstyle')?.value||'', pgStyle: $('#s-pgstyle')?.value||'',   // 한 페이지 글 수 · 버튼 모양(phase458)
       catSel: $('#s-catsel')?.value||'',
       quoteStyle: $('#s-quotestyle')?.value||'',
       headLayout: $('#s-headlayout')?.value||'',
@@ -6718,7 +6719,7 @@ const RESET={
     galOn:true,stripOn:true,
     headLayout:'',headDeco:'',headBand:'',hdName:true,hdOver:true,hdSub:true,hdNameFs:'',hdOverFs:'',hdSubFs:'',   // 헤더 프리셋·표시(phase430) — 초기화 누락 수리
     hdOverC:'',hdSubC:'',hdDdC:'',hdTextPos:'',hdDdPos:'',
-    catSel:'',catCnt:true,quoteStyle:'',postFs:'',perPage:12,btnStyle:''},
+    catSel:'',catCnt:true,quoteStyle:'',postFs:'',perPage:12,btnStyle:'',pgStyle:''},
   media:{heroImgs:[],heroImg:'',enterImg:'',enterRef:'',enterText:'',
     cardImg:'',bannerImg:'',catImgs:{},gate:'',gateBtn:'',gateColor:'',gateBtnC:'',galName:'',gbName:''}
 };

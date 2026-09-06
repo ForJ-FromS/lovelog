@@ -582,10 +582,20 @@
     padding:7px 18px;font-family:'IBM Plex Mono',monospace;font-size:9px;
     letter-spacing:.2em;color:var(--muted)}
   /* 버튼 모양 (phase458) — BACK · 더보기 · 페이지 번호 같은 작은 버튼 */
-  body.btn-box .back,body.btn-box .more,body.btn-box .pager button{border-radius:4px}
+  body.btn-box .back,body.btn-box .more{border-radius:4px}
   body.btn-text .back,body.btn-text .more{border:none;background:none;padding:6px 2px;border-radius:0;border-bottom:1px solid var(--line)}
   body.btn-text .back:hover,body.btn-text .more:hover{color:var(--pri);border-bottom-color:var(--pri)}
-  body.btn-text .pager button{border:none;background:none;border-radius:0}
+  /* 페이지 번호 모양 (phase460) — 기본은 둥근 네모 */
+  body.pg-pill #pager a{border-radius:999px}
+  body.pg-box #pager a{border-radius:2px}
+  body.pg-text #pager a{border:none;background:none;min-width:22px;height:26px;color:var(--muted)}
+  body.pg-text #pager a.on{background:none;color:var(--pri);border-bottom:1.5px solid var(--pri);border-radius:0}
+  body.pg-text #pager a:hover{color:var(--ink)}
+  body.pg-dots #pager a{border:none;background:none;min-width:0;width:auto;height:auto;font-size:0;padding:0}
+  body.pg-dots #pager a::before{content:'';display:block;width:7px;height:7px;border-radius:50%;background:var(--line)}
+  body.pg-dots #pager a.on::before{background:var(--pri);width:18px;border-radius:4px}
+  body.pg-dots #pager a.pg-arr{font-size:11px;color:var(--muted);padding:0 4px} body.pg-dots #pager a.pg-arr::before{display:none}
+  body.pg-dots #pager .pg-gap{display:none}
   .back:hover{color:var(--ink)}
 
   /* ── 사이드 ── */
@@ -2866,12 +2876,14 @@ html,body{overflow-x:hidden;overflow-x:clip}
   <div class="pane hidden" data-pane="theme">
     <p class="p-big" style="border-top:0;padding-top:0;margin-top:0">📐 레이아웃 — 배치와 구조</p>
     <div class="trows">
-      <div class="trow"><span class="tl">홈 구조</span><span class="tc"><select id="s-homestyle">
+      <p class="p-h" style="margin:18px 0 6px;font-size:10px;letter-spacing:.25em;color:var(--muted)">구조</p>
+        <div class="trow"><span class="tl">홈 구조</span><span class="tc"><select id="s-homestyle">
         <option value="grid">위젯 그리드형 (지금 구조)</option>
         <option value="blog">클래식 블로그형 (글 목록이 메인)</option></select></span></div>
       <div class="trow"><span class="tl">사이드바</span><span class="tc"><select id="s-sidepos">
         <option value="right">오른쪽</option><option value="left">왼쪽</option><option value="both">양쪽</option></select></span></div>
-      <div class="trow"><span class="tl">헤더</span><span class="tc"><select id="s-headmode">
+      <p class="p-h" style="margin:18px 0 6px;font-size:10px;letter-spacing:.25em;color:var(--muted)">헤더</p>
+        <div class="trow"><span class="tl">헤더</span><span class="tc"><select id="s-headmode">
         <option value="wide">가로 (상단 와이드)</option>
         <option value="side">세로 (사이드 프로필형)</option></select>
         <select id="s-headlayout" title="헤더 배치 — 제목 · 디데이가 놓이는 방식">
@@ -2914,7 +2926,8 @@ html,body{overflow-x:hidden;overflow-x:clip}
             <option value="">오른쪽 아래 (기본)</option><option value="tl">왼쪽 위</option><option value="tc">가운데 위</option><option value="tr">오른쪽 위</option>
             <option value="ml">왼쪽 중앙</option><option value="mc">정중앙</option><option value="mr">오른쪽 중앙</option><option value="bl">왼쪽 아래</option><option value="bc">가운데 아래</option></select>
           <span class="tl2" title="폰에서도 그대로 적용되지만, 화면이 좁아 왼쪽 · 오른쪽 차이는 작게 보여요">— 헤더 배치가 〈기본〉일 때 적용 · 폰에선 좌우 차이가 작아요</span></span></div>
-      <div class="trow"><span class="tl">카테고리</span><span class="tc"><select id="s-catstyle">
+      <p class="p-h" style="margin:18px 0 6px;font-size:10px;letter-spacing:.25em;color:var(--muted)">카테고리 · 글</p>
+        <div class="trow"><span class="tl">카테고리</span><span class="tc"><select id="s-catstyle">
         <option value="bar">상단 알약 바</option><option value="widget">사이드 위젯</option></select>
         <select id="s-catshape">
         <option value="list">모양 — 기본</option><option value="pill">모양 — 알약</option>
@@ -2922,9 +2935,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
         <option value="tab">모양 — 탭 폴더</option><option value="bracket">모양 — 브래킷 [ ]</option>
         <option value="dots">모양 — 점 구분 ·</option><option value="toc">모양 — 세로 목차 (사이드)</option></select>
         <label class="chk" style="font-size:11.5px" title="사이드 카테고리 목록의 글 수 표시"><input type="checkbox" id="s-catcnt" checked> 글 수</label>
-        <span class="tl2">한 페이지에</span><input type="number" id="s-perpage" min="3" max="100" placeholder="12" value="12" style="width:64px" title="글 목록 한 페이지에 보이는 글 수 (3~100) — 넘으면 페이지 번호가 생겨요"><span class="tl2">개</span>
-        <span class="tl2">버튼</span><select id="s-btnstyle" title="BACK · 더보기 같은 작은 버튼 모양">
-          <option value="">버튼 — 알약 (기본)</option><option value="box">버튼 — 네모</option><option value="text">버튼 — 글자만 (밑줄)</option></select>
         <select id="s-catsel" title="지금 보고 있는 카테고리를 어떻게 표시할지">
         <option value="">선택 표시 — 기본</option>
         <option value="soft">선택 표시 — 연하게 (글자색만)</option>
@@ -2949,15 +2959,22 @@ html,body{overflow-x:hidden;overflow-x:clip}
         <option value="3" selected>고정 3개</option><option value="4">고정 4개</option><option value="6">고정 6개</option></select>
         <select id="s-memott" title="숨기면 작성 팝업에서도 제목 칸이 사라져요">
         <option value="">제목 보이기</option><option value="hide">제목 숨기기</option></select></span></div>
-      <div class="trow"><span class="tl">🔲 모서리</span><span class="tc"><select id="s-corner">
-        <option value="">둥글게 (기본)</option><option value="soft">살짝 각지게</option><option value="sharp">뾰족하게</option></select></span></div>
+      <p class="p-h" style="margin:18px 0 6px;font-size:10px;letter-spacing:.25em;color:var(--muted)">모양 · 화면</p>
+        <div class="trow"><span class="tl">🔲 모서리</span><span class="tc"><select id="s-corner">
+        <option value="">둥글게 (기본)</option><option value="soft">살짝 각지게</option><option value="sharp">뾰족하게</option></select>
+          <select id="s-btnstyle" title="BACK · 더보기 같은 작은 버튼 모양">
+            <option value="">버튼 — 알약 (기본)</option><option value="box">버튼 — 네모</option><option value="text">버튼 — 글자만 (밑줄)</option></select></span></div>
       <div class="trow"><span class="tl">글 목록</span><span class="tc"><span class="tl2">제목 색</span>
         <input type="color" id="s-listtc" title="게시판 목록의 제목 글씨색">
         <button class="rmv" id="s-listtc-x" style="font-size:10px">기본으로</button>
         <span class="tl2">🏷 태그 알약</span><select id="s-rowtag">
         <option value="on" selected>보이기</option><option value="">숨기기</option></select>
         <select id="s-tagshape" title="게시판·글 하단 태그의 모양">
-        <option value="">알약 (기본)</option><option value="text">글씨만</option><option value="box">네모</option></select></span></div>
+        <option value="">알약 (기본)</option><option value="text">글씨만</option><option value="box">네모</option></select>
+          <span class="tl2">한 페이지에</span><input type="number" id="s-perpage" min="3" max="100" placeholder="12" value="12" style="width:64px" title="글 목록 한 페이지에 보이는 글 수 (3~100) — 넘으면 페이지 번호가 생겨요"><span class="tl2">개</span>
+          <select id="s-pgstyle" title="페이지 번호 모양">
+            <option value="">페이지 번호 — 둥근 네모 (기본)</option><option value="pill">페이지 번호 — 알약</option><option value="box">페이지 번호 — 네모</option>
+            <option value="text">페이지 번호 — 숫자만 (밑줄)</option><option value="dots">페이지 번호 — 점</option></select></span></div>
       <div class="trow"><span class="tl">📖 글 전용 페이지</span><span class="tc"><select id="s-postpage" title="글을 읽을 때 위젯·카테고리 바를 접고 본문만 넓게">
         <option value="">끄기</option><option value="on">켜기 — 읽을 때 본문만 넓게</option></select></span></div>
     </div>
@@ -3105,6 +3122,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=487"></script>
+<script type="module" src="./app.js?v=488"></script>
 </body>
 </html>
