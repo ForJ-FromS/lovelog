@@ -3411,12 +3411,14 @@ function askPw(title){
       m=document.createElement('div'); m.id='pw-modal'; m.className='memo-modal hidden';
       m.innerHTML=`<div class="mm-card" style="width:min(380px,92vw)">
         <div class="mm-top"><b id="pwm-t">비밀번호</b><button class="btn" id="pwm-go" style="margin-left:auto;font-size:12px;padding:8px 18px;border-radius:10px">확인</button></div>
-        <input id="pwm-in" type="password" placeholder="비밀번호를 입력하세요" autocomplete="off">
+        <div style="position:relative"><input id="pwm-in" type="password" placeholder="비밀번호를 입력하세요" autocomplete="off" style="padding-right:64px;margin-bottom:0">
+          <button type="button" id="pwm-eye" class="rmv" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:11px" title="비밀번호 보기/숨기기">보기</button></div>
       </div>`;
       document.body.appendChild(m);
     }
     m.querySelector('#pwm-t').textContent=title||'비밀번호';
-    const inp=m.querySelector('#pwm-in'); inp.value='';
+    const inp=m.querySelector('#pwm-in'); inp.value=''; inp.type='password';
+    { const eye=m.querySelector('#pwm-eye'); eye.textContent='보기'; eye.onclick=()=>{ const show=inp.type==='password'; inp.type=show?'text':'password'; eye.textContent=show?'숨김':'보기'; inp.focus(); }; }   // 👁 보기 토글(phase462)
     m.classList.remove('hidden');
     const done=v=>{ m.classList.add('hidden'); m.onclick=null; res(v); };
     m.querySelector('#pwm-go').onclick=()=>done(inp.value);
@@ -7372,6 +7374,7 @@ $('#hr-new')?.addEventListener('input', ()=>{ const v=$('#hr-new').value.trim().
     const taken=RESERVED.has(v) || await isConsoleReserved(v) || (pd.exists() && !resume && !stubExpired(pd.data()));
     out.textContent = taken ? '✗ 사용할 수 없는 주소예요' : '✓ 사용할 수 있는 주소예요';
   }catch(e){ out.textContent=''; } }, 450); });
+document.querySelectorAll('[data-eye]').forEach(b=>b.onclick=()=>{ const i=$('#'+b.dataset.eye); if(!i) return; const show=i.type==='password'; i.type=show?'text':'password'; b.textContent=show?'숨김':'보기'; });   // 👁 보기 토글(phase462)
 /* 🔑 복구 비밀번호 설정·변경(phase461) */
 $('#rec-set')?.addEventListener('click', async()=>{
   if(!st.mine) return;
