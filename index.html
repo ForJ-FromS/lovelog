@@ -446,6 +446,33 @@
   .row .c{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.12em;
     color:var(--pri);border:1px solid var(--line);border-radius:4px;padding:1px 8px}
   .row .t{font-size:14px;color:var(--listTc, var(--body))}
+  /* ═══ 글 목록 줄 모양 5종 (phase463) — 메인 목록(.row) + 미니 목록(대표글·최신글 .mini-rows) ═══ */
+  /* 번호 목차 */
+  body.rs-num #rows{counter-reset:rown} body.rs-num .row{border-bottom:none;padding:8px 8px;counter-increment:rown}
+  body.rs-num .row .d{border:none;background:none;padding:0;text-align:left;color:var(--pri);font-size:9px}
+  body.rs-num .row .d::before{content:counter(rown,decimal-leading-zero) '  ';color:var(--pri)}
+  body.rs-num .mini-rows{counter-reset:mrow} body.rs-num .mini-rows a{border-bottom:none;padding:5px 2px;counter-increment:mrow}
+  body.rs-num .mini-rows .dot{font-size:0} body.rs-num .mini-rows .dot::before{content:counter(mrow,decimal-leading-zero);font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--pri)}
+  /* 점 리더 */
+  body.rs-lead .row{border-bottom:none;padding:7px 8px}
+  body.rs-lead .row .t{display:flex;align-items:baseline;min-width:0} body.rs-lead .row .t::after{content:'';flex:1;border-bottom:1px dotted var(--line);margin:0 8px;transform:translateY(-4px);min-width:16px}
+  body.rs-lead .row .d{border:none;background:none;padding:0;text-align:right}
+  body.rs-lead .mini-rows a{border-bottom:none;padding:5px 2px} body.rs-lead .mini-rows .dot{display:none}
+  body.rs-lead .mini-rows .t{display:flex;align-items:baseline;flex:1;min-width:0} body.rs-lead .mini-rows .t::after{content:'';flex:1;border-bottom:1px dotted var(--line);margin:0 8px;transform:translateY(-4px);min-width:16px}
+  /* 카드 */
+  body.rs-card #rows{display:flex;flex-direction:column;gap:6px} body.rs-card .row{border:none;border-radius:9px;background:color-mix(in srgb, var(--ink) 5%, transparent);padding:10px 12px}
+  body.rs-card .row:hover{background:color-mix(in srgb, var(--pri) 12%, transparent)}
+  body.rs-card .mini-rows{display:flex;flex-direction:column;gap:5px} body.rs-card .mini-rows a{border:none;border-radius:8px;background:color-mix(in srgb, var(--ink) 5%, transparent);padding:8px 10px}
+  body.rs-card .mini-rows .dot{display:none}
+  /* 미니멀 */
+  body.rs-min .row{border-bottom:none;padding:6px 8px} body.rs-min .row .d{border:none;background:none;padding:0}
+  body.rs-min .mini-rows a{border-bottom:none;padding:4px 2px} body.rs-min .mini-rows .dot{display:none}
+  /* 왼쪽 선 */
+  body.rs-bar .row{border-bottom:none;border-left:2px solid var(--line);padding:7px 10px;margin-bottom:4px;border-radius:0}
+  body.rs-bar .row:hover{border-left-color:var(--pri);background:color-mix(in srgb, var(--pri) 8%, transparent)}
+  body.rs-bar .mini-rows a{border-bottom:none;border-left:2px solid var(--line);padding:5px 10px;margin-bottom:4px} body.rs-bar .mini-rows a:hover{border-left-color:var(--pri)}
+  body.rs-bar .mini-rows .dot{display:none}
+  body.corner-sharp.rs-card .row,body.corner-sharp.rs-card .mini-rows a{border-radius:0}
   .row .k{font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:var(--muted)}
   .more{display:block;text-align:center;margin-top:12px;cursor:pointer;
     font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.3em;color:var(--muted)}
@@ -2972,7 +2999,11 @@ html,body{overflow-x:hidden;overflow-x:clip}
         <option value="">둥글게 (기본)</option><option value="soft">살짝 각지게</option><option value="sharp">뾰족하게</option></select>
           <select id="s-btnstyle" title="BACK · 더보기 같은 작은 버튼 모양">
             <option value="">버튼 — 알약 (기본)</option><option value="box">버튼 — 네모</option><option value="text">버튼 — 글자만 (밑줄)</option></select></span></div>
-      <div class="trow"><span class="tl">글 목록</span><span class="tc"><span class="tl2">제목 색</span>
+      <div class="trow"><span class="tl">글 목록</span><span class="tc"><select id="s-rowstyle" title="글 목록과 대표글 · 최신글 위젯의 줄 모양">
+        <option value="">줄 모양 — 기본 (구분선 · 표시)</option><option value="num">줄 모양 — 번호 목차 (01 02 03)</option>
+        <option value="lead">줄 모양 — 점 리더 (제목 ····· 날짜)</option><option value="card">줄 모양 — 카드</option>
+        <option value="min">줄 모양 — 미니멀 (글자만)</option><option value="bar">줄 모양 — 왼쪽 선</option></select>
+        <span class="tl2">제목 색</span>
         <input type="color" id="s-listtc" title="게시판 목록의 제목 글씨색">
         <button class="rmv" id="s-listtc-x" style="font-size:10px">기본으로</button>
         <span class="tl2">🏷 태그 알약</span><select id="s-rowtag">
@@ -3130,6 +3161,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=490"></script>
+<script type="module" src="./app.js?v=491"></script>
 </body>
 </html>
