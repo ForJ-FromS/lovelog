@@ -101,6 +101,26 @@ async function encTxt(pw,t){ const s=crypto.getRandomValues(new Uint8Array(16)),
   return JSON.stringify({s:b64(s),i:b64(iv),d:b64(ct)}); }
 async function decTxt(pw,blob){ const o=JSON.parse(blob), k=await keyOf(pw,ub64(o.s));
   return dec.decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:ub64(o.i)},k,ub64(o.d))); }
+/* 🔑 비밀글 복구 키(phase461): 홈 주인이 복구 비밀번호를 정하면 RSA 키 쌍을 만들어
+   공개키(recPub)는 그대로, 개인키(recPriv)는 복구 비밀번호로 암호화해 홈 문서에 둔다.
+   비밀글을 저장할 때 글 비밀번호를 공개키로 봉인(rec) → 복구 비밀번호로 개인키를 열면 글 비밀번호가 나온다.
+   운영자·서버는 개인키를 못 열므로 여전히 내용을 볼 수 없다 */
+const RSA={name:'RSA-OAEP',hash:'SHA-256'};
+async function recMakePair(recPw){
+  const kp=await crypto.subtle.generateKey({...RSA,modulusLength:2048,publicExponent:new Uint8Array([1,0,1])},true,['encrypt','decrypt']);
+  const pub=JSON.stringify(await crypto.subtle.exportKey('jwk',kp.publicKey));
+  const priv=JSON.stringify(await crypto.subtle.exportKey('jwk',kp.privateKey));
+  return {recPub:pub, recPriv:await encTxt(recPw, priv)};
+}
+async function recWrap(pubJwk, postPw){                     // 글 비밀번호 봉인
+  const k=await crypto.subtle.importKey('jwk',JSON.parse(pubJwk),RSA,false,['encrypt']);
+  return b64(await crypto.subtle.encrypt(RSA,k,enc.encode(postPw)));
+}
+async function recUnwrap(recPw, privBlob, rec){              // 복구 비밀번호 → 개인키 → 글 비밀번호
+  const priv=JSON.parse(await decTxt(recPw, privBlob));
+  const k=await crypto.subtle.importKey('jwk',priv,RSA,false,['decrypt']);
+  return dec.decode(await crypto.subtle.decrypt(RSA,k,ub64(rec)));
+}
 /* 📷 아바타 위치 조절(phase356): 업로드 직후 확대·좌우·상하 슬라이더 창 → 결과를 128px에 구워 반환.
    취소하면 null. 저장 형식은 기존과 동일한 dataURL이라 렌더·데이터 무변화 */
 function pqAdjust(file){ return new Promise(res=>{
@@ -3411,8 +3431,27 @@ async function openPost(id, fromHome=false){
   st.backHome=fromHome;                     // 홈에서 연 글은 BACK이 홈으로
   let body;
   if(p.secret){
-    const pw=await askPw('🔒 비밀글'); if(pw===null||pw==='') return;
-    try{ body=await decTxt(pw,p.enc); }catch(e){ msg('비밀번호가 맞지 않아요.'); return; }
+    let pw=await askPw('🔒 비밀글'); if(pw===null||pw==='') return;
+    try{ body=await decTxt(pw,p.enc); }
+    catch(e){
+      if(st.mine && p.rec && st.page.recPriv && confirm('비밀번호가 맞지 않아요.\n복구 비밀번호로 열까요?')){   // 🔑 복구(phase461)
+        const rp=await askPw('🔑 복구 비밀번호'); if(!rp) return;
+        try{ pw=await recUnwrap(rp, st.page.recPriv, p.rec); body=await decTxt(pw,p.enc); }
+        catch(e2){ msg('복구 비밀번호가 맞지 않아요.'); return; }
+        msg('복구 비밀번호로 열었어요.');
+        if(confirm('이 글의 비밀번호를 새로 정할까요?')){
+          const np=await askPw('🔒 새 비밀번호');
+          if(np){ try{
+            const raw2=p.encRaw?await decTxt(pw,p.encRaw):'', imgs2=p.encImgs?await decTxt(pw,p.encImgs):'';
+            const upd={enc:await encTxt(np,body)}; if(p.encRaw) upd.encRaw=await encTxt(np,raw2); if(p.encImgs) upd.encImgs=await encTxt(np,imgs2);
+            if(st.page.recPub) upd.rec=await recWrap(st.page.recPub, np);
+            await updateDoc(doc(db,'pages',st.handle,'posts',p.id), upd); Object.assign(p, upd); pw=np;
+            msg('비밀번호를 새로 정했어요.');
+          }catch(e3){ msg('재설정 실패 — '+e3.message); } }
+        }
+      } else { msg('비밀번호가 맞지 않아요.'); return; }
+    }
+    if(st.mine && st.page.recPub && !p.rec){ try{ const rec=await recWrap(st.page.recPub, pw); await updateDoc(doc(db,'pages',st.handle,'posts',p.id),{rec}); p.rec=rec; }catch(e){} }   // 옛 비밀글 소급 봉인
     st.curRaw = null;
     if(p.encRaw){ try{ st.curRaw = await decTxt(pw, p.encRaw); }catch(e){} }   // 원문(수정용)도 같이 복호(phase258)
     st.curImgs = null;
@@ -5790,7 +5829,8 @@ $('#w-go').onclick=async()=>{
            data.encRaw = await encTxt(pw, raw); }          // 암호화한 원문을 보관 — 수정해도 HTML 모드·코드 무손실(phase258)
     if(secret){ data.enc=await encTxt(pw,html);
       data.encImgs=await encTxt(pw, JSON.stringify(wImgs));      // 사진 목록도 암호화 보관(보안점검 3b)
-    } else { data.body=html; data.encImgs=''; }
+      data.rec = st.page.recPub ? await recWrap(st.page.recPub, pw) : '';   // 🔑 복구 봉인(phase461)
+    } else { data.body=html; data.encImgs=''; data.rec=''; }
     if(JSON.stringify(data).length>980000){ msg('이 글의 본문 이미지가 너무 많아요 — 사진 수를 줄여주세요. (꾸미기 용량과는 별개예요)'); return; }
     if(pin) await Promise.all(st.posts.filter(p=>p.pinned && p.cat===cat && p.id!==editPost).map(p=>
       updateDoc(doc(db,'pages',st.handle,'posts',p.id),{pinned:false})));   // 📌 같은 카테고리의 기존 고정만 해제(phase323)
@@ -5803,7 +5843,7 @@ $('#w-go').onclick=async()=>{
           ? (old.ts || dateNoon(old.date||data.date))   // 승계 — ts 없던 옛 글도 '지금'이 아니라 제 날짜 자리로(phase235)
           : data.ts,
         editedAt: serverTimestamp()};
-      if(!secret){ upd.enc=''; upd.encRaw=''; upd.encImgs=''; }
+      if(!secret){ upd.enc=''; upd.encRaw=''; upd.encImgs=''; upd.rec=''; }
       await setDoc(doc(db,'pages',st.handle,'posts',editPost), upd);
       const pid=editPost;
       clearWriteForm();
@@ -6542,7 +6582,8 @@ function fillSettings(){
   renderStkList();
   $('#s-dim').value=p.bgDim??78; $('#s-dots').value=p.dots!==false?'on':''; $('#s-protect').value=p.protectImg!==false?'on':''; $('#s-stkm').checked=!!p.stkHideM; $('#s-stkhome').checked=!!p.stkHome; $('#s-stkoff').checked=p.stkOff!==true; $('#s-fx').value=p.fx ?? (p.sparkle?'sparkle':''); $('#s-fxc').value=p.fxC||'#ffb3c8'; fxCVal=null; $('#s-postpage').value=p.postPage?'on':''; $('#s-corner').value=p.corner||''; $('#s-cardc').value=p.cardC||'#1a1c26'; cardCVal=null; $('#s-rowtag').value=p.rowTag!==false?'on':''; const sts=$('#s-tagshape'); if(sts) sts.value=p.tagShape||'';
   $('#s-gatebtn').value=p.gateBtn||''; $('#s-listed').checked=!!p.listed; cardNew=null; bnrNew=null; renderCard(); renderBnr(); $('#s-lbicon').value=p.labelIcon??'◈'; gateColVal=null;
-  const sgs=$('#s-gateskin'); if(sgs) sgs.value=st.page.gateSkin||''; const sgp=$('#s-gatepos'); if(sgp) sgp.value=st.page.gatePos||'';
+  const sgs=$('#s-gateskin'); if(sgs) sgs.value=st.page.gateSkin||'';
+  { const el=$('#rec-state'); if(el) el.textContent=st.page.recPriv?'설정됨':'미설정'; const bt=$('#rec-set'); if(bt) bt.textContent=st.page.recPriv?'복구 비밀번호 변경':'복구 비밀번호 만들기'; } const sgp=$('#s-gatepos'); if(sgp) sgp.value=st.page.gatePos||'';
   $('#s-gatecolor').value=p.gateColor||'#ffffff';
   const gsk=$('#s-gateskip'); if(gsk) gsk.checked=p.gateSkipPost===true;
   const cw=$('#s-cmtwho'); if(cw) cw.value=p.cmtWho||'';
@@ -7229,7 +7270,7 @@ $('#s-exp-json').onclick=()=>{
 };
 
 /* ---------- 복원 (백업에서 불러오기, phase208) ---------- */
-const POST_KEYS=['title','cat','date','ts','secret','pinned','cmtOff','priv','excerpt','html','imgs','raw','enc','body','feat','mpin','encRaw','encImgs'];
+const POST_KEYS=['title','cat','date','ts','secret','pinned','cmtOff','priv','excerpt','html','imgs','raw','enc','body','feat','mpin','encRaw','encImgs','rec'];
 let bkData=null;
 /* 🏠 홈 주소(핸들) 변경(phase406) — 사진은 u/{uid}/ 에 있어 복사 불필요.
    새 주소에 홈 문서·글(댓글 포함)·방명록·갤러리·앨범·이미지·통계·반응을 복사 → 계정 핸들 갱신 → 옛 주소엔 표지판.
@@ -7331,6 +7372,25 @@ $('#hr-new')?.addEventListener('input', ()=>{ const v=$('#hr-new').value.trim().
     const taken=RESERVED.has(v) || await isConsoleReserved(v) || (pd.exists() && !resume && !stubExpired(pd.data()));
     out.textContent = taken ? '✗ 사용할 수 없는 주소예요' : '✓ 사용할 수 있는 주소예요';
   }catch(e){ out.textContent=''; } }, 450); });
+/* 🔑 복구 비밀번호 설정·변경(phase461) */
+$('#rec-set')?.addEventListener('click', async()=>{
+  if(!st.mine) return;
+  if(st.page.recPriv){
+    const old=await askPw('🔑 현재 복구 비밀번호'); if(!old) return;
+    let priv; try{ priv=await decTxt(old, st.page.recPriv); }catch(e){ msg('복구 비밀번호가 맞지 않아요.'); return; }
+    const np=await askPw('🔑 새 복구 비밀번호 (8자 이상)'); if(!np||np.length<8){ msg('8자 이상으로 정해주세요.'); return; }
+    const np2=await askPw('🔑 새 복구 비밀번호 다시 한 번'); if(np!==np2){ msg('두 입력이 달라요.'); return; }
+    const recPriv=await encTxt(np, priv);
+    await updateDoc(doc(db,'pages',st.handle),{recPriv}); st.page.recPriv=recPriv; msg('복구 비밀번호를 바꿨어요.');
+  } else {
+    if(!confirm('비밀글 복구 비밀번호를 만들까요?\n\n· 글마다 다른 비밀번호를 써도 이 하나로 열고 새로 정할 수 있어요\n· 앞으로 쓰는 비밀글에 자동 적용되고, 예전 비밀글은 한 번 정상적으로 열면 함께 적용돼요\n· 복구 비밀번호까지 잊으면 정말 방법이 없어요 — 꼭 따로 적어두세요')) return;
+    const np=await askPw('🔑 복구 비밀번호 (8자 이상)'); if(!np||np.length<8){ msg('8자 이상으로 정해주세요.'); return; }
+    const np2=await askPw('🔑 복구 비밀번호 다시 한 번'); if(np!==np2){ msg('두 입력이 달라요.'); return; }
+    msg('키를 만드는 중...'); const pair=await recMakePair(np);
+    await updateDoc(doc(db,'pages',st.handle), pair); Object.assign(st.page, pair); msg('복구 비밀번호를 만들었어요.');
+  }
+  const el=$('#rec-state'); if(el) el.textContent=st.page.recPriv?'설정됨':'미설정';
+});
 $('#bk-file')?.addEventListener('change', async e=>{
   bkData=null; $('#bk-scope').hidden=true;
   const f=e.target.files[0]; if(!f) return;
