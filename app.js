@@ -933,6 +933,7 @@ async function enterPage(){
   document.body.classList.remove('catsh-list','catsh-pill','catsh-text','catsh-box','catsh-tab','catsh-bracket','catsh-dots','catsh-toc');
   document.body.classList.add('catsh-'+catShape());
   document.body.classList.toggle('cat-nocnt', st.page.catCnt===false);   // 글 수 표시(phase416)
+  document.body.classList.remove('btn-box','btn-text'); if(st.page.btnStyle) document.body.classList.add('btn-'+st.page.btnStyle);   // 버튼 모양(phase458)
   document.body.classList.remove('catsel-soft','catsel-off');            // 선택 표시 3태(phase326)
   if(st.page.catSel) document.body.classList.add('catsel-'+st.page.catSel);
   /* 헤더 배치·장식(phase392) */
@@ -2961,7 +2962,7 @@ function renderList(){
       <p class="t">${esc(pin.title)}${pin.secret?' 🔒':''}${pin.priv?' 🔏':''}</p>
       ${pin.excerpt?`<p class="ex">${esc(pin.excerpt)}</p>`:''}
       <p class="meta">${esc(pin.cat)} · ${esc(pin.date)}</p></a>`).join('');
-  const PER=12;
+  const PER=Math.min(100,Math.max(3,+st.page.perPage||12));   // 한 페이지 글 수 — 직접 입력 3~100(phase459)
   renderPager(rest.length, PER);
   const shown=rest.slice(((st.pg||1)-1)*PER, (st.pg||1)*PER);
   const canFt = st.mine && sideCfg().some(w2=>w2.t==='feat'&&!w2.hid);   // ★ 대표글 위젯을 둔 주인에게만 토글 노출
@@ -6502,6 +6503,7 @@ function fillSettings(){
   $('#s-catstyle').value=catStyle();
   $('#s-catshape').value=catShape();
   const scc=$('#s-catcnt'); if(scc) scc.checked=st.page.catCnt!==false;
+  const spp=$('#s-perpage'); if(spp) spp.value=String(+st.page.perPage||12); const sbs=$('#s-btnstyle'); if(sbs) sbs.value=st.page.btnStyle||'';
   const scs=$('#s-catsel'); if(scs) scs.value=st.page.catSel||'';
   const sqs=$('#s-quotestyle'); if(sqs) sqs.value=st.page.quoteStyle||'';
   const shl=$('#s-headlayout'); if(shl) shl.value=st.page.headLayout||'';
@@ -6631,6 +6633,7 @@ async function saveSettings(){
       catStyle: $('#s-catstyle').value,
       catShape: $('#s-catshape').value,
       catCnt: $('#s-catcnt')?.checked!==false,
+      perPage: Math.min(100,Math.max(3,+($('#s-perpage')?.value)||12)), btnStyle: $('#s-btnstyle')?.value||'',   // 한 페이지 글 수 · 버튼 모양(phase458)
       catSel: $('#s-catsel')?.value||'',
       quoteStyle: $('#s-quotestyle')?.value||'',
       headLayout: $('#s-headlayout')?.value||'',
@@ -6715,7 +6718,7 @@ const RESET={
     galOn:true,stripOn:true,
     headLayout:'',headDeco:'',headBand:'',hdName:true,hdOver:true,hdSub:true,hdNameFs:'',hdOverFs:'',hdSubFs:'',   // 헤더 프리셋·표시(phase430) — 초기화 누락 수리
     hdOverC:'',hdSubC:'',hdDdC:'',hdTextPos:'',hdDdPos:'',
-    catSel:'',catCnt:true,quoteStyle:'',postFs:''},
+    catSel:'',catCnt:true,quoteStyle:'',postFs:'',perPage:12,btnStyle:''},
   media:{heroImgs:[],heroImg:'',enterImg:'',enterRef:'',enterText:'',
     cardImg:'',bannerImg:'',catImgs:{},gate:'',gateBtn:'',gateColor:'',gateBtnC:'',galName:'',gbName:''}
 };
