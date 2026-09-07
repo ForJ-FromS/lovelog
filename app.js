@@ -1063,15 +1063,53 @@ async function enterPage(){
   if(!st.mine && st.editMode){ st.editMode=false; $('#btn-edit').classList.remove('on'); document.body.classList.remove('editmode'); }
   $('#btn-deco').classList.toggle('hidden',!st.mine);
   show('view-page');
+  if(st.modeSwitch){                                            // 🌗 두 얼굴 테마 전환(phase475): 꾸밈만 다시 칠하고 데이터·화면 위치는 그대로
+    document.querySelector('.strip-sec').classList.toggle('hidden', !stripShow());
+    renderWidgets(); renderCatbar(); renderStickers(); modeToggleDraw(); return; }
   await loadContent();
   bumpCounter(); loadStamps();
   if(homeStyle()==='blog'){ st.cat='recent'; applyView(); }
   else { st.cat='home'; applyView(); }
   document.querySelector('.strip-sec').classList.toggle('hidden', !stripShow());
   renderWidgets(); renderCatbar(); renderList(); renderGal(); renderStickers();
+  modeInit();                                                   // 🌗 기본/기억된 모드 적용 + 토글 버튼
   // 딥링크 — loadPage에서 보관해둔 글ID를 1회 소비
   const pm=st.deepPost; st.deepPost=null;
   if(pm){ st.cat='recent'; applyView(); renderWidgets(); renderList(); openPost(pm, true); }   // 링크 진입 글도 BACK=홈
+}
+/* ═══ 🌗 두 얼굴 테마(phase475): 꾸밈 스냅샷 2개(A·B)를 홈 문서 modes에 두고 방문자가 토글 ═══
+   modes={on, a:{name,snap}, b:{name,snap}, def:'a'|'b', fx:'fade'|'curtain'|'blink', hdr:bool}
+   스냅샷 범위: 테마·색·배경·글꼴·모서리·효과·스티커·헤더 색/그라데이션 (+hdr이면 헤더 사진) — 위젯 구성·글은 공통 */
+const MODE_KEYS=['hue','sat','lum','light','glass','theme','dots','bgImg','bgRef','bgDim','titleColor','font','customCss','curImg','sparkle','fx','fxC','labelIcon','priColor',
+  'corner','cardC','headGrad','headText','hdOverC','hdSubC','hdDdC','headDeco','headBand','stickers','stkOff','stkHideM','stkHome','btnStyle','pgStyle','rowStyle','catShape','quoteStyle','postFs'];
+const MODE_HDR=['heroImgs','heroImg','headFit','headH','headMode','headNoBg'];
+function modeSnap(){ const m=st.page.modes||{}; const keys=MODE_KEYS.concat(m.hdr?MODE_HDR:[]); const o={}; keys.forEach(k=>{ if(st.page[k]!==undefined) o[k]=st.page[k]; }); return o; }
+function modeCur(){ const m=st.page.modes; if(!m||!m.on) return null; try{ const v=localStorage.getItem('lv-mode-'+st.handle); if(v==='a'||v==='b') return v; }catch(e){} return m.def==='b'?'b':'a'; }
+async function modeApply(which, animate){
+  const m=st.page.modes; if(!m||!m.on) return; const snap=(m[which]||{}).snap; if(!snap) return;
+  const fx=m.fx||'fade';
+  if(animate){ const ov=document.getElementById('mode-fx')||Object.assign(document.body.appendChild(document.createElement('div')),{id:'mode-fx'});
+    ov.className='mfx-'+fx+' on'; await new Promise(r=>setTimeout(r, fx==='curtain'?420:fx==='blink'?180:260)); }
+  Object.assign(st.page, snap);
+  st.modeSwitch=true; try{ await enterPage(); } finally{ st.modeSwitch=false; }
+  try{ localStorage.setItem('lv-mode-'+st.handle, which); }catch(e){}
+  if(animate){ const ov=document.getElementById('mode-fx'); if(ov){ ov.classList.add('out'); setTimeout(()=>{ ov.className=''; }, 700); } }
+  modeToggleDraw();
+}
+function modeToggleDraw(){
+  const m=st.page.modes; const he=document.querySelector('.head'); if(!he) return;
+  let b=document.getElementById('mode-toggle');
+  if(!m||!m.on){ if(b) b.remove(); return; }
+  if(!b){ b=document.createElement('button'); b.id='mode-toggle'; b.type='button'; he.appendChild(b); }
+  const cur=modeCur()||'a', other=cur==='a'?'b':'a';
+  b.textContent=(m[other]&&m[other].name)||(other==='a'?'☀':'☾'); b.title='테마 전환';
+  b.onclick=()=>modeApply(other, true);
+}
+function modeInit(){
+  const m=st.page.modes; if(!m||!m.on){ modeToggleDraw(); return; }
+  const cur=modeCur(); const snap=(m[cur]||{}).snap;
+  if(snap){ Object.assign(st.page, snap); st.modeSwitch=true; enterPage().finally(()=>{ st.modeSwitch=false; modeToggleDraw(); }); }
+  else modeToggleDraw();
 }
 async function loadContent(){
   /* 컬렉션별 격리: 예전엔 Promise.all이라 셋 중 하나만 규칙 오류가 나도
@@ -6116,6 +6154,30 @@ $('#view-gate').addEventListener('click',()=>{               // 아무 데나 �
   if(gatePreview) endGatePreview(); });
 document.addEventListener('keydown',e=>{                     // ESC
   if(e.key==='Escape' && gatePreview) endGatePreview(); });
+/* 🌗 두 얼굴 테마 설정(phase475) */
+function modeUIFill(){
+  const m=st.page.modes||{};
+  const g=id=>$('#'+id);
+  if(g('md-on')) g('md-on').checked=!!m.on;
+  if(g('md-an')) g('md-an').value=(m.a&&m.a.name)||'';
+  if(g('md-bn')) g('md-bn').value=(m.b&&m.b.name)||'';
+  if(g('md-def')) g('md-def').value=m.def==='b'?'b':'a';
+  if(g('md-fx')) g('md-fx').value=m.fx||'fade';
+  if(g('md-hdr')) g('md-hdr').checked=!!m.hdr;
+  if(g('md-st')) g('md-st').textContent=`A ${m.a&&m.a.snap?'저장됨':'비어 있음'} · B ${m.b&&m.b.snap?'저장됨':'비어 있음'}`;
+}
+async function modeSaveCfg(extra){
+  const m={...(st.page.modes||{})};
+  m.on=$('#md-on')?.checked===true; m.a={...(m.a||{}), name:($('#md-an')?.value||'').trim().slice(0,12)}; m.b={...(m.b||{}), name:($('#md-bn')?.value||'').trim().slice(0,12)};
+  m.def=$('#md-def')?.value==='b'?'b':'a'; m.fx=$('#md-fx')?.value||'fade'; m.hdr=$('#md-hdr')?.checked===true;
+  Object.assign(m, extra||{});
+  await updateDoc(doc(db,'pages',st.handle),{modes:m}); st.page.modes=m; modeUIFill(); modeToggleDraw();
+}
+$('#md-save-a')?.addEventListener('click', async()=>{ if(!st.mine) return; await modeSaveCfg({a:{name:($('#md-an')?.value||'').trim().slice(0,12), snap:modeSnap()}}); msg('지금 꾸밈을 A로 저장했어요.'); });
+$('#md-save-b')?.addEventListener('click', async()=>{ if(!st.mine) return; await modeSaveCfg({b:{name:($('#md-bn')?.value||'').trim().slice(0,12), snap:modeSnap()}}); msg('지금 꾸밈을 B로 저장했어요.'); });
+$('#md-apply')?.addEventListener('click', async()=>{ if(!st.mine) return; await modeSaveCfg(); msg('두 얼굴 테마 설정을 저장했어요.'); });
+$('#md-load-a')?.addEventListener('click', ()=>{ const s2=st.page.modes?.a?.snap; if(!s2){ msg('A가 비어 있어요.'); return; } modeApply('a', true); msg('A 모습을 불러왔어요 — 이 상태에서 꾸미고 [설정 저장]하면 홈 기본값이 돼요.'); });
+$('#md-load-b')?.addEventListener('click', ()=>{ const s2=st.page.modes?.b?.snap; if(!s2){ msg('B가 비어 있어요.'); return; } modeApply('b', true); msg('B 모습을 불러왔어요.'); });
 /* 대문 스킨·배치 적용(phase442) — 실제 진입과 미리보기가 같은 함수 */
 function applyGateSkin(skin, pos, btnTxt){
   const DEF={hole:'ENTER',card:'입장하기',term:'ENTER',termx:'ENTER',ticket:'TEAR HERE ✂'};
@@ -6586,6 +6648,7 @@ function fillSettings(){
   $('#s-dim').value=p.bgDim??78; $('#s-dots').value=p.dots!==false?'on':''; $('#s-protect').value=p.protectImg!==false?'on':''; $('#s-stkm').checked=!!p.stkHideM; $('#s-stkhome').checked=!!p.stkHome; $('#s-stkoff').checked=p.stkOff!==true; $('#s-fx').value=p.fx ?? (p.sparkle?'sparkle':''); $('#s-fxc').value=p.fxC||'#ffb3c8'; fxCVal=null; $('#s-postpage').value=p.postPage?'on':''; $('#s-corner').value=p.corner||''; $('#s-cardc').value=p.cardC||'#1a1c26'; cardCVal=null; $('#s-rowtag').value=p.rowTag!==false?'on':''; const sts=$('#s-tagshape'); if(sts) sts.value=p.tagShape||'';
   $('#s-gatebtn').value=p.gateBtn||''; $('#s-listed').checked=!!p.listed; cardNew=null; bnrNew=null; renderCard(); renderBnr(); $('#s-lbicon').value=p.labelIcon??'◈'; gateColVal=null;
   const sgs=$('#s-gateskin'); if(sgs) sgs.value=st.page.gateSkin||'';
+  modeUIFill();
   { const el=$('#rec-state'); if(el) el.textContent=st.page.recPriv?'설정됨':'미설정'; const bt=$('#rec-set'); if(bt) bt.textContent=st.page.recPriv?'복구 비밀번호 변경':'복구 비밀번호 만들기'; } const sgp=$('#s-gatepos'); if(sgp) sgp.value=st.page.gatePos||'';
   $('#s-gatecolor').value=p.gateColor||'#ffffff';
   const gsk=$('#s-gateskip'); if(gsk) gsk.checked=p.gateSkipPost===true;

@@ -328,6 +328,17 @@
   .head .sub{font-size:var(--hdS, 12px);color:var(--hdSc, var(--body));margin-top:2px}
   .head .dday{position:absolute;right:24px;bottom:18px;text-align:right}
   .head .dday .n{font-family:'IBM Plex Mono',monospace;font-size:20px;color:var(--hdDc, var(--pri))}
+  /* 🌗 두 얼굴 테마 (phase475) — 토글 버튼 + 전환 연출 */
+  #mode-toggle{position:absolute;top:14px;right:16px;z-index:3;border:1px solid color-mix(in srgb, #fff 35%, transparent);background:rgba(0,0,0,.35);color:#fff;
+    border-radius:999px;padding:5px 12px;font-size:11px;letter-spacing:.06em;cursor:pointer;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);transition:background .15s}
+  #mode-toggle:hover{background:rgba(0,0,0,.55)}
+  .head.hd9-tr #mode-toggle,.head.ht-tr #mode-toggle{top:auto;bottom:14px}
+  #mode-fx{position:fixed;inset:0;z-index:9000;pointer-events:none;opacity:0}
+  #mode-fx.mfx-fade.on{background:var(--bg);opacity:1;transition:opacity .26s ease} #mode-fx.mfx-fade.out{opacity:0;transition:opacity .45s ease}
+  #mode-fx.mfx-blink.on{background:#000;opacity:1;transition:opacity .12s} #mode-fx.mfx-blink.out{opacity:0;transition:opacity .35s ease}
+  #mode-fx.mfx-curtain.on{background:var(--pri);opacity:1;transform:translateY(-100%);animation:mCurtainIn .42s ease forwards}
+  #mode-fx.mfx-curtain.out{opacity:1;animation:mCurtainOut .5s ease forwards}
+  @keyframes mCurtainIn{to{transform:translateY(0)}} @keyframes mCurtainOut{from{transform:translateY(0)}to{transform:translateY(100%)}}
   .head .dday .t{font-family:'IBM Plex Mono',monospace;font-size:8px;
     letter-spacing:.2em;color:var(--muted)}
 
@@ -3093,6 +3104,29 @@ html,body{overflow-x:hidden;overflow-x:clip}
         <div class="trow"><span class="tl">이미지 저장 방지</span><span class="tc">
           <select id="s-protect" title="방문자의 우클릭 · 드래그 · 길게 눌러 저장을 막아요 — 주인은 항상 저장할 수 있어요"><option value="on">켜기</option><option value="">끄기</option></select></span></div>
       </div>
+    <p class="p-h">🌗 두 얼굴 테마</p>
+    <p class="note" style="margin-top:-4px">꾸밈을 두 벌(A · B) 저장해 두면 홈에 전환 버튼이 생겨요. 낮/밤, 평상시/이벤트, 두 인물 시점처럼 쓰세요.
+      저장 범위는 색 · 배경 · 글꼴 · 모서리 · 효과 · 스티커 · 헤더 색 (헤더 사진은 옵션) — 위젯 구성과 글은 공통이에요.
+      방법: 지금 모습을 [A로 저장] → 색 등을 바꾼 뒤 [B로 저장] → 켜기 체크 → [설정 저장].</p>
+    <div class="p-row" style="align-items:center;gap:8px">
+      <label class="chk"><input type="checkbox" id="md-on"> 켜기</label>
+      <input id="md-an" placeholder="A 이름 (예: ☀ 낮)" maxlength="12" style="width:130px;margin-bottom:0">
+      <button class="rmv" id="md-save-a" style="font-size:11px">지금 꾸밈을 A로 저장</button><button class="rmv" id="md-load-a" style="font-size:11px">A 불러오기</button>
+    </div>
+    <div class="p-row" style="align-items:center;gap:8px">
+      <span style="width:52px"></span>
+      <input id="md-bn" placeholder="B 이름 (예: ☾ 밤)" maxlength="12" style="width:130px;margin-bottom:0">
+      <button class="rmv" id="md-save-b" style="font-size:11px">지금 꾸밈을 B로 저장</button><button class="rmv" id="md-load-b" style="font-size:11px">B 불러오기</button>
+    </div>
+    <div class="p-row" style="align-items:center;gap:8px">
+      <select id="md-def" style="width:auto;margin-bottom:0"><option value="a">처음 보이는 모습 — A</option><option value="b">처음 보이는 모습 — B</option></select>
+      <select id="md-fx" style="width:auto;margin-bottom:0"><option value="fade">전환 효과 — 페이드</option><option value="curtain">전환 효과 — 커튼</option><option value="blink">전환 효과 — 암전</option></select>
+      <label class="chk" title="켜면 헤더 사진(슬라이드 · 높이 · 맞춤)도 모드마다 다르게"><input type="checkbox" id="md-hdr"> 헤더 사진도 모드별로</label>
+      <button class="btn" id="md-apply" style="font-size:12px">설정 저장</button>
+      <span class="note" id="md-st" style="margin:0"></span>
+    </div>
+    <p class="note">방문자가 누른 모드는 그 기기에 기억돼요. 전환 버튼은 헤더 오른쪽 위에 상대 모드 이름으로 떠요.</p>
+
     <p class="p-h">꾸밈 효과</p>
     <div class="trows">
       <div class="trow"><span class="tl">커서 효과</span><span class="tc"><select id="s-fx">
@@ -3208,6 +3242,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=500"></script>
+<script type="module" src="./app.js?v=501"></script>
 </body>
 </html>
