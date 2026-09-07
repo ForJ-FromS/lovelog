@@ -1703,8 +1703,14 @@ function nbHeal(w, item, key, to){
   if(key===null) items[i]=to; else if((item[key]||'').toLowerCase()!==to) item[key]=to; else return;
   nbHealN++;
   clearTimeout(nbHealT);
-  try{ localStorage.removeItem('lv-nbc-'+(key===null?item:item[key])); }catch(e){}
-  nbHealT=setTimeout(async()=>{ try{ await updateDoc(doc(db,'pages',st.handle),{side:st.page.side}); msg(`이사 간 이웃 ${nbHealN}곳의 주소를 새 주소로 갱신했어요.`); renderSide(); }catch(e){} nbHealN=0; }, 800);
+  const oldH=(key===null?item:item[key]); try{ localStorage.removeItem('lv-nbc-'+oldH); }catch(e){}
+  /* 듀얼 테마 스냅샷(A·B)에 담긴 위젯 목록도 같이 고침(phase491) — 안 그러면 홈 열 때마다 옛 핸들로 되돌아와 반복 갱신 */
+  const fixSnap=(snap)=>{ if(!snap||!Array.isArray(snap.side)) return false; let hit=false;
+    snap.side.forEach(w2=>{ (w2&&w2.items||[]).forEach((it,i)=>{ if(typeof it==='string'){ if(it.toLowerCase()===String(oldH).toLowerCase()){ w2.items[i]=to; hit=true; } }
+      else if(it&&typeof it==='object'&&(it.h||'').toLowerCase()===String(oldH).toLowerCase()){ it.h=to; hit=true; } }); });
+    return hit; };
+  const m=st.page.modes||{}; const modesHit=[m.a&&m.a.snap, m.b&&m.b.snap].map(fixSnap).some(Boolean);
+  nbHealT=setTimeout(async()=>{ try{ const upd={side:st.page.side}; if(modesHit) upd.modes=st.page.modes; await updateDoc(doc(db,'pages',st.handle),upd); msg(`이사 간 이웃 ${nbHealN}곳의 주소를 새 주소로 갱신했어요.`); renderSide(); }catch(e){} nbHealN=0; }, 800);
 }
 const NB_TTL=6*3600*1000;                                     // 이웃 정보 기기 캐시 6시간(phase448) — 읽기 비용 절감
 function nbStoreGet(h){ try{ const j=JSON.parse(localStorage.getItem('lv-nbc-'+h)||'null'); return (j&&Date.now()-j.t<NB_TTL)? j.v : undefined; }catch(e){ return undefined; } }
