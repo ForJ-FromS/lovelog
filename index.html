@@ -350,6 +350,9 @@
   #mode-fx.mfx-fade{background:var(--bg);will-change:opacity}
   #mode-fx.mfx-fade.on{opacity:.92;transition:opacity .45s ease-in}
   #mode-fx.mfx-fade.out{opacity:0;transition:opacity .9s ease-out}
+  /* 자연스럽게(phase488): 덮개 없이 배경·카드·글자색만 1.4초에 걸쳐 번짐 — blur 없음 */
+  body.mode-soft,body.mode-soft #bgphoto,body.mode-soft .side,body.mode-soft .head,body.mode-soft .post,body.mode-soft .card,body.mode-soft #catbar a,body.mode-soft .row,body.mode-soft .btn{
+    transition:background-color 1.4s ease,color 1.4s ease,border-color 1.4s ease,opacity 1.4s ease}
   #mode-fx.mfx-blink.on{background:#000;opacity:1;transition:opacity .12s} #mode-fx.mfx-blink.out{opacity:0;transition:opacity .35s ease}
   .head .dday .t{font-family:'IBM Plex Mono',monospace;font-size:8px;
     letter-spacing:.2em;color:var(--muted)}
@@ -3185,7 +3188,7 @@ html,body{overflow-x:hidden;overflow-x:clip}
         <option value="cat">버튼 — 카테고리 줄 끝 글자</option></select>
       <select id="md-pos" style="width:auto;margin-bottom:0">
         <option value="br">위치 — 오른쪽 아래</option><option value="bl">위치 — 왼쪽 아래</option><option value="tr">위치 — 오른쪽 위</option><option value="tl">위치 — 왼쪽 위</option></select>
-      <select id="md-fx" style="width:auto;margin-bottom:0"><option value="fade">전환 효과 — 페이드</option><option value="blink">전환 효과 — 암전</option></select>
+      <select id="md-fx" style="width:auto;margin-bottom:0"><option value="soft">전환 효과 — 자연스럽게 (색이 번짐)</option><option value="fade">전환 효과 — 페이드</option><option value="blink">전환 효과 — 암전</option><option value="none">전환 효과 — 없음 (바로)</option></select>
     </div>
     <p class="note">위치는 동그라미 · 스위치일 때만. 카테고리 줄 글자는 줄 오른쪽 끝에 붙어요.</p>
 
@@ -3282,6 +3285,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=513"></script>
+<script type="module" src="./app.js?v=514"></script>
 </body>
 </html>

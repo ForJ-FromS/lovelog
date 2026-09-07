@@ -1099,14 +1099,17 @@ function modeSnap(){
 function modeCur(){ const m=st.page.modes; if(!m||!m.on) return null; try{ const v=localStorage.getItem('lv-mode-'+st.handle); if(v==='a'||v==='b') return v; }catch(e){} return m.def==='b'?'b':'a'; }
 async function modeApply(which, animate){
   const m=st.page.modes; if(!m||!m.on) return; const snap=(m[which]||{}).snap; if(!snap) return;
-  const fx=(m.fx==='blink')?'blink':'fade';   // 커튼 제거(phase487) — 저장된 값이 curtain이면 페이드로
-  if(animate){ const ov=document.getElementById('mode-fx')||Object.assign(document.body.appendChild(document.createElement('div')),{id:'mode-fx'});
+  const fx=['fade','blink','none','soft'].includes(m.fx)?m.fx:'soft';   // 기본 자연스럽게(phase488) · 커튼 등 옛 값은 soft
+  const overlay=animate&&(fx==='fade'||fx==='blink');
+  if(animate&&fx==='soft') document.body.classList.add('mode-soft');
+  if(overlay){ const ov=document.getElementById('mode-fx')||Object.assign(document.body.appendChild(document.createElement('div')),{id:'mode-fx'});
     ov.className='mfx-'+fx+' on'; await new Promise(r=>setTimeout(r, fx==='blink'?180:460)); }
   Object.assign(st.page, JSON.parse(JSON.stringify(snap)));
   try{ await resolveImgs(st.page); }catch(e){}                 // 참조 이미지 다시 채움(phase477)
   st.modeSwitch=true; try{ await enterPage(); } finally{ st.modeSwitch=false; }
   try{ localStorage.setItem('lv-mode-'+st.handle, which); }catch(e){}
-  if(animate){ const ov=document.getElementById('mode-fx'); if(ov){ ov.classList.add('out'); setTimeout(()=>{ ov.className=''; }, 1000); } }
+  if(overlay){ const ov=document.getElementById('mode-fx'); if(ov){ ov.classList.add('out'); setTimeout(()=>{ ov.className=''; }, 1000); } }
+  if(animate&&fx==='soft') setTimeout(()=>document.body.classList.remove('mode-soft'), 1600);
   modeToggleDraw();
 }
 function modeToggleDraw(){
@@ -6185,7 +6188,7 @@ function modeUIFill(){
   if(g('md-ab')) g('md-ab').value=(m.a&&m.a.btn)||''; if(g('md-bb')) g('md-bb').value=(m.b&&m.b.btn)||'';
   if(g('md-btn')) g('md-btn').value=m.btn||'float'; if(g('md-pos')) g('md-pos').value=m.pos||'br';
   if(g('md-def')) g('md-def').value=m.def==='b'?'b':'a';
-  if(g('md-fx')) g('md-fx').value=m.fx||'fade';
+  if(g('md-fx')) g('md-fx').value=['fade','blink','none','soft'].includes(m.fx)?m.fx:'soft';
   if(g('md-hdr')) g('md-hdr').checked=!!m.hdr; if(g('md-strip')) g('md-strip').checked=!!m.strip; if(g('md-wid')) g('md-wid').checked=!!m.wid;
   if(g('md-st')) g('md-st').textContent=`A ${m.a&&m.a.snap?'저장됨':'비어 있음'} · B ${m.b&&m.b.snap?'저장됨':'비어 있음'}`;
 }
@@ -6195,7 +6198,7 @@ async function modeSaveCfg(extra){
   m.a={...(m.a||{}), name:($('#md-an')?.value||'').trim().slice(0,14), btn:($('#md-ab')?.value||'').trim().slice(0,16)};
   m.b={...(m.b||{}), name:($('#md-bn')?.value||'').trim().slice(0,14), btn:($('#md-bb')?.value||'').trim().slice(0,16)};
   m.btn=$('#md-btn')?.value||'float'; m.pos=$('#md-pos')?.value||'br';
-  m.def=$('#md-def')?.value==='b'?'b':'a'; m.fx=$('#md-fx')?.value||'fade'; m.hdr=$('#md-hdr')?.checked===true; m.strip=$('#md-strip')?.checked===true; m.wid=$('#md-wid')?.checked===true;
+  m.def=$('#md-def')?.value==='b'?'b':'a'; m.fx=$('#md-fx')?.value||'soft'; m.hdr=$('#md-hdr')?.checked===true; m.strip=$('#md-strip')?.checked===true; m.wid=$('#md-wid')?.checked===true;
   Object.assign(m, extra||{});
   const size=JSON.stringify(m).length; if(size>900000){ msg(`저장할 내용이 너무 커요(${Math.round(size/1024)}KB) — 사진 옵션을 끄고 다시 해보세요.`); throw new Error('too big'); }
   try{ await updateDoc(doc(db,'pages',st.handle),{modes:m}); }catch(e){ msg('저장 실패 — '+(e.message||e)); throw e; }
