@@ -1085,14 +1085,25 @@ const MODE_KEYS=['hue','sat','lum','light','glass','theme','dots','bgImg','bgRef
 const MODE_HDR=['heroImgs','heroImg','headFit','headH','headMode','headNoBg','enterImg','enterRef','enterText','cardImg','bannerImg','catImgs'];   // 사진(헤더·대문·대표·카테고리)
 const MODE_STRIP=['stripPin','stripCnt','stripShape','stripOn'];                                                                          // 하단 스트립(phase476)
 const MODE_WID=['side','ddays','bgm','noLatest','sidePos'];                                                                               // 위젯 구성(phase476)
-function modeSnap(){ const m=st.page.modes||{}; const keys=MODE_KEYS.concat(m.hdr?MODE_HDR:[], m.strip?MODE_STRIP:[], m.wid?MODE_WID:[]); const o={}; keys.forEach(k=>{ if(st.page[k]!==undefined) o[k]=st.page[k]; }); return o; }
+function modeSnap(){
+  const m=st.page.modes||{}; const keys=MODE_KEYS.concat(m.hdr?MODE_HDR:[], m.strip?MODE_STRIP:[], m.wid?MODE_WID:[]); const o={};
+  keys.forEach(k=>{ if(st.page[k]!==undefined) o[k]=st.page[k]; });
+  /* 큰 이미지 본문은 담지 않음(phase477): 문서 1MB 한도. 참조(bgRef·enterRef·heroImgs[].ref)가 있으면 참조만, 적용 때 resolveImgs로 다시 채움 */
+  const big=v=>typeof v==='string'&&v.startsWith('data:')&&v.length>20000;
+  if(o.bgRef && big(o.bgImg)) delete o.bgImg;
+  if(o.enterRef && big(o.enterImg)) delete o.enterImg;
+  if(Array.isArray(o.heroImgs)) o.heroImgs=o.heroImgs.map(h=>h&&h.ref&&big(h.img)?{...h,img:''}:h);
+  Object.keys(o).forEach(k=>{ if(big(o[k])) delete o[k]; });
+  return JSON.parse(JSON.stringify(o));
+}
 function modeCur(){ const m=st.page.modes; if(!m||!m.on) return null; try{ const v=localStorage.getItem('lv-mode-'+st.handle); if(v==='a'||v==='b') return v; }catch(e){} return m.def==='b'?'b':'a'; }
 async function modeApply(which, animate){
   const m=st.page.modes; if(!m||!m.on) return; const snap=(m[which]||{}).snap; if(!snap) return;
   const fx=m.fx||'fade';
   if(animate){ const ov=document.getElementById('mode-fx')||Object.assign(document.body.appendChild(document.createElement('div')),{id:'mode-fx'});
     ov.className='mfx-'+fx+' on'; await new Promise(r=>setTimeout(r, fx==='curtain'?420:fx==='blink'?180:260)); }
-  Object.assign(st.page, snap);
+  Object.assign(st.page, JSON.parse(JSON.stringify(snap)));
+  try{ await resolveImgs(st.page); }catch(e){}                 // 참조 이미지 다시 채움(phase477)
   st.modeSwitch=true; try{ await enterPage(); } finally{ st.modeSwitch=false; }
   try{ localStorage.setItem('lv-mode-'+st.handle, which); }catch(e){}
   if(animate){ const ov=document.getElementById('mode-fx'); if(ov){ ov.classList.add('out'); setTimeout(()=>{ ov.className=''; }, 700); } }
@@ -1110,7 +1121,7 @@ function modeToggleDraw(){
 function modeInit(){
   const m=st.page.modes; if(!m||!m.on){ modeToggleDraw(); return; }
   const cur=modeCur(); const snap=(m[cur]||{}).snap;
-  if(snap){ Object.assign(st.page, snap); st.modeSwitch=true; enterPage().finally(()=>{ st.modeSwitch=false; modeToggleDraw(); }); }
+  if(snap){ Object.assign(st.page, JSON.parse(JSON.stringify(snap))); st.modeSwitch=true; resolveImgs(st.page).catch(()=>{}).then(()=>enterPage()).finally(()=>{ st.modeSwitch=false; modeToggleDraw(); }); }
   else modeToggleDraw();
 }
 async function loadContent(){
@@ -6160,7 +6171,7 @@ document.addEventListener('keydown',e=>{                     // ESC
 function modeUIFill(){
   const m=st.page.modes||{};
   const g=id=>$('#'+id);
-  if(g('md-on')) g('md-on').checked=!!m.on;
+  if(g('md-on')){ g('md-on').checked=!!m.on; g('md-body')?.classList.toggle('hidden', !m.on); }
   if(g('md-an')) g('md-an').value=(m.a&&m.a.name)||'';
   if(g('md-bn')) g('md-bn').value=(m.b&&m.b.name)||'';
   if(g('md-def')) g('md-def').value=m.def==='b'?'b':'a';
@@ -6173,10 +6184,20 @@ async function modeSaveCfg(extra){
   m.on=$('#md-on')?.checked===true; m.a={...(m.a||{}), name:($('#md-an')?.value||'').trim().slice(0,12)}; m.b={...(m.b||{}), name:($('#md-bn')?.value||'').trim().slice(0,12)};
   m.def=$('#md-def')?.value==='b'?'b':'a'; m.fx=$('#md-fx')?.value||'fade'; m.hdr=$('#md-hdr')?.checked===true; m.strip=$('#md-strip')?.checked===true; m.wid=$('#md-wid')?.checked===true;
   Object.assign(m, extra||{});
-  await updateDoc(doc(db,'pages',st.handle),{modes:m}); st.page.modes=m; modeUIFill(); modeToggleDraw();
+  const size=JSON.stringify(m).length; if(size>900000){ msg(`저장할 내용이 너무 커요(${Math.round(size/1024)}KB) — 사진 옵션을 끄고 다시 해보세요.`); throw new Error('too big'); }
+  try{ await updateDoc(doc(db,'pages',st.handle),{modes:m}); }catch(e){ msg('저장 실패 — '+(e.message||e)); throw e; }
+  st.page.modes=m; modeUIFill(); modeToggleDraw();
 }
-$('#md-save-a')?.addEventListener('click', async()=>{ if(!st.mine) return; await modeSaveCfg({a:{name:($('#md-an')?.value||'').trim().slice(0,12), snap:modeSnap()}}); msg('지금 꾸밈을 A로 저장했어요.'); });
-$('#md-save-b')?.addEventListener('click', async()=>{ if(!st.mine) return; await modeSaveCfg({b:{name:($('#md-bn')?.value||'').trim().slice(0,12), snap:modeSnap()}}); msg('지금 꾸밈을 B로 저장했어요.'); });
+/* A/B 저장은 먼저 [설정 저장]과 같은 저장을 돌려서, 아직 확정 안 된 배경·헤더·색 변경까지 반영한 뒤 스냅샷(phase478) */
+async function modeSaveSlot(which){
+  if(!st.mine) return;
+  try{ await saveSettings(); }catch(e){ msg('먼저 설정 저장에 실패했어요 — '+(e.message||e)); return; }
+  const name=($('#md-'+which+'n')?.value||'').trim().slice(0,12);
+  await modeSaveCfg({[which]:{name, snap:modeSnap()}}); msg(`지금 꾸밈을 ${which.toUpperCase()}로 저장했어요.`);
+}
+$('#md-on')?.addEventListener('change', ()=>{ $('#md-body')?.classList.toggle('hidden', !$('#md-on').checked); });   // 켜야 A/B 칸 펼침(phase479)
+$('#md-save-a')?.addEventListener('click', ()=>modeSaveSlot('a'));
+$('#md-save-b')?.addEventListener('click', ()=>modeSaveSlot('b'));
 $('#md-apply')?.addEventListener('click', async()=>{ if(!st.mine) return; await modeSaveCfg(); msg('두 얼굴 테마 설정을 저장했어요.'); });
 $('#md-load-a')?.addEventListener('click', ()=>{ const s2=st.page.modes?.a?.snap; if(!s2){ msg('A가 비어 있어요.'); return; } modeApply('a', true); msg('A 모습을 불러왔어요 — 이 상태에서 꾸미고 [설정 저장]하면 홈 기본값이 돼요.'); });
 $('#md-load-b')?.addEventListener('click', ()=>{ const s2=st.page.modes?.b?.snap; if(!s2){ msg('B가 비어 있어요.'); return; } modeApply('b', true); msg('B 모습을 불러왔어요.'); });

@@ -3107,14 +3107,19 @@ html,body{overflow-x:hidden;overflow-x:clip}
     <p class="p-h">🌗 두 얼굴 테마</p>
     <p class="note" style="margin-top:-4px">꾸밈을 두 벌(A · B) 저장해 두면 홈에 전환 버튼이 생겨요. 낮/밤, 평상시/이벤트, 두 인물 시점처럼 쓰세요.
       저장 범위는 색 · 배경 · 글꼴 · 모서리 · 효과 · 스티커 · 헤더 색이 기본이고, 사진 · 하단 스트립 · 위젯 구성은 옵션으로 켤 수 있어요 — 글 · 갤러리 · 방명록은 공통이에요.
-      방법: 지금 모습을 [A로 저장] → 색 등을 바꾼 뒤 [B로 저장] → 켜기 체크 → [설정 저장].</p>
+      방법: 지금 모습을 [A로 저장] → 배경·색 등을 바꾼 뒤 [B로 저장] → 켜기 체크 → [설정 저장]. A/B 저장 버튼은 바꾼 내용을 먼저 저장한 뒤 담아요.</p>
     <div class="p-row" style="align-items:center;gap:8px">
-      <label class="chk"><input type="checkbox" id="md-on"> 켜기</label>
+      <label class="chk"><input type="checkbox" id="md-on"> 두 얼굴 테마 켜기</label>
+      <span class="note" style="margin:0">켜면 아래에 A · B 저장 칸이 펼쳐져요</span>
+    </div>
+    <div id="md-body" class="hidden">
+    <div class="p-row" style="align-items:center;gap:8px">
+      <span style="width:52px;font-size:11px;color:var(--muted)">A</span>
       <input id="md-an" placeholder="A 이름 (예: ☀ 낮)" maxlength="12" style="width:130px;margin-bottom:0">
       <button class="rmv" id="md-save-a" style="font-size:11px">지금 꾸밈을 A로 저장</button><button class="rmv" id="md-load-a" style="font-size:11px">A 불러오기</button>
     </div>
     <div class="p-row" style="align-items:center;gap:8px">
-      <span style="width:52px"></span>
+      <span style="width:52px;font-size:11px;color:var(--muted)">B</span>
       <input id="md-bn" placeholder="B 이름 (예: ☾ 밤)" maxlength="12" style="width:130px;margin-bottom:0">
       <button class="rmv" id="md-save-b" style="font-size:11px">지금 꾸밈을 B로 저장</button><button class="rmv" id="md-load-b" style="font-size:11px">B 불러오기</button>
     </div>
@@ -3128,6 +3133,7 @@ html,body{overflow-x:hidden;overflow-x:clip}
       <span class="note" id="md-st" style="margin:0"></span>
     </div>
     <p class="note">방문자가 누른 모드는 그 기기에 기억돼요. 전환 버튼은 헤더 오른쪽 위에 상대 모드 이름으로 떠요.</p>
+    </div>
 
     <p class="p-h">꾸밈 효과</p>
     <div class="trows">
@@ -3244,6 +3250,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=502"></script>
+<script type="module" src="./app.js?v=505"></script>
 </body>
 </html>
