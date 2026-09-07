@@ -329,10 +329,18 @@
   .head .dday{position:absolute;right:24px;bottom:18px;text-align:right}
   .head .dday .n{font-family:'IBM Plex Mono',monospace;font-size:20px;color:var(--hdDc, var(--pri))}
   /* 🌗 두 얼굴 테마 (phase475) — 토글 버튼 + 전환 연출 */
-  #mode-toggle{position:absolute;top:14px;right:16px;z-index:3;border:1px solid color-mix(in srgb, #fff 35%, transparent);background:rgba(0,0,0,.35);color:#fff;
-    border-radius:999px;padding:5px 12px;font-size:11px;letter-spacing:.06em;cursor:pointer;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);transition:background .15s}
-  #mode-toggle:hover{background:rgba(0,0,0,.55)}
-  .head.hd9-tr #mode-toggle,.head.ht-tr #mode-toggle{top:auto;bottom:14px}
+  #mode-toggle{position:fixed;z-index:60;cursor:pointer;border:none;font-family:inherit}
+  #mode-toggle.mp-br{right:22px;bottom:22px} #mode-toggle.mp-bl{left:22px;bottom:22px} #mode-toggle.mp-tr{right:22px;top:22px} #mode-toggle.mp-tl{left:22px;top:22px}
+  #mode-toggle.mb-float{width:46px;height:46px;border-radius:50%;background:var(--card);border:1px solid var(--line);display:grid;place-content:center;font-size:20px;box-shadow:0 8px 22px rgba(0,0,0,.28);transition:transform .15s}
+  #mode-toggle.mb-float:hover{transform:scale(1.08)}
+  #mode-toggle.mb-float .mt-txt{font-size:11px;letter-spacing:.04em}
+  #mode-toggle.mb-switch{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 12px 8px 8px;box-shadow:0 8px 22px rgba(0,0,0,.25);color:var(--body);font-size:11.5px}
+  #mode-toggle.mb-switch .mt-sw{width:26px;height:42px;border-radius:5px;background:var(--card2);border:1px solid var(--line);position:relative;flex:none}
+  #mode-toggle.mb-switch .mt-sw::after{content:'';position:absolute;left:5px;width:14px;height:17px;border-radius:3px;background:var(--pri);box-shadow:0 2px 0 rgba(0,0,0,.35);top:4px;transition:top .15s}
+  #mode-toggle.mb-switch.down .mt-sw::after{top:19px}
+  #mode-toggle.mb-cat{position:static;background:none;color:var(--pri);font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.15em;padding:6px 4px;margin-left:auto}
+  #mode-toggle.mb-cat:hover{text-decoration:underline;text-underline-offset:3px}
+  @media(max-width:640px){ #mode-toggle.mp-bl,#mode-toggle.mp-br{bottom:14px} #mode-toggle.mp-bl{left:12px} #mode-toggle.mp-br{right:12px} }
   #mode-fx{position:fixed;inset:0;z-index:9000;pointer-events:none;opacity:0}
   #mode-fx.mfx-fade.on{background:var(--bg);opacity:1;transition:opacity .26s ease} #mode-fx.mfx-fade.out{opacity:0;transition:opacity .45s ease}
   #mode-fx.mfx-blink.on{background:#000;opacity:1;transition:opacity .12s} #mode-fx.mfx-blink.out{opacity:0;transition:opacity .35s ease}
@@ -2566,6 +2574,7 @@ html,body{overflow-x:hidden;overflow-x:clip}
     <button data-tab="cats">카테고리</button>
     <button data-tab="theme">테마 · 레이아웃</button>
     <button data-tab="bg">배경</button>
+    <button data-tab="mode">🌗 두 얼굴</button>
     <button data-tab="stk">스티커</button>
     <button data-tab="mng">관리</button>
     <button data-tab="adm" id="tab-adm">운영</button>
@@ -3104,37 +3113,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
         <div class="trow"><span class="tl">이미지 저장 방지</span><span class="tc">
           <select id="s-protect" title="방문자의 우클릭 · 드래그 · 길게 눌러 저장을 막아요 — 주인은 항상 저장할 수 있어요"><option value="on">켜기</option><option value="">끄기</option></select></span></div>
       </div>
-    <p class="p-h">🌗 두 얼굴 테마</p>
-    <p class="note" style="margin-top:-4px">꾸밈을 두 벌(A · B) 저장해 두면 홈에 전환 버튼이 생겨요. 낮/밤, 평상시/이벤트, 두 인물 시점처럼 쓰세요.
-      저장 범위는 색 · 배경 · 글꼴 · 모서리 · 효과 · 스티커 · 헤더 색이 기본이고, 사진 · 하단 스트립 · 위젯 구성은 옵션으로 켤 수 있어요 — 글 · 갤러리 · 방명록은 공통이에요.
-      방법: 지금 모습을 [A로 저장] → 배경·색 등을 바꾼 뒤 [B로 저장] → 켜기 체크 → [설정 저장]. A/B 저장 버튼은 바꾼 내용을 먼저 저장한 뒤 담아요.</p>
-    <div class="p-row" style="align-items:center;gap:8px">
-      <label class="chk"><input type="checkbox" id="md-on"> 두 얼굴 테마 켜기</label>
-      <span class="note" style="margin:0">켜면 아래에 A · B 저장 칸이 펼쳐져요</span>
-    </div>
-    <div id="md-body" class="hidden">
-    <div class="p-row" style="align-items:center;gap:8px">
-      <span style="width:52px;font-size:11px;color:var(--muted)">A</span>
-      <input id="md-an" placeholder="A 이름 (예: ☀ 낮)" maxlength="12" style="width:130px;margin-bottom:0">
-      <button class="rmv" id="md-save-a" style="font-size:11px">지금 꾸밈을 A로 저장</button><button class="rmv" id="md-load-a" style="font-size:11px">A 불러오기</button>
-    </div>
-    <div class="p-row" style="align-items:center;gap:8px">
-      <span style="width:52px;font-size:11px;color:var(--muted)">B</span>
-      <input id="md-bn" placeholder="B 이름 (예: ☾ 밤)" maxlength="12" style="width:130px;margin-bottom:0">
-      <button class="rmv" id="md-save-b" style="font-size:11px">지금 꾸밈을 B로 저장</button><button class="rmv" id="md-load-b" style="font-size:11px">B 불러오기</button>
-    </div>
-    <div class="p-row" style="align-items:center;gap:8px">
-      <select id="md-def" style="width:auto;margin-bottom:0"><option value="a">처음 보이는 모습 — A</option><option value="b">처음 보이는 모습 — B</option></select>
-      <select id="md-fx" style="width:auto;margin-bottom:0"><option value="fade">전환 효과 — 페이드</option><option value="curtain">전환 효과 — 커튼</option><option value="blink">전환 효과 — 암전</option></select>
-      <label class="chk" title="헤더 · 대문 · 대표 · 카테고리 사진도 모드마다 다르게"><input type="checkbox" id="md-hdr"> 사진도 모드별로</label>
-      <label class="chk" title="대문 아래 스트립 갤러리에 고정한 사진 · 장수 · 모양도 모드마다"><input type="checkbox" id="md-strip"> 하단 스트립도</label>
-      <label class="chk" title="사이드 위젯 구성 · 디데이 · BGM도 모드마다 (두 벌을 따로 관리해야 해요)"><input type="checkbox" id="md-wid"> 위젯 구성도</label>
-      <button class="btn" id="md-apply" style="font-size:12px">설정 저장</button>
-      <span class="note" id="md-st" style="margin:0"></span>
-    </div>
-    <p class="note">방문자가 누른 모드는 그 기기에 기억돼요. 전환 버튼은 헤더 오른쪽 위에 상대 모드 이름으로 떠요.</p>
-    </div>
-
     <p class="p-h">꾸밈 효과</p>
     <div class="trows">
       <div class="trow"><span class="tl">커서 효과</span><span class="tc"><select id="s-fx">
@@ -3187,6 +3165,56 @@ html,body{overflow-x:hidden;overflow-x:clip}
       <span class="note">잘못 쓰면 홈이 깨질 수 있어요 — 문제 생기면 비우고 저장하세요</span>
     </div>
     <button class="go s-go" style="margin-top:14px">설정 저장</button>
+  </div>
+
+  <div class="pane hidden" data-pane="mode">
+    <p class="p-h" style="border:none;padding-top:0;margin-top:0">🌗 두 얼굴 테마</p>
+    <p class="note" style="margin-top:-4px">홈의 꾸밈을 두 벌 담아 두고, 방문자가 버튼으로 오갈 수 있게 해요. 낮/밤 · 평상시/이벤트 · 두 인물 시점처럼 컨셉은 자유.
+      담기는 것: 색 · 배경 · 글꼴 · 모서리 · 효과 · 스티커 · 헤더 색. 글 · 갤러리 · 방명록은 공통이에요.</p>
+
+    <p class="p-h">1 · 켜기와 전환 버튼</p>
+    <div class="p-row" style="align-items:center;gap:10px">
+      <label class="chk"><input type="checkbox" id="md-on"> 두 얼굴 테마 켜기</label>
+      <select id="md-btn" style="width:auto;margin-bottom:0">
+        <option value="float">버튼 — 떠 있는 동그라미 (이모지)</option>
+        <option value="switch">버튼 — 전등 스위치</option>
+        <option value="cat">버튼 — 카테고리 줄 끝 글자</option></select>
+      <select id="md-pos" style="width:auto;margin-bottom:0">
+        <option value="br">위치 — 오른쪽 아래</option><option value="bl">위치 — 왼쪽 아래</option><option value="tr">위치 — 오른쪽 위</option><option value="tl">위치 — 왼쪽 위</option></select>
+      <select id="md-fx" style="width:auto;margin-bottom:0"><option value="fade">전환 효과 — 페이드</option><option value="curtain">전환 효과 — 커튼</option><option value="blink">전환 효과 — 암전</option></select>
+    </div>
+    <p class="note">위치는 동그라미 · 스위치일 때만. 카테고리 줄 글자는 줄 오른쪽 끝에 붙어요.</p>
+
+    <div id="md-body" class="hidden">
+    <p class="p-h">2 · A 담기</p>
+    <div class="p-row" style="align-items:center;gap:8px">
+      <input id="md-an" placeholder="A 이름 (예: 아침 · 제스테 · 평상시)" maxlength="14" style="width:200px;margin-bottom:0">
+      <input id="md-ab" placeholder="A로 가는 버튼 문구 (예: ☀ 아침으로 →)" maxlength="16" style="width:220px;margin-bottom:0">
+      <button class="btn pri" id="md-save-a" style="font-size:12px">지금 모습을 A로 담기</button>
+      <button class="rmv" id="md-load-a" style="font-size:11px">A 불러오기</button>
+    </div>
+    <p class="p-h">3 · B 담기</p>
+    <p class="note" style="margin-top:-4px">B용으로 배경 · 색 등을 바꾼 뒤 담아요. 바꾼 내용은 담을 때 함께 저장돼요.</p>
+    <div class="p-row" style="align-items:center;gap:8px">
+      <input id="md-bn" placeholder="B 이름 (예: 밤 · 설아 · 이벤트)" maxlength="14" style="width:200px;margin-bottom:0">
+      <input id="md-bb" placeholder="B로 가는 버튼 문구 (예: ☾ 밤으로 →)" maxlength="16" style="width:220px;margin-bottom:0">
+      <button class="btn pri" id="md-save-b" style="font-size:12px">지금 모습을 B로 담기</button>
+      <button class="rmv" id="md-load-b" style="font-size:11px">B 불러오기</button>
+    </div>
+    <p class="p-h">4 · 더 담을 것 (선택)</p>
+    <div class="p-row" style="align-items:center;gap:12px">
+      <label class="chk" title="헤더 · 대문 · 대표 · 카테고리 사진"><input type="checkbox" id="md-hdr"> 사진도</label>
+      <label class="chk" title="대문 아래 스트립 갤러리"><input type="checkbox" id="md-strip"> 하단 스트립도</label>
+      <label class="chk" title="사이드 위젯 구성 · 디데이 · BGM"><input type="checkbox" id="md-wid"> 위젯 구성도</label>
+      <select id="md-def" style="width:auto;margin-bottom:0"><option value="a">처음 보이는 모습 — A</option><option value="b">처음 보이는 모습 — B</option></select>
+    </div>
+    <p class="note">⚠ 체크를 바꿨으면 A · B를 다시 담아야 반영돼요. 담을 때의 체크 상태가 그 슬롯에 들어갑니다.</p>
+    <div class="p-row" style="align-items:center;gap:10px">
+      <button class="btn" id="md-apply" style="font-size:12px">설정 저장</button>
+      <span class="note" id="md-st" style="margin:0"></span>
+    </div>
+    <p class="note">방문자가 누른 모드는 그 기기에 기억돼요. 버튼 문구를 비우면 상대 모드 이름이 보여요.</p>
+    </div>
   </div>
 
   <div class="pane hidden" data-pane="bg">
@@ -3250,6 +3278,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=505"></script>
+<script type="module" src="./app.js?v=506"></script>
 </body>
 </html>

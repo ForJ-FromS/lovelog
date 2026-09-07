@@ -1110,13 +1110,20 @@ async function modeApply(which, animate){
   modeToggleDraw();
 }
 function modeToggleDraw(){
-  const m=st.page.modes; const he=document.querySelector('.head'); if(!he) return;
+  const m=st.page.modes;
   let b=document.getElementById('mode-toggle');
-  if(!m||!m.on){ if(b) b.remove(); return; }
-  if(!b){ b=document.createElement('button'); b.id='mode-toggle'; b.type='button'; he.appendChild(b); }
+  if(!m||!m.on||!(m.a&&m.a.snap)||!(m.b&&m.b.snap)){ if(b) b.remove(); return; }   // 두 슬롯 다 있어야 버튼
+  const style=m.btn||'float', pos=m.pos||'br';
+  const parent = style==='cat' ? (document.getElementById('catbar')||document.body) : document.body;
+  if(b && b.parentElement!==parent){ b.remove(); b=null; }
+  if(!b){ b=document.createElement('button'); b.id='mode-toggle'; b.type='button'; parent.appendChild(b); }
   const cur=modeCur()||'a', other=cur==='a'?'b':'a';
-  b.textContent=(m[other]&&m[other].name)||(other==='a'?'☀':'☾'); b.title='테마 전환';
-  b.onclick=()=>modeApply(other, true);
+  const label=(m[other]&&m[other].btn)||(m[other]&&m[other].name)||(other==='a'?'A':'B');
+  b.className='mb-'+style+(style!=='cat'?' mp-'+pos:'')+(cur==='b'?' down':'');
+  if(style==='float'){ const emojiOnly=/^\p{Extended_Pictographic}$/u.test(label.trim()); b.innerHTML=emojiOnly?esc(label):`<span class="mt-txt">${esc(label)}</span>`; }
+  else if(style==='switch'){ b.innerHTML=`<span class="mt-sw"></span><span>${esc(label)}</span>`; }
+  else b.textContent=label;
+  b.title='테마 전환'; b.onclick=()=>modeApply(other, true);
 }
 function modeInit(){
   const m=st.page.modes; if(!m||!m.on){ modeToggleDraw(); return; }
@@ -1476,6 +1483,7 @@ function renderCatbar(){
   const gh=$('#go-home'), gh2=$('#gb-home');                      // 게시판 '‹ HOME' 백링크도 이름 추종
   if(gh) gh.textContent='‹ '+homeNm();
   if(gh2) gh2.textContent='‹ '+homeNm();
+  if(st.page&&st.page.modes&&st.page.modes.on&&(st.page.modes.btn==='cat')) modeToggleDraw();   // 카테고리 줄 글자 버튼 유지(phase480)
 }
 function applyView(){
   const home = st.cat==='home';
@@ -6174,6 +6182,8 @@ function modeUIFill(){
   if(g('md-on')){ g('md-on').checked=!!m.on; g('md-body')?.classList.toggle('hidden', !m.on); }
   if(g('md-an')) g('md-an').value=(m.a&&m.a.name)||'';
   if(g('md-bn')) g('md-bn').value=(m.b&&m.b.name)||'';
+  if(g('md-ab')) g('md-ab').value=(m.a&&m.a.btn)||''; if(g('md-bb')) g('md-bb').value=(m.b&&m.b.btn)||'';
+  if(g('md-btn')) g('md-btn').value=m.btn||'float'; if(g('md-pos')) g('md-pos').value=m.pos||'br';
   if(g('md-def')) g('md-def').value=m.def==='b'?'b':'a';
   if(g('md-fx')) g('md-fx').value=m.fx||'fade';
   if(g('md-hdr')) g('md-hdr').checked=!!m.hdr; if(g('md-strip')) g('md-strip').checked=!!m.strip; if(g('md-wid')) g('md-wid').checked=!!m.wid;
@@ -6181,7 +6191,10 @@ function modeUIFill(){
 }
 async function modeSaveCfg(extra){
   const m={...(st.page.modes||{})};
-  m.on=$('#md-on')?.checked===true; m.a={...(m.a||{}), name:($('#md-an')?.value||'').trim().slice(0,12)}; m.b={...(m.b||{}), name:($('#md-bn')?.value||'').trim().slice(0,12)};
+  m.on=$('#md-on')?.checked===true;
+  m.a={...(m.a||{}), name:($('#md-an')?.value||'').trim().slice(0,14), btn:($('#md-ab')?.value||'').trim().slice(0,16)};
+  m.b={...(m.b||{}), name:($('#md-bn')?.value||'').trim().slice(0,14), btn:($('#md-bb')?.value||'').trim().slice(0,16)};
+  m.btn=$('#md-btn')?.value||'float'; m.pos=$('#md-pos')?.value||'br';
   m.def=$('#md-def')?.value==='b'?'b':'a'; m.fx=$('#md-fx')?.value||'fade'; m.hdr=$('#md-hdr')?.checked===true; m.strip=$('#md-strip')?.checked===true; m.wid=$('#md-wid')?.checked===true;
   Object.assign(m, extra||{});
   const size=JSON.stringify(m).length; if(size>900000){ msg(`저장할 내용이 너무 커요(${Math.round(size/1024)}KB) — 사진 옵션을 끄고 다시 해보세요.`); throw new Error('too big'); }
@@ -6192,8 +6205,8 @@ async function modeSaveCfg(extra){
 async function modeSaveSlot(which){
   if(!st.mine) return;
   try{ await saveSettings(); }catch(e){ msg('먼저 설정 저장에 실패했어요 — '+(e.message||e)); return; }
-  const name=($('#md-'+which+'n')?.value||'').trim().slice(0,12);
-  await modeSaveCfg({[which]:{name, snap:modeSnap()}}); msg(`지금 꾸밈을 ${which.toUpperCase()}로 저장했어요.`);
+  const name=($('#md-'+which+'n')?.value||'').trim().slice(0,14), btn=($('#md-'+which+'b')?.value||'').trim().slice(0,16);
+  await modeSaveCfg({[which]:{name, btn, snap:modeSnap()}}); msg(`지금 모습을 ${which.toUpperCase()}에 담았어요.`);
 }
 $('#md-on')?.addEventListener('change', ()=>{ $('#md-body')?.classList.toggle('hidden', !$('#md-on').checked); });   // 켜야 A/B 칸 펼침(phase479)
 $('#md-save-a')?.addEventListener('click', ()=>modeSaveSlot('a'));
