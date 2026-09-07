@@ -819,7 +819,7 @@
   #panel.big .tabs button.on{background:none;color:var(--ink);font-weight:500}
   #panel.big .tabs button.on::after{content:'';position:absolute;left:0;right:0;bottom:1px;height:1.5px;background:var(--pri)}
   #panel.big .p-panes{padding-right:12px}
-  #panel .p-h{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.28em;text-transform:uppercase;color:var(--pri);font-weight:500;margin:28px 0 12px;padding-top:0;border-top:none}
+  #panel .p-h{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.26em;text-transform:uppercase;color:var(--pri);font-weight:600;margin:28px 0 12px;padding-top:0;border-top:none;opacity:.95}
   #panel .p-panes > .pane > .p-h:first-child{margin-top:4px}
   #panel .pane input:not([type=file]):not([type=checkbox]):not([type=range]):not([type=color]),#panel .pane select{
     padding:8px 10px;font-size:12.5px;border-radius:6px 6px 0 0;border:none;border-bottom:1px solid color-mix(in srgb, var(--muted) 55%, transparent);
@@ -831,9 +831,15 @@
     background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
     background-position:calc(100% - 11px) 50%,calc(100% - 6px) 50%;background-size:5px 5px,5px 5px;background-repeat:no-repeat}
   #panel .pane input::placeholder,#panel .pane textarea::placeholder{color:color-mix(in srgb, var(--muted) 65%, transparent)}
+  /* 고르는 컨트롤은 상자로(phase471): 셀렉트 · 숫자 · 날짜 — 글 입력칸은 밑줄 유지 */
+  #panel .pane select,#panel .pane input[type=number],#panel .pane input[type=date]{
+    border:1px solid color-mix(in srgb, var(--muted) 45%, transparent);border-radius:7px;background:color-mix(in srgb, var(--card2) 55%, transparent);padding:7px 10px}
+  #panel .pane select{padding-right:24px}
+  #panel .pane select:focus,#panel .pane input[type=number]:focus,#panel .pane input[type=date]:focus{border-color:var(--pri);background:color-mix(in srgb, var(--pri) 6%, transparent)}
+  #panel .pane input[type=number]{text-align:center}
   #panel .note{font-size:10.5px;line-height:1.6;color:color-mix(in srgb, var(--muted) 85%, transparent);margin-top:6px}
   #panel .trow{padding:8px 0;border-bottom:none;gap:12px}
-  #panel .trow .tl{font-size:12px;color:var(--muted);font-weight:400}
+  #panel .trow .tl{font-size:12.5px;color:var(--ink);font-weight:500}
   #panel .trow .tl2{font-size:10.5px;color:color-mix(in srgb, var(--muted) 80%, transparent);letter-spacing:.02em}
   #panel .btn{border-radius:999px;padding:8px 16px;font-size:12px;background:transparent;border-color:color-mix(in srgb, var(--line) 90%, transparent)}
   #panel .btn:hover{border-color:var(--pri);color:var(--ink)}
@@ -2953,13 +2959,13 @@ html,body{overflow-x:hidden;overflow-x:clip}
   <div class="pane hidden" data-pane="theme">
     <p class="p-big" style="border-top:0;padding-top:0;margin-top:0">📐 레이아웃 — 배치와 구조</p>
     <div class="trows">
-      <p class="p-h" style="margin:18px 0 6px;font-size:10px;letter-spacing:.25em;color:var(--muted)">구조</p>
+      <p class="p-h">구조</p>
         <div class="trow"><span class="tl">홈 구조</span><span class="tc"><select id="s-homestyle">
         <option value="grid">위젯 그리드형 (지금 구조)</option>
         <option value="blog">클래식 블로그형 (글 목록이 메인)</option></select></span></div>
       <div class="trow"><span class="tl">사이드바</span><span class="tc"><select id="s-sidepos">
         <option value="right">오른쪽</option><option value="left">왼쪽</option><option value="both">양쪽</option></select></span></div>
-      <p class="p-h" style="margin:18px 0 6px;font-size:10px;letter-spacing:.25em;color:var(--muted)">헤더</p>
+      <p class="p-h">헤더</p>
         <div class="trow"><span class="tl">헤더</span><span class="tc"><select id="s-headmode">
         <option value="wide">가로 (상단 와이드)</option>
         <option value="side">세로 (사이드 프로필형)</option></select>
@@ -3003,7 +3009,7 @@ html,body{overflow-x:hidden;overflow-x:clip}
             <option value="">오른쪽 아래 (기본)</option><option value="tl">왼쪽 위</option><option value="tc">가운데 위</option><option value="tr">오른쪽 위</option>
             <option value="ml">왼쪽 중앙</option><option value="mc">정중앙</option><option value="mr">오른쪽 중앙</option><option value="bl">왼쪽 아래</option><option value="bc">가운데 아래</option></select>
           <span class="tl2" title="폰에서도 그대로 적용되지만, 화면이 좁아 왼쪽 · 오른쪽 차이는 작게 보여요">— 헤더 배치가 〈기본〉일 때 적용 · 폰에선 좌우 차이가 작아요</span></span></div>
-      <p class="p-h" style="margin:18px 0 6px;font-size:10px;letter-spacing:.25em;color:var(--muted)">카테고리 · 글</p>
+      <p class="p-h">카테고리 · 글</p>
         <div class="trow"><span class="tl">카테고리</span><span class="tc"><select id="s-catstyle">
         <option value="bar">상단 알약 바</option><option value="widget">사이드 위젯</option></select>
         <select id="s-catshape">
@@ -3036,7 +3042,7 @@ html,body{overflow-x:hidden;overflow-x:clip}
         <option value="3" selected>고정 3개</option><option value="4">고정 4개</option><option value="6">고정 6개</option></select>
         <select id="s-memott" title="숨기면 작성 팝업에서도 제목 칸이 사라져요">
         <option value="">제목 보이기</option><option value="hide">제목 숨기기</option></select></span></div>
-      <p class="p-h" style="margin:18px 0 6px;font-size:10px;letter-spacing:.25em;color:var(--muted)">모양 · 화면</p>
+      <p class="p-h">모양 · 화면</p>
         <div class="trow"><span class="tl">🔲 모서리</span><span class="tc"><select id="s-corner">
         <option value="">둥글게 (기본)</option><option value="soft">살짝 각지게</option><option value="sharp">뾰족하게</option></select>
           <select id="s-btnstyle" title="BACK · 더보기 같은 작은 버튼 모양">
@@ -3203,6 +3209,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=495"></script>
+<script type="module" src="./app.js?v=497"></script>
 </body>
 </html>
