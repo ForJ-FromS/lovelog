@@ -1063,7 +1063,7 @@ async function enterPage(){
   if(!st.mine && st.editMode){ st.editMode=false; $('#btn-edit').classList.remove('on'); document.body.classList.remove('editmode'); }
   $('#btn-deco').classList.toggle('hidden',!st.mine);
   show('view-page');
-  if(st.modeSwitch){                                            // 🌗 두 얼굴 테마 전환(phase475): 꾸밈만 다시 칠하고 데이터·화면 위치는 그대로
+  if(st.modeSwitch){                                            // 🌗 듀얼 테마 전환(phase475): 꾸밈만 다시 칠하고 데이터·화면 위치는 그대로
     document.querySelector('.strip-sec').classList.toggle('hidden', !stripShow());
     renderWidgets(); renderCatbar(); renderStickers(); renderGal(); modeToggleDraw(); return; }
   await loadContent();
@@ -1077,7 +1077,7 @@ async function enterPage(){
   const pm=st.deepPost; st.deepPost=null;
   if(pm){ st.cat='recent'; applyView(); renderWidgets(); renderList(); openPost(pm, true); }   // 링크 진입 글도 BACK=홈
 }
-/* ═══ 🌗 두 얼굴 테마(phase475): 꾸밈 스냅샷 2개(A·B)를 홈 문서 modes에 두고 방문자가 토글 ═══
+/* ═══ 🌗 듀얼 테마(phase475): 꾸밈 스냅샷 2개(A·B)를 홈 문서 modes에 두고 방문자가 토글 ═══
    modes={on, a:{name,snap}, b:{name,snap}, def:'a'|'b', fx:'fade'|'curtain'|'blink', hdr:bool}
    스냅샷 범위: 테마·색·배경·글꼴·모서리·효과·스티커·헤더 색/그라데이션 (+hdr이면 헤더 사진) — 위젯 구성·글은 공통 */
 const MODE_KEYS=['hue','sat','lum','light','glass','theme','dots','bgImg','bgRef','bgDim','titleColor','font','customCss','curImg','sparkle','fx','fxC','labelIcon','priColor',
@@ -1119,7 +1119,7 @@ function modeToggleDraw(){
   if(!b){ b=document.createElement('button'); b.id='mode-toggle'; b.type='button'; parent.appendChild(b); }
   const cur=modeCur()||'a', other=cur==='a'?'b':'a';
   const label=(m[other]&&m[other].btn)||(m[other]&&m[other].name)||(other==='a'?'A':'B');
-  b.className='mb-'+style+(style!=='cat'?' mp-'+pos:'')+(cur==='b'?' down':'');
+  b.className='mb-'+style+(style!=='cat'?' mp-'+pos:'')+(cur==='b'?' down':'')+(st.mine&&pos==='br'&&style!=='cat'?' mp-owner':'');   // 주인 FAB 위로(phase481)
   if(style==='float'){ const emojiOnly=/^\p{Extended_Pictographic}$/u.test(label.trim()); b.innerHTML=emojiOnly?esc(label):`<span class="mt-txt">${esc(label)}</span>`; }
   else if(style==='switch'){ b.innerHTML=`<span class="mt-sw"></span><span>${esc(label)}</span>`; }
   else b.textContent=label;
@@ -3802,7 +3802,7 @@ function refreshGalCats(){
     g.map(c=>`<option>${esc(c)}</option>`).join('');
 }
 function openPanel(mode){
-  const groups={write:['write','galup'], deco:['set','wid','cats','theme','bg','stk','mng','adm']};
+  const groups={write:['write','galup'], deco:['set','wid','cats','theme','bg','mode','stk','mng','adm']};   // 듀얼 테마 탭 포함(phase482)
   document.querySelectorAll('.tabs button').forEach(b=>{
     b.style.display=groups[mode].includes(b.dataset.tab)?'':'none';
   });
@@ -6175,7 +6175,7 @@ $('#view-gate').addEventListener('click',()=>{               // 아무 데나 �
   if(gatePreview) endGatePreview(); });
 document.addEventListener('keydown',e=>{                     // ESC
   if(e.key==='Escape' && gatePreview) endGatePreview(); });
-/* 🌗 두 얼굴 테마 설정(phase475) */
+/* 🌗 듀얼 테마 설정(phase475) */
 function modeUIFill(){
   const m=st.page.modes||{};
   const g=id=>$('#'+id);
@@ -6211,7 +6211,7 @@ async function modeSaveSlot(which){
 $('#md-on')?.addEventListener('change', ()=>{ $('#md-body')?.classList.toggle('hidden', !$('#md-on').checked); });   // 켜야 A/B 칸 펼침(phase479)
 $('#md-save-a')?.addEventListener('click', ()=>modeSaveSlot('a'));
 $('#md-save-b')?.addEventListener('click', ()=>modeSaveSlot('b'));
-$('#md-apply')?.addEventListener('click', async()=>{ if(!st.mine) return; await modeSaveCfg(); msg('두 얼굴 테마 설정을 저장했어요.'); });
+$('#md-apply')?.addEventListener('click', async()=>{ if(!st.mine) return; await modeSaveCfg(); msg('듀얼 테마 설정을 저장했어요.'); });
 $('#md-load-a')?.addEventListener('click', ()=>{ const s2=st.page.modes?.a?.snap; if(!s2){ msg('A가 비어 있어요.'); return; } modeApply('a', true); msg('A 모습을 불러왔어요 — 이 상태에서 꾸미고 [설정 저장]하면 홈 기본값이 돼요.'); });
 $('#md-load-b')?.addEventListener('click', ()=>{ const s2=st.page.modes?.b?.snap; if(!s2){ msg('B가 비어 있어요.'); return; } modeApply('b', true); msg('B 모습을 불러왔어요.'); });
 /* 대문 스킨·배치 적용(phase442) — 실제 진입과 미리보기가 같은 함수 */
