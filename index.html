@@ -811,54 +811,48 @@
     color:var(--ink);outline:none}
   .pane textarea{min-height:170px;resize:vertical;line-height:1.9}
   .p-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:9px}
-  /* ═══ 설정 창 정돈 — 시안 B (phase467): 밑줄 탭 · 구분선 없이 여백 · 밑줄 필드 · 포인트색 모노 소제목. 기능·id 무변 ═══ */
-  #panel.big .p-card{background:color-mix(in srgb, var(--card) 94%, var(--bg));border-color:color-mix(in srgb, var(--line) 60%, transparent);border-radius:14px;padding:26px 30px;box-shadow:0 30px 80px rgba(0,0,0,.45)}
-  #panel.big .tabs{width:150px;padding-right:12px;border-right:none;gap:6px;padding-top:2px}
-  #panel.big .tabs button{padding:6px 0;font-size:12.5px;color:var(--muted);border-radius:0;background:none;letter-spacing:.02em;width:max-content;position:relative}
-  #panel.big .tabs button:hover{color:var(--ink)}
-  #panel.big .tabs button.on{background:none;color:var(--ink);font-weight:500}
-  #panel.big .tabs button.on::after{content:'';position:absolute;left:0;right:0;bottom:1px;height:1.5px;background:var(--pri)}
-  #panel.big .p-panes{padding-right:12px}
-  #panel .p-h{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.26em;text-transform:uppercase;color:var(--pri);font-weight:600;margin:28px 0 12px;padding-top:0;border-top:none;opacity:.95}
+  /* ═══ 설정 창 정돈 — 시안 A (phase466·472 복귀): 조용한 탭 하이라이트 · 얇은 선 소제목 · 상자 입력칸 · 행 구분선. 기능·id 무변 ═══ */
+  #panel.big .p-card{background:color-mix(in srgb, var(--card) 92%, var(--bg));border-color:color-mix(in srgb, var(--line) 70%, transparent);border-radius:18px;padding:26px 30px 26px 26px;box-shadow:0 30px 80px rgba(0,0,0,.45)}
+  #panel.big .tabs{width:168px;padding-right:18px;gap:2px}
+  #panel.big .tabs button{padding:9px 12px;font-size:12.5px;color:var(--muted);border-radius:8px;letter-spacing:.01em}
+  #panel.big .tabs button:hover{color:var(--ink);background:color-mix(in srgb, var(--ink) 5%, transparent)}
+  #panel.big .tabs button.on{background:color-mix(in srgb, var(--pri) 16%, transparent);color:var(--pri);font-weight:500}
+  #panel.big .p-panes{padding-right:10px}
+  #panel .p-h{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);font-weight:600;
+    margin:26px 0 10px;padding-top:0;border-top:none;display:flex;align-items:center;gap:10px}
+  #panel .p-h::after{content:'';flex:1;height:1px;background:color-mix(in srgb, var(--line) 70%, transparent)}
   #panel .p-panes > .pane > .p-h:first-child{margin-top:4px}
-  #panel .pane input:not([type=file]):not([type=checkbox]):not([type=range]):not([type=color]),#panel .pane select{
-    padding:8px 10px;font-size:12.5px;border-radius:6px 6px 0 0;border:none;border-bottom:1px solid color-mix(in srgb, var(--muted) 55%, transparent);
-    background:transparent;transition:border-color .12s}
-  #panel .pane textarea{padding:10px 12px;font-size:12.5px;border-radius:8px;border:1px solid color-mix(in srgb, var(--line) 80%, transparent);background:color-mix(in srgb, var(--card2) 50%, transparent)}
-  #panel .pane input:focus,#panel .pane select:focus{border-bottom-color:var(--pri);box-shadow:none;background:color-mix(in srgb, var(--pri) 6%, transparent)}
-  #panel .pane textarea:focus{border-color:var(--pri)}
-  #panel .pane select{appearance:none;-webkit-appearance:none;padding-right:22px;
+  #panel .pane input:not([type=file]):not([type=checkbox]):not([type=range]):not([type=color]),#panel .pane select,#panel .pane textarea{
+    padding:9px 11px;font-size:12.5px;border-radius:8px;border:1px solid color-mix(in srgb, var(--muted) 40%, transparent);
+    background:color-mix(in srgb, var(--card2) 70%, transparent);transition:border-color .12s,box-shadow .12s}
+  #panel .pane input:focus,#panel .pane select:focus,#panel .pane textarea:focus{border-color:var(--pri);box-shadow:0 0 0 3px color-mix(in srgb, var(--pri) 18%, transparent)}
+  #panel .pane select{appearance:none;-webkit-appearance:none;padding-right:28px;
     background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
-    background-position:calc(100% - 11px) 50%,calc(100% - 6px) 50%;background-size:5px 5px,5px 5px;background-repeat:no-repeat}
-  #panel .pane input::placeholder,#panel .pane textarea::placeholder{color:color-mix(in srgb, var(--muted) 65%, transparent)}
-  /* 고르는 컨트롤은 상자로(phase471): 셀렉트 · 숫자 · 날짜 — 글 입력칸은 밑줄 유지 */
-  #panel .pane select,#panel .pane input[type=number],#panel .pane input[type=date]{
-    border:1px solid color-mix(in srgb, var(--muted) 45%, transparent);border-radius:7px;background:color-mix(in srgb, var(--card2) 55%, transparent);padding:7px 10px}
-  #panel .pane select{padding-right:24px}
-  #panel .pane select:focus,#panel .pane input[type=number]:focus,#panel .pane input[type=date]:focus{border-color:var(--pri);background:color-mix(in srgb, var(--pri) 6%, transparent)}
+    background-position:calc(100% - 15px) 50%,calc(100% - 10px) 50%;background-size:5px 5px,5px 5px;background-repeat:no-repeat}
   #panel .pane input[type=number]{text-align:center}
-  #panel .note{font-size:10.5px;line-height:1.6;color:color-mix(in srgb, var(--muted) 85%, transparent);margin-top:6px}
-  #panel .trow{padding:8px 0;border-bottom:none;gap:12px}
+  #panel .pane input::placeholder,#panel .pane textarea::placeholder{color:color-mix(in srgb, var(--muted) 70%, transparent)}
+  #panel .note{font-size:10.5px;line-height:1.6;color:color-mix(in srgb, var(--muted) 85%, transparent);margin-top:4px}
+  #panel .trow{padding:7px 0;border-bottom:1px solid color-mix(in srgb, var(--line) 40%, transparent)}
+  #panel .trow:last-of-type{border-bottom:none}
   #panel .trow .tl{font-size:12.5px;color:var(--ink);font-weight:500}
-  #panel .trow .tl2{font-size:10.5px;color:color-mix(in srgb, var(--muted) 80%, transparent);letter-spacing:.02em}
-  #panel .btn{border-radius:999px;padding:8px 16px;font-size:12px;background:transparent;border-color:color-mix(in srgb, var(--line) 90%, transparent)}
-  #panel .btn:hover{border-color:var(--pri);color:var(--ink)}
+  #panel .trow .tl2{font-size:10.5px;letter-spacing:.02em}
+  #panel .btn{border-radius:8px;padding:8px 16px;font-size:12.5px;background:color-mix(in srgb, var(--card2) 70%, transparent)}
+  #panel .btn:hover{border-color:var(--pri)}
   #panel .btn.pri{background:var(--pri);border-color:var(--pri)}
-  #panel .rmv{border:none;border-bottom:1px solid color-mix(in srgb, var(--muted) 55%, transparent);border-radius:0;padding:3px 1px;font-size:10.5px;color:var(--muted);background:none}
-  #panel .rmv:hover{color:var(--ink);border-bottom-color:var(--pri)}
-  #panel .chk{font-size:12px;color:var(--body)} #panel .chk input[type=checkbox]{accent-color:var(--pri);width:13px;height:13px}
-  #panel input[type=range]{accent-color:var(--pri);height:20px}
-  #panel input[type=file]{font-size:11px;color:var(--muted)}
-  #panel input[type=file]::file-selector-button{border:1px solid color-mix(in srgb, var(--line) 90%, transparent);background:transparent;color:var(--body);border-radius:999px;padding:5px 12px;font-size:11px;margin-right:8px;cursor:pointer}
-  #panel .filelab{font-size:11px;border:1px solid color-mix(in srgb, var(--line) 90%, transparent);border-radius:999px;padding:5px 12px;cursor:pointer;color:var(--body)}
-  #panel .filelab:hover{border-color:var(--pri)}
+  #panel .rmv{border-radius:7px;padding:6px 10px;font-size:11px;border-color:color-mix(in srgb, var(--muted) 40%, transparent)}
+  #panel .rmv:hover{color:var(--ink);border-color:var(--muted)}
+  #panel .chk{font-size:12px} #panel .chk input[type=checkbox]{accent-color:var(--pri);width:14px;height:14px}
+  #panel input[type=range]{accent-color:var(--pri);height:22px}
+  #panel input[type=file]{font-size:11.5px;color:var(--muted)}
+  #panel input[type=file]::file-selector-button{border:1px solid color-mix(in srgb, var(--muted) 40%, transparent);background:color-mix(in srgb, var(--card2) 70%, transparent);color:var(--body);border-radius:7px;padding:5px 10px;font-size:11px;margin-right:8px;cursor:pointer}
+  #panel .filelab{font-size:11.5px;border:1px dashed color-mix(in srgb, var(--muted) 50%, transparent);border-radius:8px;padding:6px 10px;cursor:pointer;color:var(--muted)}
+  #panel .filelab:hover{border-color:var(--pri);color:var(--ink)}
   #panel input[type=color]{width:26px!important;min-width:26px;max-width:26px;height:24px!important;flex:none!important;border-radius:6px;padding:0!important;margin:0;
-    border:1px solid color-mix(in srgb, var(--muted) 55%, transparent);overflow:hidden;background:none;cursor:pointer}
+    border:1px solid color-mix(in srgb, var(--muted) 45%, transparent);overflow:hidden;background:none;cursor:pointer}
   #panel input[type=color]::-webkit-color-swatch-wrapper{padding:0} #panel input[type=color]::-webkit-color-swatch{border:none;border-radius:5px}
   #panel input[type=color]::-moz-color-swatch{border:none;border-radius:5px}
-  #panel .p-panes::-webkit-scrollbar{width:6px} #panel .p-panes::-webkit-scrollbar-thumb{background:color-mix(in srgb, var(--line) 80%, transparent);border-radius:3px}
+  #panel .p-panes::-webkit-scrollbar{width:8px} #panel .p-panes::-webkit-scrollbar-thumb{background:color-mix(in srgb, var(--line) 80%, transparent);border-radius:4px}
   #panel .wl{border-radius:10px}
-  @media(max-width:720px){ #panel.big .tabs button{padding:6px 4px} }
   .p-row select{width:auto;margin-bottom:0}
   .p-row input{margin-bottom:0!important;flex:1;min-width:0}
   .chk{font-size:13px;display:inline-flex;gap:7px;align-items:center;white-space:nowrap;color:var(--body)}
@@ -3209,6 +3203,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=497"></script>
+<script type="module" src="./app.js?v=498"></script>
 </body>
 </html>
