@@ -1338,6 +1338,11 @@ const homeNm=()=>st.page?.homeName||'HOME';
 const WNAME={latest:'최신글',pin:'📌 고정글',char:'캐릭터 프로필',pair:'페어 프로필',cal:'달력',habit:'해빗 트래커',notice:'공지',chat:'채팅로그',phone:'단말기',tl:'타임라인',feat:'★ 대표글',img:'이미지',nb:'이웃 홈',profile:'프로필',search:'검색',category:'카테고리',
   dday:'디데이',bgm:'BGM',quote:'인용구',links:'링크',banner:'배너칸',text:'글',cnt:'방문자수',stamp:'발도장',pairqa:'페어 인터뷰',todo:'투두리스트'};
 const STAMP_LEGACY=['heart','paw','star','drop'];   // 옛 슬롯 이름 — 카운트 승계용
+/* 글자 묶음(grapheme) 분해 — ZWJ 결합 이모지·피부색·국기가 하나로 유지(phase490) */
+function graphemes(s){
+  try{ return [...new Intl.Segmenter('ko',{granularity:'grapheme'}).segment(String(s||''))].map(x=>x.segment); }
+  catch(e){ return [...String(s||'')]; }
+}
 function parseEmo(s){
   const raw=(s||'').replace(/\s+/g,'');
   if(!raw) return ['🐾'];
@@ -4210,7 +4215,7 @@ function renderWidList(){
 }
 /* ── 클릭 이펙트 · 픽셀펫 (phase253) ── */
 function spawnFx(x,y,chars){
-  const pool=[...String(chars)].filter(s=>s.trim());
+  const pool=graphemes(String(chars)).filter(s=>s.trim());   // 결합 이모지(🐈‍⬛ 등) 한 덩어리로(phase490)
   if(!pool.length) return;
   const n=2+Math.floor(Math.random()*2);
   for(let k=0;k<n;k++){
@@ -4240,7 +4245,7 @@ function petSzVal(){                                            // 저장값 →
 }
 function petList(){                                            // 저장된 펫 전원(구 단일 petImg 하위호환)
   const imgs=(st.page&&st.page.petImgs)||((st.page&&st.page.petImg)?[st.page.petImg]:[]);
-  const emos=[...String((st.page&&st.page.pet)||'')].filter(s=>s.trim());
+  const emos=graphemes(String((st.page&&st.page.pet)||'')).filter(s=>s.trim());   // 🐈‍⬛ 같은 결합 이모지가 둘로 안 갈라지게(phase490)
   return [...imgs.map(u=>({img:u})), ...emos.map(e=>({emo:e}))].slice(0,6);   // 최대 6마리
 }
 function initPet(){
