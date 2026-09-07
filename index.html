@@ -3106,7 +3106,7 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     <p class="p-h">🌗 두 얼굴 테마</p>
     <p class="note" style="margin-top:-4px">꾸밈을 두 벌(A · B) 저장해 두면 홈에 전환 버튼이 생겨요. 낮/밤, 평상시/이벤트, 두 인물 시점처럼 쓰세요.
-      저장 범위는 색 · 배경 · 글꼴 · 모서리 · 효과 · 스티커 · 헤더 색 (헤더 사진은 옵션) — 위젯 구성과 글은 공통이에요.
+      저장 범위는 색 · 배경 · 글꼴 · 모서리 · 효과 · 스티커 · 헤더 색이 기본이고, 사진 · 하단 스트립 · 위젯 구성은 옵션으로 켤 수 있어요 — 글 · 갤러리 · 방명록은 공통이에요.
       방법: 지금 모습을 [A로 저장] → 색 등을 바꾼 뒤 [B로 저장] → 켜기 체크 → [설정 저장].</p>
     <div class="p-row" style="align-items:center;gap:8px">
       <label class="chk"><input type="checkbox" id="md-on"> 켜기</label>
@@ -3121,7 +3121,9 @@ html,body{overflow-x:hidden;overflow-x:clip}
     <div class="p-row" style="align-items:center;gap:8px">
       <select id="md-def" style="width:auto;margin-bottom:0"><option value="a">처음 보이는 모습 — A</option><option value="b">처음 보이는 모습 — B</option></select>
       <select id="md-fx" style="width:auto;margin-bottom:0"><option value="fade">전환 효과 — 페이드</option><option value="curtain">전환 효과 — 커튼</option><option value="blink">전환 효과 — 암전</option></select>
-      <label class="chk" title="켜면 헤더 사진(슬라이드 · 높이 · 맞춤)도 모드마다 다르게"><input type="checkbox" id="md-hdr"> 헤더 사진도 모드별로</label>
+      <label class="chk" title="헤더 · 대문 · 대표 · 카테고리 사진도 모드마다 다르게"><input type="checkbox" id="md-hdr"> 사진도 모드별로</label>
+      <label class="chk" title="대문 아래 스트립 갤러리에 고정한 사진 · 장수 · 모양도 모드마다"><input type="checkbox" id="md-strip"> 하단 스트립도</label>
+      <label class="chk" title="사이드 위젯 구성 · 디데이 · BGM도 모드마다 (두 벌을 따로 관리해야 해요)"><input type="checkbox" id="md-wid"> 위젯 구성도</label>
       <button class="btn" id="md-apply" style="font-size:12px">설정 저장</button>
       <span class="note" id="md-st" style="margin:0"></span>
     </div>
@@ -3242,6 +3244,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=501"></script>
+<script type="module" src="./app.js?v=502"></script>
 </body>
 </html>

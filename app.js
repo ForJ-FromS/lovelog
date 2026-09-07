@@ -1065,7 +1065,7 @@ async function enterPage(){
   show('view-page');
   if(st.modeSwitch){                                            // 🌗 두 얼굴 테마 전환(phase475): 꾸밈만 다시 칠하고 데이터·화면 위치는 그대로
     document.querySelector('.strip-sec').classList.toggle('hidden', !stripShow());
-    renderWidgets(); renderCatbar(); renderStickers(); modeToggleDraw(); return; }
+    renderWidgets(); renderCatbar(); renderStickers(); renderGal(); modeToggleDraw(); return; }
   await loadContent();
   bumpCounter(); loadStamps();
   if(homeStyle()==='blog'){ st.cat='recent'; applyView(); }
@@ -1082,8 +1082,10 @@ async function enterPage(){
    스냅샷 범위: 테마·색·배경·글꼴·모서리·효과·스티커·헤더 색/그라데이션 (+hdr이면 헤더 사진) — 위젯 구성·글은 공통 */
 const MODE_KEYS=['hue','sat','lum','light','glass','theme','dots','bgImg','bgRef','bgDim','titleColor','font','customCss','curImg','sparkle','fx','fxC','labelIcon','priColor',
   'corner','cardC','headGrad','headText','hdOverC','hdSubC','hdDdC','headDeco','headBand','stickers','stkOff','stkHideM','stkHome','btnStyle','pgStyle','rowStyle','catShape','quoteStyle','postFs'];
-const MODE_HDR=['heroImgs','heroImg','headFit','headH','headMode','headNoBg'];
-function modeSnap(){ const m=st.page.modes||{}; const keys=MODE_KEYS.concat(m.hdr?MODE_HDR:[]); const o={}; keys.forEach(k=>{ if(st.page[k]!==undefined) o[k]=st.page[k]; }); return o; }
+const MODE_HDR=['heroImgs','heroImg','headFit','headH','headMode','headNoBg','enterImg','enterRef','enterText','cardImg','bannerImg','catImgs'];   // 사진(헤더·대문·대표·카테고리)
+const MODE_STRIP=['stripPin','stripCnt','stripShape','stripOn'];                                                                          // 하단 스트립(phase476)
+const MODE_WID=['side','ddays','bgm','noLatest','sidePos'];                                                                               // 위젯 구성(phase476)
+function modeSnap(){ const m=st.page.modes||{}; const keys=MODE_KEYS.concat(m.hdr?MODE_HDR:[], m.strip?MODE_STRIP:[], m.wid?MODE_WID:[]); const o={}; keys.forEach(k=>{ if(st.page[k]!==undefined) o[k]=st.page[k]; }); return o; }
 function modeCur(){ const m=st.page.modes; if(!m||!m.on) return null; try{ const v=localStorage.getItem('lv-mode-'+st.handle); if(v==='a'||v==='b') return v; }catch(e){} return m.def==='b'?'b':'a'; }
 async function modeApply(which, animate){
   const m=st.page.modes; if(!m||!m.on) return; const snap=(m[which]||{}).snap; if(!snap) return;
@@ -6163,13 +6165,13 @@ function modeUIFill(){
   if(g('md-bn')) g('md-bn').value=(m.b&&m.b.name)||'';
   if(g('md-def')) g('md-def').value=m.def==='b'?'b':'a';
   if(g('md-fx')) g('md-fx').value=m.fx||'fade';
-  if(g('md-hdr')) g('md-hdr').checked=!!m.hdr;
+  if(g('md-hdr')) g('md-hdr').checked=!!m.hdr; if(g('md-strip')) g('md-strip').checked=!!m.strip; if(g('md-wid')) g('md-wid').checked=!!m.wid;
   if(g('md-st')) g('md-st').textContent=`A ${m.a&&m.a.snap?'저장됨':'비어 있음'} · B ${m.b&&m.b.snap?'저장됨':'비어 있음'}`;
 }
 async function modeSaveCfg(extra){
   const m={...(st.page.modes||{})};
   m.on=$('#md-on')?.checked===true; m.a={...(m.a||{}), name:($('#md-an')?.value||'').trim().slice(0,12)}; m.b={...(m.b||{}), name:($('#md-bn')?.value||'').trim().slice(0,12)};
-  m.def=$('#md-def')?.value==='b'?'b':'a'; m.fx=$('#md-fx')?.value||'fade'; m.hdr=$('#md-hdr')?.checked===true;
+  m.def=$('#md-def')?.value==='b'?'b':'a'; m.fx=$('#md-fx')?.value||'fade'; m.hdr=$('#md-hdr')?.checked===true; m.strip=$('#md-strip')?.checked===true; m.wid=$('#md-wid')?.checked===true;
   Object.assign(m, extra||{});
   await updateDoc(doc(db,'pages',st.handle),{modes:m}); st.page.modes=m; modeUIFill(); modeToggleDraw();
 }
