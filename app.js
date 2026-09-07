@@ -1099,15 +1099,14 @@ function modeSnap(){
 function modeCur(){ const m=st.page.modes; if(!m||!m.on) return null; try{ const v=localStorage.getItem('lv-mode-'+st.handle); if(v==='a'||v==='b') return v; }catch(e){} return m.def==='b'?'b':'a'; }
 async function modeApply(which, animate){
   const m=st.page.modes; if(!m||!m.on) return; const snap=(m[which]||{}).snap; if(!snap) return;
-  const fx=m.fx||'fade';
+  const fx=(m.fx==='blink')?'blink':'fade';   // 커튼 제거(phase487) — 저장된 값이 curtain이면 페이드로
   if(animate){ const ov=document.getElementById('mode-fx')||Object.assign(document.body.appendChild(document.createElement('div')),{id:'mode-fx'});
-    document.body.classList.add('mode-anim');                   // 색·배경 크로스페이드(phase485)
-    ov.className='mfx-'+fx+' on'; await new Promise(r=>setTimeout(r, fx==='curtain'?420:fx==='blink'?180:520)); }
+    ov.className='mfx-'+fx+' on'; await new Promise(r=>setTimeout(r, fx==='blink'?180:460)); }
   Object.assign(st.page, JSON.parse(JSON.stringify(snap)));
   try{ await resolveImgs(st.page); }catch(e){}                 // 참조 이미지 다시 채움(phase477)
   st.modeSwitch=true; try{ await enterPage(); } finally{ st.modeSwitch=false; }
   try{ localStorage.setItem('lv-mode-'+st.handle, which); }catch(e){}
-  if(animate){ const ov=document.getElementById('mode-fx'); if(ov){ ov.classList.add('out'); setTimeout(()=>{ ov.className=''; document.body.classList.remove('mode-anim'); }, 1200); } }
+  if(animate){ const ov=document.getElementById('mode-fx'); if(ov){ ov.classList.add('out'); setTimeout(()=>{ ov.className=''; }, 1000); } }
   modeToggleDraw();
 }
 function modeToggleDraw(){
