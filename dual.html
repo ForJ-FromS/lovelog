@@ -38,6 +38,10 @@ kbd{display:inline-block;background:hsl(var(--h) 30% 94%);border:1px solid var(-
 .pill{display:inline-block;border:1px solid var(--line);border-radius:99px;padding:2px 12px;
   font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;color:var(--ink);margin:0 2px;background:var(--card)}
 .dim{color:var(--muted);font-size:12.5px}
+.shot{margin:14px 0 4px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#111}
+.shot img{display:block;width:100%;height:auto}
+.cap{font-size:12px;color:var(--muted);margin:6px 0 18px;text-align:center}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:600px){.two{grid-template-columns:1fr}}
 .q{border-left:3px solid var(--pri);padding:2px 0 2px 14px;margin:18px 0}
 .q .qq{color:var(--ink);font-weight:600}
 a{color:var(--pri);text-decoration:none}
@@ -55,6 +59,11 @@ footer{margin-top:70px;text-align:center;font-family:'IBM Plex Mono',monospace;f
 <p class="sub">홈의 꾸밈을 두 벌 담아 두고, 방문자가 버튼 하나로 오갈 수 있게 하는 기능이에요. 밤과 아침, 평상시와 이벤트, 두 인물의 시점 — 컨셉은 자유입니다.</p>
 
 <h2><span class="no">01</span>어떻게 생겼나</h2>
+<div class="two">
+<div><div class="shot"><img src="/img/dual-night.jpg" alt="밤 모드 예시 — 어두운 유리 카드와 별 배경"></div><p class="cap">A · 밤 — 어두운 유리 카드 + 별 배경</p></div>
+<div><div class="shot"><img src="/img/dual-morning.jpg" alt="아침 모드 예시 — 밝은 유리 카드와 노을 배경"></div><p class="cap">B · 아침 — 밝은 테마 + 노을 배경 · 헤더 사진도 다르게</p></div>
+</div>
+<p>같은 홈이에요. 카테고리 줄 오른쪽 끝의 작은 글자(또는 구석 버튼)를 누르면 이렇게 오갑니다.</p>
 <p>홈 한 곳에 <b>A 모습</b>과 <b>B 모습</b>이 있고, 화면 구석(또는 카테고리 줄 끝)의 전환 버튼을 누르면 짧은 연출과 함께 다른 모습으로 바뀝니다. 방문자가 고른 모드는 그 기기에 기억돼서 다음에 와도 그대로예요.</p>
 <div class="card">
 <p><b>담기는 것(기본)</b> — 색 · 배경 · 글꼴 · 모서리 · 커서 효과 · 스티커 · 헤더 색과 장식 · 버튼/페이지/목록 모양 · 인용 스킨 · 본문 크기</p>
@@ -64,6 +73,8 @@ footer{margin-top:70px;text-align:center;font-family:'IBM Plex Mono',monospace;f
 
 <h2><span class="no">02</span>만드는 순서</h2>
 <p class="dim">꾸미기 → 〈🌗 듀얼〉 탭. 화면이 위에서 아래로 1 · 2 · 3 · 4 순서예요.</p>
+<div class="shot"><img src="/img/dual-settings.jpg" alt="듀얼 탭 설정 화면 — 1 켜기와 전환 버튼, 2 A 담기, 3 B 담기, 4 더 담을 것"></div>
+<p class="cap">듀얼 탭 — 위에서부터 1 · 2 · 3 · 4</p>
 <h3>1 · 켜기와 전환 버튼</h3>
 <ul>
 <li><b>듀얼 테마 켜기</b>를 체크하면 아래 칸이 펼쳐집니다.</li>

@@ -346,7 +346,10 @@
   #mode-toggle.mb-cat:hover{text-decoration:underline;text-underline-offset:3px}
   @media(max-width:640px){ #mode-toggle.mp-bl,#mode-toggle.mp-br{bottom:14px} #mode-toggle.mp-bl{left:12px} #mode-toggle.mp-br{right:12px} }
   #mode-fx{position:fixed;inset:0;z-index:9000;pointer-events:none;opacity:0}
-  #mode-fx.mfx-fade.on{background:var(--bg);opacity:1;transition:opacity .26s ease} #mode-fx.mfx-fade.out{opacity:0;transition:opacity .45s ease}
+  /* 페이드(phase485): 확 덮는 대신 반투명 + 흐림으로 스르륵, 그 사이 색·배경이 함께 크로스페이드 */
+  #mode-fx.mfx-fade.on{background:color-mix(in srgb, var(--bg) 55%, transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);opacity:1;transition:opacity .55s cubic-bezier(.4,0,.2,1)}
+  #mode-fx.mfx-fade.out{opacity:0;transition:opacity 1.1s cubic-bezier(.4,0,.2,1)}
+  body.mode-anim,body.mode-anim .side,body.mode-anim .head,body.mode-anim .post,body.mode-anim .card,body.mode-anim #catbar,body.mode-anim #bgphoto{transition:background-color 1.1s ease,color 1.1s ease,border-color 1.1s ease,opacity 1.1s ease!important}
   #mode-fx.mfx-blink.on{background:#000;opacity:1;transition:opacity .12s} #mode-fx.mfx-blink.out{opacity:0;transition:opacity .35s ease}
   #mode-fx.mfx-curtain.on{background:var(--pri);opacity:1;transform:translateY(-100%);animation:mCurtainIn .42s ease forwards}
   #mode-fx.mfx-curtain.out{opacity:1;animation:mCurtainOut .5s ease forwards}
@@ -3282,6 +3285,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=510"></script>
+<script type="module" src="./app.js?v=511"></script>
 </body>
 </html>
