@@ -1710,7 +1710,7 @@ function nbHeal(w, item, key, to){
       else if(it&&typeof it==='object'&&(it.h||'').toLowerCase()===String(oldH).toLowerCase()){ it.h=to; hit=true; } }); });
     return hit; };
   const m=st.page.modes||{}; const modesHit=[m.a&&m.a.snap, m.b&&m.b.snap].map(fixSnap).some(Boolean);
-  nbHealT=setTimeout(async()=>{ try{ const upd={side:st.page.side}; if(modesHit) upd.modes=st.page.modes; await updateDoc(doc(db,'pages',st.handle),upd); msg(`이사 간 이웃 ${nbHealN}곳의 주소를 새 주소로 갱신했어요.`); renderSide(); }catch(e){} nbHealN=0; }, 800);
+  nbHealT=setTimeout(async()=>{ try{ const upd={side:st.page.side}; if(modesHit) upd.modes=st.page.modes; await updateDoc(doc(db,'pages',st.handle),upd); msg(`이사 간 이웃 ${nbHealN}곳의 주소를 새 주소로 갱신했어요.`); renderSide(); }catch(e){ msg('이웃 주소 갱신 저장 실패 — '+(e.message||e)); } nbHealN=0; }, 800);
 }
 const NB_TTL=6*3600*1000;                                     // 이웃 정보 기기 캐시 6시간(phase448) — 읽기 비용 절감
 function nbStoreGet(h){ try{ const j=JSON.parse(localStorage.getItem('lv-nbc-'+h)||'null'); return (j&&Date.now()-j.t<NB_TTL)? j.v : undefined; }catch(e){ return undefined; } }
