@@ -340,7 +340,9 @@
   #mode-toggle.mb-switch .mt-sw{width:26px;height:42px;border-radius:5px;background:var(--card2);border:1px solid var(--line);position:relative;flex:none}
   #mode-toggle.mb-switch .mt-sw::after{content:'';position:absolute;left:5px;width:14px;height:17px;border-radius:3px;background:var(--pri);box-shadow:0 2px 0 rgba(0,0,0,.35);top:4px;transition:top .15s}
   #mode-toggle.mb-switch.down .mt-sw::after{top:19px}
-  #mode-toggle.mb-cat{position:static;background:none;color:var(--pri);font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.15em;padding:6px 4px;margin-left:auto}
+  #catbar{position:relative}
+  #mode-toggle.mb-cat{position:absolute;right:6px;top:50%;transform:translateY(-50%);margin:0;background:none;color:var(--pri);font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.15em;padding:6px 4px;white-space:nowrap}   /* 줄 흐름 밖(phase483) */
+  @media(max-width:640px){ #mode-toggle.mb-cat{position:static;transform:none;display:block;margin:4px auto 0;text-align:center} }
   #mode-toggle.mb-cat:hover{text-decoration:underline;text-underline-offset:3px}
   @media(max-width:640px){ #mode-toggle.mp-bl,#mode-toggle.mp-br{bottom:14px} #mode-toggle.mp-bl{left:12px} #mode-toggle.mp-br{right:12px} }
   #mode-fx{position:fixed;inset:0;z-index:9000;pointer-events:none;opacity:0}
@@ -3280,6 +3282,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=508"></script>
+<script type="module" src="./app.js?v=509"></script>
 </body>
 </html>
