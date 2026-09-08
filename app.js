@@ -1069,6 +1069,8 @@ async function enterPage(){
   show('view-page');
   if(st.modeSwitch){                                            // 🌗 듀얼 테마 전환(phase475): 꾸밈만 다시 칠하고 데이터·화면 위치는 그대로
     document.querySelector('.strip-sec').classList.toggle('hidden', !stripShow());
+    const inPost=document.body.classList.contains('in-post');
+    document.body.classList.toggle('reading', inPost && !!st.page.postPage);   // 글 넓게 읽기 상태 유지(phase518)
     renderWidgets(); renderCatbar(); renderStickers(); renderGal(); modeToggleDraw(); return; }
   await loadContent();
   bumpCounter(); loadStamps();
@@ -1088,7 +1090,7 @@ async function enterPage(){
    스냅샷 범위: 테마·색·배경·글꼴·모서리·효과·스티커·헤더 색/그라데이션 (+hdr이면 헤더 사진) — 위젯 구성·글은 공통 */
 const MODE_KEYS=['hue','sat','lum','light','glass','theme','dots','bgImg','bgRef','bgDim','titleColor','font','customCss','curImg','sparkle','fx','fxC','labelIcon','priColor',
   'corner','cardC','headGrad','headText','hdOverC','hdSubC','hdDdC','headDeco','headBand','stickers','stkOff','stkHideM','stkHome','btnStyle','pgStyle','rowStyle','catShape','quoteStyle','postFs',
-  'pet','petImg','petImgs','petSz','clickFx','snd','sndV','protectImg','fav'];   // 펫 · 클릭 이펙트 · 클릭 소리도 모드별(phase500)
+  'pet','petImg','petImgs','petSz','clickFx','snd','sndV','protectImg','fav','postPage'];   // 펫 · 클릭 이펙트 · 클릭 소리 · 글 전용 페이지도 모드별(phase518)
 const MODE_HDR=['heroImgs','heroImg','headFit','headH','headMode','headNoBg','enterImg','enterRef','enterText','cardImg','bannerImg','catImgs'];   // 사진(헤더·대문·대표·카테고리)
 const MODE_STRIP=['stripPin','stripCnt','stripShape','stripOn'];                                                                          // 하단 스트립(phase476)
 const MODE_WID=['side','ddays','bgm','noLatest','sidePos'];                                                                               // 위젯 구성(phase476)
