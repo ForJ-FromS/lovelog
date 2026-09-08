@@ -337,6 +337,7 @@
   #mode-toggle.mb-float:hover{transform:scale(1.08)}
   #mode-toggle.mb-float .mt-txt{font-size:11px;letter-spacing:.04em}
   #mode-toggle.mb-switch{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 12px 8px 8px;box-shadow:0 8px 22px rgba(0,0,0,.25);color:var(--body);font-size:11.5px}
+  #mode-toggle.mb-switch.bare{padding:8px;gap:0}
   #mode-toggle.mb-switch .mt-sw{width:26px;height:42px;border-radius:5px;background:var(--card2);border:1px solid var(--line);position:relative;flex:none}
   #mode-toggle.mb-switch .mt-sw::after{content:'';position:absolute;left:5px;width:14px;height:17px;border-radius:3px;background:var(--pri);box-shadow:0 2px 0 rgba(0,0,0,.35);top:4px;transition:top .15s}
   #mode-toggle.mb-switch.down .mt-sw::after{top:19px}
@@ -3231,7 +3232,7 @@ html,body{overflow-x:hidden;overflow-x:clip}
       <button class="btn" id="md-apply" style="font-size:12px">설정 저장</button>
       <span class="note" id="md-st" style="margin:0"></span>
     </div>
-    <p class="note">방문자가 누른 모드는 그 기기에 기억돼요. 버튼 문구를 비우면 상대 모드 이름이 보여요.</p>
+    <p class="note">방문자가 누른 모드는 그 기기에 기억돼요. 버튼 문구를 비우면 동그라미·글자 버튼엔 상대 모드 이름이, 전등 스위치엔 스위치만 보여요.</p>
     <p class="note" style="color:var(--pri)">⚠ 듀얼 테마를 켠 뒤에는 다른 탭의 [설정 저장]만으로는 모드에 반영되지 않아요. 색 · 배경 등을 바꿨으면 이 탭으로 돌아와 <b>[A로 담기]</b> 또는 <b>[B로 담기]</b>로 저장하세요 — 담기가 설정 저장까지 함께 해줍니다.</p>
     </div>
   </div>
@@ -3297,6 +3298,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=523"></script>
+<script type="module" src="./app.js?v=524"></script>
 </body>
 </html>

@@ -1125,7 +1125,7 @@ function modeToggleDraw(){
   const label=(m[other]&&m[other].btn)||(m[other]&&m[other].name)||(other==='a'?'A':'B');
   b.className='mb-'+style+(style!=='cat'?' mp-'+pos:'')+(cur==='b'?' down':'')+(st.mine&&pos==='br'&&style!=='cat'?' mp-owner':'');   // 주인 FAB 위로(phase481)
   if(style==='float'){ const emojiOnly=/^\p{Extended_Pictographic}$/u.test(label.trim()); b.innerHTML=emojiOnly?esc(label):`<span class="mt-txt">${esc(label)}</span>`; }
-  else if(style==='switch'){ b.innerHTML=`<span class="mt-sw"></span><span>${esc(label)}</span>`; }
+  else if(style==='switch'){ const lb=(m[other]&&m[other].btn)||''; b.innerHTML=`<span class="mt-sw"></span>${lb?`<span>${esc(lb)}</span>`:''}`; b.classList.toggle('bare', !lb); }   // 문구 비우면 스위치만(phase499)
   else b.textContent=label;
   b.title='테마 전환'; b.onclick=()=>modeApply(other, true);
 }
