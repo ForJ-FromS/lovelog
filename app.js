@@ -1074,6 +1074,7 @@ async function enterPage(){
   renderWidgets(); renderCatbar(); renderList(); renderGal(); renderStickers();
   modeInit();                                                   // 🌗 기본/기억된 모드 적용 + 토글 버튼
   sndMuteDraw();                                                // 🔊 방문자 음소거 버튼(phase494)
+  applyGbText();
   // 딥링크 — loadPage에서 보관해둔 글ID를 1회 소비
   const pm=st.deepPost; st.deepPost=null;
   if(pm){ st.cat='recent'; applyView(); renderWidgets(); renderList(); openPost(pm, true); }   // 링크 진입 글도 BACK=홈
@@ -1124,11 +1125,16 @@ function modeToggleDraw(){
   if(!b){ b=document.createElement('button'); b.id='mode-toggle'; b.type='button'; parent.appendChild(b); }
   const cur=modeCur()||'a', other=cur==='a'?'b':'a';
   const label=(m[other]&&m[other].btn)||(m[other]&&m[other].name)||(other==='a'?'A':'B');
-  b.className='mb-'+style+(style!=='cat'?' mp-'+pos:'')+(cur==='b'?' down':'')+(st.mine&&pos==='br'&&style!=='cat'?' mp-owner':'');   // 주인 FAB 위로(phase481)
-  if(style==='float'){ const emojiOnly=/^\p{Extended_Pictographic}$/u.test(label.trim()); b.innerHTML=emojiOnly?esc(label):`<span class="mt-txt">${esc(label)}</span>`; }
-  else if(style==='switch'){ const lb=(m[other]&&m[other].btn)||''; b.innerHTML=`<span class="mt-sw"></span>${lb?`<span>${esc(lb)}</span>`:''}`; b.classList.toggle('bare', !lb); }   // 문구 비우면 스위치만(phase499)
+  b.className='mb-'+style+(style!=='cat'?' mp-'+pos:'')+(cur==='b'?' down':'')+(st.mine&&pos==='br'&&style!=='cat'?' mp-owner':'')+(m.onPost===false?' no-post':'');   // 주인 FAB 위로(phase481) · 글 화면 숨김(phase506)
+  if(pos==='free'&&style!=='cat'){                              // 자유 배치(phase506): 비율 좌표 + 주인 드래그
+    b.style.setProperty('--mtX', (m.x??80)+'%'); b.style.setProperty('--mtY', (m.y??80)+'%');
+    if(st.mine){ b.classList.add('can-drag'); modeDragBind(b); }
+  }
+  if(style==='float'){ const lb=(m.swLabel===false&&/\p{Extended_Pictographic}/u.test(label))?label.match(/\p{Extended_Pictographic}/u)[0]:label;   // 문구 끄면 이모지만(phase507)
+    const emojiOnly=/^\p{Extended_Pictographic}$/u.test(lb.trim()); b.innerHTML=emojiOnly?esc(lb):`<span class="mt-txt">${esc(lb)}</span>`; }
+  else if(style==='switch'){ const lb=(m.swLabel===false)?'':((m[other]&&m[other].btn)||''); b.innerHTML=`<span class="mt-sw"></span>${lb?`<span>${esc(lb)}</span>`:''}`; b.classList.toggle('bare', !lb); }   // 문구 표시 끄기(phase507) · 비우면 스위치만(phase499)
   else b.textContent=label;
-  b.title='테마 전환'; b.onclick=()=>modeApply(other, true);
+  b.title='테마 전환'; b.onclick=()=>{ if(b._suppress) return; modeApply(other, true); };
 }
 /* 🌗 현재 모드 스냅샷 자동 동기화(phase502): 듀얼이 켜진 채로 위젯·설정·스티커를 저장하면
    지금 보고 있는 모드(A/B)의 스냅샷에 담긴 항목도 st.page 값으로 갱신 — "다시 담기" 없이도 저장이 굳게 */
@@ -1138,6 +1144,17 @@ async function modeSyncCurrent(){
   const fresh=modeSnap();                                       // 현재 옵션 범위로 새 스냅샷
   Object.keys(slot.snap).forEach(k=>{ if(fresh[k]!==undefined) slot.snap[k]=fresh[k]; });   // 담겨 있던 항목만 갱신
   try{ await updateDoc(doc(db,'pages',st.handle),{modes:m}); }catch(e){}
+}
+function modeDragBind(b){
+  let sx=0, sy=0, moved=false, px=0, py=0;
+  b.onpointerdown=e=>{ if(e.button!==0) return; sx=e.clientX; sy=e.clientY; moved=false; b.setPointerCapture(e.pointerId); };
+  b.onpointermove=e=>{ if(!b.hasPointerCapture(e.pointerId)) return; const dx=e.clientX-sx, dy=e.clientY-sy; if(!moved && Math.hypot(dx,dy)<6) return;
+    moved=true; b.classList.add('drag'); px=Math.max(3,Math.min(97, e.clientX/innerWidth*100)); py=Math.max(3,Math.min(97, e.clientY/innerHeight*100));
+    b.style.setProperty('--mtX', px+'%'); b.style.setProperty('--mtY', py+'%'); };
+  b.onpointerup=async e=>{ b.releasePointerCapture(e.pointerId); b.classList.remove('drag'); if(!moved) return;
+    const m=st.page.modes; m.x=Math.round(px*10)/10; m.y=Math.round(py*10)/10;
+    try{ await updateDoc(doc(db,'pages',st.handle),{modes:m}); msg('전환 버튼 위치를 저장했어요.'); }catch(err){ msg('위치 저장 실패 — '+(err.message||err)); }
+    b._suppress=true; setTimeout(()=>{ b._suppress=false; }, 300); };
 }
 function modeInit(){
   const m=st.page.modes; if(!m||!m.on){ modeToggleDraw(); return; }
@@ -1345,6 +1362,7 @@ function setGateCover(url){                          // 대문 배경 — 사진
 }
 const galNm=()=>st.page?.galName||'GALLERY';
 const gbNm=()=>st.page?.gbName||'GUESTBOOK';
+function applyGbText(){ const t=$('#gb-text'); if(t) t.placeholder=st.page?.gbHint||'다녀간 흔적을 남겨주세요'; }   // 방명록 문구(phase508)
 const homeNm=()=>st.page?.homeName||'HOME';
 const WNAME={latest:'최신글',pin:'📌 고정글',char:'캐릭터 프로필',pair:'페어 프로필',cal:'달력',habit:'해빗 트래커',notice:'공지',chat:'채팅로그',phone:'단말기',tl:'타임라인',feat:'★ 대표글',img:'이미지',nb:'이웃 홈',profile:'프로필',search:'검색',category:'카테고리',
   dday:'디데이',bgm:'BGM',quote:'인용구',links:'링크',banner:'배너칸',text:'글',cnt:'방문자수',stamp:'발도장',pairqa:'페어 인터뷰',todo:'투두리스트'};
@@ -2852,7 +2870,7 @@ function renderGuest(){
         ? `<p class="gb-re">↳ <b>${esc(st.page.name||st.handle)}</b> ${esc(g.reply)}</p>`:''}
       ${st.mine?`<i class="gb-rebtn" data-gbr="${g.id}">${g.reply?'답글 수정':'답글'}</i>`:''}
       <span class="gb-reform hidden" data-gbf="${g.id}"></span></li>`).join('')
-    :'<p class="pl-empty">아직 방명록이 비어 있어요 — 첫 흔적을 남겨주세요.</p>';
+    :`<p class="pl-empty">${esc(st.page.gbEmpty||'아직 방명록이 비어 있어요 — 첫 흔적을 남겨주세요.')}</p>`;
   $('#gb-list').querySelectorAll('[data-gbr]').forEach(b=>b.onclick=()=>{
     const id=b.dataset.gbr, g=st.guest.find(x=>x.id===id); if(!g) return;
     const box=$('#gb-list').querySelector(`[data-gbf="${id}"]`);
@@ -4122,9 +4140,16 @@ function renderCatFix(){
     row('__gb',esc(gbNm()),
       `<input data-cn="__gb" value="${esc(st.page.gbName||'')}" placeholder="GUESTBOOK" title="게시판 이름 바꾸기 — 비우면 GUESTBOOK" style="width:104px;margin-bottom:0;font-size:11.5px">
        <label class="chk" style="margin:0 0 0 6px;font-size:11px" title="켜면 방명록 탭이 숨겨지고 아무도 남길 수 없어요 — 기존 글은 지워지지 않아요"><input type="checkbox" data-gboff ${st.page.gbOff?'checked':''}> 끄기</label>`)+
+    `<div class="p-row" style="margin:-4px 0 10px 12px;align-items:center;gap:8px;font-size:11px;color:var(--muted)">
+      <span style="flex:none">방명록 안내 문구</span>
+      <input id="s-gbhint" value="${esc(st.page.gbHint||'')}" placeholder="다녀간 흔적을 남겨주세요" maxlength="40" style="width:240px;margin-bottom:0;font-size:11.5px" title="방명록 입력칸에 연하게 보이는 문구 · 비우면 기본">
+      <input id="s-gbempty" value="${esc(st.page.gbEmpty||'')}" placeholder="아직 방명록이 비어 있어요 — 첫 흔적을 남겨주세요." maxlength="60" style="width:300px;margin-bottom:0;font-size:11.5px" title="방명록이 비었을 때 보이는 문구 · 비우면 기본">
+    </div>`+
     (homeStyle()==='blog'?'':row('recent','ALL',
       `<label class="chk" style="margin:0;font-size:11px" title="켜면 상단의 ALL(전체 글) 탭이 숨겨져요 — 카테고리별 탭은 그대로예요"><input type="checkbox" data-alloff ${st.page.allOff?'checked':''}> 끄기</label>`));
   bindCatImg(box);
+  [['s-gbhint','gbHint'],['s-gbempty','gbEmpty']].forEach(([id,k])=>{ const el=box.querySelector('#'+id); if(!el) return;   // 방명록 문구(phase508)
+    el.addEventListener('change',async()=>{ const v=el.value.trim().slice(0,60); try{ await updateDoc(doc(db,'pages',st.handle),{[k]:v}); st.page[k]=v; applyGbText(); msg('방명록 문구 저장!'); }catch(e){ msg('저장 실패 — '+e.message); } }); });
   box.querySelectorAll('[data-cn]').forEach(inp=>inp.addEventListener('change',async()=>{
     const v=inp.value.trim().slice(0,20);
     const field = inp.dataset.cn==='__gal' ? 'galName' : inp.dataset.cn==='home' ? 'homeName' : 'gbName';
@@ -6250,7 +6275,7 @@ function modeUIFill(){
   if(g('md-an')) g('md-an').value=(m.a&&m.a.name)||'';
   if(g('md-bn')) g('md-bn').value=(m.b&&m.b.name)||'';
   if(g('md-ab')) g('md-ab').value=(m.a&&m.a.btn)||''; if(g('md-bb')) g('md-bb').value=(m.b&&m.b.btn)||'';
-  if(g('md-btn')) g('md-btn').value=m.btn||'float'; if(g('md-pos')) g('md-pos').value=m.pos||'br';
+  if(g('md-btn')) g('md-btn').value=m.btn||'float'; if(g('md-pos')) g('md-pos').value=m.pos||'br'; if(g('md-onpost')) g('md-onpost').checked=m.onPost!==false; if(g('md-swlabel')) g('md-swlabel').checked=m.swLabel!==false;
   if(g('md-def')) g('md-def').value=m.def==='b'?'b':'a';
   if(g('md-fx')) g('md-fx').value=['fade','blink','none','soft'].includes(m.fx)?m.fx:'soft';
   if(g('md-hdr')) g('md-hdr').checked=!!m.hdr; if(g('md-strip')) g('md-strip').checked=!!m.strip; if(g('md-wid')) g('md-wid').checked=!!m.wid;
@@ -6261,7 +6286,7 @@ async function modeSaveCfg(extra){
   m.on=$('#md-on')?.checked===true;
   m.a={...(m.a||{}), name:($('#md-an')?.value||'').trim().slice(0,14), btn:($('#md-ab')?.value||'').trim().slice(0,16)};
   m.b={...(m.b||{}), name:($('#md-bn')?.value||'').trim().slice(0,14), btn:($('#md-bb')?.value||'').trim().slice(0,16)};
-  m.btn=$('#md-btn')?.value||'float'; m.pos=$('#md-pos')?.value||'br';
+  m.btn=$('#md-btn')?.value||'float'; m.pos=$('#md-pos')?.value||'br'; m.onPost=$('#md-onpost')?.checked!==false; m.swLabel=$('#md-swlabel')?.checked!==false;
   m.def=$('#md-def')?.value==='b'?'b':'a'; m.fx=$('#md-fx')?.value||'soft'; m.hdr=$('#md-hdr')?.checked===true; m.strip=$('#md-strip')?.checked===true; m.wid=$('#md-wid')?.checked===true;
   Object.assign(m, extra||{});
   const size=JSON.stringify(m).length; if(size>900000){ msg(`저장할 내용이 너무 커요(${Math.round(size/1024)}KB) — 사진 옵션을 끄고 다시 해보세요.`); throw new Error('too big'); }

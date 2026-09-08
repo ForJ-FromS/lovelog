@@ -332,6 +332,10 @@
   #mode-toggle{position:fixed;z-index:60;cursor:pointer;border:none;font-family:inherit}
   #mode-toggle.mp-br{right:20px;bottom:22px} #mode-toggle.mp-bl{left:22px;bottom:22px} #mode-toggle.mp-tr{right:22px;top:22px} #mode-toggle.mp-tl{left:22px;top:22px}
   #mode-toggle.mp-br.mp-owner{bottom:188px}                    /* 주인 화면: 글쓰기·꾸미기·편집 버튼 위로(phase481) */
+  #mode-toggle.mp-free{left:var(--mtX,80%);top:var(--mtY,80%);transform:translate(-50%,-50%)}   /* 자유 배치(phase506): 화면 비율 좌표 */
+  #mode-toggle.mp-free.drag{cursor:grabbing;opacity:.85;transition:none}
+  #mode-toggle.mp-free.can-drag{cursor:grab}
+  body.in-post #mode-toggle.no-post{display:none}
   #mode-toggle.mp-br.mp-owner.mb-switch{right:20px}
   #mode-toggle.mb-float{width:46px;height:46px;border-radius:50%;background:var(--card);border:1px solid var(--line);display:grid;place-content:center;font-size:20px;box-shadow:0 8px 22px rgba(0,0,0,.28);transition:transform .15s}
   #mode-toggle.mb-float:hover{transform:scale(1.08)}
@@ -843,11 +847,11 @@
   /* ═══ 설정 창 정돈 — 시안 A (phase466·472 복귀): 조용한 탭 하이라이트 · 얇은 선 소제목 · 상자 입력칸 · 행 구분선. 기능·id 무변 ═══ */
   #panel.big .p-card{background:color-mix(in srgb, var(--card) 92%, var(--bg));border-color:color-mix(in srgb, var(--line) 70%, transparent);border-radius:18px;padding:26px 30px 26px 26px;box-shadow:0 30px 80px rgba(0,0,0,.45)}
   #panel.big .tabs{width:168px;padding-right:18px;gap:2px}
-  #panel.big .tabs button{padding:9px 12px;font-size:12.5px;color:var(--muted);border-radius:8px;letter-spacing:.01em}
+  #panel.big .tabs button{padding:9px 12px;font-size:12.5px;color:var(--body);border-radius:8px;letter-spacing:.01em}
   #panel.big .tabs button:hover{color:var(--ink);background:color-mix(in srgb, var(--ink) 5%, transparent)}
   #panel.big .tabs button.on{background:color-mix(in srgb, var(--pri) 16%, transparent);color:var(--pri);font-weight:500}
   #panel.big .p-panes{padding-right:10px}
-  #panel .p-h{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);font-weight:600;
+  #panel .p-h{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--body);font-weight:600;
     margin:26px 0 10px;padding-top:0;border-top:none;display:flex;align-items:center;gap:10px}
   #panel .p-h::after{content:'';flex:1;height:1px;background:color-mix(in srgb, var(--line) 70%, transparent)}
   #panel .p-panes > .pane > .p-h:first-child{margin-top:4px}
@@ -865,11 +869,12 @@
   #panel .trow .tl{padding-top:11px}
   #panel .pane input[type=number]{text-align:center}
   #panel .pane input::placeholder,#panel .pane textarea::placeholder{color:color-mix(in srgb, var(--muted) 70%, transparent)}
-  #panel .note{font-size:10.5px;line-height:1.6;color:color-mix(in srgb, var(--muted) 85%, transparent);margin-top:4px}
+  #panel .note{font-size:11px;line-height:1.6;color:color-mix(in srgb, var(--body) 80%, var(--muted));margin-top:4px}   /* 가독성(phase508): 회색 → 본문색에 가깝게 */
   #panel .trow{padding:7px 0;border-bottom:1px solid color-mix(in srgb, var(--line) 40%, transparent)}
   #panel .trow:last-of-type{border-bottom:none}
   #panel .trow .tl{font-size:12.5px;color:var(--ink);font-weight:500}
-  #panel .trow .tl2{font-size:10.5px;letter-spacing:.02em}
+  #panel .trow .tl2{font-size:11px;letter-spacing:.02em;color:var(--body)}
+  #panel .chk{color:var(--body)} #panel .p-row>span{color:var(--body)}
   #panel .btn{border-radius:8px;padding:8px 16px;font-size:12.5px;background:color-mix(in srgb, var(--card2) 70%, transparent)}
   #panel .btn:hover{border-color:var(--pri)}
   #panel .btn.pri{background:var(--pri);border-color:var(--pri)}
@@ -3199,10 +3204,13 @@ html,body{overflow-x:hidden;overflow-x:clip}
         <option value="switch">버튼 — 전등 스위치</option>
         <option value="cat">버튼 — 카테고리 줄 끝 글자</option></select>
       <select id="md-pos" style="width:auto;margin-bottom:0">
-        <option value="br">위치 — 오른쪽 아래</option><option value="bl">위치 — 왼쪽 아래</option><option value="tr">위치 — 오른쪽 위</option><option value="tl">위치 — 왼쪽 위</option></select>
+        <option value="br">위치 — 오른쪽 아래</option><option value="bl">위치 — 왼쪽 아래</option><option value="tr">위치 — 오른쪽 위</option><option value="tl">위치 — 왼쪽 위</option>
+        <option value="free">위치 — 자유 (홈에서 드래그해 놓기)</option></select>
+      <label class="chk" title="글을 읽는 화면에서도 전환 버튼을 보일지"><input type="checkbox" id="md-onpost" checked> 글 화면에서도 표시</label>
+      <label class="chk" title="전등 스위치 · 동그라미 옆에 버튼 문구(예: 밤 / 아침)를 함께 보일지"><input type="checkbox" id="md-swlabel" checked> 버튼 옆 문구 표시</label>
       <select id="md-fx" style="width:auto;margin-bottom:0"><option value="soft">전환 효과 — 자연스럽게 (색이 번짐)</option><option value="fade">전환 효과 — 페이드</option><option value="blink">전환 효과 — 암전</option><option value="none">전환 효과 — 없음 (바로)</option></select>
     </div>
-    <p class="note">위치는 동그라미 · 스위치일 때만. 카테고리 줄 글자는 줄 오른쪽 끝에 붙어요.</p>
+    <p class="note">위치는 동그라미 · 스위치일 때만. 카테고리 줄 글자는 줄 오른쪽 끝에 붙어요. 〈자유〉를 고르면 홈 화면에서 버튼을 <b>드래그해서 원하는 자리에</b> 놓을 수 있고(주인만), 놓은 자리는 자동 저장돼요. 폰에서는 화면 비율에 맞춰 같은 위치에 놓입니다.</p>
 
     <div id="md-body" class="hidden">
     <p class="p-h">2 · A 담기</p>
@@ -3232,7 +3240,7 @@ html,body{overflow-x:hidden;overflow-x:clip}
       <button class="btn" id="md-apply" style="font-size:12px">설정 저장</button>
       <span class="note" id="md-st" style="margin:0"></span>
     </div>
-    <p class="note">방문자가 누른 모드는 그 기기에 기억돼요. 버튼 문구를 비우면 동그라미·글자 버튼엔 상대 모드 이름이, 전등 스위치엔 스위치만 보여요.</p>
+    <p class="note">방문자가 누른 모드는 그 기기에 기억돼요. 〈버튼 옆 문구 표시〉를 끄면 문구를 적어 두어도 스위치(또는 이모지)만 보여요. 문구를 비우면 동그라미·글자 버튼엔 상대 모드 이름이 보이고, 전등 스위치엔 스위치만 남아요.</p>
     <p class="note" style="color:var(--pri)">ℹ 듀얼 테마가 켜진 상태에서 위젯 · 설정 · 스티커를 저장하면 <b>지금 보고 있는 모드</b>에 자동으로 반영돼요. 다른 모드를 고치려면 그 모드로 전환(불러오기)한 뒤 저장하세요. [A로 담기] · [B로 담기]는 옵션 범위를 바꿨을 때나 통째로 다시 담을 때 쓰면 됩니다.</p>
     </div>
   </div>
@@ -3298,6 +3306,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=530"></script>
+<script type="module" src="./app.js?v=533"></script>
 </body>
 </html>
