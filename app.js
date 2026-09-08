@@ -1134,7 +1134,8 @@ function modeToggleDraw(){
     b.style.setProperty('--mtX', (m.x??80)+'%'); b.style.setProperty('--mtY', (m.yp??600)+'px');
     if(st.mine&&st.editMode){ b.classList.add('can-drag'); modeDragBind(b); } else { b.classList.remove('can-drag'); b.onpointerdown=b.onpointermove=b.onpointerup=null; }
   }
-  if(/^#[0-9a-fA-F]{3,8}$/.test(m.col||'')) b.style.setProperty('--mtC', m.col); else b.style.removeProperty('--mtC');   // 버튼 색(phase514)
+  const colNow=((m[cur]&&m[cur].col)||m.col||'');               // 모드별 색 우선(phase516) — 없으면 공통, 그것도 없으면 테마 포인트색
+  if(/^#[0-9a-fA-F]{3,8}$/.test(colNow)) b.style.setProperty('--mtC', colNow); else b.style.removeProperty('--mtC');
   if(style==='float'){ const lb=(m.swLabel===false&&/\p{Extended_Pictographic}/u.test(label))?label.match(/\p{Extended_Pictographic}/u)[0]:label;   // 문구 끄면 이모지만(phase507)
     const emojiOnly=/^\p{Extended_Pictographic}$/u.test(lb.trim()); b.innerHTML=emojiOnly?esc(lb):`<span class="mt-txt">${esc(lb)}</span>`; }
   else if(style==='switch'){ const lb=(m.swLabel===false)?'':((m[other]&&m[other].btn)||''); b.innerHTML=`<span class="mt-sw"></span>${lb?`<span>${esc(lb)}</span>`:''}`; b.classList.toggle('bare', !lb); }   // 문구 표시 끄기(phase507) · 비우면 스위치만(phase499)
@@ -6295,7 +6296,8 @@ function modeUIFill(){
   if(g('md-bn')) g('md-bn').value=(m.b&&m.b.name)||'';
   if(g('md-ab')) g('md-ab').value=(m.a&&m.a.btn)||''; if(g('md-bb')) g('md-bb').value=(m.b&&m.b.btn)||'';
   if(g('md-btn')) g('md-btn').value=m.btn||'float'; if(g('md-pos')) g('md-pos').value=m.pos||'br'; if(g('md-onpost')) g('md-onpost').checked=m.onPost!==false; if(g('md-swlabel')) g('md-swlabel').checked=m.swLabel!==false;
-  if(g('md-tgemo')) g('md-tgemo').checked=!!m.tgEmo; if(g('md-ul')) g('md-ul').checked=!!m.catUl; if(g('md-col')) g('md-col').value=m.col||'#c9b27a';
+  if(g('md-tgemo')) g('md-tgemo').checked=!!m.tgEmo; if(g('md-ul')) g('md-ul').checked=!!m.catUl;
+  if(g('md-acol')) g('md-acol').value=(m.a&&m.a.col)||m.col||'#c9b27a'; if(g('md-bcol')) g('md-bcol').value=(m.b&&m.b.col)||m.col||'#c9b27a';
   const bt=(m.btn||'float'); if(g('md-tgemo-l')) g('md-tgemo-l').style.display=bt==='toggle'?'':'none'; if(g('md-ul-l')) g('md-ul-l').style.display=bt==='cat'?'':'none';
   if(g('md-def')) g('md-def').value=m.def==='b'?'b':'a';
   if(g('md-fx')) g('md-fx').value=['fade','blink','none','soft'].includes(m.fx)?m.fx:'soft';
@@ -6307,7 +6309,9 @@ async function modeSaveCfg(extra){
   m.on=$('#md-on')?.checked===true;
   m.a={...(m.a||{}), name:($('#md-an')?.value||'').trim().slice(0,14), btn:($('#md-ab')?.value||'').trim().slice(0,16)};
   m.b={...(m.b||{}), name:($('#md-bn')?.value||'').trim().slice(0,14), btn:($('#md-bb')?.value||'').trim().slice(0,16)};
-  m.btn=$('#md-btn')?.value||'float'; m.pos=$('#md-pos')?.value||'br'; m.onPost=$('#md-onpost')?.checked!==false; m.swLabel=$('#md-swlabel')?.checked!==false; m.tgEmo=$('#md-tgemo')?.checked===true; m.catUl=$('#md-ul')?.checked===true; m.col=st._mdColClear?'':($('#md-col')?.value||''); st._mdColClear=false;
+  m.btn=$('#md-btn')?.value||'float'; m.pos=$('#md-pos')?.value||'br'; m.onPost=$('#md-onpost')?.checked!==false; m.swLabel=$('#md-swlabel')?.checked!==false; m.tgEmo=$('#md-tgemo')?.checked===true; m.catUl=$('#md-ul')?.checked===true;
+  ['a','b'].forEach(k=>{ const el=$('#md-'+k+'col'); if(!el) return; m[k]={...(m[k]||{})}; m[k].col=st['_mdCol'+k+'Clear']?'':(el.value||''); st['_mdCol'+k+'Clear']=false; });
+  delete m.col;
   m.def=$('#md-def')?.value==='b'?'b':'a'; m.fx=$('#md-fx')?.value||'soft'; m.hdr=$('#md-hdr')?.checked===true; m.strip=$('#md-strip')?.checked===true; m.wid=$('#md-wid')?.checked===true;
   Object.assign(m, extra||{});
   const size=JSON.stringify(m).length; if(size>900000){ msg(`저장할 내용이 너무 커요(${Math.round(size/1024)}KB) — 사진 옵션을 끄고 다시 해보세요.`); throw new Error('too big'); }
@@ -6319,11 +6323,14 @@ async function modeSaveSlot(which){
   if(!st.mine) return;
   st._modeSaving=true; try{ await saveSettings(); }catch(e){ msg('먼저 설정 저장에 실패했어요 — '+(e.message||e)); return; } finally{ st._modeSaving=false; }
   const name=($('#md-'+which+'n')?.value||'').trim().slice(0,14), btn=($('#md-'+which+'b')?.value||'').trim().slice(0,16);
-  await modeSaveCfg({[which]:{name, btn, snap:modeSnap()}}); msg(`지금 모습을 ${which.toUpperCase()}에 담았어요.`);
+  const col=($('#md-'+which+'col')?.value)||''; const keep=st['_mdCol'+which+'Clear']?'':col;
+  await modeSaveCfg({[which]:{name, btn, col:keep, snap:modeSnap()}}); msg(`지금 모습을 ${which.toUpperCase()}에 담았어요.`);
 }
 $('#md-on')?.addEventListener('change', ()=>{ $('#md-body')?.classList.toggle('hidden', !$('#md-on').checked); });   // 켜야 A/B 칸 펼침(phase479)
-$('#md-colx')?.addEventListener('click', ()=>{ st._mdColClear=true; const c=$('#md-col'); if(c) c.value='#c9b27a'; msg('테마 포인트색으로 — [설정 저장]으로 확정'); });
-$('#md-col')?.addEventListener('input', ()=>{ st._mdColClear=false; });
+['a','b'].forEach(k=>{
+  $('#md-'+k+'colx')?.addEventListener('click', ()=>{ st['_mdCol'+k+'Clear']=true; const c=$('#md-'+k+'col'); if(c) c.value='#c9b27a'; msg(`${k.toUpperCase()} 버튼 색을 테마색으로 — [설정 저장]으로 확정`); });
+  $('#md-'+k+'col')?.addEventListener('input', ()=>{ st['_mdCol'+k+'Clear']=false; });
+});
 $('#md-btn')?.addEventListener('change', ()=>{ const bt=$('#md-btn').value; const a=$('#md-tgemo-l'), u=$('#md-ul-l'); if(a) a.style.display=bt==='toggle'?'':'none'; if(u) u.style.display=bt==='cat'?'':'none'; });
 $('#md-save-a')?.addEventListener('click', ()=>modeSaveSlot('a'));
 $('#md-save-b')?.addEventListener('click', ()=>modeSaveSlot('b'));

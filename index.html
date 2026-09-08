@@ -3231,7 +3231,7 @@ html,body{overflow-x:hidden;overflow-x:clip}
         <option value="cat">버튼 — 글자 한 줄 (카테고리 줄 끝 · 또는 자유 배치)</option></select>
       <label class="chk" id="md-tgemo-l" title="토글 스위치 손잡이에 버튼 문구의 이모지(☀ ☾ 등)를 표시하고 트랙을 두 모드 색으로"><input type="checkbox" id="md-tgemo"> 손잡이에 이모지 (해·달)</label>
       <label class="chk" id="md-ul-l" title="카테고리 줄 끝 글자에 밑줄"><input type="checkbox" id="md-ul"> 글자 밑줄</label>
-      <span style="font-size:11px;color:var(--body)">버튼 색</span><input type="color" id="md-col" value="#c9b27a" title="토글 · 스위치 · 분할 · 다이얼 바늘 · 글자의 색 — 비우면 테마 포인트색"><button class="rmv" id="md-colx" style="font-size:11px">테마색</button>
+
       <select id="md-pos" style="width:auto;margin-bottom:0">
         <option value="br">위치 — 오른쪽 아래</option><option value="bl">위치 — 왼쪽 아래</option><option value="tr">위치 — 오른쪽 위</option><option value="tl">위치 — 왼쪽 위</option>
         <option value="free">위치 — 자유 (홈에서 드래그해 놓기)</option></select>
@@ -3246,6 +3246,7 @@ html,body{overflow-x:hidden;overflow-x:clip}
     <div class="p-row" style="align-items:center;gap:8px">
       <input id="md-an" placeholder="A 이름 (예: 아침 · 제스테 · 평상시)" maxlength="14" style="width:200px;margin-bottom:0">
       <input id="md-ab" placeholder="A로 가는 버튼 문구 (예: ☀ 아침으로 →)" maxlength="16" style="width:220px;margin-bottom:0">
+      <span style="font-size:11px;color:var(--body)">버튼 색</span><input type="color" id="md-acol" value="#c9b27a" title="A일 때 전환 버튼 색 — 테마색 버튼을 누르면 테마 포인트색을 따라요"><button class="rmv" id="md-acolx" style="font-size:11px">테마색</button>
       <button class="btn pri" id="md-save-a" style="font-size:12px">지금 모습을 A로 담기</button>
       <button class="rmv" id="md-load-a" style="font-size:11px">A 불러오기</button>
     </div>
@@ -3254,6 +3255,7 @@ html,body{overflow-x:hidden;overflow-x:clip}
     <div class="p-row" style="align-items:center;gap:8px">
       <input id="md-bn" placeholder="B 이름 (예: 밤 · 설아 · 이벤트)" maxlength="14" style="width:200px;margin-bottom:0">
       <input id="md-bb" placeholder="B로 가는 버튼 문구 (예: ☾ 밤으로 →)" maxlength="16" style="width:220px;margin-bottom:0">
+      <span style="font-size:11px;color:var(--body)">버튼 색</span><input type="color" id="md-bcol" value="#c9b27a" title="B일 때 전환 버튼 색"><button class="rmv" id="md-bcolx" style="font-size:11px">테마색</button>
       <button class="btn pri" id="md-save-b" style="font-size:12px">지금 모습을 B로 담기</button>
       <button class="rmv" id="md-load-b" style="font-size:11px">B 불러오기</button>
     </div>
@@ -3335,6 +3337,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=540"></script>
+<script type="module" src="./app.js?v=541"></script>
 </body>
 </html>
