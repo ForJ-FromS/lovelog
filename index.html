@@ -916,17 +916,17 @@
   #panel .grp .p-h{margin:0 0 2px;font-size:13px}
   #panel .grp .p-h::after{display:none}
   #panel .grp .gd{font-size:11.5px;color:var(--muted);margin:0 0 8px;line-height:1.5}
-  #panel .grp .trow{padding:7px 0!important;min-height:0;border-bottom:none!important;align-items:center!important}
+  #panel .grp .trow{padding:9px 0!important;min-height:0;border-bottom:none!important;align-items:center!important}
   #panel .grp .trow .tl{padding-top:0;font-size:12.5px;color:var(--body)}
   #panel .trows{gap:0!important;margin:0}
   #panel .trow{padding:7px 0!important;min-height:0;border-bottom:none}
   #panel .trow .tc{row-gap:6px}
   #panel .trow:has(.tc > :nth-child(6)) {align-items:start!important} #panel .trow:has(.tc > :nth-child(6)) .tl{padding-top:6px}
-  #panel .pane input:not([type=file]):not([type=checkbox]):not([type=range]):not([type=color]),#panel .pane select{min-height:30px;padding:5px 9px;font-size:12.5px}
-  #panel .pane select{padding:5px 30px 5px 9px!important;min-height:30px}
-  #panel .trow select{font-size:12.5px!important;max-width:220px}
+  #panel .pane input:not([type=file]):not([type=checkbox]):not([type=range]):not([type=color]),#panel .pane select{min-height:38px;padding:8px 12px;font-size:13.5px}   /* 컨트롤 높이 복구(phase525) */
+  #panel .pane select{padding:8px 36px 8px 12px!important;min-height:38px}
+  #panel .trow select{font-size:13.5px!important;max-width:260px}
   #panel .trow input[type=color]{width:26px!important;height:24px!important}
-  #panel .btn{padding:6px 12px;font-size:12px} #panel .rmv{padding:4px 9px;font-size:11px}
+  #panel .btn{padding:8px 14px;font-size:12.5px} #panel .rmv{padding:6px 10px;font-size:11.5px}
   #panel .p-row{margin-bottom:8px;min-height:30px;align-items:center}
   #panel.big .p-card{padding:20px 24px 22px 20px}
   #panel.big .tabs button:focus,#panel.big .tabs button:focus-visible{outline:none;box-shadow:none}
@@ -2965,6 +2965,7 @@ html,body{overflow-x:hidden;overflow-x:clip}
       실수로 초기화했을 때 아래에서 고르면 그 상태로 되돌아가요. 글 · 사진 · 방명록은 건드리지 않고 꾸미기만 되돌립니다.
       기기·브라우저에 저장되니, 다른 기기나 시크릿 창에는 안 남아요.</p>
     <div id="undo-list"></div>
+    <div class="p-row" style="align-items:center;gap:8px;margin-top:6px"><button class="rmv" id="undo-more" style="font-size:11px">더 보기</button><button class="rmv" id="undo-clear" style="font-size:11px">기록 비우기</button><span class="note" style="margin:0">최근 12개까지만 보관되고 오래된 것부터 자동으로 지워져요</span></div>
 
     <p class="p-h" style="margin-top:26px">복원 (백업에서 불러오기)</p>
     <p class="note" style="margin-top:-4px">JSON 백업 파일로 되돌립니다. 복원 직전에 <b>현재 상태가 자동으로 한 번 백업</b>되고,
@@ -3359,6 +3360,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=549"></script>
+<script type="module" src="./app.js?v=550"></script>
 </body>
 </html>

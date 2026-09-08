@@ -7526,7 +7526,9 @@ async function undoApply(i){
 }
 function renderUndo(){
   const box=document.getElementById('undo-list'); if(!box) return;
-  const arr=undoList();
+  const all=undoList(); const arr=st._undoAll?all:all.slice(0,4);   // 기본 4개만, 더 보기로 펼침(phase525)
+  const more=document.getElementById('undo-more'); if(more){ more.style.display=all.length>4?'':'none'; more.textContent=st._undoAll?'접기':`더 보기 (${all.length-4})`; more.onclick=()=>{ st._undoAll=!st._undoAll; renderUndo(); }; }
+  const clr=document.getElementById('undo-clear'); if(clr){ clr.style.display=all.length?'':'none'; clr.onclick=()=>{ if(confirm('되돌리기 기록을 모두 지울까요?')){ try{ localStorage.removeItem(UNDO_KEY()); }catch(e){} renderUndo(); } }; }
   box.innerHTML = arr.length ? arr.map((it,i)=>{
     const when=new Date(it.t).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
     return `<div class="p-row" style="align-items:center;gap:8px;margin-bottom:6px">
