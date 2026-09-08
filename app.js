@@ -7046,6 +7046,7 @@ async function signup(){
       if(code){
         if(!a.exists()) throw new Error('초대코드가 올바르지 않아요.');
         id=a.data();
+        if(id.svc && id.svc!=='lovelog') throw new Error('러브인포 초대코드예요 — 러브로그 가입엔 러브로그 코드를 넣어주세요.');   // invites 컬렉션 공용(phase501)
         multi = id.multi===true || typeof id.max==='number';
         if(!multi && id.used) throw new Error('이미 사용된 초대코드예요.');
         if(id.closed===true) throw new Error('지금은 가입이 닫혀 있어요.');
@@ -7356,7 +7357,7 @@ const rnd4=()=>Math.random().toString(36).slice(2,6);
 $('#adm-make').onclick=async()=>{
   if(st.myHandle!=='jeste') return;
   const pre=($('#adm-pre').value.trim().toLowerCase()||'code').replace(/[^a-z0-9-]/g,'');
-  const n=Math.min(30,Math.max(1,+$('#adm-n').value||10));
+  const n=Math.min(500,Math.max(1,+$('#adm-n').value||10));   // 상한 500(phase501)
   const kind=$('#adm-kind').value;
   /* 1차 지정(phase321): 심으면 이 코드 가입자는 핸들 칸을 비워도 되고, 이 값이 1차로 기록됨 */
   const refPin=($('#adm-ref')?.value||'').trim().replace(/^@/,'');
@@ -7371,12 +7372,12 @@ $('#adm-make').onclick=async()=>{
     const made=[];
     if(kind==='multi'){
       const c=pre+'-'+rnd4();
-      await setDoc(doc(db,'invites',c),{max:n,created:serverTimestamp(),...(refPin?{ref:refPin}:{})});
+      await setDoc(doc(db,'invites',c),{max:n,created:serverTimestamp(),svc:'lovelog',...(refPin?{ref:refPin}:{})});
       made.push(c+'   (최대 '+n+'명'+(refPin?' · 1차:'+refPin:'')+')');
     }else{
       for(let i=0;i<n;i++){
         const c=pre+'-'+rnd4();
-        await setDoc(doc(db,'invites',c),{created:serverTimestamp(),...(refPin?{ref:refPin}:{})});
+        await setDoc(doc(db,'invites',c),{created:serverTimestamp(),svc:'lovelog',...(refPin?{ref:refPin}:{})});
         made.push(c+(refPin?'   (1차:'+refPin+')':''));
       }
     }
