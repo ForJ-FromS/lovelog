@@ -911,15 +911,24 @@
   #panel .p-panes::-webkit-scrollbar{width:6px} #panel .p-panes::-webkit-scrollbar-thumb{background:color-mix(in srgb, var(--line) 80%, transparent);border-radius:0}
   #panel .wl{border-radius:4px}
   #panel #undo-list .p-row{border-bottom:1px solid color-mix(in srgb, var(--line) 50%, transparent);padding:6px 0;margin:0}
-  /* 행 리듬 통일(phase523): 간격은 행 패딩 하나로만, 최소 높이 고정, 내용이 두 줄이면 위 정렬 */
-  #panel .trows{gap:0!important;margin:0 0 6px}
-  #panel .trow{padding:10px 0!important;min-height:54px;box-sizing:border-box;align-items:center!important}
-  #panel .trow .tc{row-gap:8px}
-  #panel .trow:has(.tc > :nth-child(6)) {align-items:start!important}
-  #panel .trow:has(.tc > :nth-child(6)) .tl{padding-top:8px}
-  #panel .trows .p-h{margin:22px 0 4px}
-  #panel .trows > .p-h:first-child{margin-top:4px}
-  #panel .p-row{margin-bottom:10px;min-height:32px;align-items:center}
+  /* 카드 묶음(phase524): 소제목 + 그 아래 행들을 JS로 .grp 카드에 담음. 카드 안은 구분선 없이 여백만, 컨트롤은 작게 */
+  #panel .grp{border:1px solid color-mix(in srgb, var(--line) 70%, transparent);border-radius:4px;background:color-mix(in srgb, var(--card2) 45%, transparent);padding:12px 14px 6px;margin:0 0 12px}
+  #panel .grp .p-h{margin:0 0 2px;font-size:13px}
+  #panel .grp .p-h::after{display:none}
+  #panel .grp .gd{font-size:11.5px;color:var(--muted);margin:0 0 8px;line-height:1.5}
+  #panel .grp .trow{padding:7px 0!important;min-height:0;border-bottom:none!important;align-items:center!important}
+  #panel .grp .trow .tl{padding-top:0;font-size:12.5px;color:var(--body)}
+  #panel .trows{gap:0!important;margin:0}
+  #panel .trow{padding:7px 0!important;min-height:0;border-bottom:none}
+  #panel .trow .tc{row-gap:6px}
+  #panel .trow:has(.tc > :nth-child(6)) {align-items:start!important} #panel .trow:has(.tc > :nth-child(6)) .tl{padding-top:6px}
+  #panel .pane input:not([type=file]):not([type=checkbox]):not([type=range]):not([type=color]),#panel .pane select{min-height:30px;padding:5px 9px;font-size:12.5px}
+  #panel .pane select{padding:5px 30px 5px 9px!important;min-height:30px}
+  #panel .trow select{font-size:12.5px!important;max-width:220px}
+  #panel .trow input[type=color]{width:26px!important;height:24px!important}
+  #panel .btn{padding:6px 12px;font-size:12px} #panel .rmv{padding:4px 9px;font-size:11px}
+  #panel .p-row{margin-bottom:8px;min-height:30px;align-items:center}
+  #panel.big .p-card{padding:20px 24px 22px 20px}
   #panel.big .tabs button:focus,#panel.big .tabs button:focus-visible{outline:none;box-shadow:none}
   #panel .pane input:focus-visible,#panel .pane select:focus-visible,#panel .btn:focus-visible,#panel .rmv:focus-visible{outline:none}
   .p-row select{width:auto;margin-bottom:0}
@@ -3350,6 +3359,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=548"></script>
+<script type="module" src="./app.js?v=549"></script>
 </body>
 </html>

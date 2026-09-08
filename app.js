@@ -3902,7 +3902,23 @@ function refreshGalCats(){
   sel.innerHTML = `<option value="">일반 갤러리 (하단 스트립)</option>`+
     g.map(c=>`<option>${esc(c)}</option>`).join('');
 }
+/* 설정 창 카드 묶음(phase524): .trows 안의 소제목(.p-h)과 그 아래 행들을 .grp 카드로 감싸고 한 줄 설명을 붙임. 1회만 */
+const GRP_DESC={'구조':'글이 쌓이는 방식과 위젯 기둥 자리','헤더':'맨 위 큰 사진과 이름 자리 — 배치 · 장식 · 표시 · 색 · 위치','카테고리 · 글':'카테고리 줄과 글이 보이는 방식','모양 · 화면':'홈 전체에 걸리는 모서리와 버튼 모양'};
+function groupPanelRows(){
+  document.querySelectorAll('#panel .trows').forEach(box=>{
+    if(box.dataset.grouped) return; box.dataset.grouped='1';
+    const kids=[...box.children]; if(!kids.some(k=>k.classList.contains('p-h'))) return;
+    let grp=null;
+    kids.forEach(k=>{
+      if(k.classList.contains('p-h')){
+        grp=document.createElement('div'); grp.className='grp'; box.insertBefore(grp,k); grp.appendChild(k);
+        const d=GRP_DESC[k.textContent.trim()]; if(d){ const p=document.createElement('p'); p.className='gd'; p.textContent=d; grp.appendChild(p); }
+      } else if(grp) grp.appendChild(k);
+    });
+  });
+}
 function openPanel(mode){
+  groupPanelRows();
   const groups={write:['write','galup'], deco:['set','wid','cats','theme','bg','mode','stk','mng','adm']};   // 듀얼 테마 탭 포함(phase482)
   document.querySelectorAll('.tabs button').forEach(b=>{
     b.style.display=groups[mode].includes(b.dataset.tab)?'':'none';
