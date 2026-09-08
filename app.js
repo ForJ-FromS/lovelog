@@ -1641,9 +1641,19 @@ document.addEventListener('mousemove',e=>{
 });
 /* 🔊 클릭 소리(phase494) — WebAudio 합성, 파일 없음. 방문자는 🔇로 기기별 끄기 */
 let sndCtx=null;
+const SND_FILES={click:'/snd/click.mp3'};                       // 파일 소리(phase497) — 저장소 /snd/ 에 동봉
+let sndBufs={};
+async function sndFile(kind, vol){
+  const c=sndCtx; const url=SND_FILES[kind]; if(!url) return false;
+  try{
+    if(!sndBufs[kind]){ const r=await fetch(url); sndBufs[kind]=await c.decodeAudioData(await r.arrayBuffer()); }
+    const s=c.createBufferSource(); s.buffer=sndBufs[kind]; const g=c.createGain(); g.gain.value=Math.max(0,Math.min(1,(vol||40)/100)); s.connect(g); g.connect(c.destination); s.start(); return true;
+  }catch(e){ return false; }
+}
 function sndPlay(kind, vol){
   try{
     if(!kind) return; if(localStorage.getItem('lv-snd-off')==='1') return;
+    if(SND_FILES[kind]){ sndCtx=sndCtx||new (window.AudioContext||window.webkitAudioContext)(); if(sndCtx.state==='suspended') sndCtx.resume(); sndFile(kind, vol); return; }
     sndCtx=sndCtx||new (window.AudioContext||window.webkitAudioContext)(); const c=sndCtx; if(c.state==='suspended') c.resume();
     const g=c.createGain(); g.connect(c.destination); const v=Math.max(0,Math.min(1,(vol||40)/100))*0.6; const t=c.currentTime;
     const tick=(at,ms,hz,amp)=>{                                 // 아주 짧은 노이즈 틱 (마우스 클릭 소리의 재료)
