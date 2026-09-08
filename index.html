@@ -332,7 +332,8 @@
   #mode-toggle{position:fixed;z-index:60;cursor:pointer;border:none;font-family:inherit}
   #mode-toggle.mp-br{right:20px;bottom:22px} #mode-toggle.mp-bl{left:22px;bottom:22px} #mode-toggle.mp-tr{right:22px;top:22px} #mode-toggle.mp-tl{left:22px;top:22px}
   #mode-toggle.mp-br.mp-owner{bottom:188px}                    /* 주인 화면: 글쓰기·꾸미기·편집 버튼 위로(phase481) */
-  #mode-toggle.mp-free{left:var(--mtX,80%);top:var(--mtY,80%);transform:translate(-50%,-50%)}   /* 자유 배치(phase506): 화면 비율 좌표 */
+  #mode-toggle.mp-free{position:absolute!important;left:var(--mtX,80%)!important;top:var(--mtY,600px)!important;right:auto!important;bottom:auto!important;transform:translate(-50%,-50%);z-index:60}   /* 자유 배치(phase514): 문서 기준 — 스크롤에 따라오지 않음 */
+  #mode-toggle.mp-free.can-drag{cursor:grab;outline:1px dashed var(--pri);outline-offset:4px}
   #mode-toggle.mp-free.drag{cursor:grabbing;opacity:.85;transition:none}
   #mode-toggle.mp-free.can-drag{cursor:grab}
   body.in-post #mode-toggle.no-post{display:none}
@@ -343,7 +344,7 @@
   #mode-toggle.mb-switch{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 12px 8px 8px;box-shadow:0 8px 22px rgba(0,0,0,.25);color:var(--body);font-size:11.5px}
   #mode-toggle.mb-switch.bare{padding:8px;gap:0}
   #mode-toggle.mb-switch .mt-sw{width:26px;height:42px;border-radius:5px;background:var(--card2);border:1px solid var(--line);position:relative;flex:none}
-  #mode-toggle.mb-switch .mt-sw::after{content:'';position:absolute;left:5px;width:14px;height:17px;border-radius:3px;background:var(--pri);box-shadow:0 2px 0 rgba(0,0,0,.35);top:4px;transition:top .15s}
+  #mode-toggle.mb-switch .mt-sw::after{content:'';position:absolute;left:5px;width:14px;height:17px;border-radius:3px;background:var(--mtC,var(--pri));box-shadow:0 2px 0 rgba(0,0,0,.35);top:4px;transition:top .15s}
   #mode-toggle.mb-switch.down .mt-sw::after{top:19px}
   #catbar{position:relative}
   /* 토글 스위치(phase510): 알약 트랙 + 동그란 손잡이, B면 오른쪽 */
@@ -352,23 +353,23 @@
   #mode-toggle.mb-toggle .mt-tg{width:46px;height:26px;border-radius:999px;position:relative;flex:none;
     background:color-mix(in srgb, var(--line) 80%, transparent);transition:background .25s}
   #mode-toggle.mb-toggle .mt-tg::after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.35);transition:left .25s cubic-bezier(.4,0,.2,1)}
-  #mode-toggle.mb-toggle.down .mt-tg{background:linear-gradient(135deg, var(--pri), color-mix(in srgb, var(--pri) 60%, #fff))}
+  #mode-toggle.mb-toggle.down .mt-tg{background:linear-gradient(135deg, var(--mtC,var(--pri)), color-mix(in srgb, var(--mtC,var(--pri)) 60%, #fff))}
   #mode-toggle.mb-toggle.down .mt-tg::after{left:23px}
   /* 회전 다이얼(phase511) */
-  #mode-toggle.mb-dial{width:48px;height:48px;border-radius:50%;background:radial-gradient(circle at 40% 35%, color-mix(in srgb, var(--card) 70%, #fff), var(--card2));border:1px solid var(--line);box-shadow:0 8px 22px rgba(0,0,0,.3);position:relative}
-  #mode-toggle.mb-dial .mt-nd{position:absolute;left:50%;top:5px;width:3px;height:13px;background:var(--pri);border-radius:2px;transform-origin:50% 19px;transform:translateX(-50%) rotate(-35deg);transition:transform .35s cubic-bezier(.4,0,.2,1)}
+  #mode-toggle.mb-dial{width:48px;height:48px;border-radius:50%;background:radial-gradient(circle at 40% 35%, color-mix(in srgb, var(--card) 70%, #fff), var(--card2));border:1px solid var(--line);box-shadow:0 8px 22px rgba(0,0,0,.3);position:fixed}   /* fixed 유지(phase513) — relative가 화면 고정을 깨뜨렸음 */
+  #mode-toggle.mb-dial .mt-nd{position:absolute;left:50%;top:5px;width:3px;height:13px;background:var(--mtC,var(--pri));border-radius:2px;transform-origin:50% 19px;transform:translateX(-50%) rotate(-35deg);transition:transform .35s cubic-bezier(.4,0,.2,1)}
   #mode-toggle.mb-dial.down .mt-nd{transform:translateX(-50%) rotate(35deg)}
   #mode-toggle.mb-dial .mt-a,#mode-toggle.mb-dial .mt-b{position:absolute;bottom:6px;font-size:7px;color:var(--muted);font-family:'IBM Plex Mono',monospace} #mode-toggle.mb-dial .mt-a{left:9px} #mode-toggle.mb-dial .mt-b{right:9px}
   /* 분할 버튼 */
   #mode-toggle.mb-split{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--card);font-size:11.5px;box-shadow:0 8px 22px rgba(0,0,0,.25);padding:0}
-  #mode-toggle.mb-split span{padding:8px 14px;color:var(--muted)} #mode-toggle.mb-split span.on{background:var(--pri);color:#15131f}
+  #mode-toggle.mb-split span{padding:8px 14px;color:var(--muted)} #mode-toggle.mb-split span.on{background:var(--mtC,var(--pri));color:#15131f}
   /* 토글 손잡이 이모지 · 두 모드 색 트랙 */
   #mode-toggle.mb-toggle.emo .mt-tg{background:linear-gradient(90deg,#1d2440,#3a3f63)} #mode-toggle.mb-toggle.emo.down .mt-tg{background:linear-gradient(90deg,#f6c85f,#ffe9a8)}
   #mode-toggle.mb-toggle.emo .mt-tg::after{content:attr(data-e);display:grid;place-content:center;font-size:12px;background:#f2e6b8}
   /* 카테고리 글자 밑줄 */
   #mode-toggle.mb-cat.ul{text-decoration:underline;text-underline-offset:4px}
-  #mode-toggle.mb-cat.mp-free{position:fixed;background:none;color:var(--pri);font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.15em;padding:6px 4px;white-space:nowrap;text-shadow:0 1px 6px rgba(0,0,0,.35)}
-  #mode-toggle.mb-cat{position:absolute;right:6px;top:50%;transform:translateY(-50%);margin:0;background:none;color:var(--pri);font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.15em;padding:6px 4px;white-space:nowrap}   /* 줄 흐름 밖(phase483) */
+  #mode-toggle.mb-cat.mp-free{background:none;color:var(--mtC,var(--pri));font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.15em;padding:6px 4px;white-space:nowrap;text-shadow:0 1px 6px rgba(0,0,0,.35)}
+  #mode-toggle.mb-cat{position:absolute;right:6px;top:50%;transform:translateY(-50%);margin:0;background:none;color:var(--mtC,var(--pri));font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.15em;padding:6px 4px;white-space:nowrap}   /* 줄 흐름 밖(phase483) */
   @media(max-width:640px){ #mode-toggle.mb-cat{position:static;transform:none;display:block;margin:4px auto 0;text-align:center} }
   #mode-toggle.mb-cat:hover{text-decoration:underline;text-underline-offset:3px}
   @media(max-width:640px){ #mode-toggle.mp-bl,#mode-toggle.mp-br{bottom:14px} #mode-toggle.mp-bl{left:12px} #mode-toggle.mp-br{right:12px} }
@@ -3230,6 +3231,7 @@ html,body{overflow-x:hidden;overflow-x:clip}
         <option value="cat">버튼 — 글자 한 줄 (카테고리 줄 끝 · 또는 자유 배치)</option></select>
       <label class="chk" id="md-tgemo-l" title="토글 스위치 손잡이에 버튼 문구의 이모지(☀ ☾ 등)를 표시하고 트랙을 두 모드 색으로"><input type="checkbox" id="md-tgemo"> 손잡이에 이모지 (해·달)</label>
       <label class="chk" id="md-ul-l" title="카테고리 줄 끝 글자에 밑줄"><input type="checkbox" id="md-ul"> 글자 밑줄</label>
+      <span style="font-size:11px;color:var(--body)">버튼 색</span><input type="color" id="md-col" value="#c9b27a" title="토글 · 스위치 · 분할 · 다이얼 바늘 · 글자의 색 — 비우면 테마 포인트색"><button class="rmv" id="md-colx" style="font-size:11px">테마색</button>
       <select id="md-pos" style="width:auto;margin-bottom:0">
         <option value="br">위치 — 오른쪽 아래</option><option value="bl">위치 — 왼쪽 아래</option><option value="tr">위치 — 오른쪽 위</option><option value="tl">위치 — 왼쪽 위</option>
         <option value="free">위치 — 자유 (홈에서 드래그해 놓기)</option></select>
@@ -3237,7 +3239,7 @@ html,body{overflow-x:hidden;overflow-x:clip}
       <label class="chk" title="전등 스위치 · 동그라미 옆에 버튼 문구(예: 밤 / 아침)를 함께 보일지"><input type="checkbox" id="md-swlabel" checked> 버튼 옆 문구 표시</label>
       <select id="md-fx" style="width:auto;margin-bottom:0"><option value="soft">전환 효과 — 자연스럽게 (색이 번짐)</option><option value="fade">전환 효과 — 페이드</option><option value="blink">전환 효과 — 암전</option><option value="none">전환 효과 — 없음 (바로)</option></select>
     </div>
-    <p class="note">글자 한 줄은 위치를 〈자유〉로 두면 드래그로 옮기고, 그 외 위치면 카테고리 줄 오른쪽 끝에 붙어요. 〈자유〉를 고르면 홈 화면에서 버튼을 <b>드래그해서 원하는 자리에</b> 놓을 수 있고(주인만), 놓은 자리는 자동 저장돼요. 폰에서는 화면 비율에 맞춰 같은 위치에 놓입니다.</p>
+    <p class="note">〈자유〉 위치는 <b>위젯 편집(⠿)을 켠 상태에서만</b> 드래그로 옮길 수 있고, 놓은 자리는 자동 저장돼요. 자유 배치 버튼은 화면에 붙어 따라오지 않고 <b>홈 페이지 위 한 자리</b>에 놓여요(위젯처럼). 구석 4곳은 화면에 붙어 따라옵니다. 글자 한 줄은 자유가 아니면 카테고리 줄 오른쪽 끝.</p>
 
     <div id="md-body" class="hidden">
     <p class="p-h">2 · A 담기</p>
@@ -3333,6 +3335,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=537"></script>
+<script type="module" src="./app.js?v=539"></script>
 </body>
 </html>

@@ -1126,10 +1126,11 @@ function modeToggleDraw(){
   const cur=modeCur()||'a', other=cur==='a'?'b':'a';
   const label=(m[other]&&m[other].btn)||(m[other]&&m[other].name)||(other==='a'?'A':'B');
   b.className='mb-'+style+((style!=='cat'||pos==='free')?' mp-'+pos:'')+(cur==='b'?' down':'')+(st.mine&&pos==='br'&&style!=='cat'?' mp-owner':'')+(m.onPost===false?' no-post':'');   // 주인 FAB 위로(phase481) · 글 화면 숨김(phase506)
-  if(pos==='free'){                                             // 자유 배치(phase506·512): 비율 좌표 + 주인 드래그 — 글자 포함
-    b.style.setProperty('--mtX', (m.x??80)+'%'); b.style.setProperty('--mtY', (m.y??80)+'%');
-    if(st.mine){ b.classList.add('can-drag'); modeDragBind(b); }
+  if(pos==='free'){                                             // 자유 배치(phase514): 문서 기준 — x는 폭 비율, y는 위에서 px
+    b.style.setProperty('--mtX', (m.x??80)+'%'); b.style.setProperty('--mtY', (m.yp??600)+'px');
+    if(st.mine&&st.editMode){ b.classList.add('can-drag'); modeDragBind(b); } else { b.classList.remove('can-drag'); b.onpointerdown=b.onpointermove=b.onpointerup=null; }
   }
+  if(/^#[0-9a-fA-F]{3,8}$/.test(m.col||'')) b.style.setProperty('--mtC', m.col); else b.style.removeProperty('--mtC');   // 버튼 색(phase514)
   if(style==='float'){ const lb=(m.swLabel===false&&/\p{Extended_Pictographic}/u.test(label))?label.match(/\p{Extended_Pictographic}/u)[0]:label;   // 문구 끄면 이모지만(phase507)
     const emojiOnly=/^\p{Extended_Pictographic}$/u.test(lb.trim()); b.innerHTML=emojiOnly?esc(lb):`<span class="mt-txt">${esc(lb)}</span>`; }
   else if(style==='switch'){ const lb=(m.swLabel===false)?'':((m[other]&&m[other].btn)||''); b.innerHTML=`<span class="mt-sw"></span>${lb?`<span>${esc(lb)}</span>`:''}`; b.classList.toggle('bare', !lb); }   // 문구 표시 끄기(phase507) · 비우면 스위치만(phase499)
@@ -1155,10 +1156,10 @@ function modeDragBind(b){
   let sx=0, sy=0, moved=false, px=0, py=0;
   b.onpointerdown=e=>{ if(e.button!==0) return; sx=e.clientX; sy=e.clientY; moved=false; b.setPointerCapture(e.pointerId); };
   b.onpointermove=e=>{ if(!b.hasPointerCapture(e.pointerId)) return; const dx=e.clientX-sx, dy=e.clientY-sy; if(!moved && Math.hypot(dx,dy)<6) return;
-    moved=true; b.classList.add('drag'); px=Math.max(3,Math.min(97, e.clientX/innerWidth*100)); py=Math.max(3,Math.min(97, e.clientY/innerHeight*100));
-    b.style.setProperty('--mtX', px+'%'); b.style.setProperty('--mtY', py+'%'); };
+    moved=true; b.classList.add('drag'); px=Math.max(3,Math.min(97, e.clientX/innerWidth*100)); py=Math.max(20, Math.round(e.clientY+window.scrollY));   // y는 문서 px
+    b.style.setProperty('--mtX', px+'%'); b.style.setProperty('--mtY', py+'px'); };
   b.onpointerup=async e=>{ b.releasePointerCapture(e.pointerId); b.classList.remove('drag'); if(!moved) return;
-    const m=st.page.modes; m.x=Math.round(px*10)/10; m.y=Math.round(py*10)/10;
+    const m=st.page.modes; m.x=Math.round(px*10)/10; m.yp=py;
     try{ await updateDoc(doc(db,'pages',st.handle),{modes:m}); msg('전환 버튼 위치를 저장했어요.'); }catch(err){ msg('위치 저장 실패 — '+(err.message||err)); }
     b._suppress=true; setTimeout(()=>{ b._suppress=false; }, 300); };
 }
@@ -5469,6 +5470,7 @@ $('#btn-edit').onclick=()=>{
   st.editMode=!st.editMode;
   $('#btn-edit').classList.toggle('on', st.editMode);
   document.body.classList.toggle('editmode', st.editMode);
+  modeToggleDraw();                                            // 편집 모드에 따라 드래그 가능 여부 갱신(phase514)
   renderSide();
   msg(st.editMode ? '위젯 편집 모드 — 드래그·↑↓로 배치를 바꾸세요. 다 되면 ⠿를 다시 누르세요.'
                   : '편집 모드를 껐어요.');
@@ -6289,7 +6291,7 @@ function modeUIFill(){
   if(g('md-bn')) g('md-bn').value=(m.b&&m.b.name)||'';
   if(g('md-ab')) g('md-ab').value=(m.a&&m.a.btn)||''; if(g('md-bb')) g('md-bb').value=(m.b&&m.b.btn)||'';
   if(g('md-btn')) g('md-btn').value=m.btn||'float'; if(g('md-pos')) g('md-pos').value=m.pos||'br'; if(g('md-onpost')) g('md-onpost').checked=m.onPost!==false; if(g('md-swlabel')) g('md-swlabel').checked=m.swLabel!==false;
-  if(g('md-tgemo')) g('md-tgemo').checked=!!m.tgEmo; if(g('md-ul')) g('md-ul').checked=!!m.catUl;
+  if(g('md-tgemo')) g('md-tgemo').checked=!!m.tgEmo; if(g('md-ul')) g('md-ul').checked=!!m.catUl; if(g('md-col')) g('md-col').value=m.col||'#c9b27a';
   const bt=(m.btn||'float'); if(g('md-tgemo-l')) g('md-tgemo-l').style.display=bt==='toggle'?'':'none'; if(g('md-ul-l')) g('md-ul-l').style.display=bt==='cat'?'':'none';
   if(g('md-def')) g('md-def').value=m.def==='b'?'b':'a';
   if(g('md-fx')) g('md-fx').value=['fade','blink','none','soft'].includes(m.fx)?m.fx:'soft';
@@ -6301,7 +6303,7 @@ async function modeSaveCfg(extra){
   m.on=$('#md-on')?.checked===true;
   m.a={...(m.a||{}), name:($('#md-an')?.value||'').trim().slice(0,14), btn:($('#md-ab')?.value||'').trim().slice(0,16)};
   m.b={...(m.b||{}), name:($('#md-bn')?.value||'').trim().slice(0,14), btn:($('#md-bb')?.value||'').trim().slice(0,16)};
-  m.btn=$('#md-btn')?.value||'float'; m.pos=$('#md-pos')?.value||'br'; m.onPost=$('#md-onpost')?.checked!==false; m.swLabel=$('#md-swlabel')?.checked!==false; m.tgEmo=$('#md-tgemo')?.checked===true; m.catUl=$('#md-ul')?.checked===true;
+  m.btn=$('#md-btn')?.value||'float'; m.pos=$('#md-pos')?.value||'br'; m.onPost=$('#md-onpost')?.checked!==false; m.swLabel=$('#md-swlabel')?.checked!==false; m.tgEmo=$('#md-tgemo')?.checked===true; m.catUl=$('#md-ul')?.checked===true; m.col=st._mdColClear?'':($('#md-col')?.value||''); st._mdColClear=false;
   m.def=$('#md-def')?.value==='b'?'b':'a'; m.fx=$('#md-fx')?.value||'soft'; m.hdr=$('#md-hdr')?.checked===true; m.strip=$('#md-strip')?.checked===true; m.wid=$('#md-wid')?.checked===true;
   Object.assign(m, extra||{});
   const size=JSON.stringify(m).length; if(size>900000){ msg(`저장할 내용이 너무 커요(${Math.round(size/1024)}KB) — 사진 옵션을 끄고 다시 해보세요.`); throw new Error('too big'); }
@@ -6316,6 +6318,8 @@ async function modeSaveSlot(which){
   await modeSaveCfg({[which]:{name, btn, snap:modeSnap()}}); msg(`지금 모습을 ${which.toUpperCase()}에 담았어요.`);
 }
 $('#md-on')?.addEventListener('change', ()=>{ $('#md-body')?.classList.toggle('hidden', !$('#md-on').checked); });   // 켜야 A/B 칸 펼침(phase479)
+$('#md-colx')?.addEventListener('click', ()=>{ st._mdColClear=true; const c=$('#md-col'); if(c) c.value='#c9b27a'; msg('테마 포인트색으로 — [설정 저장]으로 확정'); });
+$('#md-col')?.addEventListener('input', ()=>{ st._mdColClear=false; });
 $('#md-btn')?.addEventListener('change', ()=>{ const bt=$('#md-btn').value; const a=$('#md-tgemo-l'), u=$('#md-ul-l'); if(a) a.style.display=bt==='toggle'?'':'none'; if(u) u.style.display=bt==='cat'?'':'none'; });
 $('#md-save-a')?.addEventListener('click', ()=>modeSaveSlot('a'));
 $('#md-save-b')?.addEventListener('click', ()=>modeSaveSlot('b'));
