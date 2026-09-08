@@ -6625,15 +6625,6 @@ body::after{
   body::before{ opacity:.75 }
   body::after { opacity:.5 }
 }`},
-  rain:{ nm:'비 오는 창가', css:
-`/* ═ 프리셋: 비 오는 창가 ═ */
-body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:4;opacity:.28;
-background-image:linear-gradient(78deg,transparent 46%,var(--pri) 49%,transparent 52%);
-background-size:64px 150px;
-animation:pzRain .75s linear infinite}
-@keyframes pzRain{from{background-position:0 0}to{background-position:0 150px}}
-body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:4;
-background:radial-gradient(ellipse at 50% -10%,hsl(var(--h) 30% 20% / .25),transparent 55%)}`},
   film:{ nm:'필름 카메라', css:
 `/* ═ 프리셋: 필름 카메라 ═ */
 body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:5;
