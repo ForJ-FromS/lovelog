@@ -1073,6 +1073,7 @@ async function enterPage(){
   document.querySelector('.strip-sec').classList.toggle('hidden', !stripShow());
   renderWidgets(); renderCatbar(); renderList(); renderGal(); renderStickers();
   modeInit();                                                   // 🌗 기본/기억된 모드 적용 + 토글 버튼
+  sndMuteDraw();                                                // 🔊 방문자 음소거 버튼(phase494)
   // 딥링크 — loadPage에서 보관해둔 글ID를 1회 소비
   const pm=st.deepPost; st.deepPost=null;
   if(pm){ st.cat='recent'; applyView(); renderWidgets(); renderList(); openPost(pm, true); }   // 링크 진입 글도 BACK=홈
@@ -1638,6 +1639,34 @@ document.addEventListener('mousemove',e=>{
     return;
   }
 });
+/* 🔊 클릭 소리(phase494) — WebAudio 합성, 파일 없음. 방문자는 🔇로 기기별 끄기 */
+let sndCtx=null;
+function sndPlay(kind, vol){
+  try{
+    if(!kind) return; if(localStorage.getItem('lv-snd-off')==='1') return;
+    sndCtx=sndCtx||new (window.AudioContext||window.webkitAudioContext)(); const c=sndCtx; if(c.state==='suspended') c.resume();
+    const g=c.createGain(); g.connect(c.destination); const v=Math.max(0,Math.min(1,(vol||40)/100))*0.6; const t=c.currentTime;
+    if(kind==='click'||kind==='tap'){                            // 노이즈 버스트 (딸깍/톡)
+      const len=Math.floor(c.sampleRate*(kind==='click'?0.035:0.06)); const buf=c.createBuffer(1,len,c.sampleRate); const d=buf.getChannelData(0);
+      for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/len, kind==='click'?2:4);
+      const s=c.createBufferSource(); s.buffer=buf; const f=c.createBiquadFilter(); f.type=kind==='click'?'highpass':'lowpass'; f.frequency.value=kind==='click'?1800:900;
+      s.connect(f); f.connect(g); g.gain.setValueAtTime(v*(kind==='click'?1:0.9),t); s.start(t);
+      if(kind==='click'){ const o=c.createOscillator(); o.type='square'; o.frequency.setValueAtTime(2400,t); o.frequency.exponentialRampToValueAtTime(900,t+0.02); const g2=c.createGain(); g2.gain.setValueAtTime(v*0.25,t); g2.gain.exponentialRampToValueAtTime(0.0001,t+0.03); o.connect(g2); g2.connect(c.destination); o.start(t); o.stop(t+0.035); }
+    } else if(kind==='beep'){ const o=c.createOscillator(); o.type='sine'; o.frequency.setValueAtTime(1320,t); g.gain.setValueAtTime(v*0.5,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.08); o.connect(g); o.start(t); o.stop(t+0.09);
+    } else if(kind==='pop'){ const o=c.createOscillator(); o.type='sine'; o.frequency.setValueAtTime(600,t); o.frequency.exponentialRampToValueAtTime(180,t+0.07); g.gain.setValueAtTime(v*0.7,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.09); o.connect(g); o.start(t); o.stop(t+0.1); }
+  }catch(e){}
+}
+document.addEventListener('pointerdown',e=>{ if(!st.page||!st.page.snd) return; if(e.target.closest('#panel,#w-modal,#we-modal,#pwm,#snd-mute')) return; sndPlay(st.page.snd, st.page.sndV); }, true);
+function sndMuteDraw(){
+  let b=document.getElementById('snd-mute'); const on=!!(st.page&&st.page.snd&&!st.mine);
+  if(!on){ if(b) b.remove(); return; }
+  if(!b){ b=document.createElement('button'); b.id='snd-mute'; b.type='button'; document.body.appendChild(b); }
+  const off=localStorage.getItem('lv-snd-off')==='1'; b.textContent=off?'🔇':'🔊'; b.title=off?'클릭 소리 켜기':'클릭 소리 끄기';
+  b.onclick=()=>{ try{ localStorage.setItem('lv-snd-off', off?'0':'1'); }catch(e){} sndMuteDraw(); };
+}
+$('#s-snd-test')?.addEventListener('click',()=>sndPlay($('#s-snd').value||'click', +$('#s-sndv').value||40));
+$('#s-sndv')?.addEventListener('input',()=>{ const t=$('#s-sndv-t'); if(t) t.textContent=$('#s-sndv').value; });
+$('#s-snd')?.addEventListener('change',()=>{ if($('#s-snd').value) sndPlay($('#s-snd').value, +$('#s-sndv').value||40); });
 document.addEventListener('contextmenu',e=>{
   if(!st.page || st.page.protectImg===false || st.mine) return;   // 주인은 항상 저장 가능(phase411)
   if(e.target.closest('img,#pg-hero,#pg-hero2,.g-item,.stk,.pin')) e.preventDefault();
@@ -6701,6 +6730,7 @@ function fillSettings(){
   $('#s-gatebtn').value=p.gateBtn||''; $('#s-listed').checked=!!p.listed; cardNew=null; bnrNew=null; renderCard(); renderBnr(); $('#s-lbicon').value=p.labelIcon??'◈'; gateColVal=null;
   const sgs=$('#s-gateskin'); if(sgs) sgs.value=st.page.gateSkin||'';
   modeUIFill();
+  const ssn=$('#s-snd'); if(ssn) ssn.value=p.snd||''; const ssv=$('#s-sndv'); if(ssv){ ssv.value=p.sndV||40; const t=$('#s-sndv-t'); if(t) t.textContent=ssv.value; }
   { const el=$('#rec-state'); if(el) el.textContent=st.page.recPriv?'설정됨':'미설정'; const bt=$('#rec-set'); if(bt) bt.textContent=st.page.recPriv?'복구 비밀번호 변경':'복구 비밀번호 만들기'; } const sgp=$('#s-gatepos'); if(sgp) sgp.value=st.page.gatePos||'';
   $('#s-gatecolor').value=p.gateColor||'#ffffff';
   const gsk=$('#s-gateskip'); if(gsk) gsk.checked=p.gateSkipPost===true;
@@ -6818,6 +6848,7 @@ async function saveSettings(){
       dots: $('#s-dots').value==='on',
       protectImg: $('#s-protect').value==='on',
       fx: $('#s-fx').value,
+      snd: $('#s-snd')?.value||'', sndV: +($('#s-sndv')?.value)||40,   // 🔊 클릭 소리(phase494)
       fxC: fxCVal ?? st.page.fxC ?? '',
       cardC: cardCVal ?? st.page.cardC ?? '',
       sparkle: $('#s-fx').value==='sparkle',
@@ -6878,7 +6909,7 @@ const RESET={
     galOn:true,stripOn:true,
     headLayout:'',headDeco:'',headBand:'',hdName:true,hdOver:true,hdSub:true,hdNameFs:'',hdOverFs:'',hdSubFs:'',   // 헤더 프리셋·표시(phase430) — 초기화 누락 수리
     hdOverC:'',hdSubC:'',hdDdC:'',hdTextPos:'',hdDdPos:'',
-    catSel:'',catCnt:true,quoteStyle:'',postFs:'',perPage:12,btnStyle:'',pgStyle:'',rowStyle:''},
+    catSel:'',catCnt:true,quoteStyle:'',postFs:'',perPage:12,btnStyle:'',pgStyle:'',rowStyle:'',snd:'',sndV:40},
   media:{heroImgs:[],heroImg:'',enterImg:'',enterRef:'',enterText:'',
     cardImg:'',bannerImg:'',catImgs:{},gate:'',gateBtn:'',gateColor:'',gateBtnC:'',galName:'',gbName:''}
 };

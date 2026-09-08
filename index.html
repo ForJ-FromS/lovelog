@@ -345,6 +345,8 @@
   @media(max-width:640px){ #mode-toggle.mb-cat{position:static;transform:none;display:block;margin:4px auto 0;text-align:center} }
   #mode-toggle.mb-cat:hover{text-decoration:underline;text-underline-offset:3px}
   @media(max-width:640px){ #mode-toggle.mp-bl,#mode-toggle.mp-br{bottom:14px} #mode-toggle.mp-bl{left:12px} #mode-toggle.mp-br{right:12px} }
+  #snd-mute{position:fixed;left:14px;bottom:14px;z-index:8;width:28px;height:28px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--muted);font-size:12px;cursor:pointer;opacity:.55}
+  #snd-mute:hover{opacity:1}
   #mode-fx{position:fixed;inset:0;z-index:9000;pointer-events:none;opacity:0}
   /* 페이드(phase486): 흐림·요소별 트랜지션 없이 반투명 덮개만 느리게 — 가볍고 매끄럽게 */
   #mode-fx.mfx-fade{background:var(--bg);will-change:opacity}
@@ -3129,6 +3131,16 @@ html,body{overflow-x:hidden;overflow-x:clip}
         <option value="bubble">🫧 거품 — 몽글몽글</option></select>
         <input type="color" id="s-fxc" value="#ffb3c8" title="커서 효과 색 — 자유롭게 골라요">
         <button class="rmv" id="s-fxc-x" style="font-size:11px">테마색</button></span></div>
+      <div class="trow"><span class="tl">🔊 클릭 소리</span><span class="tc">
+        <select id="s-snd" title="화면을 클릭할 때 나는 작은 소리 — 파일 없이 브라우저가 합성해요">
+          <option value="">없음</option>
+          <option value="click">딸깍 — 기계식 키보드</option>
+          <option value="tap">톡 — 부드러운 탭</option>
+          <option value="beep">삑 — 전자음</option>
+          <option value="pop">뽁 — 거품 터짐</option></select>
+        <span class="tl2">크기</span><input type="range" id="s-sndv" min="5" max="100" value="40" style="width:110px"><span class="tl2" id="s-sndv-t">40</span>
+        <button class="rmv" id="s-snd-test" style="font-size:11px">들어보기</button>
+        <span class="tl2">— 방문자는 화면 오른쪽 아래 🔇로 끌 수 있어요</span></span></div>
       <div class="trow"><span class="tl">위젯 제목 기호</span><span class="tc">
         <input id="s-lbicon" maxlength="3" placeholder="◈" style="width:64px!important;text-align:center" title="SEARCH·CHAT 같은 제목 앞 기호 — 비우면 없어져요 (예: ◆ ✦ ❖ ▸ ·)"></span></div>
     </div>
@@ -3285,6 +3297,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=518"></script>
+<script type="module" src="./app.js?v=519"></script>
 </body>
 </html>
