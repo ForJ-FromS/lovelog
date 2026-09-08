@@ -765,7 +765,7 @@ function renderStkList(){
       <button class="rmv" data-sx="${i}">✕</button>
     </div>`).reverse().join('')
     :'<p class="pl-empty">아직 스티커가 없어요.</p>');
-  const save=async()=>{ try{ await updateDoc(doc(db,'pages',st.handle),{stickers:st.page.stickers}); }
+  const save=async()=>{ try{ await updateDoc(doc(db,'pages',st.handle),{stickers:st.page.stickers}); modeSyncCurrent(); }
     catch(e){ msg('⚠ 스티커 저장 실패 — 새로고침하면 되돌아가요. ('+e.message+')'); } };
   box.querySelectorAll('[data-ss]').forEach(r=>r.addEventListener('input',()=>{
     st.page.stickers[+r.dataset.ss].size=+r.value; renderStickers(); }));
@@ -1129,6 +1129,15 @@ function modeToggleDraw(){
   else if(style==='switch'){ const lb=(m[other]&&m[other].btn)||''; b.innerHTML=`<span class="mt-sw"></span>${lb?`<span>${esc(lb)}</span>`:''}`; b.classList.toggle('bare', !lb); }   // 문구 비우면 스위치만(phase499)
   else b.textContent=label;
   b.title='테마 전환'; b.onclick=()=>modeApply(other, true);
+}
+/* 🌗 현재 모드 스냅샷 자동 동기화(phase502): 듀얼이 켜진 채로 위젯·설정·스티커를 저장하면
+   지금 보고 있는 모드(A/B)의 스냅샷에 담긴 항목도 st.page 값으로 갱신 — "다시 담기" 없이도 저장이 굳게 */
+async function modeSyncCurrent(){
+  const m=st.page.modes; if(!m||!m.on) return;
+  const cur=modeCur(); const slot=m[cur]; if(!slot||!slot.snap) return;
+  const fresh=modeSnap();                                       // 현재 옵션 범위로 새 스냅샷
+  Object.keys(slot.snap).forEach(k=>{ if(fresh[k]!==undefined) slot.snap[k]=fresh[k]; });   // 담겨 있던 항목만 갱신
+  try{ await updateDoc(doc(db,'pages',st.handle),{modes:m}); }catch(e){}
 }
 function modeInit(){
   const m=st.page.modes; if(!m||!m.on){ modeToggleDraw(); return; }
@@ -1756,9 +1765,9 @@ function nbHeal(w, item, key, to){
   const m=st.page.modes||{}; const modesHit=[m.a&&m.a.snap, m.b&&m.b.snap].map(fixSnap).some(Boolean);
   nbHealT=setTimeout(async()=>{ try{ const upd={side:st.page.side}; if(modesHit) upd.modes=st.page.modes; await updateDoc(doc(db,'pages',st.handle),upd); msg(`이사 간 이웃 ${nbHealN}곳의 주소를 새 주소로 갱신했어요.`); renderSide(); }catch(e){ msg('이웃 주소 갱신 저장 실패 — '+(e.message||e)); } nbHealN=0; }, 800);
 }
-const NB_TTL=6*3600*1000;                                     // 이웃 정보 기기 캐시 6시간(phase448) — 읽기 비용 절감
+const NB_TTL=45*60*1000;                                      // 이웃 정보 기기 캐시 45분(phase504) — 배너 교체가 이웃 홈에 늦게 보이는 문제 완화
 function nbStoreGet(h){ try{ const j=JSON.parse(localStorage.getItem('lv-nbc-'+h)||'null'); return (j&&Date.now()-j.t<NB_TTL)? j.v : undefined; }catch(e){ return undefined; } }
-function nbStoreSet(h,v){ try{ const s=JSON.stringify({t:Date.now(),v}); if(s.length<20000) localStorage.setItem('lv-nbc-'+h, s); }catch(e){} }   // 큰 사진(dataURL)은 저장 생략
+function nbStoreSet(h,v){ if(!v) return; try{ const s=JSON.stringify({t:Date.now(),v}); if(s.length<20000) localStorage.setItem('lv-nbc-'+h, s); }catch(e){} }   // 큰 사진(dataURL)은 저장 생략 · 없는 홈(null)은 캐시 안 함(phase505) — 새 홈이 생겨도 바로 보이게
 async function nbInfo(h, hop){
   if(nbCache[h]!==undefined) return nbCache[h];
   const cached=st.mine ? undefined : nbStoreGet(h);            // 주인이 자기 홈을 볼 땐 항상 새로(이사 감지·자동 갱신 자리, phase450)
@@ -3185,7 +3194,7 @@ async function togglePin(id){
   const i=cur.indexOf(id);
   if(i>=0) cur.splice(i,1); else cur.push(id);
   st.page.stripPin=cur;
-  try{ await updateDoc(doc(db,'pages',st.handle),{stripPin:cur});
+  try{ await updateDoc(doc(db,'pages',st.handle),{stripPin:cur}); modeSyncCurrent();
     msg(i>=0?'대문 갤러리에서 뺐어요.':'대문 갤러리에 고정했어요.');
   }catch(e){ msg('저장 실패: '+e.message); }
   renderGal(); if(st.cat==='__gal'||isG(st.cat)) renderList();
@@ -3229,7 +3238,7 @@ function renderGal(all){
       if(src0==='pick'){                                          // ★ 기준이면 자동 고정
         const cur=[...galPins()]; cur.unshift(ref.id);
         st.page.stripPin=cur;
-        await updateDoc(doc(db,'pages',st.handle),{stripPin:cur});
+        await updateDoc(doc(db,'pages',st.handle),{stripPin:cur}); modeSyncCurrent();
       }
       renderGal();
       msg(src0==='pick'?'올렸어요 — ★ 대문에 바로 고정했어요!':'올렸어요 — 대문에 반영됐어요!');
@@ -4029,7 +4038,7 @@ function renderCatMgr(){
         const cim={...(st.page.catImgs||{})};                     // 🖼 카테고리 이미지도 이사
         if(cim[oldName]!==undefined){ cim[nv]=cim[oldName]; delete cim[oldName]; }
         const ns=navSeq().map(x=>x===oldName?nv:x);
-        await updateDoc(doc(db,'pages',st.handle),{gcats:g, mcats:m2, acats:a2, navSeq:ns, abListView:alv, catTags:ctg, catImgs:cim});
+        await updateDoc(doc(db,'pages',st.handle),{gcats:g, mcats:m2, acats:a2, navSeq:ns, abListView:alv, catTags:ctg, catImgs:cim}); modeSyncCurrent();
         st.page.gcats=g; st.page.mcats=m2; st.page.acats=a2; st.page.navSeq=ns; st.page.abListView=alv; st.page.catTags=ctg; st.page.catImgs=cim;
       }
       const moves=st.posts.filter(p=>p.cat===oldName);
@@ -4057,7 +4066,7 @@ function renderCatMgr(){
 async function setCatImg(key,val){
   const ci={...(st.page.catImgs||{})};
   if(val) ci[key]=val; else delete ci[key];
-  await updateDoc(doc(db,'pages',st.handle),{catImgs:ci});
+  await updateDoc(doc(db,'pages',st.handle),{catImgs:ci}); modeSyncCurrent();
   st.page.catImgs=ci; renderCatbar(); renderCatMgr();
 }
 function bindCatImg(box){
@@ -5403,7 +5412,7 @@ $('#wid-save').onclick=async()=>{
     const d0=dd[0];
     $('#pg-dday-main').innerHTML = (pdraft.ddHead!==false) ? ddHeadHTML(dd) : '';
     widSnap=JSON.stringify({d:draft,p:pdraft});   // 저장됨 — dirty 해제
-    renderSide(); msg('위젯 구성 저장 완료!');
+    renderSide(); msg('위젯 구성 저장 완료!'); modeSyncCurrent();
   }catch(e){ msg('오류: '+e.message); alert('저장 실패: '+e.message); }
 };
 function closePanelGuard(){
@@ -6156,7 +6165,7 @@ $('#stk-file').addEventListener('change',async e=>{
   const img=await upFile(f,700,.92,60);
   st.page.stickers=st.page.stickers||[];
   st.page.stickers.push({img,x:8,y:20,size:120,rot:0});
-  try{ await updateDoc(doc(db,'pages',st.handle),{stickers:st.page.stickers});
+  try{ await updateDoc(doc(db,'pages',st.handle),{stickers:st.page.stickers}); modeSyncCurrent();
     msg('스티커 추가! 홈에서 드래그로 옮겨보세요.');
   }catch(e2){
     st.page.stickers.pop();
@@ -6897,7 +6906,7 @@ async function saveSettings(){
     initPet(); petImgsNew=null; renderPetImgList();              // 펫 즉시 산책(phase254b) — 새로고침 없이 반영
     gateClear=false; renderGateState();
     if(data.gate==='') sessionStorage.removeItem('gate_'+st.handle);
-    if(st.page.modes&&st.page.modes.on&&!st._modeSaving) msg('저장 완료 — 듀얼 테마가 켜져 있어요. 이 저장은 A · B에 담기지 않으니, 모드에 반영하려면 〈🌗 듀얼〉 탭에서 [A로 담기] 또는 [B로 담기]를 눌러 주세요.');
+    if(st.page.modes&&st.page.modes.on&&!st._modeSaving){ await modeSyncCurrent(); msg(`저장 완료 — 지금 보고 있는 모드(${(modeCur()||'a').toUpperCase()})에도 반영했어요.`); }
     else msg('저장 완료!');
     enterPage(); renderCatbar();
   }catch(e){ msg('오류: '+e.message); }
@@ -6926,6 +6935,7 @@ $('#s-reset').onclick=async()=>{
   const data = kind==='all'
     ? {...RESET.theme,...RESET.widget,...RESET.sticker,...RESET.layout,...RESET.media}
     : {...RESET[kind]};
+  if(kind==='all'||kind==='theme') data.modes=deleteField();   // 듀얼 스냅샷도 비움(phase503) — 안 그러면 옛 모습이 되살아남
   msg('초기화 중...');
   try{
     await updateDoc(doc(db,'pages',st.handle),data);
@@ -7612,6 +7622,8 @@ $('#bk-restore')?.addEventListener('click', async ()=>{
       if(JSON.stringify(deco).length>980000) throw new Error('꾸미기 데이터가 용량을 넘어요.');
       msg('꾸미기 복원 중...');
       await updateDoc(doc(db,'pages',st.handle), deco);
+      Object.assign(st.page, deco);                              // 복원본을 메모리에도 반영 후 현재 모드 스냅샷 동기화(phase503)
+      if(deco.modes===undefined) await modeSyncCurrent();
     }
     if(rp){
       const posts=bkData.posts.filter(p=>p&&p.id);
