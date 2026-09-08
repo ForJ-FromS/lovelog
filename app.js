@@ -6261,7 +6261,7 @@ async function modeSaveCfg(extra){
 /* A/B 저장은 먼저 [설정 저장]과 같은 저장을 돌려서, 아직 확정 안 된 배경·헤더·색 변경까지 반영한 뒤 스냅샷(phase478) */
 async function modeSaveSlot(which){
   if(!st.mine) return;
-  try{ await saveSettings(); }catch(e){ msg('먼저 설정 저장에 실패했어요 — '+(e.message||e)); return; }
+  st._modeSaving=true; try{ await saveSettings(); }catch(e){ msg('먼저 설정 저장에 실패했어요 — '+(e.message||e)); return; } finally{ st._modeSaving=false; }
   const name=($('#md-'+which+'n')?.value||'').trim().slice(0,14), btn=($('#md-'+which+'b')?.value||'').trim().slice(0,16);
   await modeSaveCfg({[which]:{name, btn, snap:modeSnap()}}); msg(`지금 모습을 ${which.toUpperCase()}에 담았어요.`);
 }
@@ -6896,7 +6896,8 @@ async function saveSettings(){
     initPet(); petImgsNew=null; renderPetImgList();              // 펫 즉시 산책(phase254b) — 새로고침 없이 반영
     gateClear=false; renderGateState();
     if(data.gate==='') sessionStorage.removeItem('gate_'+st.handle);
-    msg('저장 완료!');
+    if(st.page.modes&&st.page.modes.on&&!st._modeSaving) msg('저장 완료 — 듀얼 테마가 켜져 있어요. 이 저장은 A · B에 담기지 않으니, 모드에 반영하려면 〈🌗 듀얼〉 탭에서 [A로 담기] 또는 [B로 담기]를 눌러 주세요.');
+    else msg('저장 완료!');
     enterPage(); renderCatbar();
   }catch(e){ msg('오류: '+e.message); }
 }
