@@ -881,7 +881,7 @@
   #panel .pane input:not([type=file]):not([type=checkbox]):not([type=range]):not([type=color]),#panel .pane select,#panel .pane textarea{
     padding:9px 11px;font-size:12.5px;border-radius:8px;border:1px solid color-mix(in srgb, var(--muted) 40%, transparent);
     background:color-mix(in srgb, var(--card2) 70%, transparent);transition:border-color .12s,box-shadow .12s}
-  #panel .pane input:focus,#panel .pane select:focus,#panel .pane textarea:focus{border-color:var(--pri);box-shadow:0 0 0 3px color-mix(in srgb, var(--pri) 18%, transparent)}
+  #panel .pane input:focus,#panel .pane select:focus,#panel .pane textarea:focus{border-color:color-mix(in srgb, var(--muted) 75%, transparent);box-shadow:none;background:color-mix(in srgb, var(--card2) 85%, transparent)}   /* 포커스 조용하게(phase517) — 금색 링 제거 */
   #panel .pane select{appearance:none;-webkit-appearance:none;padding:9px 38px 9px 12px!important;min-height:38px;line-height:1.3;box-sizing:border-box;
     background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
     background-position:calc(100% - 19px) 50%,calc(100% - 14px) 50%;background-size:5px 5px,5px 5px;background-repeat:no-repeat}
@@ -3337,6 +3337,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=541"></script>
+<script type="module" src="./app.js?v=542"></script>
 </body>
 </html>
