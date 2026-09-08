@@ -869,10 +869,12 @@
   .p-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:9px}
   /* ═══ 설정 창 — 혼합 시안 B (phase522): 각진 모서리 · 왼쪽 선 탭 · 라벨/컨트롤 2단 · 자간 없는 한글 소제목. 기능·id 무변 ═══ */
   #panel.big .p-card{background:color-mix(in srgb, var(--card) 96%, var(--bg));border:1px solid color-mix(in srgb, var(--line) 80%, transparent);border-radius:4px;padding:22px 26px 24px 22px;box-shadow:0 24px 60px rgba(0,0,0,.35)}
-  #panel.big .tabs{width:150px;padding-right:14px;gap:2px;border-right:1px solid color-mix(in srgb, var(--line) 60%, transparent)}
-  #panel.big .tabs button{padding:7px 10px;font-size:13px;color:var(--muted);border-radius:0;background:none;letter-spacing:0;text-align:left;border-left:2px solid transparent}
-  #panel.big .tabs button:hover{color:var(--ink);background:color-mix(in srgb, var(--ink) 4%, transparent)}
-  #panel.big .tabs button.on{background:none;color:var(--ink);font-weight:500;border-left-color:var(--ink)}
+  #panel.big .tabs{width:168px;padding:4px 16px 0 0;gap:4px;border-right:1px solid color-mix(in srgb, var(--line) 60%, transparent)}
+  #panel.big .tabs button{padding:10px 12px 10px 14px!important;font-size:13.5px;color:var(--body);border-radius:0 3px 3px 0;background:none;letter-spacing:0;text-align:left;border-left:2px solid transparent;line-height:1.2}
+  #panel.big .tabs button:hover{color:var(--ink);background:color-mix(in srgb, var(--ink) 5%, transparent)}
+  #panel.big .tabs button.on{background:color-mix(in srgb, var(--ink) 7%, transparent);color:var(--ink);font-weight:500;border-left-color:var(--ink)}
+  #panel.big .tabs button[data-tab="mng"],#panel.big .tabs button[data-tab="adm"]{margin-top:auto}   /* 관리·운영은 아래로 */
+  #panel.big .tabs button[data-tab="mng"]{border-top:1px solid color-mix(in srgb, var(--line) 60%, transparent);margin-top:10px;padding-top:14px!important;border-radius:0}
   #panel.big .p-panes{padding-right:10px}
   #panel .p-h{font-family:inherit;font-size:12.5px;letter-spacing:0;text-transform:none;color:var(--ink);font-weight:600;margin:24px 0 8px;padding-top:0;border-top:none;display:flex;align-items:center;gap:10px}
   #panel .p-h::after{content:'';flex:1;height:1px;background:color-mix(in srgb, var(--line) 60%, transparent)}
@@ -2628,7 +2630,7 @@ html,body{overflow-x:hidden;overflow-x:clip}
     <button data-tab="cats">카테고리</button>
     <button data-tab="theme">테마 · 레이아웃</button>
     <button data-tab="bg">배경</button>
-    <button data-tab="mode">🌗 듀얼</button>
+    <button data-tab="mode">듀얼 테마</button>
     <button data-tab="stk">스티커</button>
     <button data-tab="mng">관리</button>
     <button data-tab="adm" id="tab-adm">운영</button>
@@ -3360,6 +3362,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=550"></script>
+<script type="module" src="./app.js?v=551"></script>
 </body>
 </html>
