@@ -867,54 +867,61 @@
     color:var(--ink);outline:none}
   .pane textarea{min-height:170px;resize:vertical;line-height:1.9}
   .p-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:9px}
-  /* ═══ 설정 창 정돈 — 시안 A (phase466·472 복귀): 조용한 탭 하이라이트 · 얇은 선 소제목 · 상자 입력칸 · 행 구분선. 기능·id 무변 ═══ */
-  #panel.big .p-card{background:color-mix(in srgb, var(--card) 92%, var(--bg));border-color:color-mix(in srgb, var(--line) 70%, transparent);border-radius:18px;padding:26px 30px 26px 26px;box-shadow:0 30px 80px rgba(0,0,0,.45)}
-  #panel.big .tabs{width:168px;padding-right:18px;gap:2px}
-  #panel.big .tabs button{padding:9px 12px;font-size:12.5px;color:var(--body);border-radius:8px;letter-spacing:.01em}
-  #panel.big .tabs button:hover{color:var(--ink);background:color-mix(in srgb, var(--ink) 5%, transparent)}
-  #panel.big .tabs button.on{background:color-mix(in srgb, var(--pri) 16%, transparent);color:var(--pri);font-weight:500}
+  /* ═══ 설정 창 — 혼합 시안 B (phase522): 각진 모서리 · 왼쪽 선 탭 · 라벨/컨트롤 2단 · 자간 없는 한글 소제목. 기능·id 무변 ═══ */
+  #panel.big .p-card{background:color-mix(in srgb, var(--card) 96%, var(--bg));border:1px solid color-mix(in srgb, var(--line) 80%, transparent);border-radius:4px;padding:22px 26px 24px 22px;box-shadow:0 24px 60px rgba(0,0,0,.35)}
+  #panel.big .tabs{width:150px;padding-right:14px;gap:2px;border-right:1px solid color-mix(in srgb, var(--line) 60%, transparent)}
+  #panel.big .tabs button{padding:7px 10px;font-size:13px;color:var(--muted);border-radius:0;background:none;letter-spacing:0;text-align:left;border-left:2px solid transparent}
+  #panel.big .tabs button:hover{color:var(--ink);background:color-mix(in srgb, var(--ink) 4%, transparent)}
+  #panel.big .tabs button.on{background:none;color:var(--ink);font-weight:500;border-left-color:var(--ink)}
   #panel.big .p-panes{padding-right:10px}
-  #panel .p-h{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--body);font-weight:600;
-    margin:26px 0 10px;padding-top:0;border-top:none;display:flex;align-items:center;gap:10px}
-  #panel .p-h::after{content:'';flex:1;height:1px;background:color-mix(in srgb, var(--line) 70%, transparent)}
-  #panel .p-panes > .pane > .p-h:first-child{margin-top:4px}
+  #panel .p-h{font-family:inherit;font-size:12.5px;letter-spacing:0;text-transform:none;color:var(--ink);font-weight:600;margin:24px 0 8px;padding-top:0;border-top:none;display:flex;align-items:center;gap:10px}
+  #panel .p-h::after{content:'';flex:1;height:1px;background:color-mix(in srgb, var(--line) 60%, transparent)}
+  #panel .p-panes > .pane > .p-h:first-child{margin-top:2px}
   #panel .pane input:not([type=file]):not([type=checkbox]):not([type=range]):not([type=color]),#panel .pane select,#panel .pane textarea{
-    padding:9px 11px;font-size:12.5px;border-radius:8px;border:1px solid color-mix(in srgb, var(--muted) 40%, transparent);
-    background:color-mix(in srgb, var(--card2) 70%, transparent);transition:border-color .12s,box-shadow .12s}
-  #panel .pane input:focus,#panel .pane select:focus,#panel .pane textarea:focus{border-color:color-mix(in srgb, var(--muted) 75%, transparent);box-shadow:none;background:color-mix(in srgb, var(--card2) 85%, transparent)}   /* 포커스 조용하게(phase517) — 금색 링 제거 */
-  #panel .pane select{appearance:none;-webkit-appearance:none;padding:9px 38px 9px 12px!important;min-height:38px;line-height:1.3;box-sizing:border-box;
+    padding:7px 10px;font-size:13px;border-radius:3px;border:1px solid color-mix(in srgb, var(--muted) 45%, transparent);
+    background:color-mix(in srgb, var(--card2) 75%, transparent);transition:border-color .12s;min-height:32px;box-sizing:border-box}
+  #panel .pane input:focus,#panel .pane select:focus,#panel .pane textarea:focus{border-color:var(--ink);box-shadow:none;background:color-mix(in srgb, var(--card2) 90%, transparent)}
+  #panel .pane select{appearance:none;-webkit-appearance:none;padding:7px 34px 7px 10px!important;min-height:32px;line-height:1.3;
     background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
-    background-position:calc(100% - 19px) 50%,calc(100% - 14px) 50%;background-size:5px 5px,5px 5px;background-repeat:no-repeat}
-  #panel .pane input:not([type=file]):not([type=checkbox]):not([type=range]):not([type=color]){min-height:38px;box-sizing:border-box}
-  #panel .trow{padding:9px 0}
-  #panel .trow .tc{gap:10px 12px}
-  #panel .p-row{gap:10px 12px;margin-bottom:11px}
-  #panel .trow .tl{padding-top:11px}
+    background-position:calc(100% - 17px) 50%,calc(100% - 12px) 50%;background-size:5px 5px,5px 5px;background-repeat:no-repeat}
   #panel .pane input[type=number]{text-align:center}
   #panel .pane input::placeholder,#panel .pane textarea::placeholder{color:color-mix(in srgb, var(--muted) 70%, transparent)}
-  #panel .note{font-size:11px;line-height:1.6;color:color-mix(in srgb, var(--body) 80%, var(--muted));margin-top:4px}   /* 가독성(phase508): 회색 → 본문색에 가깝게 */
-  #panel .trow{padding:7px 0;border-bottom:1px solid color-mix(in srgb, var(--line) 40%, transparent)}
+  #panel .note{font-size:12px;line-height:1.6;color:var(--muted);margin-top:4px}
+  #panel .trow{padding:8px 0;border-bottom:1px solid color-mix(in srgb, var(--line) 50%, transparent);gap:12px;align-items:center}
   #panel .trow:last-of-type{border-bottom:none}
-  #panel .trow .tl{font-size:12.5px;color:var(--ink);font-weight:500}
-  #panel .trow .tl2{font-size:11px;letter-spacing:.02em;color:var(--body)}
-  #panel .chk{color:var(--body)} #panel .p-row>span{color:var(--body)}
-  #panel .btn{border-radius:8px;padding:8px 16px;font-size:12.5px;background:color-mix(in srgb, var(--card2) 70%, transparent)}
-  #panel .btn:hover{border-color:var(--pri)}
-  #panel .btn.pri{background:var(--pri);border-color:var(--pri)}
-  #panel .rmv{border-radius:7px;padding:6px 10px;font-size:11px;border-color:color-mix(in srgb, var(--muted) 40%, transparent)}
-  #panel .rmv:hover{color:var(--ink);border-color:var(--muted)}
-  #panel .chk{font-size:12px} #panel .chk input[type=checkbox]{accent-color:var(--pri);width:14px;height:14px}
-  #panel input[type=range]{accent-color:var(--pri);height:22px}
-  #panel input[type=file]{font-size:11.5px;color:var(--muted)}
-  #panel input[type=file]::file-selector-button{border:1px solid color-mix(in srgb, var(--muted) 40%, transparent);background:color-mix(in srgb, var(--card2) 70%, transparent);color:var(--body);border-radius:7px;padding:5px 10px;font-size:11px;margin-right:8px;cursor:pointer}
-  #panel .filelab{font-size:11.5px;border:1px dashed color-mix(in srgb, var(--muted) 50%, transparent);border-radius:8px;padding:6px 10px;cursor:pointer;color:var(--muted)}
-  #panel .filelab:hover{border-color:var(--pri);color:var(--ink)}
-  #panel input[type=color]{width:26px!important;min-width:26px;max-width:26px;height:24px!important;flex:none!important;border-radius:6px;padding:0!important;margin:0;
+  #panel .trow .tl{font-size:13px;color:var(--ink);font-weight:400;padding-top:0}
+  #panel .trow .tl2{font-size:12px;color:var(--muted);letter-spacing:0}
+  #panel .trow .tc{gap:8px 10px}
+  #panel .p-row{gap:8px 10px;margin-bottom:10px}
+  #panel .btn{border-radius:3px;padding:7px 14px;font-size:12.5px;background:color-mix(in srgb, var(--card2) 75%, transparent);border:1px solid color-mix(in srgb, var(--muted) 45%, transparent)}
+  #panel .btn:hover{border-color:var(--ink)}
+  #panel .btn.pri{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+  #panel .rmv{border-radius:3px;padding:5px 10px;font-size:11.5px;border:1px solid color-mix(in srgb, var(--muted) 45%, transparent);background:none}
+  #panel .rmv:hover{color:var(--ink);border-color:var(--ink)}
+  #panel .chk{font-size:12.5px;color:var(--body)} #panel .chk input[type=checkbox]{accent-color:var(--ink);width:14px;height:14px}
+  #panel input[type=range]{accent-color:var(--ink);height:20px}
+  #panel input[type=file]{font-size:12px;color:var(--muted)}
+  #panel input[type=file]::file-selector-button{border:1px solid color-mix(in srgb, var(--muted) 45%, transparent);background:none;color:var(--body);border-radius:3px;padding:5px 10px;font-size:11.5px;margin-right:8px;cursor:pointer}
+  #panel .filelab{font-size:12px;border:1px dashed color-mix(in srgb, var(--muted) 55%, transparent);border-radius:3px;padding:6px 10px;cursor:pointer;color:var(--muted)}
+  #panel .filelab:hover{border-color:var(--ink);color:var(--ink)}
+  #panel input[type=color]{width:26px!important;min-width:26px;max-width:26px;height:24px!important;flex:none!important;border-radius:3px;padding:0!important;margin:0;
     border:1px solid color-mix(in srgb, var(--muted) 45%, transparent);overflow:hidden;background:none;cursor:pointer}
-  #panel input[type=color]::-webkit-color-swatch-wrapper{padding:0} #panel input[type=color]::-webkit-color-swatch{border:none;border-radius:5px}
-  #panel input[type=color]::-moz-color-swatch{border:none;border-radius:5px}
-  #panel .p-panes::-webkit-scrollbar{width:8px} #panel .p-panes::-webkit-scrollbar-thumb{background:color-mix(in srgb, var(--line) 80%, transparent);border-radius:4px}
-  #panel .wl{border-radius:10px}
+  #panel input[type=color]::-webkit-color-swatch-wrapper{padding:0} #panel input[type=color]::-webkit-color-swatch{border:none;border-radius:2px}
+  #panel input[type=color]::-moz-color-swatch{border:none;border-radius:2px}
+  #panel .p-panes::-webkit-scrollbar{width:6px} #panel .p-panes::-webkit-scrollbar-thumb{background:color-mix(in srgb, var(--line) 80%, transparent);border-radius:0}
+  #panel .wl{border-radius:4px}
+  #panel #undo-list .p-row{border-bottom:1px solid color-mix(in srgb, var(--line) 50%, transparent);padding:6px 0;margin:0}
+  /* 행 리듬 통일(phase523): 간격은 행 패딩 하나로만, 최소 높이 고정, 내용이 두 줄이면 위 정렬 */
+  #panel .trows{gap:0!important;margin:0 0 6px}
+  #panel .trow{padding:10px 0!important;min-height:54px;box-sizing:border-box;align-items:center!important}
+  #panel .trow .tc{row-gap:8px}
+  #panel .trow:has(.tc > :nth-child(6)) {align-items:start!important}
+  #panel .trow:has(.tc > :nth-child(6)) .tl{padding-top:8px}
+  #panel .trows .p-h{margin:22px 0 4px}
+  #panel .trows > .p-h:first-child{margin-top:4px}
+  #panel .p-row{margin-bottom:10px;min-height:32px;align-items:center}
+  #panel.big .tabs button:focus,#panel.big .tabs button:focus-visible{outline:none;box-shadow:none}
+  #panel .pane input:focus-visible,#panel .pane select:focus-visible,#panel .btn:focus-visible,#panel .rmv:focus-visible{outline:none}
   .p-row select{width:auto;margin-bottom:0}
   .p-row input{margin-bottom:0!important;flex:1;min-width:0}
   .chk{font-size:13px;display:inline-flex;gap:7px;align-items:center;white-space:nowrap;color:var(--body)}
@@ -2944,6 +2951,12 @@ html,body{overflow-x:hidden;overflow-x:clip}
       <b>글·갤러리</b>: 글 전체(비밀글 포함)와 갤러리.
       방명록은 글·갤러리를 담을 때 <b>보관용 기록으로만</b> 함께 저장되고, 복원·이사되지는 않아요.</p>
 
+    <p class="p-h" style="margin-top:26px">⏪ 되돌리기 (자동 백업)</p>
+    <p class="note" style="margin-top:-4px">꾸미기를 저장하거나 초기화 · 복원 · 듀얼 담기를 할 때마다 <b>직전 상태가 이 기기에 자동으로 저장</b>됩니다(최근 12개).
+      실수로 초기화했을 때 아래에서 고르면 그 상태로 되돌아가요. 글 · 사진 · 방명록은 건드리지 않고 꾸미기만 되돌립니다.
+      기기·브라우저에 저장되니, 다른 기기나 시크릿 창에는 안 남아요.</p>
+    <div id="undo-list"></div>
+
     <p class="p-h" style="margin-top:26px">복원 (백업에서 불러오기)</p>
     <p class="note" style="margin-top:-4px">JSON 백업 파일로 되돌립니다. 복원 직전에 <b>현재 상태가 자동으로 한 번 백업</b>되고,
       글 복원은 백업 속 글을 <b>되살리기만</b> 해요(지금 있는 글을 지우지 않아요). 방명록은 보관용이라 복원되지 않습니다.<br>다른 홈의 백업을 복원하면 <b>사진도 이 홈으로 복사</b>돼요 — 단, 비밀글 속 사진은 복사되지 않아요.</p>
@@ -3266,7 +3279,7 @@ html,body{overflow-x:hidden;overflow-x:clip}
       <label class="chk" title="사이드 위젯 구성 · 디데이 · BGM"><input type="checkbox" id="md-wid"> 위젯 구성도</label>
       <select id="md-def" style="width:auto;margin-bottom:0"><option value="a">처음 보이는 모습 — A</option><option value="b">처음 보이는 모습 — B</option></select>
     </div>
-    <p class="note">⚠ 체크를 바꿨으면 A · B를 다시 담아야 반영돼요. 담을 때의 체크 상태가 그 슬롯에 들어갑니다.</p>
+    <p class="note">⚠ 체크를 바꿨으면 A · B를 다시 담아야 반영돼요. 담을 때의 체크 상태가 그 슬롯에 들어갑니다. 실수로 덮어썼다면 〈관리 → ⏪ 되돌리기〉에서 직전 상태로 돌아갈 수 있어요.</p>
     <div class="p-row" style="align-items:center;gap:10px">
       <button class="btn" id="md-apply" style="font-size:12px">설정 저장</button>
       <span class="note" id="md-st" style="margin:0"></span>
@@ -3337,6 +3350,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=544"></script>
+<script type="module" src="./app.js?v=548"></script>
 </body>
 </html>

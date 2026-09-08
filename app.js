@@ -5443,6 +5443,7 @@ $('#wid-add').onclick=()=>{
   if(['profile','quote','links','banner','dday','bgm','notice','chat','phone','img','nb','text','stamp','tl','feat','latest','char','pair','cal','habit','pairqa','todo','search','category','cnt'].includes(t)) renderWidEdit();
 };
 $('#wid-save').onclick=async()=>{
+  undoPush('위젯 구성 저장 전');
   if(editIdx>=0 && draft[editIdx]) syncWid(draft[editIdx]);
   msg('저장 중...');
   try{
@@ -6324,6 +6325,7 @@ async function modeSaveCfg(extra){
 /* A/B 저장은 먼저 [설정 저장]과 같은 저장을 돌려서, 아직 확정 안 된 배경·헤더·색 변경까지 반영한 뒤 스냅샷(phase478) */
 async function modeSaveSlot(which){
   if(!st.mine) return;
+  undoPush(which.toUpperCase()+'에 담기 전');
   st._modeSaving=true; try{ await saveSettings(); }catch(e){ msg('먼저 설정 저장에 실패했어요 — '+(e.message||e)); return; } finally{ st._modeSaving=false; }
   const name=($('#md-'+which+'n')?.value||'').trim().slice(0,14), btn=($('#md-'+which+'b')?.value||'').trim().slice(0,16);
   const col=($('#md-'+which+'col')?.value)||''; const keep=st['_mdCol'+which+'Clear']?'':col;
@@ -6803,6 +6805,7 @@ function fillSettings(){
   const sgs=$('#s-gateskin'); if(sgs) sgs.value=st.page.gateSkin||'';
   modeUIFill();
   const ssn=$('#s-snd'); if(ssn) ssn.value=p.snd||''; const ssv=$('#s-sndv'); if(ssv){ ssv.value=p.sndV||40; const t=$('#s-sndv-t'); if(t) t.textContent=ssv.value; }
+  renderUndo();
   { const el=$('#rec-state'); if(el) el.textContent=st.page.recPriv?'설정됨':'미설정'; const bt=$('#rec-set'); if(bt) bt.textContent=st.page.recPriv?'복구 비밀번호 변경':'복구 비밀번호 만들기'; } const sgp=$('#s-gatepos'); if(sgp) sgp.value=st.page.gatePos||'';
   $('#s-gatecolor').value=p.gateColor||'#ffffff';
   const gsk=$('#s-gateskip'); if(gsk) gsk.checked=p.gateSkipPost===true;
@@ -6833,6 +6836,7 @@ function fillSettings(){
   bgNew=null;
 }
 async function saveSettings(){
+  undoPush('설정 저장 전');
   msg('저장 중...');
   try{
     const gateIn=$('#s-gate').value;
@@ -6991,6 +6995,7 @@ $('#s-reset').onclick=async()=>{
   const names={all:'꾸미기 전체',theme:'테마·색',widget:'위젯 구성',sticker:'스티커',media:'사진(헤더·대문·대표·배너)'};
   if(!confirm(`${names[kind]}를 초기화할까요?\n\n글·갤러리·방명록은 그대로 남고, 꾸민 설정만 처음 상태로 돌아가요.`)) return;
   if(kind==='all' && !confirm('정말 전부 되돌릴까요? 되돌린 설정은 복구할 수 없어요.')) return;
+  undoPush('초기화 전');
   const data = kind==='all'
     ? {...RESET.theme,...RESET.widget,...RESET.sticker,...RESET.layout,...RESET.media}
     : {...RESET[kind]};
@@ -7475,6 +7480,46 @@ function decoSnap(){                                             // st.page에�
   Object.keys(st.page||{}).forEach(k=>{ if(!DECO_SKIP.includes(k)) o[k]=st.page[k]; });
   return o;
 }
+/* ⏪ 꾸미기 자동 백업(phase520): 저장 · 담기 · 초기화 · 복원 직전에 지금 상태를 기기에 남긴다.
+   사진 본문(dataURL)은 빼고 참조만 담아 용량을 줄이고, 최근 12개까지 보관 */
+const UNDO_MAX=12, UNDO_KEY=()=>'lv-undo-'+st.handle;
+function undoList(){ try{ return JSON.parse(localStorage.getItem(UNDO_KEY())||'[]'); }catch(e){ return []; } }
+function undoPush(reason){
+  if(!st.mine||!st.page) return;
+  try{
+    const o=decoSnap(); const big=v=>typeof v==='string'&&v.startsWith('data:')&&v.length>20000;
+    Object.keys(o).forEach(k=>{ if(big(o[k])) delete o[k]; });
+    if(Array.isArray(o.heroImgs)) o.heroImgs=o.heroImgs.map(h=>h&&h.ref&&big(h.img)?{...h,img:''}:h);
+    const item={t:Date.now(), r:reason||'저장', d:o};
+    const s=JSON.stringify(item); if(s.length>400000) return;
+    const arr=undoList(); arr.unshift(item);
+    while(arr.length>UNDO_MAX || JSON.stringify(arr).length>2500000) arr.pop();
+    localStorage.setItem(UNDO_KEY(), JSON.stringify(arr));
+  }catch(e){}
+}
+async function undoApply(i){
+  const arr=undoList(); const it=arr[i]; if(!it) return;
+  const when=new Date(it.t).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
+  if(!confirm(`${when}의 꾸미기 상태로 되돌릴까요?\n(지금 상태도 자동으로 백업해 둡니다 · 글과 사진은 그대로예요)`)) return;
+  undoPush('되돌리기 직전');
+  try{ msg('되돌리는 중...');
+    await updateDoc(doc(db,'pages',st.handle), it.d); Object.assign(st.page, it.d);
+    try{ await resolveImgs(st.page); }catch(e){}
+    await enterPage(); renderUndo(); msg('되돌렸어요.');
+  }catch(e){ msg('되돌리기 실패 — '+(e.message||e)); }
+}
+function renderUndo(){
+  const box=document.getElementById('undo-list'); if(!box) return;
+  const arr=undoList();
+  box.innerHTML = arr.length ? arr.map((it,i)=>{
+    const when=new Date(it.t).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    return `<div class="p-row" style="align-items:center;gap:8px;margin-bottom:6px">
+      <span style="font-size:11.5px;color:var(--body);min-width:118px">${when}</span>
+      <span class="note" style="margin:0;flex:1">${esc(it.r)}</span>
+      <button class="rmv" data-undo="${i}" style="font-size:11px">↩ 이 상태로</button></div>`;
+  }).join('') : '<p class="note" style="margin:0">아직 기록이 없어요 — 꾸미기를 저장하면 이 기기에 쌓입니다.</p>';
+  box.querySelectorAll('[data-undo]').forEach(b=>b.onclick=()=>undoApply(+b.dataset.undo));
+}
 function buildBackup(withDeco, withPosts){
   if(withPosts && !st.albumsLoaded) console.warn('[lovelog] 백업: 앨범 미로드 — 사진첩 탭을 한 번 연 뒤 백업하면 앨범도 담겨요');
   const data={ exported:new Date().toISOString(), service:'lovelog', handle:st.handle,
@@ -7679,6 +7724,7 @@ $('#bk-restore')?.addEventListener('click', async ()=>{
       Object.keys(bkData.deco).forEach(k=>{ if(!DECO_SKIP.includes(k)) deco[k]=bkData.deco[k]; });
       if(cross) deco=JSON.parse(await migStr(JSON.stringify(deco)));
       if(JSON.stringify(deco).length>980000) throw new Error('꾸미기 데이터가 용량을 넘어요.');
+      undoPush('백업 복원 전');
       msg('꾸미기 복원 중...');
       await updateDoc(doc(db,'pages',st.handle), deco);
       Object.assign(st.page, deco);                              // 복원본을 메모리에도 반영 후 현재 모드 스냅샷 동기화(phase503)
