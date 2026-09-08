@@ -1071,7 +1071,10 @@ async function enterPage(){
     document.querySelector('.strip-sec').classList.toggle('hidden', !stripShow());
     const inPost=document.body.classList.contains('in-post');
     document.body.classList.toggle('reading', inPost && !!st.page.postPage);   // 글 넓게 읽기 상태 유지(phase518)
-    renderWidgets(); renderCatbar(); renderStickers(); renderGal(); modeToggleDraw(); return; }
+    renderWidgets(); renderCatbar(); renderStickers(); renderGal(); modeToggleDraw();
+    try{ initPet(); }catch(e){}                                  // 픽셀펫도 새 모드 것으로 교체(phase527) — 안 하면 두 모드 펫이 겹쳐 보임
+    try{ applyClickFx&&applyClickFx(); }catch(e){}
+    return; }
   await loadContent();
   bumpCounter(); loadStamps();
   if(homeStyle()==='blog'){ st.cat='recent'; applyView(); }
