@@ -1646,13 +1646,15 @@ function sndPlay(kind, vol){
     if(!kind) return; if(localStorage.getItem('lv-snd-off')==='1') return;
     sndCtx=sndCtx||new (window.AudioContext||window.webkitAudioContext)(); const c=sndCtx; if(c.state==='suspended') c.resume();
     const g=c.createGain(); g.connect(c.destination); const v=Math.max(0,Math.min(1,(vol||40)/100))*0.6; const t=c.currentTime;
-    if(kind==='click'||kind==='tap'){                            // 노이즈 버스트 (딸깍/톡)
-      const len=Math.floor(c.sampleRate*(kind==='click'?0.035:0.06)); const buf=c.createBuffer(1,len,c.sampleRate); const d=buf.getChannelData(0);
-      for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/len, kind==='click'?2:4);
-      const s=c.createBufferSource(); s.buffer=buf; const f=c.createBiquadFilter(); f.type=kind==='click'?'highpass':'lowpass'; f.frequency.value=kind==='click'?1800:900;
-      s.connect(f); f.connect(g); g.gain.setValueAtTime(v*(kind==='click'?1:0.9),t); s.start(t);
-      if(kind==='click'){ const o=c.createOscillator(); o.type='square'; o.frequency.setValueAtTime(2400,t); o.frequency.exponentialRampToValueAtTime(900,t+0.02); const g2=c.createGain(); g2.gain.setValueAtTime(v*0.25,t); g2.gain.exponentialRampToValueAtTime(0.0001,t+0.03); o.connect(g2); g2.connect(c.destination); o.start(t); o.stop(t+0.035); }
-    } else if(kind==='beep'){ const o=c.createOscillator(); o.type='sine'; o.frequency.setValueAtTime(1320,t); g.gain.setValueAtTime(v*0.5,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.08); o.connect(g); o.start(t); o.stop(t+0.09);
+    const tick=(at,ms,hz,amp)=>{                                 // 아주 짧은 노이즈 틱 (마우스 클릭 소리의 재료)
+      const len=Math.floor(c.sampleRate*ms/1000); const buf=c.createBuffer(1,len,c.sampleRate); const d=buf.getChannelData(0);
+      for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3);
+      const s=c.createBufferSource(); s.buffer=buf; const f=c.createBiquadFilter(); f.type='bandpass'; f.frequency.value=hz; f.Q.value=0.9;
+      const gg=c.createGain(); gg.gain.setValueAtTime(amp,at); gg.gain.exponentialRampToValueAtTime(0.0001,at+ms/1000);
+      s.connect(f); f.connect(gg); gg.connect(c.destination); s.start(at); };
+    if(kind==='click'){ tick(t,9,3800,v*1.1); tick(t+0.055,7,2600,v*0.55); }   // 딸깍(phase496): 누름 + 뗌, 톤 없이 틱만
+    else if(kind==='tap'){ tick(t,26,700,v*0.9); }                            // 톡: 낮고 부드럽게
+    if(kind==='click'||kind==='tap'){} else if(kind==='beep'){ const o=c.createOscillator(); o.type='sine'; o.frequency.setValueAtTime(1320,t); g.gain.setValueAtTime(v*0.5,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.08); o.connect(g); o.start(t); o.stop(t+0.09);
     } else if(kind==='pop'){ const o=c.createOscillator(); o.type='sine'; o.frequency.setValueAtTime(600,t); o.frequency.exponentialRampToValueAtTime(180,t+0.07); g.gain.setValueAtTime(v*0.7,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.09); o.connect(g); o.start(t); o.stop(t+0.1); }
   }catch(e){}
 }
