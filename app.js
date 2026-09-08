@@ -592,7 +592,7 @@ const bodyHTML=t=>{
   const hbs=[];
   /* [^\S\n]* = 줄바꿈 뺀 모든 공백 — 복붙에 섞이는 NBSP(U+00A0) 같은 유령 공백까지 허용(phase366) */
   t=t.replace(/^[^\S\n]*\[html\][^\S\n]*\n([\s\S]*?)\n?[^\S\n]*\[\/html\][^\S\n]*$/gim,(m,inner,off,str)=>{
-    hbs.push(cleanHTML(inner));
+    hbs.push(fmtColorSize(cleanHTML(inner)));   // HTML 블록 안에서도 색·크기 서식(phase515)
     const before=str.slice(0,off), after=str.slice(off+m.length);
     /* 문단 분리에 딱 필요한 만큼만 개행 보충 — 원문 빈 줄(pgap)을 불리지 않게 */
     const pre = (!before || /\n\n$/.test(before)) ? '' : (/\n$/.test(before) ? '\n' : '\n\n');
@@ -662,6 +662,10 @@ const cleanHTML=h=>h
   .replace(/<script[\s\S]*?<\/script\s*>/gi,'')
   .replace(/\son\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi,'')
   .replace(/javascript:/gi,'');
+/* {{크기}} · {{#색}} 서식만 HTML 안에서도 적용(phase515) — 태그와 충돌 없는 두 서식은 HTML 블록·HTML 모드에서도 쓰이게 */
+const fmtColorSize=t=>String(t||'')
+  .replace(/\{\{(\d{1,3}):([^}]+)\}\}/g,(m,n,x)=>{ n=Math.min(72,Math.max(8,+n)); return `<span style="font-size:${n}px">${x}</span>`; })
+  .replace(/\{\{(#(?:[0-9a-fA-F]{3}){1,2}):([^}]+)\}\}/g,'<span style="color:$1">$2</span>');
 /* HTML 글의 '태그 바깥 텍스트' 줄바꿈 살리기(phase280):
    본문 첫 블록 태그 이전(머리말)·마지막 '>' 이후(맺음말)의 개행만 <br>로 —
    태그 내부·CSS는 일절 안 건드림. <br> 뒤 개행은 이중 줄바꿈 방지로 보존. */
@@ -5969,7 +5973,7 @@ $('#w-go').onclick=async()=>{
   if(schedOn && !(schedAt>Date.now())){ msg('⏰ 예약 시각을 미래로 정해주세요.'); return; }
   msg('발행 중...');
   try{
-    let html=asHtml?cleanHTML(raw):bodyHTML(raw);
+    let html=asHtml?fmtColorSize(cleanHTML(raw)):bodyHTML(raw);   // HTML 모드도 색·크기 서식(phase515)
     wImgs.forEach((im,i)=>{
       html=html.split(`[사진${i+1}]`).join(`<img src="${im}" alt="">`);
     });
