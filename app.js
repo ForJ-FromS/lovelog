@@ -3028,7 +3028,8 @@ function renderList(){
   if(st.cat==='__gal' || (st.cat!=='recent' && st.cat!=='home' && isG(st.cat))){
     $('#v-label').textContent = st.cat==='__gal' ? galNm() : st.cat.toUpperCase();
     $('#pin-slot').innerHTML='';
-    const all = st.cat==='__gal' ? st.gallery : st.gallery.filter(g=>g.cat===st.cat);
+    const gex=st.page.galEx||[];
+    const all = st.cat==='__gal' ? st.gallery.filter(g=>!gex.includes(g.cat)) : st.gallery.filter(g=>g.cat===st.cat);   // 통합 제외(phase509)
     const gper = galCols()*5;
     renderPager(all.length, gper);
     const items = all.slice(((st.pg||1)-1)*gper, (st.pg||1)*gper);
@@ -3205,7 +3206,7 @@ function stripList(){
     return ids.map(id=>st.gallery.find(g=>g.id===id)).filter(Boolean);
   }
   if(src && src!=='recent') return st.gallery.filter(g=>g.cat===src);
-  return st.gallery;
+  const gex=st.page?.galEx||[]; return st.gallery.filter(g=>!gex.includes(g.cat));   // 최근순 스트립도 통합 제외 존중(phase509) — 직접 고른/카테고리 지정은 그대로
 }
 async function togglePin(id){
   const cur=[...galPins()];
@@ -3960,6 +3961,7 @@ function renderCatMgr(){
         <option value="album" ${isA(c)?'selected':''}>사진첩 (제목 있는 묶음)</option>
         <option value="memo" ${isMemo(c)?'selected':''}>메모 (카드 모아보기)</option>
       </select>
+      ${(isG(c)||isA(c))?`<label class="chk" style="margin:0;font-size:11px" title="켜면 이 카테고리의 사진은 GALLERY(통합) 탭과 대문 갤러리에 안 뜨고, 이 카테고리 탭에서만 보여요"><input type="checkbox" data-gex="${i}" ${(st.page.galEx||[]).includes(c)?'checked':''}> 통합 제외</label>`:''}
       ${isA(c)?`<select data-alv="${i}" style="width:auto;margin-bottom:0;font-size:11px" title="이 사진첩의 목록을 어떻게 보여줄지">
         <option value="card" ${(st.page.abListView||{})[c]!=='list'?'selected':''}>표지 카드</option>
         <option value="list" ${(st.page.abListView||{})[c]==='list'?'selected':''}>제목만</option>
@@ -3999,6 +4001,11 @@ function renderCatMgr(){
     st.page.gcats=g; st.page.mcats=m; st.page.acats=a; refreshWriteCats(); refreshGalCats(); renderSide(); renderCatbar();
     renderCatMgr();                                            // 행 재렌더 — 사진첩 전환 시 [표지 카드/제목만] 셀렉트 즉시 등장(phase291b)
     msg(`'${name}' → ${s.value==='gallery'?'사진':s.value==='album'?'사진첩':s.value==='memo'?'메모':'글'} 카테고리로 변경!`);
+  });
+  box.querySelectorAll('[data-gex]').forEach(cb=>cb.onchange=async()=>{     // 통합 갤러리 제외(phase509) — 즉시 저장
+    const name=cats()[+cb.dataset.gex]; const arr=(st.page.galEx||[]).filter(x=>x!==name); if(cb.checked) arr.push(name);
+    try{ await updateDoc(doc(db,'pages',st.handle),{galEx:arr}); }catch(e){ msg('저장 실패 — '+e.message); return; }
+    st.page.galEx=arr; renderGal(); if(st.cat==='__gal') renderList(); msg(cb.checked?`'${name}'은 통합 갤러리에서 빠져요.`:`'${name}'을 통합 갤러리에 다시 포함해요.`); modeSyncCurrent();
   });
   box.querySelectorAll('[data-alv]').forEach(s2=>s2.onchange=async()=>{     // 사진첩 목록 모양(phase288d) — 즉시 저장
     const name=cats()[+s2.dataset.alv];
