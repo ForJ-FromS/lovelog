@@ -1066,8 +1066,9 @@ async function enterPage(){
   document.body.classList.toggle('head-notext', p.headText===false);
   document.body.classList.toggle('head-nograd', p.headGrad==='none');
   document.body.classList.toggle('head-lightgrad', p.headGrad==='light');
-  const isPil = p.headMode==='pillar';                       // 📐 세로 헤더 — 기둥(phase537)
+  const isPil = p.headMode==='pillar' || p.headMode==='pillar-r';   // 📐 세로 헤더 — 기둥 왼쪽/오른쪽(phase537)
   document.body.classList.toggle('hm-pillar', isPil);
+  document.body.classList.toggle('hm-pillar-r', p.headMode==='pillar-r');
   if(p.headMode==='side' || isPil){
     headEl.classList.toggle('v', !isPil); headEl.classList.toggle('pil', isPil);
     headEl.style.removeProperty('min-height'); $('#aside').prepend(headEl); }
@@ -1107,7 +1108,7 @@ const MODE_KEYS=['hue','sat','lum','light','glass','theme','dots','bgImg','bgRef
   'pet','petImg','petImgs','petSz','clickFx','snd','sndV','protectImg','fav','postPage',
   'listTc','rowTag','tagShape','galCols','memoCols','catSel','catCnt','gbHint','gbEmpty','homeName','galName','gbName','labelIcon','headFs','headSubFs','headOverFs','headShow','sidePos','tagShow','tagOrder','magPick','magCards','magSlots'];   // 글 목록 제목 색 등 남은 꾸밈도 모드별(phase519)
 const MODE_HDR=['heroImgs','heroImg','headFit','headH','headMode','headNoBg','enterImg','enterRef','enterText','cardImg','bannerImg','catImgs'];   // 사진(헤더·대문·대표·카테고리)
-const MODE_STRIP=['stripPin','stripCnt','stripShape','stripOn'];                                                                          // 하단 스트립(phase476)
+const MODE_STRIP=['stripPin','stripCnt','stripShape','stripOn','stripSrc'];   // 사진 출처도 모드별(phase537b)                                                                          // 하단 스트립(phase476)
 const MODE_WID=['side','ddays','bgm','noLatest','sidePos','homeStyle'];                                                                   // 위젯 구성(phase476) · 홈 구조도 함께(phase537)
 function modeSnap(){
   const m=st.page.modes||{}; const keys=MODE_KEYS.concat(m.hdr?MODE_HDR:[], m.strip?MODE_STRIP:[], m.wid?MODE_WID:[]); const o={};
@@ -1904,12 +1905,13 @@ function renderSide(){
   const boxR=$('#aside'), boxL=$('#aside-l'),
         hL=$('#hcol-l'), hC=$('#hcol-c'), hR=$('#hcol-r');
   const both = p.sidePos==='both';
-  const pil = p.headMode==='pillar';                             // 기둥 헤더(phase537)
+  const pil = p.headMode==='pillar' || p.headMode==='pillar-r';  // 기둥 헤더(phase537)
+  const pilR = p.headMode==='pillar-r';                          // 오른쪽 기둥(phase537b)
   const headEl=document.querySelector('#aside .head, #aside-l .head, .hcol .head');   // 홈 기둥으로 옮겨간 헤더도 추적
   boxR.innerHTML=''; boxL.innerHTML='';
   hL.innerHTML=''; hC.innerHTML=''; hR.innerHTML='';
   if(headEl){
-    const headBox = pil ? (home ? hL : boxL)                  // 기둥은 언제나 왼쪽 칸(phase537)
+    const headBox = pil ? (pilR ? (home ? hR : boxR) : (home ? hL : boxL))   // 기둥은 왼쪽 또는 오른쪽 칸(phase537)
       : home
       ? (p.sidePos==='right' ? hR : hL)     // 홈에서는 홈 그리드 기둥에 (실종 버그 수정)
       : (both?boxL:boxR);
@@ -1934,13 +1936,16 @@ function renderSide(){
     if(w.home && !homeView) return;                            // 🏠 홈에서만 표시 — 카테고리·게시판에선 숨김(phase282)
     const pos = p.sidePos==='left'?'l' : p.sidePos==='both'?'b' : 'r';
     let box = (home && isM) ? hC
-      : pil                                                    // 기둥: 왼쪽은 헤더 자리 → l 위젯은 가운데로(phase537)
-      ? (home ? ((w.col==='c'||w.col==='l') ? hC : hR) : boxR)
+      : pil                                                    // 기둥: 헤더가 먹은 쪽의 위젯은 가운데로(phase537)
+      ? (pilR
+          ? (home ? ((w.col==='c'||w.col==='r') ? hC : hL) : (w.bcol==='r'?boxR:boxL))   // 오른쪽 기둥: r 위젯은 가운데, 게시판은 왼쪽 칸(오른쪽 지정 시 기둥 아래)
+          : (home ? ((w.col==='c'||w.col==='l') ? hC : hR) : (w.bcol==='l'?boxL:boxR)))  // 왼쪽 기둥: 게시판에선 기둥 아래로도 둘 수 있음
       : home
       ? (pos==='b' ? (w.col==='l'?hL : w.col==='c'?hC : hR)
         : pos==='l' ? (w.col==='c'?hC : hL)
         : (w.col==='c'?hC : hR))
-      : ((both && w.col==='l') ? boxL : boxR);
+      : (w.bcol ? (w.bcol==='l'?boxL:boxR)                       // 카테고리 화면 좌우 지정(phase537b)
+        : (both && w.col==='l') ? boxL : boxR);
     /* 📌 띄운 위젯: 컬럼 대신 플로팅 레이어에 (PC 전용, 좁으면 원래 자리로 자동 복귀) */
     let flw=null;
     if(w.float && wide && wfl && w.t!=='latest'){
@@ -2836,6 +2841,9 @@ function renderSide(){
   gh.classList.toggle('pos-b', pos==='b');
   gh.classList.toggle('no-l', pos==='b' && !hL.children.length && !st.mine);
   gh.classList.toggle('no-r', pos==='b' && !hR.children.length && !st.mine);
+  /* 게시판 왼쪽 칸: 사이드바가 '양쪽'이 아니어도 왼쪽으로 지정한 위젯이 있으면 칸을 연다(phase537b) — 위젯이 없는 헤더뿐이면 기둥 CSS가 따로 처리 */
+  const lw = !home && !both && !pil && [...boxL.children].some(el=>!el.classList.contains('head'));
+  document.body.classList.toggle('side-lw', lw);
   applyAutoHead();                                   // 헤더 재배치 후 실제 폭으로 재계산
 }
 function renderCats(){ renderSide(); }
@@ -4429,23 +4437,23 @@ function renderCatFix(){
   const stn=$('#strip-on'); if(stn) stn.onchange=async()=>{
     try{ await updateDoc(doc(db,'pages',st.handle),{stripOn:stn.checked}); }
     catch(e){ msg('저장 실패 — '+e.message); stn.checked=!stn.checked; return; }
-    st.page.stripOn=stn.checked;
+    st.page.stripOn=stn.checked; modeSyncCurrent();                     // 🌗 현재 모드 스냅샷에도(phase537b)
     document.querySelector('.strip-sec').classList.toggle('hidden', !stripShow());
     msg(stn.checked?'대문 하단 스트립을 켰어요.':'대문 하단 스트립을 껐어요.');
   };
   const sc2=$('#strip-cnt'); if(sc2) sc2.onchange=async()=>{           // ▤ 장수(phase310) — 즉시 저장
     st.page.stripCnt=+sc2.value;
-    try{ await updateDoc(doc(db,'pages',st.handle),{stripCnt:+sc2.value});
+    try{ await updateDoc(doc(db,'pages',st.handle),{stripCnt:+sc2.value}); modeSyncCurrent();
       renderGal(); msg('스트립 장수를 바꿨어요.'); }
     catch(e3){ msg('저장 실패: '+e3.message); } };
   const sh=$('#strip-shape'); if(sh) sh.onchange=async()=>{           // ▤ 모양(phase308) — 즉시 저장
     st.page.stripShape=sh.value;
-    try{ await updateDoc(doc(db,'pages',st.handle),{stripShape:sh.value});
+    try{ await updateDoc(doc(db,'pages',st.handle),{stripShape:sh.value}); modeSyncCurrent();
       renderGal(); msg('스트립 모양을 바꿨어요 — 대문에서 확인해 보세요.'); }
     catch(e2){ msg('저장 실패: '+e2.message); } };
   const ss=$('#strip-src'); if(ss) ss.onchange=async()=>{
     st.page.stripSrc=ss.value;
-    try{ await updateDoc(doc(db,'pages',st.handle),{stripSrc:ss.value});
+    try{ await updateDoc(doc(db,'pages',st.handle),{stripSrc:ss.value}); modeSyncCurrent();
       msg(ss.value==='pick'?'★ 표시한 사진이 대문에 떠요 — 갤러리에서 ★를 눌러 골라주세요.':'대문 갤러리 기준을 바꿨어요.');
     }catch(e){ msg('저장 실패: '+e.message); }
     renderGal();
@@ -4651,6 +4659,9 @@ function renderWidEdit(){
   html+=`
     <div class="p-row" style="align-items:center;gap:8px;margin-bottom:6px">
       <label class="chk" title="카드 배경·테두리·금색 탭 없이 내용만 홈 위에 얹혀요 — 편집 모드에선 점선으로 자리가 보여요"><input type="checkbox" id="we-bare" ${w.bare?'checked':''}> 🫧 투명 (카드 없이)</label>
+      <span style="font-size:11px;color:var(--muted);flex:none;margin-left:6px">카테고리 화면에선</span>
+      <select id="we-bcol" title="글 목록·카테고리 화면으로 넘어갔을 때 이 위젯을 어느 쪽 사이드에 둘지 — 기본은 사이드바 설정을 따라요" style="flex:.8">
+        <option value="">사이드바 설정대로</option><option value="l"${w.bcol==='l'?' selected':''}>왼쪽</option><option value="r"${w.bcol==='r'?' selected':''}>오른쪽</option></select>
     </div>`;                                                   // 모든 위젯 공통(phase537b)
   if(w.t==='profile') html+=`
     <div class="p-row"><label class="filelab">사진 <input type="file" id="we-img" accept="image/*"></label></div>
@@ -5378,6 +5389,7 @@ function renderWidEdit(){
   }));
   const mgl=$('#we-maglab'); if(mgl) mgl.addEventListener('input',()=>{ w.label=mgl.value===' '?'':(mgl.value.trim()||undefined); if(w.label===undefined) delete w.label; });   // 📰 공백 하나 = 제목 없음
   const wbr=$('#we-bare'); if(wbr) wbr.addEventListener('change',()=>{ if(wbr.checked) w.bare=true; else delete w.bare; });   // 🫧 투명 공통(phase537b)
+  const wbc=$('#we-bcol'); if(wbc) wbc.addEventListener('change',()=>{ if(wbc.value) w.bcol=wbc.value; else delete w.bcol; });   // 카테고리 화면 좌우(phase537b)
   const qan=$('#we-qanim'); if(qan) qan.addEventListener('change',()=>{ w.anim=qan.checked; });
   const qaf=$('#we-qafix'); if(qaf) qaf.addEventListener('change',()=>{ if(qaf.checked) w.animFix=true; else delete w.animFix; });
   const qmk=$('#we-qmark'); if(qmk) qmk.addEventListener('change',()=>{
@@ -6409,7 +6421,7 @@ function renderMagSlots(){
 }
 function renderHeroList(){
   const box=$('#s-hero-list');
-  const pil = $('#s-headmode')?.value==='pillar';                 // 기둥이면 미리보기 세로(phase537)
+  const pil = ['pillar','pillar-r'].includes($('#s-headmode')?.value);   // 기둥이면 미리보기 세로(phase537)
   box.classList.toggle('pv-pillar', pil);
   box.innerHTML = heroDraft.map((o,i)=>`
     <div style="width:100%;border:1px solid var(--line);border-radius:11px;padding:10px;margin-bottom:10px">
