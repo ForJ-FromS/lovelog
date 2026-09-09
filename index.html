@@ -502,6 +502,16 @@
   .row .c{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.12em;
     color:var(--pri);border:1px solid var(--line);border-radius:4px;padding:1px 8px}
   .row .t{font-size:14px;color:var(--listTc, var(--body))}
+  /* 📰 매거진 표지 위젯(phase537b) — 카드 안에서는 목록 구분선 없이 · 투명이면 카드 옷을 벗김 */
+  .w-mag .mg-wrap{margin:0}
+  .w-mag .mg-cards{border-bottom:none;padding-bottom:0}
+  .w-mag .mg-lead{margin-bottom:14px}
+  .w-mag .mg-lead:last-child{margin-bottom:0}
+  .side.w-bare{background:none!important;border-color:transparent!important;padding:4px 2px;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+  .side.w-bare::before{display:none}
+  .side.w-bare:hover{border-color:transparent}
+  body.editmode .side.w-bare{outline:1px dashed color-mix(in srgb, var(--pri) 45%, transparent);outline-offset:4px;border-radius:12px}   /* 편집 모드에선 자리가 보이게 */
+  @media(max-width:640px){ #hcol-c .w-mag .mg-lead{grid-template-columns:1fr} }
   /* 📰 매거진형(phase535) */
   .mg-wrap{margin:0 0 14px}
   .mg-lead{display:grid;grid-template-columns:1.35fr 1fr;gap:16px;align-items:start;cursor:pointer;margin-bottom:16px}
@@ -2100,10 +2110,22 @@
     background-repeat:no-repeat;background-color:var(--card2)}
   .hpv-mo{width:118px;height:124px;border-radius:10px;border:1px solid var(--line);
     background-repeat:no-repeat;background-color:var(--card2)}
+  /* 📰 매거진 직접 고르기 슬롯(phase537) */
+  .ms-row{display:flex;align-items:center;gap:8px;margin-bottom:7px;flex-wrap:wrap}
+  .ms-row .ms-l{font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.2em;color:var(--muted);width:44px;flex:none}
+  .ms-row select{flex:1;min-width:160px}
+  .ms-row .ms-th{width:56px;height:42px;border-radius:7px;border:1px solid var(--line);background:var(--card2) center/cover no-repeat;flex:none;
+    display:grid;place-items:center;font-size:10px;color:var(--muted)}
+  .ms-row .filelab{font-size:11px;padding:5px 9px}
   .hsl{display:flex;align-items:center;gap:9px;margin-bottom:7px}
   .hsl span{font-size:11px;color:var(--muted);width:30px;flex:none}
   .hsl input[type=range]{flex:1;margin:0!important}
-  @media(max-width:640px){.hpv-pc{width:100%;height:96px}.hpv-mo{width:92px;height:96px}}
+  /* 기둥 헤더일 땐 미리보기도 세로로 — 실제 비율(300 × 화면높이)에 맞춤(phase537) */
+  #s-hero-list.pv-pillar .hpv-pc{width:150px;height:330px}
+  #s-hero-list.pv-pillar .hpv-mo{width:150px;height:118px}   /* 폰에선 기둥이 상단 배너로 접히니 가로형 */
+  #s-hero-list.pv-pillar .hpv-wrap{align-items:flex-start}
+  @media(max-width:640px){.hpv-pc{width:100%;height:96px}.hpv-mo{width:92px;height:96px}
+    #s-hero-list.pv-pillar .hpv-pc{width:120px;height:264px}}
   .fld{display:flex;align-items:center;gap:0;border:1px solid var(--line);
     border-radius:10px;background:var(--card);overflow:hidden}
   .fld-pre{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--muted);
@@ -3142,7 +3164,7 @@ html,body{overflow-x:hidden;overflow-x:clip}
       <p class="p-h">구조</p>
         <div class="trow"><span class="tl">홈 구조</span><span class="tc"><select id="s-homestyle">
         <option value="grid">갠홈형 (위젯 그리드 — 지금 구조)</option>
-        <option value="mag">매거진형 (첫 화면 = 표지 글 + 카드 + 목록)</option>
+        <option value="mag">매거진형 (갠홈 + 📰 표지 위젯 붙박이 · 전체 목록 위에도 표지)</option>
         <option value="blog">클래식 블로그형 (글 목록이 메인)</option></select></span></div>
       <div class="trow"><span class="tl">사이드바</span><span class="tc"><select id="s-sidepos">
         <option value="right">오른쪽</option><option value="left">왼쪽</option><option value="both">양쪽</option></select></span></div>
@@ -3245,9 +3267,11 @@ html,body{overflow-x:hidden;overflow-x:clip}
             <option value="">페이지 번호 — 둥근 네모 (기본)</option><option value="pill">페이지 번호 — 알약</option><option value="box">페이지 번호 — 네모</option>
             <option value="text">페이지 번호 — 숫자만 (밑줄)</option><option value="dots">페이지 번호 — 점</option></select>
           <select id="s-magpick" title="매거진형에서 표지에 올릴 글">
-            <option value="latest">표지 글 — 최신 글</option><option value="feat">표지 글 — 대표글 ★</option><option value="pin">표지 글 — 고정글</option></select>
-          <select id="s-magcards" title="표지 아래 가로 카드 수">
-            <option value="2">가로 카드 — 2편</option><option value="4">가로 카드 — 4편</option><option value="0">가로 카드 — 없음</option></select></span></div>
+            <option value="latest">표지 글 — 최신 글</option><option value="feat">표지 글 — 대표글 ★</option><option value="pin">표지 글 — 고정글</option>
+            <option value="manual">표지 글 — 직접 고르기 (표지 1 + 카드 2 · 사진도 따로)</option></select>
+          <select id="s-magcards" title="표지 아래 가로 카드 수 (직접 고르기에선 채운 칸만큼)">
+            <option value="2">가로 카드 — 2편</option><option value="4">가로 카드 — 4편</option><option value="0">가로 카드 — 없음</option></select>
+          <div id="mag-slots" class="hidden" style="width:100%;margin-top:8px"></div></span></div>
       <div class="trow"><span class="tl">📖 글 전용 페이지</span><span class="tc"><select id="s-postpage" title="글을 읽을 때 위젯·카테고리 바를 접고 본문만 넓게">
         <option value="">끄기</option><option value="on">켜기 — 읽을 때 본문만 넓게</option></select></span></div>
     </div>
@@ -3474,6 +3498,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=568"></script>
+<script type="module" src="./app.js?v=573"></script>
 </body>
 </html>

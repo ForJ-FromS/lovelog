@@ -1105,7 +1105,7 @@ async function enterPage(){
 const MODE_KEYS=['hue','sat','lum','light','glass','theme','dots','bgImg','bgRef','bgDim','titleColor','font','customCss','curImg','sparkle','fx','fxC','labelIcon','priColor',
   'corner','cardC','headGrad','headText','hdOverC','hdSubC','hdDdC','headDeco','headBand','stickers','stkOff','stkHideM','stkHome','btnStyle','pgStyle','rowStyle','catShape','quoteStyle','postFs',
   'pet','petImg','petImgs','petSz','clickFx','snd','sndV','protectImg','fav','postPage',
-  'listTc','rowTag','tagShape','galCols','memoCols','catSel','catCnt','gbHint','gbEmpty','homeName','galName','gbName','labelIcon','headFs','headSubFs','headOverFs','headShow','sidePos','tagShow','tagOrder','magPick','magCards'];   // 글 목록 제목 색 등 남은 꾸밈도 모드별(phase519)
+  'listTc','rowTag','tagShape','galCols','memoCols','catSel','catCnt','gbHint','gbEmpty','homeName','galName','gbName','labelIcon','headFs','headSubFs','headOverFs','headShow','sidePos','tagShow','tagOrder','magPick','magCards','magSlots'];   // 글 목록 제목 색 등 남은 꾸밈도 모드별(phase519)
 const MODE_HDR=['heroImgs','heroImg','headFit','headH','headMode','headNoBg','enterImg','enterRef','enterText','cardImg','bannerImg','catImgs'];   // 사진(헤더·대문·대표·카테고리)
 const MODE_STRIP=['stripPin','stripCnt','stripShape','stripOn'];                                                                          // 하단 스트립(phase476)
 const MODE_WID=['side','ddays','bgm','noLatest','sidePos','homeStyle'];                                                                   // 위젯 구성(phase476) · 홈 구조도 함께(phase537)
@@ -1303,6 +1303,8 @@ function sideCfg(){
     if(st.page.ddays&&st.page.ddays.length) s.push({t:'dday'});
     if(ytId(st.page.bgm?.url)) s.push({t:'bgm'});
   }
+  if(homeStyle()==='mag' && !s.some(w=>w&&w.t==='mag'))     // 📰 매거진형은 표지 위젯이 붙박이(phase537b) — 자리·설정은 바꿔도 못 지움
+    s=[{t:'mag',col:'c',bare:true}, ...s];
   return s.map(w=>({col:DEFCOL[w.t]||'r', ...w}));
 }
 /* 홈 중앙 붙박이: 고정글 + 최신글 */
@@ -1401,7 +1403,7 @@ const galNm=()=>st.page?.galName||'GALLERY';
 const gbNm=()=>st.page?.gbName||'GUESTBOOK';
 function applyGbText(){ const t=$('#gb-text'); if(t) t.placeholder=st.page?.gbHint||'다녀간 흔적을 남겨주세요'; }   // 방명록 문구(phase508)
 const homeNm=()=>st.page?.homeName||'HOME';
-const WNAME={latest:'최신글',pin:'📌 고정글',char:'캐릭터 프로필',pair:'페어 프로필',cal:'달력',habit:'해빗 트래커',notice:'공지',chat:'채팅로그',phone:'단말기',tl:'타임라인',feat:'★ 대표글',img:'이미지',nb:'이웃 홈',profile:'프로필',search:'검색',category:'카테고리',
+const WNAME={mag:'📰 매거진 표지',latest:'최신글',pin:'📌 고정글',char:'캐릭터 프로필',pair:'페어 프로필',cal:'달력',habit:'해빗 트래커',notice:'공지',chat:'채팅로그',phone:'단말기',tl:'타임라인',feat:'★ 대표글',img:'이미지',nb:'이웃 홈',profile:'프로필',search:'검색',category:'카테고리',
   dday:'디데이',bgm:'BGM',quote:'인용구',links:'링크',banner:'배너칸',text:'글',cnt:'방문자수',stamp:'발도장',pairqa:'페어 인터뷰',todo:'투두리스트'};
 const STAMP_LEGACY=['heart','paw','star','drop'];   // 옛 슬롯 이름 — 카운트 승계용
 /* 글자 묶음(grapheme) 분해 — ZWJ 결합 이모지·피부색·국기가 하나로 유지(phase490) */
@@ -1496,10 +1498,10 @@ function fillCounter(){
   else b.textContent = tot;
   if(a.closest('.cnt-term')) a.textContent=String(tv).padStart(6,'0');
 }
-const DEFCOL={search:'l',category:'l',profile:'l',latest:'c',tl:'r',feat:'r',quote:'c',notice:'c',chat:'c',phone:'c',img:'l',nb:'r',
+const DEFCOL={mag:'c',search:'l',category:'l',profile:'l',latest:'c',tl:'r',feat:'r',quote:'c',notice:'c',chat:'c',phone:'c',img:'l',nb:'r',
   dday:'r',bgm:'r',links:'r',banner:'r',text:'c',cnt:'l',char:'r',pair:'c',cal:'r',habit:'r'};
 const homeStyle=()=>st.page?.homeStyle||'grid';
-const listHome=()=>homeStyle()==='blog'||homeStyle()==='mag';   // 첫 화면이 글 목록인 구조 — 매거진형도 표지 블록이 홈(phase537)
+const listHome=()=>homeStyle()==='blog';   // 첫 화면이 글 목록인 구조 — 매거진형은 갠홈 + 📰 위젯이라 제외(phase537b)
 const galOn=()=>st.page?.galOn!==false;
 const galTabOn=()=>st.page?.galTabOn!==false;                  // 알약(탭)만 별도 on/off(phase267) — 스트립과 독립
 const stripOn=()=>st.page?.stripOn!==false;
@@ -1517,7 +1519,7 @@ function goHome(){
 }
 function goBoard(cat){
   if(cat==='__gb' && st.page.gbOff){ msg('방명록이 잠시 닫혀 있어요.'); return; }
-  if(cat==='recent' && st.page.allOff){ msg('전체 글 보기가 꺼져 있어요.'); return; }
+  if(cat==='recent' && st.page.allOff && !listHome()){ msg('전체 글 보기가 꺼져 있어요.'); return; }   // 블로그형은 recent가 홈이라 ALL을 꺼도 들어가야 함(phase537b)
   if(st.cat!==cat) st.tagF=null;                              // 🏷 카테고리 이동 시 태그 필터 해제(phase292)
   st.cat=cat||'recent'; st.pg=1; applyView(); renderWidgets(); renderList(); backToList(); renderCatbar(); }
 const allTags=()=>[...new Set(st.posts.flatMap(p=>p.tags||[]))].sort((a,b)=>a.localeCompare(b,'ko'));   // 🏷(phase292)
@@ -2723,6 +2725,17 @@ function renderSide(){
           :(!w.title&&st.mine?'<p class="pl-empty">✎ 편집에서 내용을 채워주세요.</p><p class="pl-ghost">👻 지금은 방문자에게 안 보이는 카드예요</p>':'')}`;
       box.appendChild(d); return;
     }
+    if(w.t==='mag'){                                           // 📰 매거진 표지 위젯(phase537b) — 매거진형 전용 · 레이아웃 탭의 표지 글 설정을 따름
+      if(!home || homeStyle()!=='mag') return;
+      d.className+=' w-mag'+(w.bare?' w-bare':'');
+      const list=st.posts.filter(p=>!p.pinned || (st.page.magPick==='pin'));
+      const sel=magSelect(list);
+      if(!sel.lead){ if(st.mine) d.innerHTML=`<p class="label">${esc(w.label||'FEATURED')}</p><p class="pl-empty">아직 글이 없어요.</p>`; else return; }
+      else d.innerHTML=(w.label===''?'':`<p class="label">${esc(w.label||'FEATURED')}</p>`)+magHTML(sel);
+      box.appendChild(d);
+      d.querySelectorAll('.mg-lead,.mg-card').forEach(a=>a.onclick=()=>openFromHome(a.dataset.id));
+      return;
+    }
     if(w.t==='quote'){
       d.className+=' w-quote';
       d.innerHTML=`${w.noQm?'':'<span class="qm">❝</span>'}<p>${esc(w.text||'').replace(/\n/g,'<br>')}</p>`;
@@ -2965,6 +2978,47 @@ function updateBoardWrite(){
 const postThumb=p=>{ if(p.secret) return ''; if(p.thumb) return p.thumb;   // 글마다 지정한 대표 사진 우선(phase535)
   if(Array.isArray(p.imgs)&&p.imgs[0]) return p.imgs[0];
   if(!p.body) return ''; const m=p.body.match(/<img[^>]+src="([^"]+)"/); return m?m[1]:''; };
+/* 📰 매거진 표지 고르기 — 목록(ALL) 위 블록과 📰 위젯이 같이 씀(phase537b) */
+function magSelect(list){
+  const pick=st.page.magPick||'latest';
+  let lead, cards, rest, slotImg={};
+  if(!list.length) return {lead:null,cards:[],rest:[],slotImg};
+  if(pick==='manual'){                                        // 직접 고르기: 글도 사진도 주인이 정한 대로(phase537)
+    const sl=st.page.magSlots||[]; const byId=id=>id&&st.posts.find(p=>p.id===id);
+    lead = byId(sl[0]&&sl[0].id) || list[0];
+    if(sl[0]&&sl[0].img) slotImg[lead.id]=sl[0].img;
+    cards = sl.slice(1).map(o=>byId(o&&o.id)).filter((p,i,arr)=>p && p!==lead && arr.indexOf(p)===i);
+    sl.slice(1).forEach(o=>{ const p2=byId(o&&o.id); if(p2&&o.img) slotImg[p2.id]=o.img; });
+    rest=list.filter(p=>p!==lead && !cards.includes(p));
+  } else {
+    lead = pick==='feat' ? (list.find(p=>p.feat)||list[0]) : pick==='pin' ? (list.find(p=>p.pinned)||list[0]) : list[0];
+    const nCard=[0,2,4].includes(+st.page.magCards)?+st.page.magCards:2;
+    const others=list.filter(p=>p!==lead);
+    cards=others.slice(0,nCard); rest=others.slice(nCard);
+  }
+  return {lead,cards,rest,slotImg};
+}
+function magHTML({lead,cards,slotImg}){
+  if(!lead) return '';
+  const th=slotImg[lead.id]||postThumb(lead);
+  const tagH=(p)=>(p.tags&&p.tags[0])?`<span class="mg-tag">${esc(p.tags[0])}</span>`:'';
+  return `<div class="mg-wrap">
+    <a class="mg-lead${th?'':' no-th'}" data-id="${lead.id}">
+      ${th?`<span class="mg-ph"><img src="${th}" alt="" loading="lazy"></span>`:''}
+      <span class="mg-tx">
+        <span class="mg-meta">${tagH(lead)}<span class="mg-cat">${esc(lead.cat||'')}</span></span>
+        <span class="mg-ti">${esc(lead.title)}${lead.secret?' 🔒':''}${lead.priv?' 🔏':''}</span>
+        ${lead.excerpt?`<span class="mg-ex">${esc(lead.excerpt)}</span>`:''}
+        <span class="mg-dt">${esc(lead.date||'')} · 읽기 →</span>
+      </span></a>
+    ${cards.length?`<div class="mg-cards">`+cards.map(p=>{ const t2=slotImg[p.id]||postThumb(p); return `
+      <a class="mg-card" data-id="${p.id}">
+        ${t2?`<span class="mg-cph"><img src="${t2}" alt="" loading="lazy"></span>`:''}
+        <span class="mg-ctx"><span class="mg-dt">${esc((p.date||'').slice(5))}</span>
+          <span class="mg-cti">${esc(p.title)}${p.secret?' 🔒':''}</span>
+          ${p.excerpt?`<span class="mg-cex">${esc(p.excerpt)}</span>`:''}</span></a>`; }).join('')+`</div>`:''}
+  </div>`;
+}
 function renderPager(total, per){
   const box=$('#pager'); if(!box) return [];
   const pages=Math.ceil(total/per);
@@ -3194,30 +3248,8 @@ function renderList(){
   const magOn = homeStyle()==='mag' && !st.selMode && !st.q && (st.pg||1)===1 && (st.cat==='recent'||st.cat==='home');
   let magHead='', magRest=shown;
   if(magOn && shown.length){
-    const pick=st.page.magPick||'latest';
-    let lead = pick==='feat' ? (shown.find(p=>p.feat)||shown[0]) : pick==='pin' ? (shown.find(p=>p.pinned)||shown[0]) : shown[0];
-    const nCard=[0,2,4].includes(+st.page.magCards)?+st.page.magCards:2;
-    const others=shown.filter(p=>p!==lead);
-    const cards=others.slice(0,nCard);
-    magRest=others.slice(nCard);
-    const th=postThumb(lead);
-    const tagH=(p)=>(p.tags&&p.tags[0])?`<span class="mg-tag">${esc(p.tags[0])}</span>`:'';
-    magHead=`<div class="mg-wrap">
-      <a class="mg-lead${th?'':' no-th'}" data-id="${lead.id}">
-        ${th?`<span class="mg-ph"><img src="${th}" alt="" loading="lazy"></span>`:''}
-        <span class="mg-tx">
-          <span class="mg-meta">${tagH(lead)}<span class="mg-cat">${esc(lead.cat||'')}</span></span>
-          <span class="mg-ti">${esc(lead.title)}${lead.secret?' 🔒':''}${lead.priv?' 🔏':''}</span>
-          ${lead.excerpt?`<span class="mg-ex">${esc(lead.excerpt)}</span>`:''}
-          <span class="mg-dt">${esc(lead.date||'')} · 읽기 →</span>
-        </span></a>
-      ${cards.length?`<div class="mg-cards">`+cards.map(p=>{ const t2=postThumb(p); return `
-        <a class="mg-card" data-id="${p.id}">
-          ${t2?`<span class="mg-cph"><img src="${t2}" alt="" loading="lazy"></span>`:''}
-          <span class="mg-ctx"><span class="mg-dt">${esc((p.date||'').slice(5))}</span>
-            <span class="mg-cti">${esc(p.title)}${p.secret?' 🔒':''}</span>
-            ${p.excerpt?`<span class="mg-cex">${esc(p.excerpt)}</span>`:''}</span></a>`; }).join('')+`</div>`:''}
-    </div>`;
+    const sel=magSelect(shown);
+    magHead=magHTML(sel); magRest=sel.rest;
   }
   $('#rows').innerHTML = (magHead||shown.length)
     ? magHead + (magRest.length?magRest.map(rowHTML).join(''):'')
@@ -4442,18 +4474,18 @@ function fillWidgets(){
   closeWidEdit(); renderWidList();
 }
 let wstOpen=null;                                            // 표시 패널이 열린 행(phase328)
-function renderWidList(){
+function renderWidList(){   // 📰는 매거진형 전용 — 다른 구조에선 목록에서 숨김(phase537b)
   /* 표시 상태(phase328): 홈에서만·PC에서만은 조합 가능 — 라벨은 요약, 체크는 독립 */
   const wLbl=w=>w.hid?'꺼두기':(w.home&&w.mhide)?'홈+PC':w.home?'홈에서만':w.mhide?'PC에서만':'모든 화면';
   const wCls=w=>w.hid?'off':(w.home||w.mhide)?'home':'all';
-  $('#wid-list').innerHTML = draft.map((w,i)=>`
+  $('#wid-list').innerHTML = draft.map((w,i)=> (w.t==='mag' && homeStyle()!=='mag') ? '' : `
     <div class="wl${w.hid?' off':''}">
       <span class="nm"><span class="t">${WNAME[w.t]||w.t}${w.t==='links'?` (${(w.items||[]).length})`:''}${w.t==='banner'?` (${(w.items||[]).length})`:''}</span>${w.float?'<span class="wbdg pri">📌</span>':''}</span>
       <button class="wst st-${wCls(w)}" data-st="${i}" title="이 위젯을 어디에 보여줄지 — 눌러서 조합 선택">${wLbl(w)} ▾</button>
       ${w.t!=='latest'?`<button data-f="${i}" title="컬럼에서 떼어 화면에 자유 배치 (PC 전용)"${w.float?' style="color:var(--pri)"':''}>📌</button>`:''}
-      ${['profile','quote','links','banner','dday','bgm','notice','chat','phone','img','nb','text','stamp','latest','tl','feat','char','pair','cal','habit','pairqa','todo','search','category','cnt'].includes(w.t)?`<button data-e="${i}">✎</button>`:'<button class="wl-ph" disabled>✎</button>'}
+      ${['mag','profile','quote','links','banner','dday','bgm','notice','chat','phone','img','nb','text','stamp','latest','tl','feat','char','pair','cal','habit','pairqa','todo','search','category','cnt'].includes(w.t)?`<button data-e="${i}">✎</button>`:'<button class="wl-ph" disabled>✎</button>'}
       ${!['search','category','cnt','bgm','stamp','pin','feat'].includes(w.t)?`<button data-c2="${i}" title="이 위젯을 설정 그대로 복사해 하나 더">⧉</button>`:'<button class="wl-ph" disabled>⧉</button>'}
-      <button data-u="${i}">↑</button><button data-d="${i}">↓</button><button data-x="${i}">✕</button>
+      <button data-u="${i}">↑</button><button data-d="${i}">↓</button>${(w.t==='mag'&&homeStyle()==='mag')?'<button class="wl-ph" disabled title="매거진형에선 표지 위젯이 붙박이예요 — 자리·설정만 바꿀 수 있어요">✕</button>':`<button data-x="${i}">✕</button>`}
     </div>${wstOpen===i?`
     <div class="wl-opts">
       <label class="chk"><input type="checkbox" data-wo="home" data-woi="${i}" ${w.home?'checked':''}> 홈에서만 <span class="note">(카테고리·글에선 숨김)</span></label>
@@ -4901,6 +4933,12 @@ function renderWidEdit(){
       <span style="font-size:10.5px">— 글 목록의 ☆ 또는 글쓰기 화면 체크로 고릅니다</span>
     </div>
     <input id="we-ftic" placeholder="앞머리 모양 (비우면 ★ — 이모지·문자 가능, 예: ✦ ♥ 🌊)" value="${esc(w.icon||'')}" maxlength="4">`;
+  if(w.t==='mag') html+=`
+    <input id="we-maglab" placeholder="제목 (기본: FEATURED · 비우려면 공백 하나)" value="${esc(w.label??'')}">
+    <div class="p-row" style="align-items:center">
+      <label class="chk" title="카드 배경·테두리 없이 표지만 홈 위에 얹혀요"><input type="checkbox" id="we-magbare" ${w.bare?'checked':''}> 🫧 투명 (카드 없이)</label>
+    </div>
+    <p class="note">어떤 글을 표지에 올릴지(최신 · 대표글 · 고정글 · 직접 고르기)와 카드 수는 <b>꾸미기 → 레이아웃 → 표지 글</b>에서 정해요. 전체(ALL) 목록 위의 표지 블록과 같은 설정을 씁니다.</p>`;
   if(w.t==='quote') html+=`
     <textarea id="we-text" placeholder="걸어둘 문장" style="min-height:90px">${w.text||''}</textarea>
     <div class="p-row" style="align-items:center">
@@ -5331,6 +5369,8 @@ function renderWidEdit(){
     delete w.cat;                                    // 구 단일 필드 정리
     if(sel.length) w.cats=sel; else delete w.cats;
   }));
+  const mgl=$('#we-maglab'); if(mgl) mgl.addEventListener('input',()=>{ w.label=mgl.value===' '?'':(mgl.value.trim()||undefined); if(w.label===undefined) delete w.label; });   // 📰 공백 하나 = 제목 없음
+  const mgb=$('#we-magbare'); if(mgb) mgb.addEventListener('change',()=>{ if(mgb.checked) w.bare=true; else delete w.bare; });
   const qan=$('#we-qanim'); if(qan) qan.addEventListener('change',()=>{ w.anim=qan.checked; });
   const qaf=$('#we-qafix'); if(qaf) qaf.addEventListener('change',()=>{ if(qaf.checked) w.animFix=true; else delete w.animFix; });
   const qmk=$('#we-qmark'); if(qmk) qmk.addEventListener('change',()=>{
@@ -5618,13 +5658,13 @@ function syncWid(w){
 $('#wid-add').onclick=()=>{
   const t=$('#wid-type').value;
   if(t==='latest' && draft.some(w=>w.t==='latest')){ msg('최신글 블록은 하나만 둘 수 있어요.'); return; }
-  if(['search','category','dday','profile','cnt','pin'].includes(t) && draft.some(w=>w.t===t)){
+  if(['search','category','dday','profile','cnt','pin','mag'].includes(t) && draft.some(w=>w.t===t)){
     msg('이미 있는 위젯이에요.'); return; }                     // bgm은 복수 허용(phase273 — 위젯별 곡 지정)
   draft.push(['links','banner','nb','tl'].includes(t)?{t,items:[]}
     : t==='char'?{t,p:{items:[]}} : t==='pair'?{t,a:{items:[]},b:{items:[]}} : t==='pairqa'?{t,qas:[]} : t==='todo'?{t,items:[]}
     : t==='cal'?{t,marks:[]} : t==='habit'?{t,habits:[]} : {t});
   editIdx=draft.length-1; renderWidList();
-  if(['profile','quote','links','banner','dday','bgm','notice','chat','phone','img','nb','text','stamp','tl','feat','latest','char','pair','cal','habit','pairqa','todo','search','category','cnt'].includes(t)) renderWidEdit();
+  if(['mag','profile','quote','links','banner','dday','bgm','notice','chat','phone','img','nb','text','stamp','tl','feat','latest','char','pair','cal','habit','pairqa','todo','search','category','cnt'].includes(t)) renderWidEdit();
 };
 $('#wid-save').onclick=async()=>{
   undoPush('위젯 구성 저장 전');
@@ -6325,8 +6365,35 @@ function renderEgate(){
         : `<img class="thumb" src="${im}">`)
     : '<span class="note">전용 이미지 없음 — 첫 헤더 사진이 대신 쓰여요.</span>';
 }
+/* 📰 매거진 직접 고르기 — 표지 1 + 카드 2, 글과 사진을 따로(phase537) */
+let magSlotsDraft=[{id:'',img:''},{id:'',img:''},{id:'',img:''}];
+function renderMagSlots(){
+  const box=$('#mag-slots'); if(!box) return;
+  const on = $('#s-magpick')?.value==='manual';
+  box.classList.toggle('hidden', !on); if(!on) return;
+  const posts=(st.posts||[]).slice().sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+  const opt=(sel)=>`<option value="">— 비워 두기 —</option>`+posts.map(p=>`<option value="${p.id}"${p.id===sel?' selected':''}>${esc((p.date||'').slice(2,10))} · ${esc(p.title||'(제목 없음)')}</option>`).join('');
+  box.innerHTML = `<p class="note" style="margin:0 0 6px">표지와 카드에 올릴 글을 고르고, 원하면 사진도 따로 넣어요. 사진을 안 넣으면 그 글의 대표 사진(없으면 본문 첫 사진)이 쓰이고, 그것도 없으면 사진 없이 나와요. 비워 둔 칸은 표시되지 않아요.</p>`+
+    ['표지','카드 1','카드 2'].map((lb,i)=>{ const o=magSlotsDraft[i]; return `
+    <div class="ms-row">
+      <span class="ms-l">${lb}</span>
+      <select data-ms="${i}">${opt(o.id)}</select>
+      <span class="ms-th" style="${o.img?`background-image:url(${o.img})`:''}">${o.img?'':'사진'}</span>
+      <label class="filelab">${o.img?'바꾸기':'사진'} <input type="file" accept="image/*" data-msf="${i}"></label>
+      ${o.img?`<button class="rmv" data-msx="${i}" title="사진 지우기 — 글의 사진으로 돌아가요">✕</button>`:''}
+    </div>`; }).join('');
+  box.querySelectorAll('[data-ms]').forEach(el=>el.onchange=()=>{ magSlotsDraft[+el.dataset.ms].id=el.value; });
+  box.querySelectorAll('[data-msf]').forEach(el=>el.onchange=async()=>{
+    const f=el.files[0]; if(!f) return; msg('사진 올리는 중…');
+    try{ magSlotsDraft[+el.dataset.msf].img=await upFile(f,900,.85,150); renderMagSlots(); msg('사진 넣었어요 — [설정 저장]을 눌러야 확정돼요.'); }
+    catch(e){ msg('사진 올리기 실패 — '+e.message); }
+  });
+  box.querySelectorAll('[data-msx]').forEach(el=>el.onclick=()=>{ magSlotsDraft[+el.dataset.msx].img=''; renderMagSlots(); });
+}
 function renderHeroList(){
   const box=$('#s-hero-list');
+  const pil = $('#s-headmode')?.value==='pillar';                 // 기둥이면 미리보기 세로(phase537)
+  box.classList.toggle('pv-pillar', pil);
   box.innerHTML = heroDraft.map((o,i)=>`
     <div style="width:100%;border:1px solid var(--line);border-radius:11px;padding:10px;margin-bottom:10px">
       <div class="p-row" style="align-items:center;justify-content:space-between">
@@ -6339,7 +6406,7 @@ function renderHeroList(){
       </div>
       <div class="hpv-wrap">
         <div class="hpv">
-          <span class="hpv-t">PC</span>
+          <span class="hpv-t">${pil?'PC · 기둥':'PC'}</span>
           <div class="hpv-pc" data-hp="${i}" style="background-image:url(${o.img});
             background-position:${o.x}% ${o.y}%;
             background-size:${o.z>100?o.z+'% auto':'cover'}"></div>
@@ -6956,6 +7023,7 @@ function fillSettings(){
   $('#s-mut-title').value=(p.mutualMemo&&p.mutualMemo.title)||''; $('#s-mut-text').value=(p.mutualMemo&&p.mutualMemo.text)||'';
   $('#s-gate').value=''; gateClear=false; renderGateState(); priVal=null; $('#s-pri').value=p.priColor||'#9db4ff'; $('#s-color').value=hslToHex(p.hue??222, p.sat??60, p.lum??62);
   $('#s-headmode').value=p.headMode||'wide'; $('#s-headh').value=p.headH||380; $('#s-headfit').value=p.headFit||'cover';
+  $('#s-headmode').onchange=()=>renderHeroList();              // 기둥 ↔ 가로 바꾸면 사진 미리보기 비율도 바로(phase537)
   const shc=$('#s-headclear'); if(shc) shc.checked=!!p.headClear;
   $('#s-headgrad').value=p.headGrad||'dark'; $('#s-headtext').checked=p.headText!==false; $('#s-headh-v').textContent=(p.headH||380)+'px';
   $('#s-sidepos').value=p.sidePos||'right';
@@ -6967,6 +7035,8 @@ function fillSettings(){
   const scc=$('#s-catcnt'); if(scc) scc.checked=st.page.catCnt!==false;
   const spp=$('#s-perpage'); if(spp) spp.value=String(+st.page.perPage||12); const sbs=$('#s-btnstyle'); if(sbs) sbs.value=st.page.btnStyle||''; const sps=$('#s-pgstyle'); if(sps) sps.value=st.page.pgStyle||''; const srs=$('#s-rowstyle'); if(srs) srs.value=st.page.rowStyle||'';
   const magP=$('#s-magpick'); if(magP) magP.value=st.page.magPick||'latest'; const magC=$('#s-magcards'); if(magC) magC.value=String([0,2,4].includes(+st.page.magCards)?+st.page.magCards:2);
+  magSlotsDraft=[0,1,2].map(i=>{ const o=(st.page.magSlots||[])[i]||{}; return {id:o.id||'', img:o.img||''}; });   // 📰 직접 고르기 초안(phase537)
+  if(magP){ magP.onchange=()=>renderMagSlots(); } renderMagSlots();
   const scs=$('#s-catsel'); if(scs) scs.value=st.page.catSel||'';
   const sqs=$('#s-quotestyle'); if(sqs) sqs.value=st.page.quoteStyle||'';
   const shl=$('#s-headlayout'); if(shl) shl.value=st.page.headLayout||'';
@@ -7103,6 +7173,7 @@ async function saveSettings(){
       catCnt: $('#s-catcnt')?.checked!==false,
       perPage: Math.min(100,Math.max(3,+($('#s-perpage')?.value)||12)), btnStyle: $('#s-btnstyle')?.value||'', pgStyle: $('#s-pgstyle')?.value||'', rowStyle: $('#s-rowstyle')?.value||'',
       magPick: $('#s-magpick')?.value||'latest', magCards: +($('#s-magcards')?.value ?? 2),   // 📰 매거진형(phase535)   // 한 페이지 글 수 · 버튼 모양(phase458)
+      magSlots: magSlotsDraft.map(o=>({id:o.id||'', img:o.img||''})),   // 📰 직접 고른 표지·카드(phase537)
       catSel: $('#s-catsel')?.value||'',
       quoteStyle: $('#s-quotestyle')?.value||'',
       headLayout: $('#s-headlayout')?.value||'',
