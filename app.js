@@ -1953,17 +1953,17 @@ function renderSide(){
     if(w.t==='pin'){
       if(!home) return;
       const el=pinCard(); if(!el) return;          // 고정글이 없으면 자리도 없음
-      el.dataset.wi=wi; bindDrag(el);
+      el.dataset.wi=wi; bindDrag(el); if(w.bare) el.classList.add('w-bare');
       box.appendChild(el);
       return;
     }
     if(w.t==='latest'){
       if(!home) return;
       const el=latestBlock(box, w.n, w.noPin!==true, w.cats||(w.cat?[w.cat]:[]), w.icon||'◈', !!w.mhide);
-      el.dataset.wi=wi; bindDrag(el);
+      el.dataset.wi=wi; bindDrag(el); if(w.bare){ el.classList.add('w-bare'); box.querySelector('.pin')?.classList.add('w-bare'); }
       return;
     }
-    const d=document.createElement('div'); d.className='side sw-'+w.t+(w.mhide?' w-mhide':'');
+    const d=document.createElement('div'); d.className='side sw-'+w.t+(w.mhide?' w-mhide':'')+(w.bare?' w-bare':'');   // 🫧 투명(phase537b)
     d.dataset.wi=wi; if(!flw) bindDrag(d);   // 띄운 위젯은 컬럼 순서 드래그 대상이 아님
     if(w.t==='search'){
       d.innerHTML=`<p class="label">${esc(w.label||'SEARCH')}</p>
@@ -2727,7 +2727,7 @@ function renderSide(){
     }
     if(w.t==='mag'){                                           // 📰 매거진 표지 위젯(phase537b) — 매거진형 전용 · 레이아웃 탭의 표지 글 설정을 따름
       if(!home || homeStyle()!=='mag') return;
-      d.className+=' w-mag'+(w.bare?' w-bare':'');
+      d.className+=' w-mag';
       const list=st.posts.filter(p=>!p.pinned || (st.page.magPick==='pin'));
       const sel=magSelect(list);
       if(!sel.lead){ if(st.mine) d.innerHTML=`<p class="label">${esc(w.label||'FEATURED')}</p><p class="pl-empty">아직 글이 없어요.</p>`; else return; }
@@ -4642,6 +4642,10 @@ function renderWidEdit(){
       <span style="font-size:11px;color:var(--muted);flex:none">위젯 제목</span>
       <input id="we-wlabel" placeholder="비우면 기본 제목" value="${esc(w.label||'')}" maxlength="30" style="flex:1;margin-bottom:0" title="위젯 머리에 뜨는 제목 — 비우면 원래 이름">
     </div>`;
+  html+=`
+    <div class="p-row" style="align-items:center;gap:8px;margin-bottom:6px">
+      <label class="chk" title="카드 배경·테두리·금색 탭 없이 내용만 홈 위에 얹혀요 — 편집 모드에선 점선으로 자리가 보여요"><input type="checkbox" id="we-bare" ${w.bare?'checked':''}> 🫧 투명 (카드 없이)</label>
+    </div>`;                                                   // 모든 위젯 공통(phase537b)
   if(w.t==='profile') html+=`
     <div class="p-row"><label class="filelab">사진 <input type="file" id="we-img" accept="image/*"></label></div>
     <div class="p-row" style="align-items:center">
@@ -4935,9 +4939,6 @@ function renderWidEdit(){
     <input id="we-ftic" placeholder="앞머리 모양 (비우면 ★ — 이모지·문자 가능, 예: ✦ ♥ 🌊)" value="${esc(w.icon||'')}" maxlength="4">`;
   if(w.t==='mag') html+=`
     <input id="we-maglab" placeholder="제목 (기본: FEATURED · 비우려면 공백 하나)" value="${esc(w.label??'')}">
-    <div class="p-row" style="align-items:center">
-      <label class="chk" title="카드 배경·테두리 없이 표지만 홈 위에 얹혀요"><input type="checkbox" id="we-magbare" ${w.bare?'checked':''}> 🫧 투명 (카드 없이)</label>
-    </div>
     <p class="note">어떤 글을 표지에 올릴지(최신 · 대표글 · 고정글 · 직접 고르기)와 카드 수는 <b>꾸미기 → 레이아웃 → 표지 글</b>에서 정해요. 전체(ALL) 목록 위의 표지 블록과 같은 설정을 씁니다.</p>`;
   if(w.t==='quote') html+=`
     <textarea id="we-text" placeholder="걸어둘 문장" style="min-height:90px">${w.text||''}</textarea>
@@ -5370,7 +5371,7 @@ function renderWidEdit(){
     if(sel.length) w.cats=sel; else delete w.cats;
   }));
   const mgl=$('#we-maglab'); if(mgl) mgl.addEventListener('input',()=>{ w.label=mgl.value===' '?'':(mgl.value.trim()||undefined); if(w.label===undefined) delete w.label; });   // 📰 공백 하나 = 제목 없음
-  const mgb=$('#we-magbare'); if(mgb) mgb.addEventListener('change',()=>{ if(mgb.checked) w.bare=true; else delete w.bare; });
+  const wbr=$('#we-bare'); if(wbr) wbr.addEventListener('change',()=>{ if(wbr.checked) w.bare=true; else delete w.bare; });   // 🫧 투명 공통(phase537b)
   const qan=$('#we-qanim'); if(qan) qan.addEventListener('change',()=>{ w.anim=qan.checked; });
   const qaf=$('#we-qafix'); if(qaf) qaf.addEventListener('change',()=>{ if(qaf.checked) w.animFix=true; else delete w.animFix; });
   const qmk=$('#we-qmark'); if(qmk) qmk.addEventListener('change',()=>{
