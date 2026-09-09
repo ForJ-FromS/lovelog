@@ -2681,7 +2681,7 @@ function renderSide(){
         : '';
       d.innerHTML=`<p class="label">${esc(w.title||'STAMP')}</p>
         ${w.hint===false?'':'<p class="stamp-hint">'+esc(w.hintTxt||'발도장 꾹 — 하루에 하나!')+'</p>'}
-        <div class="stamp-row${emos.length===1?' one':''}">
+        <div class="stamp-row${emos.length===1?' one':''}${w.sbg==='bare'?' bare':''}">
           ${emos.map((e2,i)=>`
             <button class="stamp-b" data-stamp="s${i}" style="${sbg}">
               <span class="si">${e2}</span>
@@ -4829,6 +4829,7 @@ function renderWidEdit(){
         <option value=""${!w.sbg?' selected':''}>도장 배경 — 은은한 테마색 (기본)</option>
         <option value="none"${w.sbg==='none'?' selected':''}>도장 배경 — 완전 투명</option>
         <option value="custom"${w.sbg==='custom'?' selected':''}>도장 배경 — 직접 고르기 →</option>
+        <option value="bare"${w.sbg==='bare'?' selected':''}>도장 배경 — 없음 (테두리도 없이 이모지만)</option>
       </select>
       <input type="color" id="we-sbgc" value="${/^#[0-9a-fA-F]{6}$/.test(w.sbgc||'')?w.sbgc:'#9db8ff'}" title="배경색" style="width:38px;height:30px;padding:2px;margin-bottom:0">
       <input type="range" id="we-sbga" min="4" max="100" value="${Math.min(100,Math.max(4,+w.sbga||12))}" style="flex:1;min-width:70px" title="진하기">
