@@ -4125,12 +4125,7 @@ function renderCatMgr(){
   });
   box.querySelectorAll('[data-cd]').forEach(b=>b.onclick=async()=>{
     await removeCat(cats()[+b.dataset.cd]); renderCatMgr();
-  })+
-    (allTags().length?`<p class="p-h" style="margin-top:22px">🏷 태그 바</p>
-    <p class="note" style="margin-top:-4px">글 목록 위에 뜨는 태그 줄이에요. 체크를 끄면 그 태그는 줄에서 숨고(글에는 남아요), ↑↓로 순서를 정하면 그 순서대로 앞에 옵니다. 순서를 안 정한 태그는 가나다순으로 뒤에 붙어요.</p>
-    <div id="tag-mgr">${(()=>{ const ord=st.page.tagOrder||[], show=st.page.tagShow||[]; const all=allTags().slice().sort((a,b)=>{ const ia=ord.indexOf(a), ib=ord.indexOf(b); if(ia>=0||ib>=0) return (ia<0?9999:ia)-(ib<0?9999:ib); return a.localeCompare(b,'ko'); });
-      return all.map((t,i)=>`<div class="p-row" style="align-items:center;gap:8px;margin-bottom:4px"><label class="chk" style="margin:0;display:inline-flex;align-items:center;gap:6px;width:200px"><input type="checkbox" data-tshow="${esc(t)}" ${(!show.length||show.includes(t))?'checked':''}><span style="flex:1;text-align:left">${esc(t)}</span></label>
-        <button class="rmv" data-tup="${i}" style="font-size:11px;padding:2px 7px">↑</button><button class="rmv" data-tdn="${i}" style="font-size:11px;padding:2px 7px">↓</button></div>`).join(''); })()}</div>`:'');
+  });
   bindCatImg(box);
 }
 async function setCatImg(key,val){
@@ -4198,7 +4193,12 @@ function renderCatFix(){
       <input id="s-gbempty" value="${esc(st.page.gbEmpty||'')}" placeholder="아직 방명록이 비어 있어요 — 첫 흔적을 남겨주세요." maxlength="60" style="width:300px;margin-bottom:0;font-size:11.5px" title="방명록이 비었을 때 보이는 문구 · 비우면 기본">
     </div>`+
     (homeStyle()==='blog'?'':row('recent','ALL',
-      `<label class="chk" style="margin:0;font-size:11px" title="켜면 상단의 ALL(전체 글) 탭이 숨겨져요 — 카테고리별 탭은 그대로예요"><input type="checkbox" data-alloff ${st.page.allOff?'checked':''}> 끄기</label>`));
+      `<label class="chk" style="margin:0;font-size:11px" title="켜면 상단의 ALL(전체 글) 탭이 숨겨져요 — 카테고리별 탭은 그대로예요"><input type="checkbox" data-alloff ${st.page.allOff?'checked':''}> 끄기</label>`))+
+        (allTags().length?`<p class="p-h" style="margin-top:22px">🏷 태그 바</p>
+    <p class="note" style="margin-top:-4px">글 목록 위에 뜨는 태그 줄이에요. 체크를 끄면 그 태그는 줄에서 숨고(글에는 남아요), ↑↓로 순서를 정하면 그 순서대로 앞에 옵니다. 순서를 안 정한 태그는 가나다순으로 뒤에 붙어요.</p>
+    <div id="tag-mgr">${(()=>{ const ord=st.page.tagOrder||[], show=st.page.tagShow||[]; const all=allTags().slice().sort((a,b)=>{ const ia=ord.indexOf(a), ib=ord.indexOf(b); if(ia>=0||ib>=0) return (ia<0?9999:ia)-(ib<0?9999:ib); return a.localeCompare(b,'ko'); });
+      return all.map((t,i)=>`<div class="p-row" style="align-items:center;gap:8px;margin-bottom:4px"><label class="chk" style="margin:0;display:inline-flex;align-items:center;gap:6px;width:200px"><input type="checkbox" data-tshow="${esc(t)}" ${(!show.length||show.includes(t))?'checked':''}><span style="flex:1;text-align:left">${esc(t)}</span></label>
+        <button class="rmv" data-tup="${i}" style="font-size:11px;padding:2px 7px">↑</button><button class="rmv" data-tdn="${i}" style="font-size:11px;padding:2px 7px">↓</button></div>`).join(''); })()}</div>`:'');
   bindCatImg(box);
   /* 🏷 태그 바 편집(phase528) */
   const tagMgr=box.querySelector('#tag-mgr');
