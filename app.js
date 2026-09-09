@@ -1094,7 +1094,7 @@ async function enterPage(){
 const MODE_KEYS=['hue','sat','lum','light','glass','theme','dots','bgImg','bgRef','bgDim','titleColor','font','customCss','curImg','sparkle','fx','fxC','labelIcon','priColor',
   'corner','cardC','headGrad','headText','hdOverC','hdSubC','hdDdC','headDeco','headBand','stickers','stkOff','stkHideM','stkHome','btnStyle','pgStyle','rowStyle','catShape','quoteStyle','postFs',
   'pet','petImg','petImgs','petSz','clickFx','snd','sndV','protectImg','fav','postPage',
-  'listTc','rowTag','tagShape','galCols','memoCols','catSel','catCnt','gbHint','gbEmpty','homeName','galName','gbName','labelIcon','headFs','headSubFs','headOverFs','headShow','sidePos','tagShow','tagOrder'];   // 글 목록 제목 색 등 남은 꾸밈도 모드별(phase519)
+  'listTc','rowTag','tagShape','galCols','memoCols','catSel','catCnt','gbHint','gbEmpty','homeName','galName','gbName','labelIcon','headFs','headSubFs','headOverFs','headShow','sidePos','tagShow','tagOrder','magPick','magCards'];   // 글 목록 제목 색 등 남은 꾸밈도 모드별(phase519)
 const MODE_HDR=['heroImgs','heroImg','headFit','headH','headMode','headNoBg','enterImg','enterRef','enterText','cardImg','bannerImg','catImgs'];   // 사진(헤더·대문·대표·카테고리)
 const MODE_STRIP=['stripPin','stripCnt','stripShape','stripOn'];                                                                          // 하단 스트립(phase476)
 const MODE_WID=['side','ddays','bgm','noLatest','sidePos'];                                                                               // 위젯 구성(phase476)
@@ -2023,10 +2023,11 @@ function renderSide(){
         return;
       }
       const ccov=(trks[tcur]&&trks[tcur].cov)||w.cov||'';   // 커버 우선순위: 곡별 > 위젯 > 유튜브(phase279/281)
+      const ytFit = w.covFit==='raw' ? '' : ' yt-fit';                // 유튜브 썸네일 검은 띠 잘라내기(phase536)
       const cover = ccov
         ? `<img src="${ccov}" alt="">`
         : vid
-          ? `<img src="https://img.youtube.com/vi/${vid}/hqdefault.jpg" alt="">`
+          ? `<img class="ytc${ytFit}" src="https://img.youtube.com/vi/${vid}/hqdefault.jpg" alt="">`
           : `<span class="mus">♪</span>`;
       const bst=w.style||'';                        // ''기본 | cst 카세트 | lp LP | tun 튜너
       const btit=esc(bsrc.title|| (list?'플레이리스트':'배경음악'));
@@ -2940,7 +2941,9 @@ function updateBoardWrite(){
     else if(c!=='recent'){ $('#w-cat').value=c; }
   };
 }
-const postThumb=p=>{ if(p.secret||!p.body) return ''; const m=p.body.match(/<img[^>]+src="([^"]+)"/); return m?m[1]:''; };
+const postThumb=p=>{ if(p.secret) return ''; if(p.thumb) return p.thumb;   // 글마다 지정한 대표 사진 우선(phase535)
+  if(Array.isArray(p.imgs)&&p.imgs[0]) return p.imgs[0];
+  if(!p.body) return ''; const m=p.body.match(/<img[^>]+src="([^"]+)"/); return m?m[1]:''; };
 function renderPager(total, per){
   const box=$('#pager'); if(!box) return [];
   const pages=Math.ceil(total/per);
@@ -3166,8 +3169,39 @@ function renderList(){
         ?`<span class="cw"><span class="rtg">${esc(p.tags[0])}${p.tags.length>1?' +'+(p.tags.length-1):''}</span><span class="c">${esc(p.cat)}</span></span>`
         :`<span class="c">${esc(p.cat)}</span>`}
       <span class="k"></span>${t?`<img class="th" src="${t}" alt="" draggable="false" loading="lazy">`:''}</li>`; };
-  $('#rows').innerHTML = shown.length?shown.map(rowHTML).join('')
-    :'<p class="pl-empty">아직 글이 없습니다.</p>';
+  /* 📰 매거진형(phase535): 첫 화면 첫 페이지에서만 표지 카드 + 가로 카드, 나머지는 기존 목록 */
+  const magOn = homeStyle()==='mag' && !st.selMode && !st.q && (st.pg||1)===1 && (st.cat==='recent'||st.cat==='home');
+  let magHead='', magRest=shown;
+  if(magOn && shown.length){
+    const pick=st.page.magPick||'latest';
+    let lead = pick==='feat' ? (shown.find(p=>p.feat)||shown[0]) : pick==='pin' ? (shown.find(p=>p.pinned)||shown[0]) : shown[0];
+    const nCard=[0,2,4].includes(+st.page.magCards)?+st.page.magCards:2;
+    const others=shown.filter(p=>p!==lead);
+    const cards=others.slice(0,nCard);
+    magRest=others.slice(nCard);
+    const th=postThumb(lead);
+    const tagH=(p)=>(p.tags&&p.tags[0])?`<span class="mg-tag">${esc(p.tags[0])}</span>`:'';
+    magHead=`<div class="mg-wrap">
+      <a class="mg-lead${th?'':' no-th'}" data-id="${lead.id}">
+        ${th?`<span class="mg-ph"><img src="${th}" alt="" loading="lazy"></span>`:''}
+        <span class="mg-tx">
+          <span class="mg-meta">${tagH(lead)}<span class="mg-cat">${esc(lead.cat||'')}</span></span>
+          <span class="mg-ti">${esc(lead.title)}${lead.secret?' 🔒':''}${lead.priv?' 🔏':''}</span>
+          ${lead.excerpt?`<span class="mg-ex">${esc(lead.excerpt)}</span>`:''}
+          <span class="mg-dt">${esc(lead.date||'')} · 읽기 →</span>
+        </span></a>
+      ${cards.length?`<div class="mg-cards">`+cards.map(p=>{ const t2=postThumb(p); return `
+        <a class="mg-card" data-id="${p.id}">
+          ${t2?`<span class="mg-cph"><img src="${t2}" alt="" loading="lazy"></span>`:''}
+          <span class="mg-ctx"><span class="mg-dt">${esc((p.date||'').slice(5))}</span>
+            <span class="mg-cti">${esc(p.title)}${p.secret?' 🔒':''}</span>
+            ${p.excerpt?`<span class="mg-cex">${esc(p.excerpt)}</span>`:''}</span></a>`; }).join('')+`</div>`:''}
+    </div>`;
+  }
+  $('#rows').innerHTML = (magHead||shown.length)
+    ? magHead + (magRest.length?magRest.map(rowHTML).join(''):'')
+    : '<p class="pl-empty">아직 글이 없습니다.</p>';
+  $('#rows').querySelectorAll('.mg-lead,.mg-card').forEach(a=>a.onclick=()=>openPost(a.dataset.id));
   $('#more-btn').style.display='none';
   /* ☑ 선택 삭제 모드(phase419): 행 클릭 = 체크 토글, 하단 바에서 한 번에 삭제 */
   if(st.selMode){
@@ -4867,6 +4901,10 @@ function renderWidEdit(){
       <label class="filelab" style="font-size:11px">🖼 커버 이미지 ${w.cov?'(있음)':''} <input type="file" id="we-bcov" accept="image/*"></label>
       ${w.cov?`<img src="${w.cov}" style="width:34px;height:34px;object-fit:cover;border-radius:6px;flex:none" alt="">`:''}
       ${w.cov?`<button class="rmv" id="we-bcovx" style="flex:none;font-size:10px">제거</button>`:''}
+      <select id="we-covfit" style="flex:1;margin-bottom:0" title="커버를 따로 올리지 않았을 때 쓰는 유튜브 썸네일 처리">
+        <option value=""${w.covFit!=='raw'?' selected':''}>유튜브 썸네일 — 꽉 채우기</option>
+        <option value="raw"${w.covFit==='raw'?' selected':''}>유튜브 썸네일 — 원본 그대로</option>
+      </select>
     </div>
     <p class="note" style="margin-top:-2px">유튜브 썸네일 대신 쓸 앨범아트예요. 곡별 커버(아래 🖼)가 있으면 그 곡에선 그게 우선.</p>
     <p class="p-h" style="margin-top:8px">1번 곡 (대표곡)</p>
@@ -5428,6 +5466,7 @@ function renderWidEdit(){
     try{ w.cov=await upFile(f,600,.9,60); renderWidEdit(); msg('커버 이미지를 올렸어요.'); }
     catch(e){ msg('커버 업로드 실패 — '+e.message); } });
   const bcovx=$('#we-bcovx'); if(bcovx) bcovx.onclick=()=>{ delete w.cov; renderWidEdit(); };
+  const cfit=$('#we-covfit'); if(cfit) cfit.onchange=()=>{ if(cfit.value==='raw') w.covFit='raw'; else delete w.covFit; };   // 앨범아트 처리(phase536)
   $('#wid-edit').querySelectorAll('[data-btcv]').forEach(inp=>inp.addEventListener('change',async()=>{
     const f=inp.files[0]; if(!f) return;                                       // 곡별 커버(phase279/281)
     try{ w.tracks[inp.dataset.btcv].cov=await upFile(f,600,.9,60); renderWidEdit(); msg('곡 커버를 올렸어요.'); }
@@ -6809,6 +6848,7 @@ function fillSettings(){
   $('#s-catshape').value=catShape();
   const scc=$('#s-catcnt'); if(scc) scc.checked=st.page.catCnt!==false;
   const spp=$('#s-perpage'); if(spp) spp.value=String(+st.page.perPage||12); const sbs=$('#s-btnstyle'); if(sbs) sbs.value=st.page.btnStyle||''; const sps=$('#s-pgstyle'); if(sps) sps.value=st.page.pgStyle||''; const srs=$('#s-rowstyle'); if(srs) srs.value=st.page.rowStyle||'';
+  const magP=$('#s-magpick'); if(magP) magP.value=st.page.magPick||'latest'; const magC=$('#s-magcards'); if(magC) magC.value=String([0,2,4].includes(+st.page.magCards)?+st.page.magCards:2);
   const scs=$('#s-catsel'); if(scs) scs.value=st.page.catSel||'';
   const sqs=$('#s-quotestyle'); if(sqs) sqs.value=st.page.quoteStyle||'';
   const shl=$('#s-headlayout'); if(shl) shl.value=st.page.headLayout||'';
@@ -6943,7 +6983,8 @@ async function saveSettings(){
       catStyle: $('#s-catstyle').value,
       catShape: $('#s-catshape').value,
       catCnt: $('#s-catcnt')?.checked!==false,
-      perPage: Math.min(100,Math.max(3,+($('#s-perpage')?.value)||12)), btnStyle: $('#s-btnstyle')?.value||'', pgStyle: $('#s-pgstyle')?.value||'', rowStyle: $('#s-rowstyle')?.value||'',   // 한 페이지 글 수 · 버튼 모양(phase458)
+      perPage: Math.min(100,Math.max(3,+($('#s-perpage')?.value)||12)), btnStyle: $('#s-btnstyle')?.value||'', pgStyle: $('#s-pgstyle')?.value||'', rowStyle: $('#s-rowstyle')?.value||'',
+      magPick: $('#s-magpick')?.value||'latest', magCards: +($('#s-magcards')?.value ?? 2),   // 📰 매거진형(phase535)   // 한 페이지 글 수 · 버튼 모양(phase458)
       catSel: $('#s-catsel')?.value||'',
       quoteStyle: $('#s-quotestyle')?.value||'',
       headLayout: $('#s-headlayout')?.value||'',
@@ -7030,7 +7071,7 @@ const RESET={
     galOn:true,stripOn:true,
     headLayout:'',headDeco:'',headBand:'',hdName:true,hdOver:true,hdSub:true,hdNameFs:'',hdOverFs:'',hdSubFs:'',   // 헤더 프리셋·표시(phase430) — 초기화 누락 수리
     hdOverC:'',hdSubC:'',hdDdC:'',hdTextPos:'',hdDdPos:'',
-    catSel:'',catCnt:true,quoteStyle:'',postFs:'',perPage:12,btnStyle:'',pgStyle:'',rowStyle:'',snd:'',sndV:40},
+    catSel:'',catCnt:true,quoteStyle:'',postFs:'',perPage:12,btnStyle:'',pgStyle:'',rowStyle:'',snd:'',sndV:40,magPick:'latest',magCards:2},
   media:{heroImgs:[],heroImg:'',enterImg:'',enterRef:'',enterText:'',
     cardImg:'',bannerImg:'',catImgs:{},gate:'',gateBtn:'',gateColor:'',gateBtnC:'',galName:'',gbName:''}
 };

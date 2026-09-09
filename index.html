@@ -502,6 +502,35 @@
   .row .c{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.12em;
     color:var(--pri);border:1px solid var(--line);border-radius:4px;padding:1px 8px}
   .row .t{font-size:14px;color:var(--listTc, var(--body))}
+  /* 📰 매거진형(phase535) */
+  .mg-wrap{margin:0 0 14px}
+  .mg-lead{display:grid;grid-template-columns:1.35fr 1fr;gap:16px;align-items:start;cursor:pointer;margin-bottom:16px}
+  .mg-lead.no-th{grid-template-columns:1fr;border-left:2px solid var(--pri);padding-left:14px}
+  .mg-ph{display:block;border-radius:8px;overflow:hidden;aspect-ratio:4/3;background:var(--card2)}
+  .mg-ph img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .3s}
+  .mg-lead:hover .mg-ph img{transform:scale(1.03)}
+  .mg-tx{display:flex;flex-direction:column;gap:6px;min-width:0}
+  .mg-meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .mg-tag{font-size:10px;color:var(--muted);border:1px solid var(--line);border-radius:3px;padding:1px 7px}
+  .mg-cat{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.16em;color:var(--pri);text-transform:uppercase}
+  .mg-ti{font-size:18px;line-height:1.4;color:var(--listTc, var(--ink))}
+  .mg-ex{font-size:12.5px;line-height:1.75;color:var(--muted);display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+  .mg-dt{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--muted);letter-spacing:.06em}
+  .mg-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+  .mg-card{display:flex;gap:10px;cursor:pointer;min-width:0}
+  .mg-cph{display:block;width:84px;height:66px;flex:none;border-radius:6px;overflow:hidden;background:var(--card2)}
+  .mg-cph img{width:100%;height:100%;object-fit:cover;display:block}
+  .mg-ctx{display:flex;flex-direction:column;gap:3px;min-width:0}
+  .mg-cti{font-size:13px;line-height:1.4;color:var(--listTc, var(--body))}
+  .mg-cex{font-size:11px;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .mg-card:hover .mg-cti,.mg-lead:hover .mg-ti{color:var(--pri)}
+  @media(max-width:720px){
+    .mg-lead{grid-template-columns:1fr;gap:10px;position:relative}
+    .mg-lead .mg-ph{aspect-ratio:16/10}
+    .mg-lead:not(.no-th) .mg-tx{margin-top:-46px;padding:0 12px;text-shadow:0 1px 8px rgba(0,0,0,.75)}
+    .mg-lead:not(.no-th) .mg-ti{color:#fff} .mg-lead:not(.no-th) .mg-ex{display:none}
+    .mg-cards{grid-template-columns:1fr}
+  }
   /* ═══ 글 목록 줄 모양 5종 (phase463) — 메인 목록(.row) + 미니 목록(대표글·최신글 .mini-rows) ═══ */
   /* 번호 목차 */
   body.rs-num #rows{counter-reset:rown} body.rs-num .row{border-bottom:none;padding:8px 8px;counter-increment:rown}
@@ -718,6 +747,7 @@
   .bgm-cov{width:56px;height:56px;border-radius:50%;overflow:hidden;flex:none;
     border:2px solid var(--line);position:relative;background:var(--card2)}
   .bgm-cov img{width:100%;height:100%;object-fit:cover}
+  .bgm-cov img.yt-fit,.lp-cov img.yt-fit,.cst-cov img.yt-fit,.tun-cov img.yt-fit,img.ytc.yt-fit{transform:scale(1.36)}   /* 유튜브 4:3 썸네일의 검은 띠 잘라내기(phase536) */
   .bgm-cov .mus{position:absolute;inset:0;display:flex;align-items:center;
     justify-content:center;color:var(--pri);font-size:17px}
   .bgm-cov::after{content:'';position:absolute;left:50%;top:50%;width:12px;height:12px;
@@ -3048,6 +3078,7 @@ html,body{overflow-x:hidden;overflow-x:clip}
       <p class="p-h">구조</p>
         <div class="trow"><span class="tl">홈 구조</span><span class="tc"><select id="s-homestyle">
         <option value="grid">위젯 그리드형 (지금 구조)</option>
+        <option value="mag">매거진형 (표지 글 + 카드)</option>
         <option value="blog">클래식 블로그형 (글 목록이 메인)</option></select></span></div>
       <div class="trow"><span class="tl">사이드바</span><span class="tc"><select id="s-sidepos">
         <option value="right">오른쪽</option><option value="left">왼쪽</option><option value="both">양쪽</option></select></span></div>
@@ -3147,7 +3178,11 @@ html,body{overflow-x:hidden;overflow-x:clip}
           <span class="tl2">한 페이지에</span><input type="number" id="s-perpage" min="3" max="100" placeholder="12" value="12" style="width:64px" title="글 목록 한 페이지에 보이는 글 수 (3~100) — 넘으면 페이지 번호가 생겨요"><span class="tl2">개</span>
           <select id="s-pgstyle" title="페이지 번호 모양">
             <option value="">페이지 번호 — 둥근 네모 (기본)</option><option value="pill">페이지 번호 — 알약</option><option value="box">페이지 번호 — 네모</option>
-            <option value="text">페이지 번호 — 숫자만 (밑줄)</option><option value="dots">페이지 번호 — 점</option></select></span></div>
+            <option value="text">페이지 번호 — 숫자만 (밑줄)</option><option value="dots">페이지 번호 — 점</option></select>
+          <select id="s-magpick" title="매거진형에서 표지에 올릴 글">
+            <option value="latest">표지 글 — 최신 글</option><option value="feat">표지 글 — 대표글 ★</option><option value="pin">표지 글 — 고정글</option></select>
+          <select id="s-magcards" title="표지 아래 가로 카드 수">
+            <option value="2">가로 카드 — 2편</option><option value="4">가로 카드 — 4편</option><option value="0">가로 카드 — 없음</option></select></span></div>
       <div class="trow"><span class="tl">📖 글 전용 페이지</span><span class="tc"><select id="s-postpage" title="글을 읽을 때 위젯·카테고리 바를 접고 본문만 넓게">
         <option value="">끄기</option><option value="on">켜기 — 읽을 때 본문만 넓게</option></select></span></div>
     </div>
@@ -3374,6 +3409,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=559"></script>
+<script type="module" src="./app.js?v=561"></script>
 </body>
 </html>
