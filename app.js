@@ -6677,7 +6677,11 @@ async function modeSaveSlot(which){
   const col=($('#md-'+which+'col')?.value)||''; const keep=st['_mdCol'+which+'Clear']?'':col;
   await modeSaveCfg({[which]:{name, btn, col:keep, snap:modeSnap()}}); msg(`지금 모습을 ${which.toUpperCase()}에 담았어요.`);
 }
-$('#md-on')?.addEventListener('change', ()=>{ $('#md-body')?.classList.toggle('hidden', !$('#md-on').checked); });   // 켜야 A/B 칸 펼침(phase479)
+$('#md-on')?.addEventListener('change', async()=>{ const on=$('#md-on').checked; $('#md-body')?.classList.toggle('hidden', !on);   // 켜야 A/B 칸 펼침(phase479)
+  /* 켜기/끄기는 즉시 저장(phase537b) — 전엔 [듀얼 설정 저장]을 안 누르면 꺼도 전환 버튼이 그대로 남았음 */
+  if(!st.mine||!st.page) return;
+  try{ await updateDoc(doc(db,'pages',st.handle),{'modes.on':on}); st.page.modes={...(st.page.modes||{}), on}; modeToggleDraw(); msg(on?'듀얼 테마를 켰어요 — A·B를 담아야 버튼이 나와요.':'듀얼 테마를 껐어요 — 전환 버튼을 치웠어요.'); }
+  catch(e){ msg('저장 실패 — '+(e.message||e)); } });
 ['a','b'].forEach(k=>{
   $('#md-'+k+'colx')?.addEventListener('click', ()=>{ st['_mdCol'+k+'Clear']=true; const c=$('#md-'+k+'col'); if(c) c.value='#c9b27a'; msg(`${k.toUpperCase()} 버튼 색을 테마색으로 — [설정 저장]으로 확정`); });
   $('#md-'+k+'col')?.addEventListener('input', ()=>{ st['_mdCol'+k+'Clear']=false; });
