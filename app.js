@@ -2730,10 +2730,10 @@ function renderSide(){
       d.className+=' w-mag';
       const list=st.posts.filter(p=>!p.pinned || (st.page.magPick==='pin'));
       const sel=magSelect(list);
-      if(!sel.lead){ if(st.mine) d.innerHTML=`<p class="label">${esc(w.label||'FEATURED')}</p><p class="pl-empty">아직 글이 없어요.</p>`; else return; }
-      else d.innerHTML=(w.label===''?'':`<p class="label">${esc(w.label||'FEATURED')}</p>`)+magHTML(sel);
+      if(!sel.lead){ if(st.mine) d.innerHTML=`<p class="label">${esc(w.label||'COVER')}</p><p class="pl-empty">아직 글이 없어요.</p>`; else return; }
+      else d.innerHTML=(w.label===''?'':`<p class="label">${esc(w.label||'COVER')}</p>`)+magHTML(sel);
       box.appendChild(d);
-      d.querySelectorAll('.mg-lead,.mg-card').forEach(a=>a.onclick=()=>openFromHome(a.dataset.id));
+      d.querySelectorAll('.mg-lead,.mg-card').forEach(a=>a.onclick=()=>magClick(a, openFromHome));
       return;
     }
     if(w.t==='quote'){
@@ -2984,11 +2984,14 @@ function magSelect(list){
   let lead, cards, rest, slotImg={};
   if(!list.length) return {lead:null,cards:[],rest:[],slotImg};
   if(pick==='manual'){                                        // 직접 고르기: 글도 사진도 주인이 정한 대로(phase537)
-    const sl=st.page.magSlots||[]; const byId=id=>id&&st.posts.find(p=>p.id===id);
-    lead = byId(sl[0]&&sl[0].id) || list[0];
+    const sl=st.page.magSlots||[];
+    const byId=(o,i)=>{ if(!o||!o.id) return null;
+      if(o.id==='__custom') return {id:'__c'+i, custom:true, title:o.title||'', excerpt:o.ex||'', cat:o.cat||'', date:'', url:o.url||''};   // ✎ 직접 쓰기(phase537b)
+      return st.posts.find(p=>p.id===o.id)||null; };
+    lead = byId(sl[0],0) || list[0];
     if(sl[0]&&sl[0].img) slotImg[lead.id]=sl[0].img;
-    cards = sl.slice(1).map(o=>byId(o&&o.id)).filter((p,i,arr)=>p && p!==lead && arr.indexOf(p)===i);
-    sl.slice(1).forEach(o=>{ const p2=byId(o&&o.id); if(p2&&o.img) slotImg[p2.id]=o.img; });
+    cards = sl.slice(1).map((o,i)=>byId(o,i+1)).filter((p,i,arr)=>p && p!==lead && arr.indexOf(p)===i);
+    sl.slice(1).forEach((o,i)=>{ const p2=byId(o,i+1); if(p2&&o.img) slotImg[p2.id]=o.img; });
     rest=list.filter(p=>p!==lead && !cards.includes(p));
   } else {
     lead = pick==='feat' ? (list.find(p=>p.feat)||list[0]) : pick==='pin' ? (list.find(p=>p.pinned)||list[0]) : list[0];
@@ -2998,23 +3001,26 @@ function magSelect(list){
   }
   return {lead,cards,rest,slotImg};
 }
+const magClick=(a,open)=>{ const id=a.dataset.id||'';                    // ✎ 직접 쓰기는 글이 아니라 링크(있으면)만(phase537b)
+  if(id.startsWith('__c')){ const u=a.dataset.url; if(u) window.open(u,'_blank','noopener'); return; }
+  open(id); };
 function magHTML({lead,cards,slotImg}){
   if(!lead) return '';
   const th=slotImg[lead.id]||postThumb(lead);
   const tagH=(p)=>(p.tags&&p.tags[0])?`<span class="mg-tag">${esc(p.tags[0])}</span>`:'';
   return `<div class="mg-wrap">
-    <a class="mg-lead${th?'':' no-th'}" data-id="${lead.id}">
+    <a class="mg-lead${th?'':' no-th'}" data-id="${lead.id}"${lead.custom?` data-url="${esc(lead.url||'')}"`:''}>
       ${th?`<span class="mg-ph"><img src="${th}" alt="" loading="lazy"></span>`:''}
       <span class="mg-tx">
         <span class="mg-meta">${tagH(lead)}<span class="mg-cat">${esc(lead.cat||'')}</span></span>
         <span class="mg-ti">${esc(lead.title)}${lead.secret?' 🔒':''}${lead.priv?' 🔏':''}</span>
         ${lead.excerpt?`<span class="mg-ex">${esc(lead.excerpt)}</span>`:''}
-        <span class="mg-dt">${esc(lead.date||'')} · 읽기 →</span>
+        <span class="mg-dt">${lead.custom ? (lead.url?'열기 →':'') : esc(lead.date||'')+' · 읽기 →'}</span>
       </span></a>
     ${cards.length?`<div class="mg-cards">`+cards.map(p=>{ const t2=slotImg[p.id]||postThumb(p); return `
-      <a class="mg-card" data-id="${p.id}">
+      <a class="mg-card" data-id="${p.id}"${p.custom?` data-url="${esc(p.url||'')}"`:''}>
         ${t2?`<span class="mg-cph"><img src="${t2}" alt="" loading="lazy"></span>`:''}
-        <span class="mg-ctx"><span class="mg-dt">${esc((p.date||'').slice(5))}</span>
+        <span class="mg-ctx"><span class="mg-dt">${p.custom ? esc(p.cat||'') : esc((p.date||'').slice(5))}</span>
           <span class="mg-cti">${esc(p.title)}${p.secret?' 🔒':''}</span>
           ${p.excerpt?`<span class="mg-cex">${esc(p.excerpt)}</span>`:''}</span></a>`; }).join('')+`</div>`:''}
   </div>`;
@@ -3254,7 +3260,7 @@ function renderList(){
   $('#rows').innerHTML = (magHead||shown.length)
     ? magHead + (magRest.length?magRest.map(rowHTML).join(''):'')
     : '<p class="pl-empty">아직 글이 없습니다.</p>';
-  $('#rows').querySelectorAll('.mg-lead,.mg-card').forEach(a=>a.onclick=()=>openPost(a.dataset.id));
+  $('#rows').querySelectorAll('.mg-lead,.mg-card').forEach(a=>a.onclick=()=>magClick(a, openPost));
   $('#more-btn').style.display='none';
   /* ☑ 선택 삭제 모드(phase419): 행 클릭 = 체크 토글, 하단 바에서 한 번에 삭제 */
   if(st.selMode){
@@ -4938,7 +4944,7 @@ function renderWidEdit(){
     </div>
     <input id="we-ftic" placeholder="앞머리 모양 (비우면 ★ — 이모지·문자 가능, 예: ✦ ♥ 🌊)" value="${esc(w.icon||'')}" maxlength="4">`;
   if(w.t==='mag') html+=`
-    <input id="we-maglab" placeholder="제목 (기본: FEATURED · 비우려면 공백 하나)" value="${esc(w.label??'')}">
+    <input id="we-maglab" placeholder="제목 (기본: COVER · 비우려면 공백 하나)" value="${esc(w.label??'')}">
     <p class="note">어떤 글을 표지에 올릴지(최신 · 대표글 · 고정글 · 직접 고르기)와 카드 수는 <b>꾸미기 → 레이아웃 → 표지 글</b>에서 정해요. 전체(ALL) 목록 위의 표지 블록과 같은 설정을 씁니다.</p>`;
   if(w.t==='quote') html+=`
     <textarea id="we-text" placeholder="걸어둘 문장" style="min-height:90px">${w.text||''}</textarea>
@@ -6373,17 +6379,27 @@ function renderMagSlots(){
   const on = $('#s-magpick')?.value==='manual';
   box.classList.toggle('hidden', !on); if(!on) return;
   const posts=(st.posts||[]).slice().sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
-  const opt=(sel)=>`<option value="">— 비워 두기 —</option>`+posts.map(p=>`<option value="${p.id}"${p.id===sel?' selected':''}>${esc((p.date||'').slice(2,10))} · ${esc(p.title||'(제목 없음)')}</option>`).join('');
-  box.innerHTML = `<p class="note" style="margin:0 0 6px">표지와 카드에 올릴 글을 고르고, 원하면 사진도 따로 넣어요. 사진을 안 넣으면 그 글의 대표 사진(없으면 본문 첫 사진)이 쓰이고, 그것도 없으면 사진 없이 나와요. 비워 둔 칸은 표시되지 않아요.</p>`+
-    ['표지','카드 1','카드 2'].map((lb,i)=>{ const o=magSlotsDraft[i]; return `
+  const opt=(sel)=>`<option value="">— 비워 두기 —</option><option value="__custom"${sel==='__custom'?' selected':''}>✎ 직접 쓰기 (공지처럼 — 글 없이 제목·문구·사진)</option>`+posts.map(p=>`<option value="${p.id}"${p.id===sel?' selected':''}>${esc((p.date||'').slice(2,10))} · ${esc(p.title||'(제목 없음)')}</option>`).join('');
+  box.innerHTML = `<p class="note" style="margin:0 0 6px">표지와 카드에 올릴 글을 고르거나 〈직접 쓰기〉로 문구를 적어요. 사진을 안 넣으면 그 글의 대표 사진(없으면 본문 첫 사진)이 쓰이고, 그것도 없으면 사진 없이 나와요. 비워 둔 칸은 표시되지 않아요.</p>`+
+    ['표지','카드 1','카드 2'].map((lb,i)=>{ const o=magSlotsDraft[i]; const cu=o.id==='__custom'; return `
     <div class="ms-row">
       <span class="ms-l">${lb}</span>
       <select data-ms="${i}">${opt(o.id)}</select>
       <span class="ms-th" style="${o.img?`background-image:url(${o.img})`:''}">${o.img?'':'사진'}</span>
       <label class="filelab">${o.img?'바꾸기':'사진'} <input type="file" accept="image/*" data-msf="${i}"></label>
-      ${o.img?`<button class="rmv" data-msx="${i}" title="사진 지우기 — 글의 사진으로 돌아가요">✕</button>`:''}
-    </div>`; }).join('');
-  box.querySelectorAll('[data-ms]').forEach(el=>el.onchange=()=>{ magSlotsDraft[+el.dataset.ms].id=el.value; });
+      ${o.img?`<button class="rmv" data-msx="${i}" title="사진 지우기${cu?'':' — 글의 사진으로 돌아가요'}">✕</button>`:''}
+    </div>${cu?`
+    <div class="ms-row ms-custom" style="padding-left:52px">
+      <input data-mst="${i}" placeholder="제목" value="${esc(o.title||'')}" maxlength="80" style="flex:1;min-width:180px;margin-bottom:0">
+      <input data-msc="${i}" placeholder="작은 라벨 (예: NOTICE)" value="${esc(o.cat||'')}" maxlength="20" style="width:150px;margin-bottom:0">
+    </div>
+    <div class="ms-row ms-custom" style="padding-left:52px">
+      <textarea data-mse="${i}" placeholder="짧은 문구 (표지는 4줄 · 카드는 2줄까지 보여요)" maxlength="300" style="flex:1;min-width:180px;min-height:54px;margin-bottom:0">${esc(o.ex||'')}</textarea>
+      <input data-msu="${i}" placeholder="누르면 열 링크 (선택 · https://)" value="${esc(o.url||'')}" style="width:220px;margin-bottom:0">
+    </div>`:''}`; }).join('');
+  box.querySelectorAll('[data-ms]').forEach(el=>el.onchange=()=>{ magSlotsDraft[+el.dataset.ms].id=el.value; renderMagSlots(); });
+  const bindTx=(sel,key)=>box.querySelectorAll(sel).forEach(el=>el.addEventListener('input',()=>{ magSlotsDraft[+el.dataset[key.k]][key.f]=el.value; }));
+  bindTx('[data-mst]',{k:'mst',f:'title'}); bindTx('[data-msc]',{k:'msc',f:'cat'}); bindTx('[data-mse]',{k:'mse',f:'ex'}); bindTx('[data-msu]',{k:'msu',f:'url'});
   box.querySelectorAll('[data-msf]').forEach(el=>el.onchange=async()=>{
     const f=el.files[0]; if(!f) return; msg('사진 올리는 중…');
     try{ magSlotsDraft[+el.dataset.msf].img=await upFile(f,900,.85,150); renderMagSlots(); msg('사진 넣었어요 — [설정 저장]을 눌러야 확정돼요.'); }
@@ -7036,7 +7052,7 @@ function fillSettings(){
   const scc=$('#s-catcnt'); if(scc) scc.checked=st.page.catCnt!==false;
   const spp=$('#s-perpage'); if(spp) spp.value=String(+st.page.perPage||12); const sbs=$('#s-btnstyle'); if(sbs) sbs.value=st.page.btnStyle||''; const sps=$('#s-pgstyle'); if(sps) sps.value=st.page.pgStyle||''; const srs=$('#s-rowstyle'); if(srs) srs.value=st.page.rowStyle||'';
   const magP=$('#s-magpick'); if(magP) magP.value=st.page.magPick||'latest'; const magC=$('#s-magcards'); if(magC) magC.value=String([0,2,4].includes(+st.page.magCards)?+st.page.magCards:2);
-  magSlotsDraft=[0,1,2].map(i=>{ const o=(st.page.magSlots||[])[i]||{}; return {id:o.id||'', img:o.img||''}; });   // 📰 직접 고르기 초안(phase537)
+  magSlotsDraft=[0,1,2].map(i=>{ const o=(st.page.magSlots||[])[i]||{}; return {id:o.id||'', img:o.img||'', title:o.title||'', cat:o.cat||'', ex:o.ex||'', url:o.url||''}; });   // 📰 직접 고르기 초안(phase537) · 직접 쓰기 칸(phase537b)
   if(magP){ magP.onchange=()=>renderMagSlots(); } renderMagSlots();
   const scs=$('#s-catsel'); if(scs) scs.value=st.page.catSel||'';
   const sqs=$('#s-quotestyle'); if(sqs) sqs.value=st.page.quoteStyle||'';
@@ -7174,7 +7190,7 @@ async function saveSettings(){
       catCnt: $('#s-catcnt')?.checked!==false,
       perPage: Math.min(100,Math.max(3,+($('#s-perpage')?.value)||12)), btnStyle: $('#s-btnstyle')?.value||'', pgStyle: $('#s-pgstyle')?.value||'', rowStyle: $('#s-rowstyle')?.value||'',
       magPick: $('#s-magpick')?.value||'latest', magCards: +($('#s-magcards')?.value ?? 2),   // 📰 매거진형(phase535)   // 한 페이지 글 수 · 버튼 모양(phase458)
-      magSlots: magSlotsDraft.map(o=>({id:o.id||'', img:o.img||''})),   // 📰 직접 고른 표지·카드(phase537)
+      magSlots: magSlotsDraft.map(o=>o.id==='__custom' ? {id:'__custom', img:o.img||'', title:o.title||'', cat:o.cat||'', ex:o.ex||'', url:o.url||''} : {id:o.id||'', img:o.img||''}),   // 📰 직접 고른 표지·카드 · 직접 쓰기(phase537)
       catSel: $('#s-catsel')?.value||'',
       quoteStyle: $('#s-quotestyle')?.value||'',
       headLayout: $('#s-headlayout')?.value||'',
