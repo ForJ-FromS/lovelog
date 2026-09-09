@@ -7096,7 +7096,7 @@ function fillSettings(){
   [['s-hdnamefs','hdNameFs'],['s-hdoverfs','hdOverFs'],['s-hdsubfs','hdSubFs']].forEach(([id,k])=>{ const el=$('#'+id); if(el) el.value=st.page[k]||''; });
   const spf=$('#s-postfs'); if(spf) spf.value=st.page.postFs||'';
   const ssb=$('#s-sbstyle'); if(ssb) ssb.value=st.page.sbStyle||'';
-  const sgs=$('#s-galshape'); if(sgs) sgs.value=st.page.galShape||'';
+  const sgsh=$('#s-galshape'); if(sgsh) sgsh.value=st.page.galShape||'';
   $('#s-galcols').value=String(galCols());
   const sgr=$('#s-galrows'); if(sgr) sgr.value=String(galRows());
   const smr=$('#s-memorows'); if(smr) smr.value=String(memoRows());
