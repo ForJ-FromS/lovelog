@@ -3241,7 +3241,7 @@ function renderList(){
           <a class="memo-card${th?' has-mth':''}" data-id="${p.id}">
             ${th?`<img class="mth" src="${th}" alt="" draggable="false" loading="lazy">`:''}
             ${!st.page.memoNoTt&&p.title?`<b class="mt">${esc(p.title)}</b>`:''}
-            <span class="mk">${st.mine?`<i class="mp${p.mpin?' on':''}" data-mp="${p.id}" title="첫 화면에 고정 (${mpinMax()}개까지)">📌</i>`:''}${p.secret?'🔒':''}${p.priv?'🔏':''}</span>
+            <span class="mk">${st.mine?`<i class="mp${p.mpin?' on':''}" data-mp="${p.id}" title="첫 화면에 고정 (${mpinMax()}개까지)">📌</i>`:''}${p.secret?lockMk().trim():''}${p.priv?privMk().trim():''}</span>
             <p class="mx">${p.secret?'비밀 메모예요.':esc(strip(p.raw||p.excerpt||''))}</p>
             <span class="mf"><i>${esc((p.date||'').slice(2))}</i><span>전체 보기 →</span></span>
           </a>`; }).join('')+`</div>`
@@ -3284,7 +3284,7 @@ function renderList(){
     <li class="row ${t?'has-th':''}${st.selMode?' selrow':''}${st.selMode&&st.selIds?.has(p.id)?' selon':''}" data-id="${p.id}">
       ${st.selMode?`<input type="checkbox" class="rsel" data-rs="${p.id}" ${st.selIds?.has(p.id)?'checked':''}>`:''}
       <span class="d">${esc((p.date||'').slice(5))}</span>
-      <span class="t">${esc(p.title)} ${p.secret?'<span class="k">🔒</span>':''}${p.priv?'<span class="k" title="비공개 — 나만 보여요">🔏</span>':''}${+p.schedAt>Date.now()?'<span class="k" title="예약 발행 — 시각이 되면 공개돼요">⏰</span>':''}${p.mut===true?'<span class="k" title="이웃 공개 — 서로 이웃에게만 보여요">🤝</span>':''}${canFt?`<button class="ft-star${p.feat?' on':''}" data-ft="${p.id}" title="★ 대표글 위젯에 전시 (다시 누르면 해제)">${p.feat?'★':'☆'}</button>`:''}</span>
+      <span class="t">${esc(p.title)} ${p.secret?`<span class="k">${lockMk().trim()}</span>`:''}${p.priv?`<span class="k" title="비공개 — 나만 보여요">${privMk().trim()}</span>`:''}${+p.schedAt>Date.now()?'<span class="k" title="예약 발행 — 시각이 되면 공개돼요">⏰</span>':''}${p.mut===true?'<span class="k" title="이웃 공개 — 서로 이웃에게만 보여요">🤝</span>':''}${canFt?`<button class="ft-star${p.feat?' on':''}" data-ft="${p.id}" title="★ 대표글 위젯에 전시 (다시 누르면 해제)">${p.feat?'★':'☆'}</button>`:''}</span>
       ${(st.page.rowTag!==false && p.tags&&p.tags[0])
         ?`<span class="cw"><span class="rtg">${esc(p.tags[0])}${p.tags.length>1?' +'+(p.tags.length-1):''}</span><span class="c">${esc(p.cat)}</span></span>`
         :`<span class="c">${esc(p.cat)}</span>`}
@@ -4977,10 +4977,6 @@ function renderWidEdit(){
       <option value="bare" ${w.style==='bare'?'selected':''}>담백 — 선·점 없이 글줄만</option>
     </select>
     <input id="we-tldot" placeholder="점 모양 (비우면 ● — 이모지·문자 가능, 예: ✦ ♥ ✈ 📍)" value="${esc(w.dot||'')}" maxlength="4">
-    <div class="p-row" style="align-items:center;margin-bottom:6px">
-      <input type="number" id="we-chmax" placeholder="최대 높이 px (비우면 전체 표시)" value="${+w.maxH>0?+w.maxH:''}" min="120" max="900" style="width:190px;margin-bottom:0" title="정하면 그 높이를 넘는 항목은 스크롤로 봐요 — 위젯 안 스크롤바 모양을 따라요">
-      <span class="note" style="margin:0">넘치면 위젯 안에서 스크롤 (phase537b)</span>
-    </div>
     ${(w.items||[]).map((it,ii)=>`<div class="tl-ed">
       <div class="p-row">
         <input data-tld="${ii}" placeholder="날짜 (자유 형식)" value="${esc(it.d||'')}" style="flex:1">
