@@ -2158,7 +2158,7 @@
   .hsl{display:flex;align-items:center;gap:9px;margin-bottom:7px}
   .hsl span{font-size:11px;color:var(--muted);width:30px;flex:none}
   .hsl input[type=range]{flex:1;margin:0!important}
-  /* 기둥 헤더일 땐 미리보기도 세로로 — 실제 비율(300 × 화면높이)에 맞춤(phase537) */
+  /* 세로 칼럼 헤더일 땐 미리보기도 세로로 — 실제 비율(300 × 화면높이)에 맞춤(phase537) */
   #s-hero-list.pv-pillar .hpv-pc{width:150px;height:330px}
   #s-hero-list.pv-pillar .hpv-mo{width:150px;height:118px}   /* 폰에선 기둥이 상단 배너로 접히니 가로형 */
   #s-hero-list.pv-pillar .hpv-wrap{align-items:flex-start}
@@ -3203,15 +3203,16 @@ html,body{overflow-x:hidden;overflow-x:clip}
         <div class="trow"><span class="tl">홈 구조</span><span class="tc"><select id="s-homestyle">
         <option value="grid">갠홈형 (위젯 그리드 — 지금 구조)</option>
         <option value="mag">매거진형 (갠홈 + 📰 표지 위젯 붙박이 · 전체 목록 위에도 표지)</option>
-        <option value="blog">클래식 블로그형 (글 목록이 메인)</option></select></span></div>
+        <option value="blog">클래식 블로그형 (글 목록이 메인)</option></select>
+        <a href="/layout.html" target="_blank" rel="noopener" class="tl2" style="color:var(--pri)" title="세 구조와 세로 칼럼 헤더를 시안으로 비교">📐 홈 구조 안내 ↗</a></span></div>
       <div class="trow"><span class="tl">사이드바</span><span class="tc"><select id="s-sidepos">
         <option value="right">오른쪽</option><option value="left">왼쪽</option><option value="both">양쪽</option></select></span></div>
       <p class="p-h">헤더</p>
         <div class="trow"><span class="tl">헤더</span><span class="tc"><select id="s-headmode">
         <option value="wide">가로 (상단 와이드)</option>
         <option value="side">세로 (사이드 프로필형)</option>
-        <option value="pillar">세로 — 기둥 왼쪽 (사진이 옆에 고정)</option>
-        <option value="pillar-r">세로 — 기둥 오른쪽</option></select>
+        <option value="pillar">세로 칼럼 — 왼쪽 (사진이 옆에 세로로 · 스크롤 따라옴)</option>
+        <option value="pillar-r">세로 칼럼 — 오른쪽</option></select>
         <select id="s-headlayout" title="헤더 배치 — 제목 · 디데이가 놓이는 방식">
         <option value="">헤더 배치 — 기본 (좌하단 제목)</option>
         <option value="center">헤더 배치 — 센터</option>
@@ -3540,6 +3541,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=581"></script>
+<script type="module" src="./app.js?v=582"></script>
 </body>
 </html>

@@ -6435,7 +6435,7 @@ function renderHeroList(){
       </div>
       <div class="hpv-wrap">
         <div class="hpv">
-          <span class="hpv-t">${pil?'PC · 기둥':'PC'}</span>
+          <span class="hpv-t">${pil?'PC · 세로 칼럼':'PC'}</span>
           <div class="hpv-pc" data-hp="${i}" style="background-image:url(${o.img});
             background-position:${o.x}% ${o.y}%;
             background-size:${o.z>100?o.z+'% auto':'cover'}"></div>

@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LOVELOG — 홈 구조 안내</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--h:222;--bg:hsl(var(--h) 40% 98%);--card:#fff;--line:hsl(var(--h) 24% 88%);
+  --ink:hsl(var(--h) 32% 16%);--body:hsl(var(--h) 14% 32%);--muted:hsl(var(--h) 10% 54%);--pri:hsl(var(--h) 68% 50%)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--body);font-family:'Noto Sans KR',sans-serif;
+  font-size:14px;line-height:1.8;-webkit-font-smoothing:antialiased}
+.wrap{max-width:760px;margin:0 auto;padding:60px 22px 90px}
+.en{font-family:'IBM Plex Mono',monospace;letter-spacing:.28em;font-size:9px;color:var(--muted)}
+h1{font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:500;color:var(--ink);
+  letter-spacing:.12em;margin:8px 0 6px}
+.sub{color:var(--muted);font-size:13px}
+h2{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;letter-spacing:.22em;
+  color:var(--ink);margin:56px 0 6px;padding-bottom:9px;border-bottom:1px solid var(--line);position:relative}
+h2::after{content:'';position:absolute;left:0;bottom:-1px;width:34px;height:2px;background:var(--pri)}
+h2 .no{color:var(--pri);margin-right:8px}
+h3{font-size:14px;font-weight:700;color:var(--ink);margin:30px 0 6px}
+h4{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.24em;
+  color:var(--pri);margin:20px 0 2px}
+p{margin:10px 0}
+b{color:var(--ink);font-weight:600}
+ul{margin:8px 0 12px;padding-left:4px;list-style:none}
+li{position:relative;padding-left:16px;margin:7px 0}
+li::before{content:'·';position:absolute;left:2px;color:var(--pri);font-weight:700}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:14px 0;
+  box-shadow:0 1px 4px hsl(var(--h) 30% 50% / .05)}
+.card p{margin:6px 0}
+kbd{display:inline-block;background:hsl(var(--h) 30% 94%);border:1px solid var(--line);
+  border-radius:6px;padding:1px 8px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--ink)}
+.pill{display:inline-block;border:1px solid var(--line);border-radius:99px;padding:2px 12px;
+  font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;color:var(--ink);margin:0 2px;background:var(--card)}
+.dim{color:var(--muted);font-size:12.5px}
+.shot{margin:14px 0 4px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#111}
+.shot img{display:block;width:100%;height:auto}
+.cap{font-size:12px;color:var(--muted);margin:6px 0 18px;text-align:center}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+@media(max-width:600px){.two,.three{grid-template-columns:1fr}}
+.q{border-left:3px solid var(--pri);padding:2px 0 2px 14px;margin:18px 0}
+.q .qq{color:var(--ink);font-weight:600}
+a{color:var(--pri);text-decoration:none}
+.top{position:fixed;top:14px;right:18px;font-family:'IBM Plex Mono',monospace;font-size:8.5px;
+  letter-spacing:.25em;color:var(--muted)}
+.top a{color:inherit}
+footer{margin-top:70px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:8.5px;
+  letter-spacing:.3em;color:var(--muted)}
+
+
+/* ── 실제 홈 스킨 슬라이더 ── */
+#demo{margin:16px 0 6px;position:relative}
+.dm-stage{position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#0d1322}
+.dm-view{position:relative;width:100%;overflow:hidden}
+.dm-slide{position:absolute;left:0;top:0;width:1100px;transform-origin:0 0;display:none}
+.dm-slide.on{display:block}
+.dm-nav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}
+.dm-nav button{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:#fff;color:var(--ink);font-size:16px;cursor:pointer}
+.dm-nav button:hover{border-color:var(--pri);color:var(--pri)}
+.dm-dots{display:flex;gap:6px;justify-content:center;flex:1;flex-wrap:wrap}
+.dm-dots b{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.14em;font-weight:500;color:var(--muted);
+  border:1px solid var(--line);border-radius:99px;padding:3px 10px;cursor:pointer;background:#fff}
+.dm-dots b.on{background:var(--pri);border-color:var(--pri);color:#fff}
+.dm-cap{font-size:13px;color:var(--body);margin:10px 0 0;text-align:center;min-height:2.6em}
+.dm-cap b{display:block;color:var(--ink);font-size:14px}
+
+/* 슬라이드 안쪽 = 러브로그 어두운 스킨 (실제 토큰) */
+.lv{--h:222;--bg:hsl(var(--h) 32% 9%);--card:hsl(var(--h) 28% 13%);--card2:hsl(var(--h) 30% 10%);--line:hsl(var(--h) 28% 23%);
+  --ink:hsl(var(--h) 35% 93%);--body:hsl(var(--h) 20% 74%);--muted:hsl(var(--h) 15% 50%);--pri:hsl(var(--h) 60% 66%);
+  background:var(--bg);color:var(--body);font-family:'Noto Sans KR',sans-serif;font-weight:300;line-height:1.85;font-size:14px;
+  padding:34px 18px 36px;position:relative;
+  background-image:radial-gradient(ellipse 55% 40% at 15% 0%, hsl(var(--h) 55% 26% / .65), transparent 65%),
+    radial-gradient(ellipse 50% 45% at 90% 90%, hsl(var(--h) 55% 22% / .7), transparent 65%),
+    radial-gradient(hsl(var(--h) 35% 30% / .55) 1px, transparent 1px);
+  background-size:auto,auto,26px 26px}
+.lv *{box-sizing:border-box}
+.lv p{margin:0}
+.lv a{color:inherit;text-decoration:none}
+.lv ul{margin:0;padding:0}
+.lv li{padding-left:8px;margin:0}
+.lv .seal{position:absolute;top:12px;right:16px;font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.25em;color:var(--muted)}
+.lv .mono{font-family:'IBM Plex Mono',monospace}
+.lv .head{position:relative;border:1px solid var(--line);border-radius:16px;overflow:hidden;min-height:300px;display:flex;align-items:flex-end;
+  background:linear-gradient(170deg,var(--card),var(--card2))}
+.lv .head::before,.lv .head::after,.lv .pil::before,.lv .pil::after{content:'';position:absolute;z-index:3;width:16px;height:16px;border:1.5px solid hsl(var(--h) 40% 62% / .8)}
+.lv .head::before,.lv .pil::before{left:11px;top:11px;border-right:none;border-bottom:none;border-radius:4px 0 0 0}
+.lv .head::after,.lv .pil::after{right:11px;bottom:11px;border-left:none;border-top:none;border-radius:0 0 4px 0}
+.lv .bgimg{position:absolute;inset:0;background-image:radial-gradient(ellipse 70% 60% at 35% 25%, hsl(var(--h) 45% 30%), transparent 70%),linear-gradient(200deg, hsl(var(--h) 38% 22%), hsl(var(--h) 30% 11%))}
+.lv .shade{position:absolute;inset:0;background:linear-gradient(180deg, hsl(var(--h) 10% 7% / .1) 30%, hsl(var(--h) 10% 7% / .82))}
+.lv .head .in{position:relative;padding:26px 28px 20px;width:100%}
+.lv .over{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.4em;color:var(--muted)}
+.lv .head h1{font-family:'IBM Plex Mono',monospace;font-size:27px;font-weight:600;letter-spacing:.12em;color:var(--ink);line-height:1.4;margin:0}
+.lv .sub{font-size:12px;color:var(--body);margin-top:2px}
+.lv .head .dday{position:absolute;right:24px;bottom:18px;text-align:right}
+.lv .dday .n{font-family:'IBM Plex Mono',monospace;font-size:20px;color:var(--pri)}
+.lv .dday .t{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.2em;color:var(--muted)}
+/* 세로 칼럼 */
+.lv .pil{position:relative;border:1px solid var(--line);border-radius:16px;overflow:hidden;min-height:100%;
+  display:flex;flex-direction:column;justify-content:flex-end;background:linear-gradient(170deg,var(--card),var(--card2))}
+.lv .pil .ph{position:absolute;inset:0;background-image:radial-gradient(ellipse 80% 50% at 30% 20%, hsl(var(--h) 45% 30%), transparent 70%),linear-gradient(200deg, hsl(var(--h) 38% 22%), hsl(var(--h) 30% 11%))}
+.lv .pil .ph::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 35%, hsl(var(--h) 32% 7% / .84))}
+.lv .pil .rule{position:relative;z-index:2;height:1px;margin:0 22px 15px;background:linear-gradient(90deg,var(--pri),hsl(var(--h) 30% 40% / .25))}
+.lv .pil .in{position:relative;z-index:2;padding:0 22px 24px}
+.lv .pil h1{font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;letter-spacing:.1em;color:var(--ink);line-height:1.3;margin:0}
+.lv .pil .dday{display:flex;align-items:baseline;gap:8px;margin-top:14px}
+.lv .pil .dday .n{font-size:18px}
+/* 카테고리 알약 */
+.lv .catbar{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:16px 0 0}
+.lv .catbar a{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.22em;text-indent:.22em;color:var(--body);
+  border:1px solid var(--line);border-radius:999px;padding:8px 18px;background:var(--card)}
+.lv .catbar a.on{background:var(--pri);border-color:var(--pri);color:hsl(var(--h) 30% 12%)}
+/* 그리드 */
+.lv .grid{display:grid;gap:20px;margin-top:18px;align-items:stretch}
+.lv .col{display:flex;flex-direction:column;gap:14px;min-width:0}
+/* 위젯 */
+.lv .side{position:relative;border:1px solid var(--line);border-radius:12px;background:var(--card);padding:15px 17px;overflow:hidden}
+.lv .side::before{content:'';position:absolute;left:14px;top:0;width:30px;height:3px;border-radius:0 0 3px 3px;background:var(--pri);opacity:.85}
+.lv .side.bare{background:none;border-color:transparent;padding:4px 2px}
+.lv .side.bare::before{display:none}
+.lv .label{font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.3em;color:var(--muted);margin:0 0 9px}
+.lv .label::before{content:'◈ ';color:var(--pri)}
+.lv .s-search{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:9px;background:var(--card2);padding:8px 12px;font-size:12.5px;color:var(--muted)}
+.lv .cnt{display:flex;align-items:baseline;gap:9px;padding:3px 0;font-size:13px}
+.lv .cnt b{font-family:'IBM Plex Mono',monospace;font-weight:500;color:var(--pri);font-size:15px}
+.lv .cnt span{color:var(--muted);font-size:12px}
+.lv .dd-card{position:relative;height:82px;border-radius:10px;overflow:hidden;margin-bottom:8px;border:1px solid var(--line);display:flex;align-items:flex-end;
+  background:linear-gradient(160deg,hsl(var(--h) 36% 26%),hsl(var(--h) 28% 12%))}
+.lv .dd-card:last-child{margin-bottom:0}
+.lv .dd-card .in2{width:100%;display:flex;gap:10px;justify-content:space-between;align-items:baseline;padding:8px 12px}
+.lv .dd-card .t{font-size:11.5px;color:#fff}
+.lv .dd-card .n{font-family:'IBM Plex Mono',monospace;font-size:15px;color:#fff}
+.lv .lk{display:flex;flex-direction:column;gap:7px}
+.lv .lk a{display:flex;justify-content:space-between;font-size:12.5px;color:var(--body)}
+.lv .lk a span{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted)}
+.lv .qt{font-size:13px;color:var(--body);line-height:1.9}
+.lv .qt i{display:block;font-style:normal;font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted);margin-top:8px}
+.lv .pin .tag{font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:var(--pri);letter-spacing:.2em}
+.lv .pin .t{margin-top:4px;font-size:15px;font-weight:500;color:var(--ink)}
+.lv .pin .ex{margin-top:2px;font-size:12.5px;color:var(--muted)}
+.lv .pin .meta{margin-top:8px;font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted)}
+.lv .mini{display:flex;flex-direction:column}
+.lv .mini a{display:flex;align-items:baseline;gap:9px;padding:7px 2px;font-size:12.5px;color:var(--body);border-bottom:1px dashed hsl(var(--h) 20% 26%)}
+.lv .mini a:last-child{border-bottom:none}
+.lv .mini .dot{color:var(--pri);font-size:9px}
+.lv .mini .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lv .mini .dt{font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:var(--muted)}
+.lv .mini.two{display:grid;grid-template-columns:1fr 1fr;column-gap:22px}
+.lv .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.lv .cd{min-height:40px;border-radius:8px;border:1px solid transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;color:var(--body)}
+.lv .cd.wd{min-height:0;font-family:'IBM Plex Mono',monospace;font-size:7.5px;letter-spacing:.1em;color:var(--muted)}
+.lv .cd.today{background:var(--pri);color:hsl(var(--h) 30% 12%)}
+.lv .cd.ev{border-color:var(--pri)}
+/* 매거진 블록 */
+.lv .mg-lead{display:grid;grid-template-columns:1.35fr 1fr;gap:16px;align-items:start;margin-bottom:16px}
+.lv .mg-ph{display:block;border-radius:8px;aspect-ratio:4/3;background:linear-gradient(150deg,hsl(var(--h) 34% 26%),hsl(var(--h) 28% 12%))}
+.lv .mg-tx{display:flex;flex-direction:column;gap:6px;min-width:0}
+.lv .mg-cat{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.16em;color:var(--pri)}
+.lv .mg-ti{font-size:18px;line-height:1.4;color:var(--ink)}
+.lv .mg-ex{font-size:12.5px;line-height:1.75;color:var(--muted)}
+.lv .mg-dt{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--muted);letter-spacing:.06em}
+.lv .mg-cards{display:grid;grid-template-columns:1fr 1fr;gap:14px 12px;padding-bottom:18px;border-bottom:1px solid var(--line)}
+.lv .mg-cards.nob{border-bottom:none;padding-bottom:0}
+.lv .mg-card{display:flex;gap:10px;min-width:0}
+.lv .mg-cph{display:block;width:84px;height:66px;flex:none;border-radius:6px;background:linear-gradient(150deg,hsl(var(--h) 32% 22%),hsl(var(--h) 28% 12%))}
+.lv .mg-ctx{display:flex;flex-direction:column;gap:3px;min-width:0}
+.lv .mg-cti{font-size:13px;line-height:1.4;color:var(--body)}
+.lv .mg-cex{font-size:11px;color:var(--muted)}
+/* 글 목록 */
+.lv .sec-head{position:relative;display:flex;justify-content:space-between;align-items:baseline;padding-bottom:9px;border-bottom:1px solid var(--line);margin-bottom:14px}
+.lv .sec-head::after{content:'';position:absolute;left:0;bottom:-1px;width:44px;height:1px;background:var(--pri)}
+.lv .sec-head h2{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:400;letter-spacing:.3em;color:var(--ink);margin:0;padding:0;border:0}
+.lv .sec-head h2::after{display:none}
+.lv .sec-head .en{font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.25em;color:var(--muted)}
+.lv .rows{list-style:none;margin:0;padding:0}
+.lv .row{display:grid;grid-template-columns:58px 1fr auto 46px;gap:12px;align-items:center;padding:11px 8px;border-bottom:1px solid hsl(var(--h) 12% 15%);border-left:2px solid transparent}
+.lv .row::before{display:none}
+.lv .row .d{font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:2px 0;text-align:center}
+.lv .row .t{font-size:14px;color:var(--body);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lv .row .c{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:.14em}
+.lv .row .th{width:46px;height:46px;border-radius:7px;border:1px solid var(--line);background:linear-gradient(150deg,hsl(var(--h) 32% 22%),hsl(var(--h) 28% 12%))}
+.lv .pager{display:flex;gap:6px;justify-content:center;margin-top:20px}
+.lv .pager a{font-family:'IBM Plex Mono',monospace;font-size:11px;min-width:26px;height:26px;display:grid;place-items:center;border:1px solid var(--line);border-radius:7px;color:var(--muted)}
+.lv .pager a.on{background:var(--pri);border-color:var(--pri);color:hsl(var(--h) 30% 12%)}
+/* 스트립 */
+.lv .strip{margin-top:26px}
+.lv .gal{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.lv .gal a{display:block;aspect-ratio:4/3;border-radius:9px;border:1px solid var(--line);background:linear-gradient(150deg,hsl(var(--h) 34% 26%),hsl(var(--h) 28% 12%))}
+.lv .blogw{max-width:1000px;margin:0 auto}
+.lv .foot{text-align:center;margin-top:26px;font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.3em;color:var(--muted)}
+
+</style></head><body>
+<div class="top"><a href="/guide.html">← GUIDE</a> &nbsp;·&nbsp; <a href="/dual.html">DUAL</a> &nbsp;·&nbsp; <a href="/">LOVELOG</a></div>
+<div class="wrap">
+
+<p class="en">◆ HOME LAYOUT</p>
+<h1>📐 홈 구조 안내</h1>
+<p class="sub">홈의 뼈대를 고르는 세 가지 구조 — 갠홈형 · 블로그형 · 매거진형 — 와, 어느 구조에든 얹을 수 있는 〈세로 칼럼〉 헤더를 시안으로 비교해요. 꾸미기 → <b>📐 레이아웃</b> 탭의 「홈 구조」와 「헤더」 셀렉트에서 고릅니다. 직접 눌러 보며 찾기 번거로운 분들을 위해, 모양이 어떻게 달라지는지 미리 보여드려요.</p>
+
+<h2><span class="no">01</span>실사용 예시</h2>
+<p>아래는 <b>매거진형 + 세로 칼럼(왼쪽)</b> 조합이에요. 대문 사진이 왼쪽에 세로로 서고 스크롤을 따라오며, 가운데엔 표지 글과 카드, 그 아래 글 목록(투명 위젯), 오른쪽엔 위젯들이 놓였어요.</p>
+<div class="shot"><img src="/img/layout-mag-column.jpg" alt="매거진형 + 세로 칼럼 왼쪽 예시 — 왼쪽에 세로 대문 사진, 가운데 표지 글과 카드, 오른쪽 위젯"></div>
+<p class="cap">매거진형 · 헤더 〈세로 칼럼 — 왼쪽〉 · 가운데 위젯은 🫧 투명</p>
+<p class="dim">이 화면을 만드는 데 쓴 설정: 홈 구조 <span class="pill">매거진형</span> · 헤더 <span class="pill">세로 칼럼 — 왼쪽</span> · 표지 글 <span class="pill">직접 고르기</span> · 가운데 위젯 ✎ <span class="pill">🫧 투명</span></p>
+
+<h2><span class="no">02</span>세 가지 홈 구조</h2>
+<p>같은 글·위젯·사진을 두고 뼈대만 다르게 세우는 거예요. 바꿔도 데이터는 그대로고, 언제든 되돌릴 수 있어요. 아래 슬라이더는 실제 홈 스킨으로 그린 시안이에요.</p>
+
+
+<div id="demo">
+  <div class="dm-stage"><div class="dm-view" id="dm-view"></div></div>
+  <div class="dm-nav"><button id="dm-prev" title="이전">‹</button><div class="dm-dots" id="dm-dots"></div><button id="dm-next" title="다음">›</button></div>
+  <p class="dm-cap" id="dm-cap"></p>
+</div>
+<p class="dim">‹ › 로 넘기거나 번호를 누르세요. 1 · 2 · 3은 홈 구조 세 가지, 4 · 5 · 6은 각각에 세로 칼럼을 넣은 모습, 7은 오른쪽 칼럼이에요. 글·사진은 예시용 빈 상자예요.</p>
+
+<h3>갠홈형 (위젯 그리드)</h3>
+<div class="card">
+<p>지금까지의 기본 구조예요. 헤더 아래 세 칸(왼쪽 · 가운데 · 오른쪽)에 위젯을 카드로 놓고, 가운데엔 보통 고정글·최신글이 와요. 사이드바 설정(왼쪽 · 오른쪽 · 양쪽)에 따라 칸이 두 개가 되기도 하고요. 맨 아래엔 갤러리 스트립.</p>
+<p class="dim">어울리는 홈 — 위젯이 많고 대문 느낌을 살리고 싶을 때. 카테고리를 누르면 글 목록 화면으로 넘어가고, 위젯은 사이드로 붙어요.</p>
+</div>
+
+<h3>블로그형 (클래식)</h3>
+<div class="card">
+<p>홈 그리드가 없고 <b>첫 화면이 바로 전체 글 목록</b>이에요. 카테고리 알약 바는 숨겨지고(사이드의 카테고리 위젯이 그 역할), 폭도 1100px로 조금 좁아 읽기에 맞춰져요. 위젯은 사이드바(오른쪽 · 왼쪽 · 양쪽)에만.</p>
+<p class="dim">어울리는 홈 — 글이 주인공일 때. 홈 그리드 전용 위젯(고정글 · 최신글 카드)은 여기선 안 보여요. 「ALL 탭 끄기」를 켜도 홈(전체 목록)엔 들어갈 수 있어요.</p>
+</div>
+
+<h3>매거진형</h3>
+<div class="card">
+<p>갠홈형과 같은 그리드인데 두 가지가 더 있어요. 하나는 가운데 칸의 <b>📰 매거진 표지 위젯</b> — 표지 글 하나를 크게, 아래에 가로 카드 두 편(또는 넷 · 없음)을 놓는 붙박이 위젯이에요. 지울 수는 없지만 ↑↓·드래그로 자리를 옮기고 ✎에서 제목·🫧 투명을 바꿀 수 있어요. 다른 하나는 <b>전체(ALL) 목록 맨 위에도 같은 표지 블록</b>이 얹힌다는 것.</p>
+<p>표지에 어떤 글을 올릴지는 03에서 따로 설명해요.</p>
+<p class="dim">어울리는 홈 — 글도 위젯도 다 쓰되, 첫눈에 "이번 글"이 보이길 원할 때.</p>
+</div>
+
+<h2><span class="no">03</span>매거진 표지 정하기</h2>
+<p>꾸미기 → 📐 레이아웃 → <b>카테고리 · 글</b> 카드의 <b>📰 매거진 표지</b> 줄이에요. 홈 구조가 매거진형일 때만 쓰여요.</p>
+<div class="card">
+<h4>표지 글</h4>
+<ul>
+<li><b>최신 글</b>(기본) — 가장 최근 글이 표지, 그다음 두 편이 카드.</li>
+<li><b>대표글 ★ / 고정글</b> — 그 글이 표지, 나머지 최신순으로 카드.</li>
+<li><b>직접 고르기</b> — 표지 1 + 카드 2 자리에 <b>글을 직접 골라</b> 넣어요. 자리마다 [사진]으로 사진도 따로 넣을 수 있어서, 사진 없는 글도 표지에 올릴 수 있고 글의 사진 대신 다른 사진을 걸 수도 있어요. 비워 둔 카드 칸은 안 나와요.</li>
+<li><b>✎ 직접 쓰기</b> — 직접 고르기 안에서 글 대신 고르는 항목. 제목 · 작은 라벨(예: NOTICE) · 짧은 문구 · 링크(선택) · 사진을 적어서 <b>글 없이 공지처럼</b> 표지나 카드에 둘 수 있어요. 링크를 넣으면 누를 때 새 창으로 열려요.</li>
+</ul>
+<h4>사진이 어디서 오나</h4>
+<p>자리에 사진을 직접 넣지 않으면 → 그 글의 <b>대표 사진</b>(글쓰기 첨부 썸네일의 ☆로 지정) → 없으면 <b>본문 첫 사진</b> → 그것도 없으면 사진 없는 표지(왼쪽 세로선 모양)로 나와요. 글 목록 옆 썸네일도 같은 대표 사진을 써요.</p>
+</div>
+
+<h2><span class="no">04</span>세로 칼럼 헤더</h2>
+<p>헤더 셀렉트의 <b>〈세로 칼럼 — 왼쪽〉 · 〈세로 칼럼 — 오른쪽〉</b>. 대문 사진이 위에 가로로 누워 있는 대신, 한쪽 칸을 통째로 차지하고 세로로 서요. 스크롤하면 따라 내려오고, 홈 이름·부제·디데이는 사진 아래쪽에 앉아요. 어느 홈 구조에든 얹을 수 있어요.</p>
+
+<div class="card">
+<p><b>칸이 하나 줄어요.</b> 칼럼이 차지한 쪽의 위젯은 화면에서만 가운데로 옮겨 보여요. 설정값은 안 바뀌어서 가로 헤더로 돌리면 제자리로 돌아와요.</p>
+<p><b>카테고리 화면에선</b> 칼럼이 그대로 서 있고 위젯은 반대쪽 사이드로 붙어요. 위젯 ✎의 「카테고리 화면에선 — 왼쪽/오른쪽」으로 칼럼 아래에 붙일 수도 있어요.</p>
+<p><b>폰에선</b> 칼럼이 상단 배너(화면 높이의 절반쯤)로 접혀요.</p>
+<p class="dim">모양은 위 슬라이더의 4 · 5 · 6 · 7번을 보세요 — <a href="#demo" onclick="demoGo(3);return false">갠홈 + 칼럼</a> · <a href="#demo" onclick="demoGo(4);return false">블로그 + 칼럼</a> · <a href="#demo" onclick="demoGo(5);return false">매거진 + 칼럼</a> · <a href="#demo" onclick="demoGo(6);return false">오른쪽 칼럼</a></p>
+</div>
+<h3>칼럼용 사진 잡기</h3>
+<div class="card">
+<p>헤더를 세로 칼럼으로 두면 사진 탭의 헤더 사진 미리보기가 <b>세로 상자(PC · 세로 칼럼)</b>로 바뀌어요. 확대 · 가로 · 세로 슬라이더로 얼굴이 이름 블록에 가리지 않게 자리를 잡아 주세요. 모바일 미리보기는 반대로 가로형 — 폰에선 배너로 접히기 때문이에요.</p>
+<p class="dim">사진 위치값은 헤더 모드 공통이라, 가로 배너용으로 잡아둔 값이 칼럼에서도 그대로 쓰여요. 칼럼으로 바꾼 뒤 슬라이더를 한 번 다시 만져 주세요.</p>
+</div>
+
+<h2><span class="no">05</span>헷갈리기 쉬운 것</h2>
+<div class="q"><p class="qq">매거진형으로 바꿨는데 홈이 갠홈형이랑 똑같아 보여요</p><p>📰 표지 위젯이 가운데 칸에 자동으로 들어와요. 안 보이면 위젯 편집(⠿)을 켜고 가운데 칸을 확인해 보세요 — 🫧 투명이 기본이라 카드 테두리가 없어서 못 알아볼 수 있어요. 표지 글 설정이 「최신 글」인데 글이 하나도 없으면 아무것도 안 나와요.</p></div>
+<div class="q"><p class="qq">📰 표지 위젯을 지우고 싶어요</p><p>매거진형에선 못 지워요(붙박이). 위젯 없이 쓰려면 갠홈형으로 바꾸면 돼요 — 그러면 위젯이 사라지고 ALL 목록 위 표지 블록도 없어져요.</p></div>
+<div class="q"><p class="qq">듀얼 테마에서 A는 갠홈형, B는 매거진형으로 하고 싶어요</p><p>🌗 듀얼 탭의 <b>「위젯 구성도」</b> 체크를 켜야 홈 구조가 모드별로 담겨요. 켠 뒤 각 모드에서 구조를 바꾸고 [설정 저장] → [A로 담기] / [B로 담기]를 다시 해 주세요. 체크가 꺼져 있으면 홈 구조는 두 모드 공통이에요.</p></div>
+<div class="q"><p class="qq">세로 칼럼을 켰더니 왼쪽에 두었던 위젯이 없어졌어요</p><p>없어진 게 아니라 가운데로 옮겨 보이는 거예요. 위젯 탭 목록엔 그대로 있고, 헤더를 가로로 돌리면 왼쪽 칸으로 돌아와요.</p></div>
+<div class="q"><p class="qq">블로그형에서 ALL 탭을 끄니까 홈 버튼이 안 먹어요</p><p>블로그형은 전체 목록이 곧 홈이라, ALL을 꺼도 홈엔 들어가요(09.09 고침). 안 되면 새로고침 해 보세요.</p></div>
+<div class="q"><p class="qq">표지 사진이 이상한 데가 잘려요</p><p>표지는 4:3, 카드는 84×66 상자에 <b>가운데 기준</b>으로 맞춰 잘려요. 자리에 딱 맞는 사진을 직접 넣고 싶으면 「직접 고르기」에서 그 자리의 [사진]에 미리 잘라둔 사진을 올리는 게 제일 정확해요.</p></div>
+
+<footer>LOVELOG · 홈 구조 안내 · 2026.09</footer>
+</div>
+<script>
+/* ── 슬라이드 조립 ── */
+const D={
+  seal:`<div class="seal">LOVELOG · @ACCOUNT</div>`,
+  headWide:`<header class="head"><div class="bgimg"></div><div class="shade"></div>
+    <div class="in"><p class="over">PRIVATE HOME · @account</p><h1>안개 정거장</h1><p class="sub">늦게 쓰는 기록들</p></div>
+    <div class="dday"><div class="n">D+1204</div><div class="t">SINCE 2023.05.24</div></div></header>`,
+  pil:`<header class="pil"><div class="ph"></div><div class="rule"></div>
+    <div class="in"><p class="over">PRIVATE HOME · @account</p><h1>안개 정거장</h1><p class="sub">늦게 쓰는 기록들</p>
+    <div class="dday"><span class="n">D+1204</span><span class="t">SINCE 2023.05.24</span></div></div></header>`,
+  catbar:`<nav class="catbar"><a class="on">ALL</a><a>기록</a><a>메모</a><a>사진</a><a>링크</a></nav>`,
+  wSearch:`<div class="side"><div class="s-search">⌕ search</div></div>`,
+  wCnt:`<div class="side"><p class="label">COUNTER</p><div class="cnt"><b>142</b><span>쓴 글</span></div><div class="cnt"><b>38</b><span>사진</span></div><div class="cnt"><b>7</b><span>이번 달</span></div></div>`,
+  wDday:`<div class="side"><p class="label">DDAY</p><div class="dd-card"><div class="in2"><span class="t">가을 여행</span><span class="n">D-12</span></div></div><div class="dd-card"><div class="in2"><span class="t">정기 점검</span><span class="n">D-31</span></div></div></div>`,
+  wLinks:`<div class="side"><p class="label">LINKS</p><div class="lk"><a>바깥 기록 <span>↗</span></a><a>사진 보관함 <span>↗</span></a><a>읽은 책 목록 <span>↗</span></a></div></div>`,
+  wQuote:`<div class="side"><p class="label">QUOTE</p><div class="qt">오래 걸리는 일은 오래 걸리는 대로 둔다.<i>— 어느 밤의 메모</i></div></div>`,
+  wCal:`<div class="side"><p class="label">CALENDAR</p><div class="cal"><div class="cd wd">M</div><div class="cd wd">T</div><div class="cd wd">W</div><div class="cd wd">T</div><div class="cd wd">F</div><div class="cd wd">S</div><div class="cd wd">S</div>
+    <div class="cd">1</div><div class="cd">2</div><div class="cd ev">3</div><div class="cd">4</div><div class="cd">5</div><div class="cd">6</div><div class="cd">7</div>
+    <div class="cd">8</div><div class="cd today">9</div><div class="cd">10</div><div class="cd">11</div><div class="cd ev">12</div><div class="cd">13</div><div class="cd">14</div></div></div>`,
+  wPin:`<div class="side pin"><div class="tag">◈ PINNED</div><div class="t">창을 열어두고 잔 밤에 대해서</div><div class="ex">새벽 세 시에 깨서 커튼이 부풀어 있는 걸 한참 봤다. 방충망 너머로 들어온 바람이 책상 위 종이를 두 번 넘겼다.</div><div class="meta">2026.09.07 · 기록</div></div>`,
+  wLatest(two,bare){ return `<div class="side${bare?' bare':''}"><p class="label">LATEST</p><div class="mini${two?' two':''}">
+    <a><span class="dot">◈</span><span class="t">창을 열어두고 잔 밤에 대해서</span><span class="dt">09.07</span></a>
+    <a><span class="dot">◈</span><span class="t">9월 첫째 주에 산 것들 정리</span><span class="dt">09.04</span></a>
+    <a><span class="dot">◈</span><span class="t">오래된 사진첩을 다시 스캔했다</span><span class="dt">08.30</span></a>
+    <a><span class="dot">◈</span><span class="t">비 오는 날의 산책 경로</span><span class="dt">08.27</span></a>
+    <a><span class="dot">◈</span><span class="t">읽다 만 책 목록</span><span class="dt">08.21</span></a>
+    <a><span class="dot">◈</span><span class="t">여름 끝의 저녁 하늘</span><span class="dt">08.14</span></a></div></div>`; },
+  mag(nob){ return `<div class="mg-lead"><span class="mg-ph"></span><span class="mg-tx"><span class="mg-cat">기록</span><span class="mg-ti">창을 열어두고 잔 밤에 대해서</span>
+    <span class="mg-ex">새벽 세 시에 깨서 커튼이 부풀어 있는 걸 한참 봤다. 방충망 너머로 들어온 바람이 책상 위 종이를 두 번 넘겼고, 다시 잠들기까지 오래 걸렸다.</span><span class="mg-dt">2026.09.07 · 읽기 →</span></span></div>
+    <div class="mg-cards${nob?' nob':''}"><a class="mg-card"><span class="mg-cph"></span><span class="mg-ctx"><span class="mg-dt">09.04</span><span class="mg-cti">9월 첫째 주에 산 것들 정리</span><span class="mg-cex">장바구니에 오래 담아뒀던 것들만 골라서 샀다.</span></span></a>
+    <a class="mg-card"><span class="mg-cph"></span><span class="mg-ctx"><span class="mg-dt">08.30</span><span class="mg-cti">오래된 사진첩을 다시 스캔했다</span><span class="mg-cex">색이 바랜 쪽이 오히려 마음에 든다.</span></span></a></div>`; },
+  wMag:`<div class="side bare"><p class="label">COVER</p>`+``+`</div>`,
+  rows(n){ const L=[['09.07','창을 열어두고 잔 밤에 대해서','기록'],['09.04','9월 첫째 주에 산 것들 정리','메모'],['08.30','오래된 사진첩을 다시 스캔했다','사진'],['08.27','비 오는 날의 산책 경로','기록'],['08.21','읽다 만 책 목록','메모'],['08.14','여름 끝의 저녁 하늘','사진'],['08.09','장마 지나고 남은 것들','기록'],['08.02','새로 산 스탠드 각도 맞추기','메모']];
+    return `<ul class="rows">`+L.slice(0,n).map(r=>`<li class="row"><span class="d">${r[0]}</span><span class="t">${r[1]}</span><span class="c">${r[2]}</span><span class="th"></span></li>`).join('')+`</ul><div class="pager"><a>‹</a><a class="on">1</a><a>2</a><a>3</a><a>›</a></div>`; },
+  strip:`<div class="strip"><div class="sec-head"><h2>GALLERY</h2><span class="en">MORE</span></div><div class="gal"><a></a><a></a><a></a><a></a></div></div>`,
+  foot:`<div class="foot">— ◆ —</div>`,
+};
+D.wMag=`<div class="side bare"><p class="label">COVER</p>${D.mag(true)}</div>`;
+const rightCol=D.wSearch+D.wCnt+D.wDday+D.wQuote+D.wLinks;
+const leftCol=D.wCnt+D.wLinks;
+const SLIDES=[
+ {t:'갠홈형', c:'가로 헤더 아래 세 칸. 가운데엔 고정글·최신글, 양옆에 위젯 카드. 맨 아래 갤러리 스트립.',
+  h:`${D.seal}${D.headWide}${D.catbar}<div class="grid" style="grid-template-columns:270px 1fr 270px"><div class="col">${leftCol}</div><div class="col">${D.wPin}${D.wLatest(true)}${D.wCal}</div><div class="col">${rightCol}</div></div>${D.strip}${D.foot}`},
+ {t:'블로그형', c:'첫 화면이 전체 글 목록. 카테고리 알약 바가 없고 폭이 조금 좁아져요. 위젯은 사이드바에만.',
+  h:`<div class="blogw">${D.seal}${D.headWide}<div class="grid" style="grid-template-columns:1fr 252px;gap:18px"><main><div class="sec-head"><h2>RECENT</h2><span class="en">✎ WRITE</span></div>${D.rows(8)}</main><div class="col">${rightCol}</div></div>${D.foot}</div>`},
+ {t:'매거진형', c:'갠홈형 그대로에 가운데 칸 맨 위 📰 표지 위젯(붙박이 · 투명). 전체(ALL) 목록 위에도 같은 표지 블록이 얹혀요.',
+  h:`${D.seal}${D.headWide}${D.catbar}<div class="grid" style="grid-template-columns:270px 1fr 270px"><div class="col">${leftCol}</div><div class="col">${D.wMag}${D.wLatest(true,true)}${D.wCal}</div><div class="col">${rightCol}</div></div>${D.strip}${D.foot}`},
+ {t:'갠홈형 + 세로 칼럼(왼쪽)', c:'대문 사진이 왼쪽 칸 전체를 세로로 차지하고 스크롤을 따라와요. 왼쪽 칸에 있던 위젯은 가운데로 옮겨 보여요.',
+  h:`${D.seal}${D.catbar}<div class="grid" style="grid-template-columns:300px 1fr 270px"><div class="col">${D.pil}</div><div class="col">${D.wPin}${D.wLatest(true)}${leftCol}</div><div class="col">${rightCol}</div></div>${D.strip}${D.foot}`},
+ {t:'블로그형 + 세로 칼럼(왼쪽)', c:'왼쪽이 표지, 오른쪽이 목차 — 잡지 펼침면처럼. 목록이 길어도 사진이 옆에 계속 있어요.',
+  h:`${D.seal}<div class="grid" style="grid-template-columns:300px 1fr 252px;gap:18px;margin-top:0"><div class="col">${D.pil}</div><main><div class="sec-head"><h2>RECENT</h2><span class="en">✎ WRITE</span></div>${D.rows(8)}</main><div class="col">${rightCol}</div></div>${D.foot}`},
+ {t:'매거진형 + 세로 칼럼(왼쪽)', c:'01의 실사용 예시가 이 조합. 표지 글 옆에 큰 사진이 서 있어서 "이번 글"이 제일 먼저 보여요.',
+  h:`${D.seal}${D.catbar}<div class="grid" style="grid-template-columns:300px 1fr 270px"><div class="col">${D.pil}</div><div class="col">${D.wMag}${D.wLatest(true,true)}${leftCol}</div><div class="col">${rightCol}</div></div>${D.strip}${D.foot}`},
+ {t:'세로 칼럼 — 오른쪽 (갠홈형)', c:'왼쪽의 거울. 위젯은 왼쪽 + 가운데, 사진 칼럼이 오른쪽. 어느 구조에든 똑같이 적용돼요.',
+  h:`${D.seal}${D.catbar}<div class="grid" style="grid-template-columns:270px 1fr 300px"><div class="col">${rightCol}</div><div class="col">${D.wPin}${D.wLatest(true)}${leftCol}</div><div class="col">${D.pil}</div></div>${D.strip}${D.foot}`},
+];
+let demoIdx=0;
+function demoBuild(){
+  const view=document.getElementById('dm-view'), dots=document.getElementById('dm-dots');
+  view.innerHTML=SLIDES.map((s,i)=>`<div class="dm-slide lv${i===0?' on':''}" data-i="${i}">${s.h}</div>`).join('');
+  dots.innerHTML=SLIDES.map((s,i)=>`<b data-i="${i}"${i===0?' class="on"':''}>${i+1}</b>`).join('');
+  dots.querySelectorAll('b').forEach(b=>b.onclick=()=>demoGo(+b.dataset.i));
+  demoFit();
+}
+function demoFit(){
+  const view=document.getElementById('dm-view'); const k=view.clientWidth/1100;
+  const cur=view.querySelector('.dm-slide.on'); if(!cur) return;
+  view.querySelectorAll('.dm-slide').forEach(s=>s.style.transform=`scale(${k})`);
+  view.style.height=Math.round(cur.offsetHeight*k)+'px';
+}
+function demoGo(i){
+  demoIdx=(i+SLIDES.length)%SLIDES.length;
+  document.querySelectorAll('.dm-slide').forEach(s=>s.classList.toggle('on', +s.dataset.i===demoIdx));
+  document.querySelectorAll('#dm-dots b').forEach(b=>b.classList.toggle('on', +b.dataset.i===demoIdx));
+  document.getElementById('dm-cap').innerHTML=`<b>${demoIdx+1}. ${SLIDES[demoIdx].t}</b>${SLIDES[demoIdx].c}`;
+  demoFit();
+  document.getElementById('demo').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+document.getElementById('dm-prev').onclick=()=>demoGo(demoIdx-1);
+document.getElementById('dm-next').onclick=()=>demoGo(demoIdx+1);
+window.addEventListener('resize',demoFit);
+demoBuild(); demoGo(0);
+document.addEventListener('keydown',e=>{ if(e.key==='ArrowLeft') demoGo(demoIdx-1); if(e.key==='ArrowRight') demoGo(demoIdx+1); });
+</script>
+</body></html>
