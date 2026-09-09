@@ -7053,6 +7053,8 @@ function fillSettings(){
   $('#s-gate').value=''; gateClear=false; renderGateState(); priVal=null; $('#s-pri').value=p.priColor||'#9db4ff'; $('#s-color').value=hslToHex(p.hue??222, p.sat??60, p.lum??62);
   $('#s-headmode').value=p.headMode||'wide'; $('#s-headh').value=p.headH||380; $('#s-headfit').value=p.headFit||'cover';
   $('#s-headmode').onchange=()=>renderHeroList();              // 기둥 ↔ 가로 바꾸면 사진 미리보기 비율도 바로(phase537)
+  const hsSel=$('#s-homestyle'); if(hsSel) hsSel.onchange=()=>{     // 📰 매거진형으로 바꾸면 사이드바 기본을 2열 — 오른쪽으로(phase537b) · 3열로 되돌리는 건 자유
+    if(hsSel.value==='mag' && $('#s-sidepos')){ $('#s-sidepos').value='right'; msg('매거진형 기본 배치로 사이드바를 〈2열 — 오른쪽〉에 맞췄어요. 3열이 좋으면 바꿔도 돼요.'); } };
   const shc=$('#s-headclear'); if(shc) shc.checked=!!p.headClear;
   $('#s-headgrad').value=p.headGrad||'dark'; $('#s-headtext').checked=p.headText!==false; $('#s-headh-v').textContent=(p.headH||380)+'px';
   $('#s-sidepos').value=p.sidePos||'right';

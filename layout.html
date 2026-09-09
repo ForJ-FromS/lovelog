@@ -230,7 +230,7 @@ footer{margin-top:70px;text-align:center;font-family:'IBM Plex Mono',monospace;f
 
 <h3>매거진형</h3>
 <div class="card">
-<p>갠홈형과 같은 그리드인데 두 가지가 더 있어요. 하나는 가운데 칸의 <b>📰 매거진 표지 위젯</b> — 표지 글 하나를 크게, 아래에 가로 카드 두 편(또는 넷 · 없음)을 놓는 붙박이 위젯이에요. 지울 수는 없지만 ↑↓·드래그로 자리를 옮기고 ✎에서 제목·🫧 투명을 바꿀 수 있어요. 다른 하나는 <b>전체(ALL) 목록 맨 위에도 같은 표지 블록</b>이 얹힌다는 것.</p>
+<p>갠홈형과 같은 그리드예요. 매거진형으로 바꾸는 순간 사이드바가 <b>〈2열 — 위젯 오른쪽〉</b>으로 맞춰져서 표지 칸이 넓어지고 잡지 첫 면처럼 보여요(3열로 바꿔 써도 돼요). 그 넓은 칸 맨 위에 <b>📰 매거진 표지 위젯</b> — 표지 글 하나를 크게, 아래에 가로 카드 두 편(또는 넷 · 없음)을 놓는 붙박이 위젯이에요. 지울 수는 없지만 ↑↓·드래그로 자리를 옮기고 ✎에서 제목·🫧 투명을 바꿀 수 있어요. 다른 하나는 <b>전체(ALL) 목록 맨 위에도 같은 표지 블록</b>이 얹힌다는 것.</p>
 <p>표지에 어떤 글을 올릴지는 03에서 따로 설명해요.</p>
 <p class="dim">어울리는 홈 — 글도 위젯도 다 쓰되, 첫눈에 "이번 글"이 보이길 원할 때.</p>
 </div>
@@ -319,8 +319,8 @@ const SLIDES=[
   h:`${D.seal}${D.headWide}${D.catbar}<div class="grid" style="grid-template-columns:270px 1fr 270px"><div class="col">${leftCol}</div><div class="col">${D.wPin}${D.wLatest(true)}${D.wCal}</div><div class="col">${rightCol}</div></div>${D.strip}${D.foot}`},
  {t:'블로그형', c:'첫 화면이 전체 글 목록. 카테고리 알약 바가 없고 폭이 조금 좁아져요. 위젯은 사이드바에만.',
   h:`<div class="blogw">${D.seal}${D.headWide}<div class="grid" style="grid-template-columns:1fr 252px;gap:18px"><main><div class="sec-head"><h2>RECENT</h2><span class="en">✎ WRITE</span></div>${D.rows(8)}</main><div class="col">${rightCol}</div></div>${D.foot}</div>`},
- {t:'매거진형', c:'갠홈형 그대로에 가운데 칸 맨 위 📰 표지 위젯(붙박이 · 투명). 전체(ALL) 목록 위에도 같은 표지 블록이 얹혀요.',
-  h:`${D.seal}${D.headWide}${D.catbar}<div class="grid" style="grid-template-columns:270px 1fr 270px"><div class="col">${leftCol}</div><div class="col">${D.wMag}${D.wLatest(true,true)}${D.wCal}</div><div class="col">${rightCol}</div></div>${D.strip}${D.foot}`},
+ {t:'매거진형', c:'기본은 2열(위젯 오른쪽). 넓은 칸 맨 위에 📰 표지 위젯(붙박이 · 투명), 그 아래 최신글·위젯. 전체(ALL) 목록 위에도 같은 표지 블록이 얹혀요.',
+  h:`${D.seal}${D.headWide}${D.catbar}<div class="grid" style="grid-template-columns:1fr 270px"><div class="col">${D.wMag}${D.wLatest(true,true)}${D.wCal}</div><div class="col">${rightCol}</div></div>${D.strip}${D.foot}`},
  {t:'갠홈형 + 세로 칼럼(왼쪽)', c:'대문 사진이 왼쪽 칸 전체를 세로로 차지하고 스크롤을 따라와요. 왼쪽 칸에 있던 위젯은 가운데로 옮겨 보여요.',
   h:`${D.seal}${D.catbar}<div class="grid" style="grid-template-columns:300px 1fr 270px"><div class="col">${D.pil}</div><div class="col">${D.wPin}${D.wLatest(true)}${leftCol}</div><div class="col">${rightCol}</div></div>${D.strip}${D.foot}`},
  {t:'블로그형 + 세로 칼럼(왼쪽)', c:'왼쪽이 표지, 오른쪽이 목차 — 잡지 펼침면처럼. 목록이 길어도 사진이 옆에 계속 있어요.',
