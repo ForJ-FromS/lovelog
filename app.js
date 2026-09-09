@@ -1108,7 +1108,7 @@ const MODE_KEYS=['hue','sat','lum','light','glass','theme','dots','bgImg','bgRef
   'listTc','rowTag','tagShape','galCols','memoCols','catSel','catCnt','gbHint','gbEmpty','homeName','galName','gbName','labelIcon','headFs','headSubFs','headOverFs','headShow','sidePos','tagShow','tagOrder','magPick','magCards'];   // 글 목록 제목 색 등 남은 꾸밈도 모드별(phase519)
 const MODE_HDR=['heroImgs','heroImg','headFit','headH','headMode','headNoBg','enterImg','enterRef','enterText','cardImg','bannerImg','catImgs'];   // 사진(헤더·대문·대표·카테고리)
 const MODE_STRIP=['stripPin','stripCnt','stripShape','stripOn'];                                                                          // 하단 스트립(phase476)
-const MODE_WID=['side','ddays','bgm','noLatest','sidePos'];                                                                               // 위젯 구성(phase476)
+const MODE_WID=['side','ddays','bgm','noLatest','sidePos','homeStyle'];                                                                   // 위젯 구성(phase476) · 홈 구조도 함께(phase537)
 function modeSnap(){
   const m=st.page.modes||{}; const keys=MODE_KEYS.concat(m.hdr?MODE_HDR:[], m.strip?MODE_STRIP:[], m.wid?MODE_WID:[]); const o={};
   keys.forEach(k=>{ if(st.page[k]!==undefined) o[k]=st.page[k]; });
@@ -1128,9 +1128,14 @@ async function modeApply(which, animate){
   if(animate&&fx==='soft') document.body.classList.add('mode-soft');
   if(overlay){ const ov=document.getElementById('mode-fx')||Object.assign(document.body.appendChild(document.createElement('div')),{id:'mode-fx'});
     ov.className='mfx-'+fx+' on'; await new Promise(r=>setTimeout(r, fx==='blink'?180:460)); }
+  const wasLH=listHome();                                       // 홈 구조가 모드별이면 첫 화면이 달라질 수 있음(phase537)
   Object.assign(st.page, JSON.parse(JSON.stringify(snap)));
   try{ await resolveImgs(st.page); }catch(e){}                 // 참조 이미지 다시 채움(phase477)
   st.modeSwitch=true; try{ await enterPage(); } finally{ st.modeSwitch=false; }
+  if(!document.body.classList.contains('in-post')){            // 글 읽는 중엔 화면을 안 옮김 — 목록으로 돌아갈 때 반영
+    if(listHome()!==wasLH){ if(listHome()) goBoard('recent'); else goHome(); }   // 갠홈 ↔ 블로그/매거진: 첫 화면으로
+    else if(st.cat!=='home') renderList();                       // 블로그 ↔ 매거진: 표지 블록 유무만 다시 그림
+  }
   try{ localStorage.setItem('lv-mode-'+st.handle, which); }catch(e){}
   if(overlay){ const ov=document.getElementById('mode-fx'); if(ov){ ov.classList.add('out'); setTimeout(()=>{ ov.className=''; }, 1000); } }
   if(animate&&fx==='soft') setTimeout(()=>document.body.classList.remove('mode-soft'), 1600);
