@@ -505,7 +505,7 @@
   /* 📰 매거진형(phase535) */
   .mg-wrap{margin:0 0 14px}
   .mg-lead{display:grid;grid-template-columns:1.35fr 1fr;gap:16px;align-items:start;cursor:pointer;margin-bottom:16px}
-  .mg-lead.no-th{grid-template-columns:1fr;border-left:2px solid var(--pri);padding-left:14px}
+  .mg-lead.no-th{grid-template-columns:1fr;border-left:3px solid var(--pri);padding-left:14px}   /* .row:hover의 2px 왼쪽선과 구분(phase537) */
   .mg-ph{display:block;border-radius:8px;overflow:hidden;aspect-ratio:4/3;background:var(--card2)}
   .mg-ph img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .3s}
   .mg-lead:hover .mg-ph img{transform:scale(1.03)}
@@ -516,7 +516,7 @@
   .mg-ti{font-size:18px;line-height:1.4;color:var(--listTc, var(--ink))}
   .mg-ex{font-size:12.5px;line-height:1.75;color:var(--muted);display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
   .mg-dt{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--muted);letter-spacing:.06em}
-  .mg-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+  .mg-cards{display:grid;grid-template-columns:1fr 1fr;gap:14px 12px;padding-bottom:18px;border-bottom:1px solid var(--line)}   /* 4장이면 2×2라 목록과 간격을 더(phase537) */
   .mg-card{display:flex;gap:10px;cursor:pointer;min-width:0}
   .mg-cph{display:block;width:84px;height:66px;flex:none;border-radius:6px;overflow:hidden;background:var(--card2)}
   .mg-cph img{width:100%;height:100%;object-fit:cover;display:block}
@@ -1020,10 +1020,11 @@
   .head.pil .dday .n{font-size:19px}
   /* 기둥일 때 칸 배치 — 왼쪽 300px 고정 */
   body.hm-pillar #home-grid{grid-template-columns:300px minmax(0,1fr) 270px!important}
-  body.hm-pillar #home-grid #hcol-l{display:flex!important}
-  body.hm-pillar .cols{grid-template-columns:300px minmax(0,1fr) 270px}
-  body.hm-pillar #aside-l{display:flex!important}
-  body.hm-pillar.style-blog .cols{grid-template-columns:300px minmax(0,1fr) 252px}
+  body.hm-pillar #home-grid #hcol-l,body.hm-pillar #home-grid #hcol-r{display:flex!important}   /* 사이드바 왼쪽 설정이 오른쪽 칸을 숨겨도 기둥에선 세 칸 */
+  body.hm-pillar .cols{grid-template-columns:300px minmax(0,1fr) 270px!important}
+  body.hm-pillar #aside-l{display:flex!important;order:-1}
+  body.hm-pillar #aside{order:0}                                     /* side-left의 aside{order:-1}가 위젯 칸까지 왼쪽으로 끌던 것 차단 */
+  body.hm-pillar.style-blog .cols{grid-template-columns:300px minmax(0,1fr) 252px!important}
   @media(max-width:1180px){
     body.hm-pillar #home-grid{grid-template-columns:280px minmax(0,1fr)!important}
     body.hm-pillar #home-grid #hcol-r{grid-column:1/3}
@@ -1378,8 +1379,8 @@
     line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
     color:color-mix(in srgb, var(--bgmTx, var(--muted)) 70%, transparent)}
   /* 좁은 칸에서 판이 칸을 다 먹어 글자가 세 줄로 접히던 것(phase537) */
-  .lp-wrap{width:min(92px,34%);height:min(92px,34%);aspect-ratio:1}
-  .lp-disc{width:100%;height:100%}
+  .lp-wrap{width:min(92px,34%);height:auto;aspect-ratio:1}
+  .lp-disc{width:100%;height:auto;aspect-ratio:1}
   .lp-arm{height:63%}
   .lp-disc img,.lp-disc .mus{width:37%;height:37%}   /* 판이 줄면 라벨도 같이(phase537) */
   /* 튜너 */
@@ -3141,7 +3142,7 @@ html,body{overflow-x:hidden;overflow-x:clip}
       <p class="p-h">구조</p>
         <div class="trow"><span class="tl">홈 구조</span><span class="tc"><select id="s-homestyle">
         <option value="grid">갠홈형 (위젯 그리드 — 지금 구조)</option>
-        <option value="mag">매거진형 (표지 글 + 카드)</option>
+        <option value="mag">매거진형 (첫 화면 = 표지 글 + 카드 + 목록)</option>
         <option value="blog">클래식 블로그형 (글 목록이 메인)</option></select></span></div>
       <div class="trow"><span class="tl">사이드바</span><span class="tc"><select id="s-sidepos">
         <option value="right">오른쪽</option><option value="left">왼쪽</option><option value="both">양쪽</option></select></span></div>
@@ -3473,6 +3474,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=565"></script>
+<script type="module" src="./app.js?v=567"></script>
 </body>
 </html>

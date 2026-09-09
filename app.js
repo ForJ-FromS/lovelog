@@ -1088,7 +1088,7 @@ async function enterPage(){
     return; }
   await loadContent();
   bumpCounter(); loadStamps();
-  if(homeStyle()==='blog'){ st.cat='recent'; applyView(); }
+  if(listHome()){ st.cat='recent'; applyView(); }               // 블로그형·매거진형은 첫 화면이 recent(phase537)
   else { st.cat='home'; applyView(); }
   document.querySelector('.strip-sec').classList.toggle('hidden', !stripShow());
   renderWidgets(); renderCatbar(); renderList(); renderGal(); renderStickers();
@@ -1494,6 +1494,7 @@ function fillCounter(){
 const DEFCOL={search:'l',category:'l',profile:'l',latest:'c',tl:'r',feat:'r',quote:'c',notice:'c',chat:'c',phone:'c',img:'l',nb:'r',
   dday:'r',bgm:'r',links:'r',banner:'r',text:'c',cnt:'l',char:'r',pair:'c',cal:'r',habit:'r'};
 const homeStyle=()=>st.page?.homeStyle||'grid';
+const listHome=()=>homeStyle()==='blog'||homeStyle()==='mag';   // 첫 화면이 글 목록인 구조 — 매거진형도 표지 블록이 홈(phase537)
 const galOn=()=>st.page?.galOn!==false;
 const galTabOn=()=>st.page?.galTabOn!==false;                  // 알약(탭)만 별도 on/off(phase267) — 스트립과 독립
 const stripOn=()=>st.page?.stripOn!==false;
@@ -1501,7 +1502,7 @@ const stripShow=()=>st.page?.stripOn===true ? true          // 스트립 독립(
   : st.page?.stripOn===false ? false                        // 명시 끔=숨김
   : galOn();                                                // 미저장=종전대로 갤러리 탭 연동(기존 홈 무변)
 function goHome(){
-  if(homeStyle()==='blog'){ goBoard('recent'); return; }
+  if(listHome()){ goBoard('recent'); return; }
   st.backHome=false;
   document.body.classList.remove('reading','in-post');   // 글 읽기 상태 해제 — 위젯·스티커 원위치
   $('#post-view').classList.add('hidden');
@@ -1536,7 +1537,7 @@ function renderCatbar(){
   const bar=$('#catbar');
   if(catStyle()!=='bar'){ bar.classList.add('hidden'); return; }   // 블로그형에서도 '상단 알약 바' 선택 존중
   bar.classList.remove('hidden');
-  const homeOn = homeStyle()==='blog' ? st.cat==='recent' : st.cat==='home';
+  const homeOn = listHome() ? st.cat==='recent' : st.cat==='home';
   const ci=st.page.catImgs||{};
   const pill=(key,label,on)=> ci[key]
     ? `<a data-c="${esc(key)}" class="pillimg ${on?'on':''}"><img src="${ci[key]}" alt="${esc(label)}" draggable="false"></a>`
@@ -1545,7 +1546,7 @@ function renderCatbar(){
     navSeq().map(t=> t==='__gal' ? (galOn()&&galTabOn()?pill('__gal',galNm(),st.cat==='__gal'):'')
       : t==='__gb' ? (st.page.gbOff?'' : pill('__gb',gbNm(),st.cat==='__gb').replace('</a>',(gbNew()?'<i class="gbdot"></i>':'')+'</a>'))
       : pill(t,t.toUpperCase(),st.cat===t)).join('')+
-    (homeStyle()==='blog'||st.page.allOff?'':pill('recent','ALL',st.cat==='recent'));
+    (listHome()||st.page.allOff?'':pill('recent','ALL',st.cat==='recent'));
   bar.querySelectorAll('a').forEach(el=>el.onclick=()=>{
     el.dataset.c==='home' ? goHome() : goBoard(el.dataset.c);
   });
@@ -1558,7 +1559,7 @@ function applyView(){
   const home = st.cat==='home';
   $('#home-grid').classList.toggle('hidden', !home);
   $('#board').classList.toggle('hidden', home);
-  const isHomeView = home || (homeStyle()==='blog' && st.cat==='recent');
+  const isHomeView = home || (listHome() && st.cat==='recent');
   document.body.classList.toggle('in-board', !isHomeView);
   applyAutoHead();                                   // 표시 상태가 정해진 뒤 실제 폭으로 재계산
 }
@@ -1920,7 +1921,7 @@ function renderSide(){
   const mOrd=(w,i)=>w.mo ?? (({c:0,l:1,r:2}[w.col||'r']||2)*100+i);
   let seq = sideCfg().map((w,wi)=>({w,wi}));
   if(home && isM) seq=seq.sort((A,B)=>mOrd(A.w,A.wi)-mOrd(B.w,B.wi));
-  const homeView = home || (homeStyle()==='blog' && st.cat==='recent');   // 블로그형은 첫 화면(recent)이 홈(phase282)
+  const homeView = home || (listHome() && st.cat==='recent');   // 블로그형·매거진형은 첫 화면(recent)이 홈(phase282·537)
   seq.forEach(({w,wi})=>{
     if(w.hid) return;                                          // 👁 잠시 끈 위젯 — 설정은 그대로 보관(phase272)
     if(w.home && !homeView) return;                            // 🏠 홈에서만 표시 — 카테고리·게시판에선 숨김(phase282)
@@ -2062,7 +2063,7 @@ function renderSide(){
             <div class="cst-lbl${ccov?' has-cv':''}">${ccov?`<img class="bcv" src="${ccov}" alt=""><i class="cst-lt"><span>${esc(w.sub||'SIDE A')}</span><b>${btit}</b></i>`:`<span>${esc(w.sub||'SIDE A')}</span><b>${btit}</b>`}</div>
             <div class="cst-win"><span class="cst-reel"></span><span class="cst-reel rr"></span></div>
             <div class="cst-foot"><span>STEREO · TAPE</span><span class="bgm-btn2">▶</span></div>
-          </div><div class="bgm-fr"></div>`;
+          </div>`;
       }else if(bst==='lp'){
         d.className+=' bgm-lp';
         d.innerHTML=`<p class="label">${esc(w.label||'NOW PLAYING')}</p>
@@ -2070,7 +2071,7 @@ function renderSide(){
             <span class="lp-wrap"><span class="lp-disc">${cover}</span><span class="lp-arm"></span></span>
             <span class="lp-meta"><b>${btit}</b><span>${esc(w.sub||'33⅓ RPM · SIDE A')}</span></span>
             <span class="bgm-btn2">▶</span>
-          </div><div class="bgm-fr"></div>`;
+          </div>`;
       }else if(bst==='tun'){
         d.className+=' bgm-tun';
         d.innerHTML=`<p class="label">${esc(w.label||'NOW PLAYING')}</p>
@@ -2082,7 +2083,7 @@ function renderSide(){
               <span class="tun-meta"><b>${btit}</b><span>${esc(w.sub||'FM 88.1 · STEREO')}</span></span>
               <span class="bgm-btn2">▶</span>
             </div>
-          </div><div class="bgm-fr"></div>`;
+          </div>`;
       }else{
         d.innerHTML=`<p class="label">${esc(w.label||'NOW PLAYING')}</p>
           <div class="bgm-w">
@@ -2090,7 +2091,7 @@ function renderSide(){
             <span class="bgm-meta"><b>${btit}</b>
               <span class="bgm-eq"><i></i><i></i><i></i><i></i><i></i></span></span>
             <span class="bgm-btn2">▶</span>
-          </div><div class="bgm-fr"></div>`;
+          </div>`;
       }
       /* 한 곡=반복 / 여러 곡=그 곡부터 이어 재생(phase277) */
       const srcFrom=si=>{
@@ -2770,7 +2771,7 @@ function renderSide(){
       return;
     }
   });
-  const blogEdit = st.mine && st.editMode && homeStyle()==='blog';
+  const blogEdit = st.mine && st.editMode && listHome();
   if((home || blogEdit) && st.mine && st.editMode){
     const pcMove=async(wi,dir)=>{
       const arr=JSON.parse(JSON.stringify(sideCfg()));
@@ -3610,8 +3611,8 @@ $('#lb').addEventListener('touchend',e=>{ const t=e.changedTouches[0]; const dx=
   if(lbZ>1) return;                                            // 확대 중엔 밀기가 넘김이 되지 않게(phase537)
   if(Math.abs(dx)>44 && Math.abs(dx)>Math.abs(dy)*1.4){ lbSwiped=true; lbMove(dx<0?1:-1); } },{passive:true});
 $('#lb').onclick=e=>{ if(lbSwiped){ lbSwiped=false; return; }   // 스와이프 직후 따라오는 click은 닫기 아님
-  if(lbZ>1) return;                                             // 확대 중엔 배경을 눌러도 안 닫힘(phase537)
   if(e.target.closest && e.target.closest('#lb-zoom')) return;
+  if(lbZ>1 && e.target.id!=='lb') return;                       // 확대 중엔 사진을 눌러도 안 닫힘 — 바깥 배경은 닫힘(phase537)
   $('#lb').classList.remove('show'); };
 
 /* ═══ 🔍 라이트박스 확대·축소 (phase537) — 휠·버튼·더블클릭·손가락 두 개 ═══ */
@@ -3684,7 +3685,7 @@ $('#lb').addEventListener('touchmove',e=>{
     lbX=lbPan.ox+(t.clientX-lbPan.x)/lbZ; lbY=lbPan.oy+(t.clientY-lbPan.y)/lbZ; lbApply(); }
 },{passive:false});
 $('#lb').addEventListener('touchend',e=>{
-  if(e.touches.length<2) lbPin=null;
+  if(e.touches.length<2){ if(lbPin && lbZ<1.05) lbZoomReset(); lbPin=null; }   // 1배 근처에서 손을 떼면 딱 1배로(phase537)
   if(!e.touches.length){ if(lbPan){ lbPan=null; lbSwiped=true; setTimeout(()=>{ lbSwiped=false; },0); } }
 },{passive:true});
 document.addEventListener('contextmenu',e=>{
@@ -4323,7 +4324,7 @@ function renderCatFix(){
       <input id="s-gbhint" value="${esc(st.page.gbHint||'')}" placeholder="다녀간 흔적을 남겨주세요" maxlength="40" style="width:240px;margin-bottom:0;font-size:11.5px" title="방명록 입력칸에 연하게 보이는 문구 · 비우면 기본">
       <input id="s-gbempty" value="${esc(st.page.gbEmpty||'')}" placeholder="아직 방명록이 비어 있어요 — 첫 흔적을 남겨주세요." maxlength="60" style="width:300px;margin-bottom:0;font-size:11.5px" title="방명록이 비었을 때 보이는 문구 · 비우면 기본">
     </div>`+
-    (homeStyle()==='blog'?'':row('recent','ALL',
+    (listHome()?'':row('recent','ALL',
       `<label class="chk" style="margin:0;font-size:11px" title="켜면 상단의 ALL(전체 글) 탭이 숨겨져요 — 카테고리별 탭은 그대로예요"><input type="checkbox" data-alloff ${st.page.allOff?'checked':''}> 끄기</label>`))+
         (allTags().length?`<p class="p-h" style="margin-top:22px">🏷 태그 바</p>
     <p class="note" style="margin-top:-4px">글 목록 위에 표시되는 태그 줄입니다. 체크를 끄면 해당 태그는 줄에서만 숨겨지며(글의 태그는 유지), ↑↓로 정한 순서가 앞에 옵니다. 순서를 정하지 않은 태그는 가나다순으로 뒤에 배치됩니다.</p>
