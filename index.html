@@ -3247,6 +3247,14 @@ html,body{overflow-x:hidden;overflow-x:clip}
         <option value="3" selected>고정 3개</option><option value="4">고정 4개</option><option value="6">고정 6개</option></select>
         <select id="s-memott" title="숨기면 작성 팝업에서도 제목 칸이 사라져요">
         <option value="">제목 보이기</option><option value="hide">제목 숨기기</option></select></span></div>
+      <div class="trow"><span class="tl">📰 매거진 표지</span><span class="tc">
+          <select id="s-magpick" title="매거진형에서 표지에 올릴 글 — 홈 가운데 표지 위젯과 전체(ALL) 목록 위 블록이 같이 따라요">
+            <option value="latest">표지 글 — 최신 글</option><option value="feat">표지 글 — 대표글 ★</option><option value="pin">표지 글 — 고정글</option>
+            <option value="manual">표지 글 — 직접 고르기 (표지 1 + 카드 2 · 사진도 따로)</option></select>
+          <select id="s-magcards" title="표지 아래 가로 카드 수 (직접 고르기에선 채운 칸만큼)">
+            <option value="2">가로 카드 — 2편</option><option value="4">가로 카드 — 4편</option><option value="0">가로 카드 — 없음</option></select>
+          <span class="tl2">— 홈 구조가 매거진형일 때만 쓰여요</span>
+          <div id="mag-slots" class="hidden" style="width:100%;margin-top:8px"></div></span></div>
       <p class="p-h">모양 · 화면</p>
         <div class="trow"><span class="tl">🔲 모서리</span><span class="tc"><select id="s-corner">
         <option value="">둥글게 (기본)</option><option value="soft">살짝 각지게</option><option value="sharp">뾰족하게</option></select>
@@ -3267,12 +3275,7 @@ html,body{overflow-x:hidden;overflow-x:clip}
           <select id="s-pgstyle" title="페이지 번호 모양">
             <option value="">페이지 번호 — 둥근 네모 (기본)</option><option value="pill">페이지 번호 — 알약</option><option value="box">페이지 번호 — 네모</option>
             <option value="text">페이지 번호 — 숫자만 (밑줄)</option><option value="dots">페이지 번호 — 점</option></select>
-          <select id="s-magpick" title="매거진형에서 표지에 올릴 글">
-            <option value="latest">표지 글 — 최신 글</option><option value="feat">표지 글 — 대표글 ★</option><option value="pin">표지 글 — 고정글</option>
-            <option value="manual">표지 글 — 직접 고르기 (표지 1 + 카드 2 · 사진도 따로)</option></select>
-          <select id="s-magcards" title="표지 아래 가로 카드 수 (직접 고르기에선 채운 칸만큼)">
-            <option value="2">가로 카드 — 2편</option><option value="4">가로 카드 — 4편</option><option value="0">가로 카드 — 없음</option></select>
-          <div id="mag-slots" class="hidden" style="width:100%;margin-top:8px"></div></span></div>
+</span></div>
       <div class="trow"><span class="tl">📖 글 전용 페이지</span><span class="tc"><select id="s-postpage" title="글을 읽을 때 위젯·카테고리 바를 접고 본문만 넓게">
         <option value="">끄기</option><option value="on">켜기 — 읽을 때 본문만 넓게</option></select></span></div>
     </div>
@@ -3499,6 +3502,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=574"></script>
+<script type="module" src="./app.js?v=575"></script>
 </body>
 </html>
