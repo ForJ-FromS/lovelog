@@ -752,7 +752,7 @@
   .bgm-cov{width:56px;height:56px;border-radius:50%;overflow:hidden;flex:none;
     border:2px solid var(--line);position:relative;background:var(--card2)}
   .bgm-cov img{width:100%;height:100%;object-fit:cover}
-  .bgm-cov img.yt-fit,.lp-cov img.yt-fit,.cst-cov img.yt-fit,.tun-cov img.yt-fit,img.ytc.yt-fit{scale:1.36}   /* 유튜브 4:3 썸네일의 검은 띠 잘라내기(phase536) — transform 대신 scale 속성: LP 라벨의 translate(-50%,-50%)를 덮어쓰지 않게(phase537) */
+  .bgm-cov img.yt-fit,.lp-cov img.yt-fit,.cst-cov img.yt-fit,.tun-cov img.yt-fit,img.ytc.yt-fit{transform:scale(1.36)}   /* 유튜브 4:3 썸네일의 검은 띠 잘라내기(phase536) */
   .bgm-cov .mus{position:absolute;inset:0;display:flex;align-items:center;
     justify-content:center;color:var(--pri);font-size:17px}
   .bgm-cov::after{content:'';position:absolute;left:50%;top:50%;width:12px;height:12px;
@@ -1359,6 +1359,7 @@
   .lp-disc img,.lp-disc .mus{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
     width:34px;height:34px;border-radius:50%;object-fit:cover;border:1px solid var(--line);
     display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--muted)}
+  .lp-disc img.yt-fit{transform:translate(-50%,-50%) scale(1.36)}   /* 판 라벨은 가운데 정렬을 유지한 채 확대(phase537) */
   .lp-disc::after{content:'';position:absolute;left:50%;top:50%;width:3px;height:3px;border-radius:50%;
     background:var(--ink);transform:translate(-50%,-50%)}
   .playing .lp-disc{animation:bgmspin 3.4s linear infinite}
@@ -1373,8 +1374,14 @@
   .lp-meta{min-width:0;flex:1}
   .lp-meta b{display:block;font-size:12.5px;font-weight:600;margin-bottom:5px;color:var(--bgmTx, var(--ink));
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .lp-meta span{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.18em;
+  .lp-meta span{display:block;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.18em;
+    line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
     color:color-mix(in srgb, var(--bgmTx, var(--muted)) 70%, transparent)}
+  /* 좁은 칸에서 판이 칸을 다 먹어 글자가 세 줄로 접히던 것(phase537) */
+  .lp-wrap{width:min(92px,34%);height:min(92px,34%);aspect-ratio:1}
+  .lp-disc{width:100%;height:100%}
+  .lp-arm{height:63%}
+  .lp-disc img,.lp-disc .mus{width:37%;height:37%}   /* 판이 줄면 라벨도 같이(phase537) */
   /* 튜너 */
   .tun-body{background:var(--bgmBg,rgba(0,0,0,.42));border:1px solid var(--line);border-radius:7px;padding:12px 13px 13px}
   body.light .tun-body{background:var(--bgmBg,rgba(255,255,255,.66))}
@@ -3466,6 +3473,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=564"></script>
+<script type="module" src="./app.js?v=565"></script>
 </body>
 </html>
