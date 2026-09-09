@@ -1108,7 +1108,7 @@ async function enterPage(){
 const MODE_KEYS=['hue','sat','lum','light','glass','theme','dots','bgImg','bgRef','bgDim','titleColor','font','customCss','curImg','sparkle','fx','fxC','labelIcon','priColor',
   'corner','cardC','headGrad','headText','hdOverC','hdSubC','hdDdC','headDeco','headBand','stickers','stkOff','stkHideM','stkHome','btnStyle','pgStyle','rowStyle','catShape','quoteStyle','postFs',
   'pet','petImg','petImgs','petSz','clickFx','snd','sndV','protectImg','fav','postPage',
-  'listTc','rowTag','tagShape','galCols','memoCols','galRows','memoRows','sbStyle','galShape','catSel','catCnt','gbHint','gbEmpty','homeName','galName','gbName','labelIcon','headFs','headSubFs','headOverFs','headShow','sidePos','tagShow','tagOrder','magPick','magCards','magSlots'];   // 글 목록 제목 색 등 남은 꾸밈도 모드별(phase519)
+  'listTc','rowTag','tagShape','galCols','memoCols','galRows','memoRows','sbStyle','galShape','catSel','catCnt','gbHint','gbEmpty','gbPer','homeName','galName','gbName','labelIcon','headFs','headSubFs','headOverFs','headShow','sidePos','tagShow','tagOrder','magPick','magCards','magSlots'];   // 글 목록 제목 색 등 남은 꾸밈도 모드별(phase519)
 const MODE_HDR=['heroImgs','heroImg','headFit','headH','headMode','headNoBg','enterImg','enterRef','enterText','cardImg','bannerImg','catImgs'];   // 사진(헤더·대문·대표·카테고리)
 const MODE_STRIP=['stripPin','stripCnt','stripShape','stripOn','stripSrc'];   // 사진 출처도 모드별(phase537b)                                                                          // 하단 스트립(phase476)
 const MODE_WID=['side','ddays','bgm','noLatest','sidePos','homeStyle'];                                                                   // 위젯 구성(phase476) · 홈 구조도 함께(phase537)
@@ -2934,7 +2934,20 @@ function renderGuest(){
     if(g.uid===st.me.uid && g.reply && g.id){ try{ localStorage.setItem('gbre-'+g.id,'1'); }catch(e){} } });
   $('#gb-form').classList.toggle('hidden', !st.me);
   $('#gb-login').classList.toggle('hidden', !!st.me);
-  $('#gb-list').innerHTML = st.guest.length? st.guest.map(g=>`
+  /* 📖 방명록 페이지 나누기(phase537b) — 전엔 전부 한 장에 */
+  const gbPer = Math.min(100, Math.max(3, +st.page.gbPer||10));
+  const gbPages = Math.ceil(st.guest.length/gbPer)||1;
+  st.gbPg = Math.min(Math.max(1, st.gbPg||1), gbPages);
+  const gbShown = st.guest.slice((st.gbPg-1)*gbPer, st.gbPg*gbPer);
+  { const box=$('#gb-pager'); if(box){
+      if(gbPages<=1) box.innerHTML='';
+      else{ const p=st.gbPg; let nums=[];
+        if(gbPages<=7) nums=Array.from({length:gbPages},(_,i)=>i+1);
+        else{ nums=[1]; if(p>3) nums.push('…'); for(let i=Math.max(2,p-1); i<=Math.min(gbPages-1,p+1); i++) nums.push(i); if(p<gbPages-2) nums.push('…'); nums.push(gbPages); }
+        box.innerHTML=`<a class="pg-arr${p<=1?' off':''}" data-pg="${p-1}">‹</a>`+nums.map(n=>n==='…'?`<span class="pg-gap">…</span>`:`<a class="${n===p?'on':''}" data-pg="${n}">${n}</a>`).join('')+`<a class="pg-arr${p>=gbPages?' off':''}" data-pg="${p+1}">›</a>`;
+        box.querySelectorAll('a[data-pg]').forEach(a=>a.onclick=()=>{ const n=+a.dataset.pg; if(n<1||n>gbPages||n===st.gbPg) return; st.gbPg=n; renderGuest(); $('#guest-view').scrollIntoView({behavior:'smooth',block:'start'}); });
+      } } }
+  $('#gb-list').innerHTML = st.guest.length? gbShown.map(g=>`
     <li class="gb-item">
       <p class="who"><span>${g.home?`<a class="who-h" href="${urlFor(g.home)}">@${esc(g.home)}</a>`:`@${esc(g.name||'guest')}`}${(st.mine||g.uid===st.me?.uid)?`<i class="del" data-gbd="${g.id}">삭제</i>`:''}</span>
       <span class="dt">${fmtTs(g.ts)}</span></p>
@@ -4388,6 +4401,8 @@ function renderCatFix(){
     `<div class="p-row" style="margin:-4px 0 10px 12px;align-items:center;gap:8px;font-size:11px;color:var(--muted)">
       <span style="flex:none">방명록 안내 문구</span>
       <input id="s-gbhint" value="${esc(st.page.gbHint||'')}" placeholder="다녀간 흔적을 남겨주세요" maxlength="40" style="width:240px;margin-bottom:0;font-size:11.5px" title="방명록 입력칸에 연하게 보이는 문구 · 비우면 기본">
+      <select id="s-gbper" style="width:auto;margin-bottom:0;font-size:11.5px" title="방명록 한 페이지에 보여줄 개수 — 넘으면 페이지 번호가 생겨요">
+        ${[3,5,7,10,15,20,30].map(n=>`<option value="${n}"${(+st.page.gbPer||10)===n?' selected':''}>한 페이지 ${n}개</option>`).join('')}</select>
       <input id="s-gbempty" value="${esc(st.page.gbEmpty||'')}" placeholder="아직 방명록이 비어 있어요 — 첫 흔적을 남겨주세요." maxlength="60" style="width:300px;margin-bottom:0;font-size:11.5px" title="방명록이 비었을 때 보이는 문구 · 비우면 기본">
     </div>`+
     (listHome()?'':row('recent','ALL',
@@ -4409,6 +4424,8 @@ function renderCatFix(){
     tagMgr.querySelectorAll('[data-tup]').forEach(b=>b.onclick=()=>move(+b.dataset.tup,-1));
     tagMgr.querySelectorAll('[data-tdn]').forEach(b=>b.onclick=()=>move(+b.dataset.tdn, 1));
   }
+  { const gp=box.querySelector('#s-gbper'); if(gp) gp.addEventListener('change',async()=>{   // 📖 방명록 한 페이지 개수(phase537b)
+      const v=+gp.value||10; try{ await updateDoc(doc(db,'pages',st.handle),{gbPer:v}); st.page.gbPer=v; modeSyncCurrent(); st.gbPg=1; msg('방명록 한 페이지 '+v+'개로 저장!'); }catch(e){ msg('저장 실패 — '+e.message); } }); }
   [['s-gbhint','gbHint'],['s-gbempty','gbEmpty']].forEach(([id,k])=>{ const el=box.querySelector('#'+id); if(!el) return;   // 방명록 문구(phase508)
     el.addEventListener('change',async()=>{ const v=el.value.trim().slice(0,60); try{ await updateDoc(doc(db,'pages',st.handle),{[k]:v}); st.page[k]=v; applyGbText(); msg('방명록 문구 저장!'); }catch(e){ msg('저장 실패 — '+e.message); } }); });
   box.querySelectorAll('[data-cn]').forEach(inp=>inp.addEventListener('change',async()=>{

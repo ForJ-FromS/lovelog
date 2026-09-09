@@ -701,16 +701,16 @@
   @media(max-width:720px){#panel.wfull .p-card{padding:18px 14px 22px}}
   #pv-body mark{background:color-mix(in srgb, var(--pri) 32%, transparent);
     color:inherit;padding:0 3px;border-radius:3px}
-  #pager{display:flex;gap:6px;justify-content:center;align-items:center;margin-top:22px;
+  #pager,#gb-pager{display:flex;gap:6px;justify-content:center;align-items:center;margin-top:22px;
     font-family:'IBM Plex Mono',monospace;font-size:11px}
-  #pager a{min-width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;
+  #pager a,#gb-pager a{min-width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;
     border:1px solid var(--line);border-radius:8px;color:var(--body);cursor:pointer;
     background:var(--card);padding:0 6px;user-select:none}
   #pager a:hover{border-color:var(--pri)}
-  #pager a.on{background:var(--pri);border-color:var(--pri);
+  #pager a.on,#gb-pager a.on{background:var(--pri);border-color:var(--pri);
     color:hsl(var(--h) calc(30% * var(--sf,1)) 12%);pointer-events:none}
   #pager a.off{opacity:.3;pointer-events:none}
-  #pager .pg-gap{color:var(--muted);padding:0 2px}
+  #pager .pg-gap,#gb-pager .pg-gap{color:var(--muted);padding:0 2px}
   .lb-nav{position:fixed;top:50%;transform:translateY(-50%);z-index:2;
     width:44px;height:64px;border:none;background:rgba(0,0,0,.35);color:#fff;
     font-size:30px;line-height:1;border-radius:10px;cursor:pointer;user-select:none}
@@ -748,16 +748,16 @@
   body.btn-text .back,body.btn-text .more{border:none;background:none;padding:6px 2px;border-radius:0;border-bottom:1px solid var(--line)}
   body.btn-text .back:hover,body.btn-text .more:hover{color:var(--pri);border-bottom-color:var(--pri)}
   /* 페이지 번호 모양 (phase460) — 기본은 둥근 네모 */
-  body.pg-pill #pager a{border-radius:999px}
-  body.pg-box #pager a{border-radius:2px}
-  body.pg-text #pager a{border:none;background:none;min-width:22px;height:26px;color:var(--muted)}
-  body.pg-text #pager a.on{background:none;color:var(--pri);border-bottom:1.5px solid var(--pri);border-radius:0}
+  body.pg-pill #pager a,body.pg-pill #gb-pager a{border-radius:999px}
+  body.pg-box #pager a,body.pg-box #gb-pager a{border-radius:2px}
+  body.pg-text #pager a,body.pg-text #gb-pager a{border:none;background:none;min-width:22px;height:26px;color:var(--muted)}
+  body.pg-text #pager a.on,body.pg-text #gb-pager a.on{background:none;color:var(--pri);border-bottom:1.5px solid var(--pri);border-radius:0}
   body.pg-text #pager a:hover{color:var(--ink)}
-  body.pg-dots #pager a{border:none;background:none;min-width:0;width:auto;height:auto;font-size:0;padding:0}
+  body.pg-dots #pager a,body.pg-dots #gb-pager a{border:none;background:none;min-width:0;width:auto;height:auto;font-size:0;padding:0}
   body.pg-dots #pager a::before{content:'';display:block;width:7px;height:7px;border-radius:50%;background:var(--line)}
   body.pg-dots #pager a.on::before{background:var(--pri);width:18px;border-radius:4px}
-  body.pg-dots #pager a.pg-arr{font-size:11px;color:var(--muted);padding:0 4px} body.pg-dots #pager a.pg-arr::before{display:none}
-  body.pg-dots #pager .pg-gap{display:none}
+  body.pg-dots #pager a.pg-arr,body.pg-dots #gb-pager a.pg-arr{font-size:11px;color:var(--muted);padding:0 4px} body.pg-dots #pager a.pg-arr,body.pg-dots #gb-pager a.pg-arr::before{display:none}
+  body.pg-dots #pager .pg-gap,body.pg-dots #gb-pager .pg-gap{display:none}
   .back:hover{color:var(--ink)}
 
   /* ── 사이드 ── */
@@ -2689,6 +2689,7 @@ html,body{overflow-x:hidden;overflow-x:clip}
             <button class="btn pri" id="gb-login-btn" style="font-size:12px">Google로 로그인</button>
           </div>
           <ul id="gb-list" style="list-style:none"></ul>
+          <div id="gb-pager"></div>
         </div>
 
         <div id="post-view" class="hidden">
@@ -3586,6 +3587,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=597"></script>
+<script type="module" src="./app.js?v=599"></script>
 </body>
 </html>
