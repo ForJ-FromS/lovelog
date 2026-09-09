@@ -1450,8 +1450,8 @@
     line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
     color:color-mix(in srgb, var(--bgmTx, var(--muted)) 70%, transparent)}
   /* 좁은 칸에서 판이 칸을 다 먹어 글자가 세 줄로 접히던 것(phase537) */
-  .lp-wrap{width:min(92px,34%);height:auto;aspect-ratio:1}
-  .lp-disc{width:100%;height:auto;aspect-ratio:1}
+  .lp-wrap{width:min(92px,34%);width:round(min(92px,34%),2px);height:auto;aspect-ratio:1}   /* 소수점 크기면 홈 줄이 깨져 보여 2px 단위로(phase537b) */
+  .lp-disc{width:100%;height:auto;aspect-ratio:1;backface-visibility:hidden;transform:translateZ(0)}
   .lp-arm{height:63%}
   .lp-disc img,.lp-disc .mus{width:37%;height:37%}   /* 판이 줄면 라벨도 같이(phase537) */
   /* 튜너 */
@@ -3587,6 +3587,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=599"></script>
+<script type="module" src="./app.js?v=600"></script>
 </body>
 </html>

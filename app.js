@@ -1108,7 +1108,7 @@ async function enterPage(){
 const MODE_KEYS=['hue','sat','lum','light','glass','theme','dots','bgImg','bgRef','bgDim','titleColor','font','customCss','curImg','sparkle','fx','fxC','labelIcon','priColor',
   'corner','cardC','headGrad','headText','hdOverC','hdSubC','hdDdC','headDeco','headBand','stickers','stkOff','stkHideM','stkHome','btnStyle','pgStyle','rowStyle','catShape','quoteStyle','postFs',
   'pet','petImg','petImgs','petSz','clickFx','snd','sndV','protectImg','fav','postPage',
-  'listTc','rowTag','tagShape','galCols','memoCols','galRows','memoRows','sbStyle','galShape','catSel','catCnt','gbHint','gbEmpty','gbPer','homeName','galName','gbName','labelIcon','headFs','headSubFs','headOverFs','headShow','sidePos','tagShow','tagOrder','magPick','magCards','magSlots'];   // 글 목록 제목 색 등 남은 꾸밈도 모드별(phase519)
+  'listTc','rowTag','tagShape','galCols','memoCols','galRows','memoRows','sbStyle','galShape','catSel','catCnt','gbHint','gbEmpty','gbPer','lockMark','privMark','homeName','galName','gbName','labelIcon','headFs','headSubFs','headOverFs','headShow','sidePos','tagShow','tagOrder','magPick','magCards','magSlots'];   // 글 목록 제목 색 등 남은 꾸밈도 모드별(phase519)
 const MODE_HDR=['heroImgs','heroImg','headFit','headH','headMode','headNoBg','enterImg','enterRef','enterText','cardImg','bannerImg','catImgs'];   // 사진(헤더·대문·대표·카테고리)
 const MODE_STRIP=['stripPin','stripCnt','stripShape','stripOn','stripSrc'];   // 사진 출처도 모드별(phase537b)                                                                          // 하단 스트립(phase476)
 const MODE_WID=['side','ddays','bgm','noLatest','sidePos','homeStyle'];                                                                   // 위젯 구성(phase476) · 홈 구조도 함께(phase537)
@@ -1320,7 +1320,7 @@ function pinCard(){                              // 고정글 카드 — 단독 
   const pin=st.posts.find(p=>p.pinned); if(!pin) return null;
   const pd=document.createElement('a'); pd.className='pin';
   pd.innerHTML=`<span class="tag">◈ PINNED</span>
-    <p class="t">${esc(pin.title)}${pin.secret?' 🔒':''}${pin.priv?' 🔏':''}</p>
+    <p class="t">${esc(pin.title)}${pin.secret?lockMk():''}${pin.priv?privMk():''}</p>
     ${pin.excerpt?`<p class="ex">${esc(pin.excerpt)}</p>`:''}
     <p class="meta">${esc(pin.cat)} · ${esc(pin.date)}</p>`;
   pd.onclick=()=>openFromHome(pin.id);
@@ -1334,7 +1334,7 @@ function latestBlock(box, n, withPin=true, catL=[], icon='◈', mh=false){
   const lbl=catL.length ? ' · '+catL.map(c=>esc(c.toUpperCase())).join(' · ') : '';
   d.innerHTML=`<p class="label">LATEST${lbl}</p><div class="mini-rows">`+
     (arr.length?arr.map(p2=>`<a data-lid="${p2.id}">
-      <span class="dot">${esc(icon||'◈')}</span><span class="t">${esc(p2.title)}${p2.secret?' 🔒':''}${p2.priv?' 🔏':''}</span>
+      <span class="dot">${esc(icon||'◈')}</span><span class="t">${esc(p2.title)}${p2.secret?lockMk():''}${p2.priv?privMk():''}</span>
       <span class="dt">${esc((p2.date||'').slice(5))}</span></a>`).join('')
     :'<p class="pl-empty">아직 글이 없습니다.</p>')+
     `</div>${catL.length===1?`<p class="cat-add" style="display:block" id="latest-more">${esc(catL[0])} 전체 →</p>`:(st.page.allOff?'':'<p class="cat-add" style="display:block" id="latest-more">전체 보기 →</p>')}`;
@@ -1504,6 +1504,9 @@ function fillCounter(){
 const DEFCOL={mag:'c',search:'l',category:'l',profile:'l',latest:'c',tl:'r',feat:'r',quote:'c',notice:'c',chat:'c',phone:'c',img:'l',nb:'r',
   dday:'r',bgm:'r',links:'r',banner:'r',text:'c',cnt:'l',char:'r',pair:'c',cal:'r',habit:'r'};
 const homeStyle=()=>st.page?.homeStyle||'grid';
+/* 🔒 비밀글 · 🔏 비공개 표시 — 꾸미기에서 이모지·문자·[LOCKED] 같은 글자로 바꿀 수 있음(phase537b) */
+const lockMk=()=>{ const v=(st.page?.lockMark??'').trim(); return v==='-'?'':' '+esc(v||'🔒'); };
+const privMk=()=>{ const v=(st.page?.privMark??'').trim(); return v==='-'?'':' '+esc(v||'🔏'); };
 const listHome=()=>homeStyle()==='blog';   // 첫 화면이 글 목록인 구조 — 매거진형은 갠홈 + 📰 위젯이라 제외(phase537b)
 const galOn=()=>st.page?.galOn!==false;
 const galTabOn=()=>st.page?.galTabOn!==false;                  // 알약(탭)만 별도 on/off(phase267) — 스트립과 독립
@@ -2612,7 +2615,7 @@ function renderSide(){
       if(!arr.length && !st.mine) return;
       d.innerHTML=`<p class="label">${esc(w.title||'FEATURED')}</p><div class="mini-rows">`+
         (arr.length?arr.map(p2=>`<a data-fid="${p2.id}">
-          <span class="dot">${esc(w.icon||'★')}</span><span class="t">${esc(p2.title)}${p2.secret?' 🔒':''}${p2.priv?' 🔏':''}</span>
+          <span class="dot">${esc(w.icon||'★')}</span><span class="t">${esc(p2.title)}${p2.secret?lockMk():''}${p2.priv?privMk():''}</span>
           <span class="dt">${esc((p2.date||'').slice(5))}</span></a>`).join('')
         :(st.mine?('<p class="pl-empty">글쓰기 화면에서 ★ 대표글을 체크하면 여기에 모여요.</p>'+(!w.title?'<p class="pl-ghost">👻 지금은 방문자에게 안 보이는 카드예요</p>':'')):''))+`</div>`;
       box.appendChild(d);
@@ -3048,7 +3051,7 @@ function magHTML({lead,cards,slotImg}){
       ${th?`<span class="mg-ph"><img src="${th}" alt="" loading="lazy"></span>`:''}
       <span class="mg-tx">
         <span class="mg-meta">${tagH(lead)}<span class="mg-cat">${esc(lead.cat||'')}</span></span>
-        <span class="mg-ti">${esc(lead.title)}${lead.secret?' 🔒':''}${lead.priv?' 🔏':''}</span>
+        <span class="mg-ti">${esc(lead.title)}${lead.secret?lockMk():''}${lead.priv?privMk():''}</span>
         ${lead.excerpt?`<span class="mg-ex">${esc(lead.excerpt)}</span>`:''}
         <span class="mg-dt">${lead.custom ? (lead.url?'열기 →':'') : esc(lead.date||'')+' · 읽기 →'}</span>
       </span></a>
@@ -3056,7 +3059,7 @@ function magHTML({lead,cards,slotImg}){
       <a class="mg-card" data-id="${p.id}"${p.custom?` data-url="${esc(p.url||'')}"`:''}>
         ${t2?`<span class="mg-cph"><img src="${t2}" alt="" loading="lazy"></span>`:''}
         <span class="mg-ctx"><span class="mg-dt">${p.custom ? esc(p.cat||'') : esc((p.date||'').slice(5))}</span>
-          <span class="mg-cti">${esc(p.title)}${p.secret?' 🔒':''}</span>
+          <span class="mg-cti">${esc(p.title)}${p.secret?lockMk():''}</span>
           ${p.excerpt?`<span class="mg-cex">${esc(p.excerpt)}</span>`:''}</span></a>`; }).join('')+`</div>`:''}
   </div>`;
 }
@@ -3269,7 +3272,7 @@ function renderList(){
   $('#pin-slot').innerHTML = pins.map(pin=>`
     <a class="pin" data-id="${pin.id}">
       <span class="tag">◈ PINNED</span>
-      <p class="t">${esc(pin.title)}${pin.secret?' 🔒':''}${pin.priv?' 🔏':''}</p>
+      <p class="t">${esc(pin.title)}${pin.secret?lockMk():''}${pin.priv?privMk():''}</p>
       ${pin.excerpt?`<p class="ex">${esc(pin.excerpt)}</p>`:''}
       <p class="meta">${esc(pin.cat)} · ${esc(pin.date)}</p></a>`).join('');
   const PER=Math.min(100,Math.max(3,+st.page.perPage||12));   // 한 페이지 글 수 — 직접 입력 3~100(phase459)
@@ -4405,6 +4408,13 @@ function renderCatFix(){
         ${[3,5,7,10,15,20,30].map(n=>`<option value="${n}"${(+st.page.gbPer||10)===n?' selected':''}>한 페이지 ${n}개</option>`).join('')}</select>
       <input id="s-gbempty" value="${esc(st.page.gbEmpty||'')}" placeholder="아직 방명록이 비어 있어요 — 첫 흔적을 남겨주세요." maxlength="60" style="width:300px;margin-bottom:0;font-size:11.5px" title="방명록이 비었을 때 보이는 문구 · 비우면 기본">
     </div>`+
+    `<div class="p-row" style="margin:-4px 0 10px 12px;align-items:center;gap:8px;font-size:11px;color:var(--muted)">
+      <span style="flex:none">🔒 비밀글 표시</span>
+      <input id="s-lockmark" value="${esc(st.page.lockMark||'')}" placeholder="🔒" maxlength="16" style="width:120px;margin-bottom:0;font-size:11.5px" title="제목 뒤에 붙는 비밀글 표시 — 다른 이모지 · 특수문자 · [LOCKED] 같은 글자도 돼요. 없애려면 - 하나만">
+      <span style="flex:none">🔏 비공개 표시</span>
+      <input id="s-privmark" value="${esc(st.page.privMark||'')}" placeholder="🔏" maxlength="16" style="width:120px;margin-bottom:0;font-size:11.5px" title="지인만 보는 비공개 글 표시 — 없애려면 - 하나만">
+      <span style="flex:none;opacity:.7">비우면 기본 · 없애려면 -</span>
+    </div>`+
     (listHome()?'':row('recent','ALL',
       `<label class="chk" style="margin:0;font-size:11px" title="켜면 상단의 ALL(전체 글) 탭이 숨겨져요 — 카테고리별 탭은 그대로예요"><input type="checkbox" data-alloff ${st.page.allOff?'checked':''}> 끄기</label>`))+
         (allTags().length?`<p class="p-h" style="margin-top:22px">🏷 태그 바</p>
@@ -4426,6 +4436,8 @@ function renderCatFix(){
   }
   { const gp=box.querySelector('#s-gbper'); if(gp) gp.addEventListener('change',async()=>{   // 📖 방명록 한 페이지 개수(phase537b)
       const v=+gp.value||10; try{ await updateDoc(doc(db,'pages',st.handle),{gbPer:v}); st.page.gbPer=v; modeSyncCurrent(); st.gbPg=1; msg('방명록 한 페이지 '+v+'개로 저장!'); }catch(e){ msg('저장 실패 — '+e.message); } }); }
+  [['s-lockmark','lockMark'],['s-privmark','privMark']].forEach(([id,k])=>{ const el=box.querySelector('#'+id); if(!el) return;   // 🔒🔏 표시 문자(phase537b)
+    el.addEventListener('change',async()=>{ const v=el.value.trim().slice(0,16); try{ await updateDoc(doc(db,'pages',st.handle),{[k]:v}); st.page[k]=v; modeSyncCurrent(); renderSide(); if(st.cat!=='home') renderList(); msg('표시를 바꿨어요.'); }catch(e){ msg('저장 실패 — '+e.message); } }); });
   [['s-gbhint','gbHint'],['s-gbempty','gbEmpty']].forEach(([id,k])=>{ const el=box.querySelector('#'+id); if(!el) return;   // 방명록 문구(phase508)
     el.addEventListener('change',async()=>{ const v=el.value.trim().slice(0,60); try{ await updateDoc(doc(db,'pages',st.handle),{[k]:v}); st.page[k]=v; applyGbText(); msg('방명록 문구 저장!'); }catch(e){ msg('저장 실패 — '+e.message); } }); });
   box.querySelectorAll('[data-cn]').forEach(inp=>inp.addEventListener('change',async()=>{
