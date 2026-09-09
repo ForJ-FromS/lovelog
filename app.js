@@ -3703,9 +3703,10 @@ function lbApply(){
 }
 function lbZoomReset(){ lbZ=1; lbX=0; lbY=0; lbApply(); }
 function lbZoomBy(d){ lbZ=Math.round((lbZ+d)*100)/100; lbApply(); }
-$('#lbz-in').onclick =e=>{ e.stopPropagation(); lbZoomBy(.4); };
-$('#lbz-out').onclick=e=>{ e.stopPropagation(); lbZoomBy(-.4); };
-$('#lbz-rs').onclick =e=>{ e.stopPropagation(); lbZoomReset(); };
+{ const zi=$('#lbz-in'), zo=$('#lbz-out'), zr=$('#lbz-rs');   // 구 index 캐시(스큐) 내성 — 버튼이 없어도 앱은 떠야 함
+  if(zi) zi.onclick =e=>{ e.stopPropagation(); lbZoomBy(.4); };
+  if(zo) zo.onclick=e=>{ e.stopPropagation(); lbZoomBy(-.4); };
+  if(zr) zr.onclick =e=>{ e.stopPropagation(); lbZoomReset(); }; }
 $('#lb').addEventListener('wheel',e=>{
   if(!$('#lb').classList.contains('show')) return;
   e.preventDefault(); lbZoomBy(e.deltaY<0 ? .25 : -.25);
