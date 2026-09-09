@@ -1094,7 +1094,7 @@ async function enterPage(){
 const MODE_KEYS=['hue','sat','lum','light','glass','theme','dots','bgImg','bgRef','bgDim','titleColor','font','customCss','curImg','sparkle','fx','fxC','labelIcon','priColor',
   'corner','cardC','headGrad','headText','hdOverC','hdSubC','hdDdC','headDeco','headBand','stickers','stkOff','stkHideM','stkHome','btnStyle','pgStyle','rowStyle','catShape','quoteStyle','postFs',
   'pet','petImg','petImgs','petSz','clickFx','snd','sndV','protectImg','fav','postPage',
-  'listTc','rowTag','tagShape','galCols','memoCols','catSel','catCnt','gbHint','gbEmpty','homeName','galName','gbName','labelIcon','headFs','headSubFs','headOverFs','headShow','sidePos'];   // 글 목록 제목 색 등 남은 꾸밈도 모드별(phase519)
+  'listTc','rowTag','tagShape','galCols','memoCols','catSel','catCnt','gbHint','gbEmpty','homeName','galName','gbName','labelIcon','headFs','headSubFs','headOverFs','headShow','sidePos','tagShow','tagOrder'];   // 글 목록 제목 색 등 남은 꾸밈도 모드별(phase519)
 const MODE_HDR=['heroImgs','heroImg','headFit','headH','headMode','headNoBg','enterImg','enterRef','enterText','cardImg','bannerImg','catImgs'];   // 사진(헤더·대문·대표·카테고리)
 const MODE_STRIP=['stripPin','stripCnt','stripShape','stripOn'];                                                                          // 하단 스트립(phase476)
 const MODE_WID=['side','ddays','bgm','noLatest','sidePos'];                                                                               // 위젯 구성(phase476)
@@ -3129,7 +3129,10 @@ function renderList(){
   let items=st.posts;
   if(st.cat!=='recent') items=items.filter(p=>p.cat===st.cat);
   if(st.q) items=items.filter(p=>postHay(p).includes(st.q));
-  const tset=[...new Set(items.flatMap(p=>p.tags||[]))].sort((a,b)=>a.localeCompare(b,'ko'));   // 🏷 이 목록의 태그(phase292)
+  const tShow=st.page.tagShow||[], tOrd=st.page.tagOrder||[];   // 🏷 태그 바 표시 · 순서 설정(phase528)
+  let tset=[...new Set(items.flatMap(p=>p.tags||[]))];
+  if(tShow.length) tset=tset.filter(t=>tShow.includes(t));
+  tset.sort((a,b)=>{ const ia=tOrd.indexOf(a), ib=tOrd.indexOf(b); if(ia>=0||ib>=0) return (ia<0?9999:ia)-(ib<0?9999:ib); return a.localeCompare(b,'ko'); });
   if(st.tagF && !tset.includes(st.tagF)) st.tagF=null;
   const tslot=$('#tag-slot');
   if(tslot) tslot.innerHTML = tset.length
@@ -4186,9 +4189,25 @@ function renderCatFix(){
       <input id="s-gbhint" value="${esc(st.page.gbHint||'')}" placeholder="다녀간 흔적을 남겨주세요" maxlength="40" style="width:240px;margin-bottom:0;font-size:11.5px" title="방명록 입력칸에 연하게 보이는 문구 · 비우면 기본">
       <input id="s-gbempty" value="${esc(st.page.gbEmpty||'')}" placeholder="아직 방명록이 비어 있어요 — 첫 흔적을 남겨주세요." maxlength="60" style="width:300px;margin-bottom:0;font-size:11.5px" title="방명록이 비었을 때 보이는 문구 · 비우면 기본">
     </div>`+
+    (allTags().length?`<p class="p-h" style="margin-top:22px">🏷 태그 바</p>
+    <p class="note" style="margin-top:-4px">글 목록 위에 뜨는 태그 줄이에요. 체크를 끄면 그 태그는 줄에서 숨고(글에는 남아요), ↑↓로 순서를 정하면 그 순서대로 앞에 옵니다. 순서를 안 정한 태그는 가나다순으로 뒤에 붙어요.</p>
+    <div id="tag-mgr">${(()=>{ const ord=st.page.tagOrder||[], show=st.page.tagShow||[]; const all=allTags().slice().sort((a,b)=>{ const ia=ord.indexOf(a), ib=ord.indexOf(b); if(ia>=0||ib>=0) return (ia<0?9999:ia)-(ib<0?9999:ib); return a.localeCompare(b,'ko'); });
+      return all.map((t,i)=>`<div class="p-row" style="align-items:center;gap:8px;margin-bottom:4px"><label class="chk" style="margin:0;min-width:200px"><input type="checkbox" data-tshow="${esc(t)}" ${(!show.length||show.includes(t))?'checked':''}> ${esc(t)}</label>
+        <button class="rmv" data-tup="${i}" style="font-size:11px;padding:2px 7px">↑</button><button class="rmv" data-tdn="${i}" style="font-size:11px;padding:2px 7px">↓</button></div>`).join(''); })()}</div>`:'')+
     (homeStyle()==='blog'?'':row('recent','ALL',
       `<label class="chk" style="margin:0;font-size:11px" title="켜면 상단의 ALL(전체 글) 탭이 숨겨져요 — 카테고리별 탭은 그대로예요"><input type="checkbox" data-alloff ${st.page.allOff?'checked':''}> 끄기</label>`));
   bindCatImg(box);
+  /* 🏷 태그 바 편집(phase528) */
+  const tagMgr=box.querySelector('#tag-mgr');
+  if(tagMgr){
+    const cur=()=>{ const ord=st.page.tagOrder||[]; return allTags().slice().sort((a,b)=>{ const ia=ord.indexOf(a), ib=ord.indexOf(b); if(ia>=0||ib>=0) return (ia<0?9999:ia)-(ib<0?9999:ib); return a.localeCompare(b,'ko'); }); };
+    const saveTags=async(upd)=>{ try{ await updateDoc(doc(db,'pages',st.handle),upd); Object.assign(st.page,upd); renderList(); modeSyncCurrent(); }catch(e){ msg('저장 실패 — '+e.message); } };
+    tagMgr.querySelectorAll('[data-tshow]').forEach(cb=>cb.onchange=()=>{ const all=allTags(); const on=[...tagMgr.querySelectorAll('[data-tshow]')].filter(c=>c.checked).map(c=>c.dataset.tshow);
+      saveTags({tagShow: on.length===all.length?[]:on}); msg(cb.checked?`'${cb.dataset.tshow}' 태그를 줄에 보여요.`:`'${cb.dataset.tshow}' 태그를 줄에서 숨겨요.`); });
+    const move=(i,d)=>{ const arr=cur(); const j=i+d; if(j<0||j>=arr.length) return; [arr[i],arr[j]]=[arr[j],arr[i]]; saveTags({tagOrder:arr}).then(()=>renderCatMgr()); };
+    tagMgr.querySelectorAll('[data-tup]').forEach(b=>b.onclick=()=>move(+b.dataset.tup,-1));
+    tagMgr.querySelectorAll('[data-tdn]').forEach(b=>b.onclick=()=>move(+b.dataset.tdn, 1));
+  }
   [['s-gbhint','gbHint'],['s-gbempty','gbEmpty']].forEach(([id,k])=>{ const el=box.querySelector('#'+id); if(!el) return;   // 방명록 문구(phase508)
     el.addEventListener('change',async()=>{ const v=el.value.trim().slice(0,60); try{ await updateDoc(doc(db,'pages',st.handle),{[k]:v}); st.page[k]=v; applyGbText(); msg('방명록 문구 저장!'); }catch(e){ msg('저장 실패 — '+e.message); } }); });
   box.querySelectorAll('[data-cn]').forEach(inp=>inp.addEventListener('change',async()=>{
