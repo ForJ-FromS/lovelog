@@ -1086,6 +1086,7 @@ async function enterPage(){
     const inPost=document.body.classList.contains('in-post');
     document.body.classList.toggle('reading', inPost && !!st.page.postPage);   // 글 넓게 읽기 상태 유지(phase518)
     renderWidgets(); renderCatbar(); renderStickers(); renderGal(); modeToggleDraw();
+    if(!st.stamps && sideCfg().some(w=>w.t==='stamp'&&!w.hid)) loadStamps();   // 🐾 처음 모드에 발도장 위젯이 없었으면 여기서 읽음(phase537b) — 0으로 보이던 것
     try{ initPet(); }catch(e){}                                  // 픽셀펫도 새 모드 것으로 교체(phase527) — 안 하면 두 모드 펫이 겹쳐 보임
     try{ applyClickFx&&applyClickFx(); }catch(e){}
     return; }
