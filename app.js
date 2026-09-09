@@ -691,7 +691,7 @@ function renderStickers(){
   if(st.page?.stkOff===true) return;
   arr.forEach((s,i)=>{
     if(s.off) return;
-    const d=document.createElement('div'); d.className='stk';
+    const d=document.createElement('div'); d.className='stk'+(s.home?' stk-h':'');   // 🏠 이 스티커만 홈에서(phase537)
     const isM=window.innerWidth<=720;
     const sx=(isM&&s.mx!=null)?s.mx:s.x, sy=(isM&&s.my!=null)?s.my:s.y;
     const dsz=(isM&&s.msz!=null)?s.msz:(s.size||120);      // 모바일 전용 크기(없으면 PC 크기)
@@ -765,6 +765,7 @@ function renderStkList(){
       <input type="range" data-sr="${i}" min="-45" max="45" value="${s.rot||0}">
       <button class="rmv" data-sup="${i}" title="겹칠 때 위로 올리기">▲</button>
       <button class="rmv" data-sdn="${i}" title="겹칠 때 아래로 내리기">▼</button>
+      <button class="rmv" data-sh="${i}" title="${s.home?'지금은 홈에서만 보여요 — 누르면 어디서나 보입니다':'어디서나 보여요 — 누르면 홈에서만 보입니다'}" style="${s.home?'color:var(--pri);border-color:var(--pri)':''}">🏠${s.home?' 홈만':''}</button>
       <button class="rmv" data-so="${i}" title="누르면 홈에서 ${s.off?'다시 보여요':'숨겨져요'}">${s.off?'▷ 보이기':'숨기기'}</button>
       <button class="rmv" data-sx="${i}">✕</button>
     </div>`).reverse().join('')
@@ -795,6 +796,12 @@ function renderStkList(){
   box.querySelectorAll('[data-so]').forEach(b=>b.onclick=async()=>{
     const s=st.page.stickers[+b.dataset.so]; s.off=!s.off;
     await save(); renderStkList(); renderStickers();
+  });
+  box.querySelectorAll('[data-sh]').forEach(b=>b.onclick=async()=>{   // 🏠 이 스티커만 홈에서(phase537)
+    const s=st.page.stickers[+b.dataset.sh];
+    if(s.home) delete s.home; else s.home=true;
+    await save(); renderStkList(); renderStickers();
+    msg(s.home ? '이 스티커는 이제 홈에서만 보여요.' : '이 스티커는 어디서나 보여요.');
   });
   box.querySelectorAll('[data-sx]').forEach(b=>b.onclick=async()=>{
     st.page.stickers.splice(+b.dataset.sx,1);
@@ -1059,8 +1066,12 @@ async function enterPage(){
   document.body.classList.toggle('head-notext', p.headText===false);
   document.body.classList.toggle('head-nograd', p.headGrad==='none');
   document.body.classList.toggle('head-lightgrad', p.headGrad==='light');
-  if(p.headMode==='side'){ headEl.classList.add('v'); headEl.style.removeProperty('min-height'); $('#aside').prepend(headEl); }
-  else { headEl.classList.remove('v');
+  const isPil = p.headMode==='pillar';                       // 📐 세로 헤더 — 기둥(phase537)
+  document.body.classList.toggle('hm-pillar', isPil);
+  if(p.headMode==='side' || isPil){
+    headEl.classList.toggle('v', !isPil); headEl.classList.toggle('pil', isPil);
+    headEl.style.removeProperty('min-height'); $('#aside').prepend(headEl); }
+  else { headEl.classList.remove('v','pil');
     const anchor=$('#catbar'); anchor.parentNode.insertBefore(headEl, anchor); }
   $('#btn-write').classList.toggle('hidden',!st.mine);
   $('#btn-edit').classList.toggle('hidden',!st.mine);
@@ -1885,11 +1896,13 @@ function renderSide(){
   const boxR=$('#aside'), boxL=$('#aside-l'),
         hL=$('#hcol-l'), hC=$('#hcol-c'), hR=$('#hcol-r');
   const both = p.sidePos==='both';
+  const pil = p.headMode==='pillar';                             // 기둥 헤더(phase537)
   const headEl=document.querySelector('#aside .head, #aside-l .head, .hcol .head');   // 홈 기둥으로 옮겨간 헤더도 추적
   boxR.innerHTML=''; boxL.innerHTML='';
   hL.innerHTML=''; hC.innerHTML=''; hR.innerHTML='';
   if(headEl){
-    const headBox = home
+    const headBox = pil ? (home ? hL : boxL)                  // 기둥은 언제나 왼쪽 칸(phase537)
+      : home
       ? (p.sidePos==='right' ? hR : hL)     // 홈에서는 홈 그리드 기둥에 (실종 버그 수정)
       : (both?boxL:boxR);
     headBox.appendChild(headEl);
@@ -1913,6 +1926,8 @@ function renderSide(){
     if(w.home && !homeView) return;                            // 🏠 홈에서만 표시 — 카테고리·게시판에선 숨김(phase282)
     const pos = p.sidePos==='left'?'l' : p.sidePos==='both'?'b' : 'r';
     let box = (home && isM) ? hC
+      : pil                                                    // 기둥: 왼쪽은 헤더 자리 → l 위젯은 가운데로(phase537)
+      ? (home ? ((w.col==='c'||w.col==='l') ? hC : hR) : boxR)
       : home
       ? (pos==='b' ? (w.col==='l'?hL : w.col==='c'?hC : hR)
         : pos==='l' ? (w.col==='c'?hC : hL)
@@ -3410,14 +3425,18 @@ function abDate(a){                                          // 'YYYY.MM.DD' —
   catch(e){ return ''; } }
 function renderAlbumBoard(){
   $('#v-label').textContent = st.cat.toUpperCase();
-  $('#pin-slot').innerHTML=''; $('#more-btn').style.display='none'; renderPager(0,1);
-  const list=albumsOf(st.cat);
-  const open=st.albumOpen && list.find(a=>a.id===st.albumOpen);
-  if(open){ renderAlbumView(open); return; }
+  $('#pin-slot').innerHTML=''; $('#more-btn').style.display='none';
+  const all=albumsOf(st.cat);
+  const open=st.albumOpen && all.find(a=>a.id===st.albumOpen);
+  if(open){ renderPager(0,1); renderAlbumView(open); return; }   // 폴더를 열었을 땐 번호 없음
   st.abIdx=0;
   const asList=(st.page.abListView||{})[st.cat]==='list';       // 카테고리별 목록 모양(phase288d): 카드/제목만
+  /* 📚 폴더 목록도 페이지 나누기(phase537) — 전엔 renderPager(0,1)로 번호를 지우고 전부 한 장에 뿌렸음 */
+  const abPer = Math.min(100, Math.max(3, +st.page.perPage||12));
+  renderPager(all.length, abPer);
+  const list = all.slice(((st.pg||1)-1)*abPer, (st.pg||1)*abPer);
   $('#rows').innerHTML =
-    (list.length
+    (all.length
       ? asList
         ? `<div class="ab-rows">`+list.map(a=>
             `<a class="ab-row" data-ab="${a.id}"><span class="ab-rd">${esc(abDate(a).slice(5))}</span><span class="ab-rt">${a.priv?'🔏 ':''}${esc(a.title||'(제목 없음)')}</span><span class="ab-rn">${(a.imgs||[]).length}장</span></a>`).join('')+`</div>`
@@ -3569,6 +3588,7 @@ function lbOpen(list, id){
 function lbShow(){
   const g=lbList[lbIdx]; if(!g) return;
   $('#lb-img').src=g.img;
+  lbZoomReset();                                              // 사진을 넘기면 배율은 원래대로(phase537)
   $('#lb-prev').classList.toggle('hidden', lbIdx<=0);
   $('#lb-next').classList.toggle('hidden', lbIdx>=lbList.length-1);
   $('#lb-n').textContent=lbList.length>1 ? (lbIdx+1)+' / '+lbList.length : '';
@@ -3587,9 +3607,86 @@ document.addEventListener('keydown',e=>{
 let lbSwiped=false, lbTX=0, lbTY=0;                          // 📱 스와이프로 넘기기(phase315)
 $('#lb').addEventListener('touchstart',e=>{ const t=e.touches[0]; lbTX=t.clientX; lbTY=t.clientY; },{passive:true});
 $('#lb').addEventListener('touchend',e=>{ const t=e.changedTouches[0]; const dx=t.clientX-lbTX, dy=t.clientY-lbTY;
+  if(lbZ>1) return;                                            // 확대 중엔 밀기가 넘김이 되지 않게(phase537)
   if(Math.abs(dx)>44 && Math.abs(dx)>Math.abs(dy)*1.4){ lbSwiped=true; lbMove(dx<0?1:-1); } },{passive:true});
-$('#lb').onclick=()=>{ if(lbSwiped){ lbSwiped=false; return; }   // 스와이프 직후 따라오는 click은 닫기 아님
+$('#lb').onclick=e=>{ if(lbSwiped){ lbSwiped=false; return; }   // 스와이프 직후 따라오는 click은 닫기 아님
+  if(lbZ>1) return;                                             // 확대 중엔 배경을 눌러도 안 닫힘(phase537)
+  if(e.target.closest && e.target.closest('#lb-zoom')) return;
   $('#lb').classList.remove('show'); };
+
+/* ═══ 🔍 라이트박스 확대·축소 (phase537) — 휠·버튼·더블클릭·손가락 두 개 ═══ */
+let lbZ=1, lbX=0, lbY=0;
+const LBZMIN=1, LBZMAX=5;
+function lbApply(){
+  const lb=$('#lb'), im=$('#lb-img'); if(!im) return;
+  lbZ=Math.min(LBZMAX,Math.max(LBZMIN,lbZ));
+  if(lbZ<=1){ lbX=0; lbY=0; }
+  else{                                                        // 확대분 만큼만 밀 수 있게 — 사진이 화면 밖으로 안 달아남
+    const r=im.getBoundingClientRect(), w=r.width/lbZ, h=r.height/lbZ;
+    const mx=Math.max(0,(w*lbZ-Math.min(window.innerWidth,w*lbZ))/2)/lbZ;
+    const my=Math.max(0,(h*lbZ-Math.min(window.innerHeight,h*lbZ))/2)/lbZ;
+    lbX=Math.min(mx,Math.max(-mx,lbX)); lbY=Math.min(my,Math.max(-my,lbY));
+  }
+  im.style.setProperty('--lbz',lbZ);
+  im.style.setProperty('--lbx',lbX+'px');
+  im.style.setProperty('--lby',lbY+'px');
+  lb.classList.toggle('zoomed', lbZ>1);
+  const n=$('#lbz-n'); if(n) n.textContent=Math.round(lbZ*100)+'%';
+  $('#lb-prev').classList.toggle('hidden', lbZ>1 || lbIdx<=0);   // 확대 중엔 넘김 화살표를 감춤
+  $('#lb-next').classList.toggle('hidden', lbZ>1 || lbIdx>=lbList.length-1);
+}
+function lbZoomReset(){ lbZ=1; lbX=0; lbY=0; lbApply(); }
+function lbZoomBy(d){ lbZ=Math.round((lbZ+d)*100)/100; lbApply(); }
+$('#lbz-in').onclick =e=>{ e.stopPropagation(); lbZoomBy(.4); };
+$('#lbz-out').onclick=e=>{ e.stopPropagation(); lbZoomBy(-.4); };
+$('#lbz-rs').onclick =e=>{ e.stopPropagation(); lbZoomReset(); };
+$('#lb').addEventListener('wheel',e=>{
+  if(!$('#lb').classList.contains('show')) return;
+  e.preventDefault(); lbZoomBy(e.deltaY<0 ? .25 : -.25);
+},{passive:false});
+$('#lb-img').addEventListener('dblclick',e=>{
+  e.stopPropagation(); if(lbZ>1) lbZoomReset(); else { lbZ=2.2; lbApply(); } });
+document.addEventListener('keydown',e=>{
+  if(!$('#lb').classList.contains('show')) return;
+  if(e.key==='+'||e.key==='=') lbZoomBy(.4);
+  if(e.key==='-'||e.key==='_') lbZoomBy(-.4);
+  if(e.key==='0') lbZoomReset();
+});
+/* 마우스로 끌어 옮기기 */
+let lbDrag=null;
+$('#lb-img').addEventListener('pointerdown',e=>{
+  if(lbZ<=1 || e.pointerType==='touch') return;
+  e.preventDefault(); e.stopPropagation();
+  lbDrag={x:e.clientX,y:e.clientY,ox:lbX,oy:lbY};
+  $('#lb').classList.add('dragging'); $('#lb-img').setPointerCapture(e.pointerId);
+});
+$('#lb-img').addEventListener('pointermove',e=>{
+  if(!lbDrag) return;
+  lbX=lbDrag.ox+(e.clientX-lbDrag.x)/lbZ; lbY=lbDrag.oy+(e.clientY-lbDrag.y)/lbZ; lbApply();
+});
+['pointerup','pointercancel'].forEach(ev=>$('#lb-img').addEventListener(ev,e=>{
+  if(!lbDrag) return; lbDrag=null; $('#lb').classList.remove('dragging');
+  lbSwiped=true; setTimeout(()=>{ lbSwiped=false; },0);        // 끌고 난 뒤 따라오는 click은 닫기 아님
+}));
+/* 손가락 두 개로 확대 · 확대 중엔 한 손가락으로 밀기 */
+let lbPin=null, lbPan=null;
+const lbDist=t=>Math.hypot(t[0].clientX-t[1].clientX, t[0].clientY-t[1].clientY);
+$('#lb').addEventListener('touchstart',e=>{
+  if(e.touches.length===2){ lbPin={d:lbDist(e.touches), z:lbZ}; lbPan=null; }
+  else if(e.touches.length===1 && lbZ>1){
+    const t=e.touches[0]; lbPan={x:t.clientX,y:t.clientY,ox:lbX,oy:lbY}; }
+},{passive:true});
+$('#lb').addEventListener('touchmove',e=>{
+  if(lbPin && e.touches.length===2){
+    e.preventDefault(); lbZ=lbPin.z*(lbDist(e.touches)/lbPin.d); lbApply(); return; }
+  if(lbPan && e.touches.length===1){
+    e.preventDefault(); const t=e.touches[0];
+    lbX=lbPan.ox+(t.clientX-lbPan.x)/lbZ; lbY=lbPan.oy+(t.clientY-lbPan.y)/lbZ; lbApply(); }
+},{passive:false});
+$('#lb').addEventListener('touchend',e=>{
+  if(e.touches.length<2) lbPin=null;
+  if(!e.touches.length){ if(lbPan){ lbPan=null; lbSwiped=true; setTimeout(()=>{ lbSwiped=false; },0); } }
+},{passive:true});
 document.addEventListener('contextmenu',e=>{
   if(e.target.closest&&(e.target.closest('#gal')||e.target.closest('#lb'))) e.preventDefault();
 });
@@ -5905,6 +6002,7 @@ bindFmtBar('#w-fmt');
 })();
 bindFmtBar('#mm-fmt','#mm-body');
 let wImgs=[];
+let wThumb='';                                                   // ★ 글 대표 사진(phase537)
 function insertWTag(n){
   const ta=$('#w-body'), tk=`\n[사진${n}]\n`,
         s=ta.selectionStart??ta.value.length, sc=ta.scrollTop;
@@ -5913,11 +6011,22 @@ function insertWTag(n){
 }
 function renderWImgs(){
   const box=$('#w-img-list'); if(!box) return;
+  if(wThumb && !wImgs.includes(wThumb)) wThumb='';              // 지운 사진이 대표였으면 해제(phase537)
   box.innerHTML = wImgs.map((im,i)=>
-    `<span class="wim" data-wim="${i}" title="누르면 커서 자리에 [사진${i+1}] 삽입"><img src="${im}" alt=""><i>${i+1}</i></span>`).join('');
-  box.querySelectorAll('[data-wim]').forEach(el=>el.onclick=()=>{
+    `<span class="wim${im===wThumb?' thon':''}" data-wim="${i}" title="누르면 커서 자리에 [사진${i+1}] 삽입"><img src="${im}" alt=""><i>${i+1}</i><i class="wth" data-wth="${i}" title="목록·매거진 표지에 쓸 대표 사진">${im===wThumb?'★':'☆'}</i></span>`).join('');
+  box.querySelectorAll('[data-wim]').forEach(el=>el.onclick=e=>{
+    if(e.target.closest('[data-wth]')) return;                  // ★는 삽입이 아니라 대표 지정
     insertWTag(+el.dataset.wim+1);
     msg(`[사진${+el.dataset.wim+1}] 넣었어요 — 발행하면 그 자리에 사진이 나와요.`);
+  });
+  box.querySelectorAll('[data-wth]').forEach(el=>el.onclick=e=>{
+    e.stopPropagation();
+    const im=wImgs[+el.dataset.wth];
+    wThumb = (wThumb===im) ? '' : im;
+    renderWImgs();
+    msg(wThumb ? '대표 사진으로 정했어요 — 글 목록·매거진 표지에 이 사진이 걸려요.'
+              : '대표 사진을 해제했어요 — 본문 첫 사진이 자동으로 쓰여요.');
+    clearTimeout(wdTimer); wdTimer=setTimeout(saveWDraft,300);
   });
 }
 async function addWImgs(files){                                // 첨부 파이프 공용화(phase302)
@@ -5982,7 +6091,7 @@ function clearWriteForm(){
   wTags=[]; renderWTags();                                     // 🏷(phase292)
   ['w-title','w-pw','w-body'].forEach(i=>$('#'+i).value='');
   $('#w-secret').checked=false; $('#w-pin').checked=false; $('#w-priv').checked=false; $('#w-feat').checked=false; $('#w-pw').style.display='none';
-  $('#w-cmt').checked=true; $('#w-html').checked=false; wImgs=[]; renderWImgs();
+  $('#w-cmt').checked=true; $('#w-html').checked=false; wImgs=[]; wThumb=''; renderWImgs();
   $('#w-sched').checked=false; $('#w-schedat').value=''; $('#w-schedat').classList.add('hidden');
   const wmu2=$('#w-mut'); if(wmu2) wmu2.checked=false;
   const dN=new Date(), wdi=$('#w-date');
@@ -6008,7 +6117,9 @@ function startEditPost(){
     $('#w-html').checked = !!p.html;                               // 모드 승계 — 수정만 해도 풀리던 구멍 봉쇄
   }
   wImgs = (p.secret && Array.isArray(st.curImgs)) ? st.curImgs.slice()      // 🔒 비밀글은 복호화한 사진 목록(보안점검 3b)
-        : (Array.isArray(p.imgs) ? p.imgs.slice() : []); renderWImgs();
+        : (Array.isArray(p.imgs) ? p.imgs.slice() : []);
+  wThumb = p.thumb || '';                                                  // ★ 대표 사진 이어받기(phase537)
+  renderWImgs();
   $('#w-pin').checked=!!p.pinned;
   const psc=(+p.schedAt>Date.now())? +p.schedAt : null;          // 지난 예약은 발행된 것 — 표시 안 함
   $('#w-sched').checked=!!psc; $('#w-schedat').classList.toggle('hidden',!psc);
@@ -6082,7 +6193,8 @@ $('#w-go').onclick=async()=>{
         .replace(/\*\*|__|~~|==|\*/g,'')
         .replace(/^@[crji]\s/gm,'').replace(/\{\{[^:}]{1,8}:/g,'').replace(/\}\}/g,'')
         .replace(/^(-{3,}|―{3,}|={3,}|\.{3,}|~{3,}|\*{3,})$/gm,'').replace(/^(\d+[.)]|[-•])\s/gm,'')).replace(/\s+/g,' ').trim().slice(0,70),
-      html: asHtml, imgs: secret?[]:wImgs.slice() };   // 🔒 비밀글은 사진 주소도 평문 미저장(보안점검 3b)
+      html: asHtml, imgs: secret?[]:wImgs.slice(),   // 🔒 비밀글은 사진 주소도 평문 미저장(보안점검 3b)
+      thumb: (secret || !wImgs.includes(wThumb)) ? '' : wThumb };   // ★ 대표 사진(phase537)
     if(!secret){ data.raw = raw; data.encRaw=''; }        // 원문 보관(수정 시 그대로 열기)
     else { data.raw = '';                                  // 비밀글은 평문 원문을 남기지 않고
            data.encRaw = await encTxt(pw, raw); }          // 암호화한 원문을 보관 — 수정해도 HTML 모드·코드 무손실(phase258)

@@ -307,7 +307,7 @@
   /* 모서리 조절(phase299) — 전역 각지게, 원형(50%) 요소는 자동 추출 목록으로 보존 */
   body.corner-soft *{border-radius:4px!important}
   body.corner-sharp *:where(:not(.html-block):not(.html-block *):not(.html-full):not(.html-full *)){border-radius:0!important}   /* :where=특이성 0 — 면제는 유지하고 원형 보존 규칙은 다시 이기게(phase389) */
-  body.corner-soft .thumb-x .rm2, body.corner-soft .ph-chip, body.corner-soft .fab, body.corner-soft .gdel, body.corner-soft .bgm-cov, body.corner-soft .bgm-btn2, body.corner-soft .bgm-play .ic, body.corner-soft .ch-p, body.corner-soft .cst-scr, body.corner-soft .cst-reel, body.corner-soft .bgm-cst .bgm-btn2, body.corner-soft .bgm-lp .bgm-btn2, body.corner-soft .bgm-tun .bgm-btn2, body.corner-soft .lp-disc, body.corner-soft .lp-disc img,.lp-disc .mus, body.corner-soft .mm-th i, body.corner-soft .w-cal .cmemo, body.corner-soft .tl-dot, body.corner-soft .ph-x, body.corner-soft .chl-pv, body.corner-soft .gpin, body.corner-soft .gedit, body.corner-sharp .thumb-x .rm2, body.corner-sharp .ph-chip, body.corner-sharp .fab, body.corner-sharp .gdel, body.corner-sharp .bgm-cov, body.corner-sharp .bgm-btn2, body.corner-sharp .bgm-play .ic, body.corner-sharp .ch-p, body.corner-sharp .cst-scr, body.corner-sharp .cst-reel, body.corner-sharp .bgm-cst .bgm-btn2, body.corner-sharp .bgm-lp .bgm-btn2, body.corner-sharp .bgm-tun .bgm-btn2, body.corner-sharp .lp-disc, body.corner-sharp .lp-disc img,.lp-disc .mus, body.corner-sharp .mm-th i, body.corner-sharp .w-cal .cmemo, body.corner-sharp .tl-dot, body.corner-sharp .ph-x, body.corner-sharp .chl-pv, body.corner-sharp .gpin, body.corner-sharp .gedit{border-radius:50%!important}
+  body.corner-soft .thumb-x .rm2, body.corner-soft .ph-chip, body.corner-soft .fab, body.corner-soft .gdel, body.corner-soft .bgm-cov, body.corner-soft .bgm-btn2, body.corner-soft .bgm-play .ic, body.corner-soft .ch-p, body.corner-soft .cst-scr, body.corner-soft .cst-reel, body.corner-soft .bgm-cst .bgm-btn2, body.corner-soft .bgm-lp .bgm-btn2, body.corner-soft .bgm-tun .bgm-btn2, body.corner-soft .lp-disc, body.corner-soft .lp-disc img, body.corner-soft .lp-disc .mus, body.corner-soft .lp-arm::before, body.corner-soft .mm-th i, body.corner-soft .w-cal .cmemo, body.corner-soft .tl-dot, body.corner-soft .ph-x, body.corner-soft .chl-pv, body.corner-soft .gpin, body.corner-soft .gedit, body.corner-sharp .thumb-x .rm2, body.corner-sharp .ph-chip, body.corner-sharp .fab, body.corner-sharp .gdel, body.corner-sharp .bgm-cov, body.corner-sharp .bgm-btn2, body.corner-sharp .bgm-play .ic, body.corner-sharp .ch-p, body.corner-sharp .cst-scr, body.corner-sharp .cst-reel, body.corner-sharp .bgm-cst .bgm-btn2, body.corner-sharp .bgm-lp .bgm-btn2, body.corner-sharp .bgm-tun .bgm-btn2, body.corner-sharp .lp-disc, body.corner-sharp .lp-disc img, body.corner-sharp .lp-disc .mus, body.corner-sharp .lp-arm::before, body.corner-sharp .mm-th i, body.corner-sharp .w-cal .cmemo, body.corner-sharp .tl-dot, body.corner-sharp .ph-x, body.corner-sharp .chl-pv, body.corner-sharp .gpin, body.corner-sharp .gedit{border-radius:50%!important}
   .head h1{text-shadow:0 0 26px hsl(var(--h) calc(60% * var(--sf,1)) 60% / .35)}
   .head .bgimg{position:absolute;inset:0;background-size:cover;background-position:center;
     transition:opacity 1.2s ease}
@@ -584,6 +584,11 @@
     border:1px solid var(--line);cursor:pointer;background:var(--card2)}
   #w-img-list .wim:hover{border-color:var(--pri)}
   #w-img-list .wim img{width:100%;height:100%;object-fit:cover;display:block}
+  #w-img-list .wim .wth{position:absolute;right:2px;top:2px;font-style:normal;font-size:11px;
+    line-height:1;color:rgba(255,255,255,.5);text-shadow:0 1px 3px rgba(0,0,0,.7);cursor:pointer;padding:2px}
+  #w-img-list .wim .wth:hover{color:#fff}
+  #w-img-list .wim.thon{border-color:var(--pri)}
+  #w-img-list .wim.thon .wth{color:var(--pri)}
   #w-img-list .wim i{position:absolute;left:3px;bottom:3px;font-style:normal;
     font-family:'IBM Plex Mono',monospace;font-size:9px;background:rgba(0,0,0,.6);
     color:#fff;border-radius:5px;padding:1px 5px}
@@ -747,7 +752,7 @@
   .bgm-cov{width:56px;height:56px;border-radius:50%;overflow:hidden;flex:none;
     border:2px solid var(--line);position:relative;background:var(--card2)}
   .bgm-cov img{width:100%;height:100%;object-fit:cover}
-  .bgm-cov img.yt-fit,.lp-cov img.yt-fit,.cst-cov img.yt-fit,.tun-cov img.yt-fit,img.ytc.yt-fit{transform:scale(1.36)}   /* 유튜브 4:3 썸네일의 검은 띠 잘라내기(phase536) */
+  .bgm-cov img.yt-fit,.lp-cov img.yt-fit,.cst-cov img.yt-fit,.tun-cov img.yt-fit,img.ytc.yt-fit{scale:1.36}   /* 유튜브 4:3 썸네일의 검은 띠 잘라내기(phase536) — transform 대신 scale 속성: LP 라벨의 translate(-50%,-50%)를 덮어쓰지 않게(phase537) */
   .bgm-cov .mus{position:absolute;inset:0;display:flex;align-items:center;
     justify-content:center;color:var(--pri);font-size:17px}
   .bgm-cov::after{content:'';position:absolute;left:50%;top:50%;width:12px;height:12px;
@@ -807,7 +812,17 @@
   #lb{position:fixed;inset:0;background:rgba(5,6,9,.9);z-index:60;
     display:none;align-items:center;justify-content:center;padding:26px}
   #lb.show{display:flex}
-  #lb img{max-width:94vw;max-height:86vh;border-radius:10px}
+  #lb img{max-width:94vw;max-height:86vh;border-radius:10px;
+    transform:scale(var(--lbz,1)) translate(var(--lbx,0px),var(--lby,0px));
+    transition:transform .18s ease;touch-action:none;cursor:zoom-in}
+  #lb.zoomed img{cursor:grab;transition:none}
+  #lb.zoomed.dragging img{cursor:grabbing}
+  #lb-zoom{position:absolute;right:18px;bottom:18px;z-index:3;display:flex;gap:6px}
+  #lb-zoom button{width:34px;height:34px;border-radius:9px;border:1px solid rgba(255,255,255,.25);
+    background:rgba(10,12,18,.55);color:#eee;font-size:15px;line-height:1;cursor:pointer}
+  #lb-zoom button:hover{border-color:var(--pri);color:var(--pri)}
+  #lb-zoom b{display:grid;place-items:center;min-width:46px;height:34px;border-radius:9px;
+    font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:400;color:rgba(255,255,255,.6)}
   body.img-protect #lb::after{content:'';position:absolute;inset:0}
   body.img-protect #gal img,body.img-protect #lb img{user-select:none;-webkit-user-select:none;
     -webkit-user-drag:none;-webkit-touch-callout:none}
@@ -989,6 +1004,43 @@
   .head.v .in{padding:16px 18px 14px}
   .head.v h1{font-size:17px}
   .head.v .dday{position:static;text-align:left;padding:0 18px 14px;margin-top:-6px}
+
+  /* ═══ 세로 헤더 — 기둥 (phase537) : 왼쪽 칸을 통째로 쓰는 사진 기둥 ═══ */
+  .head.pil{min-height:0;position:sticky;top:24px;height:calc(100vh - 96px);
+    display:flex;flex-direction:column;justify-content:flex-end;margin-bottom:0}
+  .head.pil .bgimg{position:absolute;inset:0;height:auto}
+  .head.pil #pg-hero2{position:absolute;top:0;left:0;width:100%;height:100%}
+  .head.pil .shade{display:block;
+    background:linear-gradient(180deg,transparent 35%, hsl(var(--h) calc(10% * var(--sf,1)) 7% / .84))}
+  .head.pil .in{position:relative;z-index:2;padding:0 22px 24px}
+  .head.pil .in::before{content:'';display:block;height:1px;margin:0 0 15px;
+    background:linear-gradient(90deg,var(--pri),hsl(var(--h) calc(30% * var(--sf,1)) 40% / .25))}
+  .head.pil h1{font-size:var(--hdN, 27px)}
+  .head.pil .dday{position:relative;z-index:2;right:auto;bottom:auto;text-align:left;padding:0 22px 24px;margin-top:-8px}
+  .head.pil .dday .n{font-size:19px}
+  /* 기둥일 때 칸 배치 — 왼쪽 300px 고정 */
+  body.hm-pillar #home-grid{grid-template-columns:300px minmax(0,1fr) 270px!important}
+  body.hm-pillar #home-grid #hcol-l{display:flex!important}
+  body.hm-pillar .cols{grid-template-columns:300px minmax(0,1fr) 270px}
+  body.hm-pillar #aside-l{display:flex!important}
+  body.hm-pillar.style-blog .cols{grid-template-columns:300px minmax(0,1fr) 252px}
+  @media(max-width:1180px){
+    body.hm-pillar #home-grid{grid-template-columns:280px minmax(0,1fr)!important}
+    body.hm-pillar #home-grid #hcol-r{grid-column:1/3}
+    body.hm-pillar .cols{grid-template-columns:280px minmax(0,1fr)}
+    body.hm-pillar #aside{grid-column:1/3}
+  }
+  @media(max-width:820px){
+    .head.pil{position:static;height:min(54vh,330px)}
+    body.hm-pillar #home-grid{grid-template-columns:1fr 1fr!important}
+    body.hm-pillar #home-grid #hcol-l{grid-column:1/3}
+    body.hm-pillar .cols{grid-template-columns:minmax(0,1fr)}
+    body.hm-pillar #aside,body.hm-pillar #aside-l{grid-column:auto}
+  }
+  @media(max-width:640px){
+    body.hm-pillar #home-grid{grid-template-columns:1fr!important}
+    body.hm-pillar #home-grid #hcol-l{grid-column:auto}
+  }
   /* ── 밝은 테마 ── */
   body.light{
     --bg:hsl(var(--h) calc(35% * var(--sf,1)) calc(95% + var(--lo,0%)));
@@ -1130,6 +1182,7 @@
   @media(max-width:960px){#wfl-layer{display:none}}         /* 폰·태블릿은 원래 자리(컬럼)로 복귀 */
   @media(max-width:720px){body.stk-hide-m #stk-layer{display:none}}
   body.stk-home.in-board #stk-layer{display:none}   /* 스티커 홈 전용(phase284) — in-board 판정은 위젯 '홈에서만'과 동일 */
+  body.in-board .stk.stk-h{display:none}   /* 스티커별 홈 전용(phase537) — 전체 옵션과 별개로 하나씩 고름 */
   #stk-layer{transition:opacity .35s}
   body.in-post #stk-layer{opacity:0;pointer-events:none}  /* 글 읽는 동안은 스티커 숨김 */
   .w-text .tx-x{margin:0;font-size:12.5px;line-height:1.85;color:var(--body)}
@@ -2651,6 +2704,9 @@ html,body{overflow-x:hidden;overflow-x:clip}
   <img id="lb-img" alt="">
   <button id="lb-next" class="lb-nav hidden">›</button>
   <span id="lb-n"></span>
+  <div id="lb-zoom">
+    <button id="lbz-out" title="축소 (−)">−</button><b id="lbz-n">100%</b><button id="lbz-in" title="확대 (+)">＋</button><button id="lbz-rs" title="원래대로">⤢</button>
+  </div>
 </div>
 
 <!-- 관리 패널 -->
@@ -3077,7 +3133,7 @@ html,body{overflow-x:hidden;overflow-x:clip}
     <div class="trows">
       <p class="p-h">구조</p>
         <div class="trow"><span class="tl">홈 구조</span><span class="tc"><select id="s-homestyle">
-        <option value="grid">위젯 그리드형 (지금 구조)</option>
+        <option value="grid">갠홈형 (위젯 그리드 — 지금 구조)</option>
         <option value="mag">매거진형 (표지 글 + 카드)</option>
         <option value="blog">클래식 블로그형 (글 목록이 메인)</option></select></span></div>
       <div class="trow"><span class="tl">사이드바</span><span class="tc"><select id="s-sidepos">
@@ -3085,7 +3141,8 @@ html,body{overflow-x:hidden;overflow-x:clip}
       <p class="p-h">헤더</p>
         <div class="trow"><span class="tl">헤더</span><span class="tc"><select id="s-headmode">
         <option value="wide">가로 (상단 와이드)</option>
-        <option value="side">세로 (사이드 프로필형)</option></select>
+        <option value="side">세로 (사이드 프로필형)</option>
+        <option value="pillar">세로 — 기둥 (사진이 옆에 고정)</option></select>
         <select id="s-headlayout" title="헤더 배치 — 제목 · 디데이가 놓이는 방식">
         <option value="">헤더 배치 — 기본 (좌하단 제목)</option>
         <option value="center">헤더 배치 — 센터</option>
@@ -3368,7 +3425,7 @@ html,body{overflow-x:hidden;overflow-x:clip}
     <div class="p-row" style="flex-direction:column;align-items:flex-start;gap:7px;margin:2px 0 8px">
       <label class="chk"><input type="checkbox" id="s-stkoff" checked> 스티커 표시</label>
       <label class="chk"><input type="checkbox" id="s-stkm"> 모바일에서 스티커 숨기기</label>
-      <label class="chk"><input type="checkbox" id="s-stkhome"> 홈 화면에서만 스티커 보이기 — 카테고리·글 목록에선 숨겨져요</label>
+      <label class="chk"><input type="checkbox" id="s-stkhome"> 홈 화면에서만 스티커 보이기 — 카테고리·글 목록에선 숨겨져요 <b style="font-weight:400;color:var(--muted)">(전체 · 아래 목록의 🏠는 하나씩)</b></label>
     </div>
     <p class="note" style="margin-top:-4px">위 체크는 바꾸는 즉시 저장돼요.</p>
     <div id="stk-list"></div>
@@ -3409,6 +3466,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=561"></script>
+<script type="module" src="./app.js?v=564"></script>
 </body>
 </html>
