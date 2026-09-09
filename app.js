@@ -951,7 +951,8 @@ async function enterPage(){
   document.body.classList.toggle('tag-text', p.tagShape==='text');      // 🏷 태그 모양(phase313)
   document.body.classList.toggle('tag-box', p.tagShape==='box');
   document.body.classList.toggle('style-blog', homeStyle()==='blog');
-  ['','dot','line','rail','grad','hide'].forEach(k=>document.body.classList.toggle('sb-'+k, !!k && p.sbStyle===k));   // 스크롤바 모양(phase537b)
+  ['','dot','line','rail','grad','hide'].forEach(k=>document.body.classList.toggle('sb-'+k, !!k && p.sbStyle===k));
+  ['wide','sq','v','free'].forEach(k=>document.body.classList.toggle('gg-'+k, p.galShape===k));   // ▤ 갤러리 탭 비율(phase537b)   // 스크롤바 모양(phase537b)
   document.body.classList.remove('theme-win98','theme-vhs');
   if(p.theme && p.theme!=='default') document.body.classList.add('theme-'+p.theme);
   document.documentElement.style.setProperty('--galc', galCols());
@@ -1107,7 +1108,7 @@ async function enterPage(){
 const MODE_KEYS=['hue','sat','lum','light','glass','theme','dots','bgImg','bgRef','bgDim','titleColor','font','customCss','curImg','sparkle','fx','fxC','labelIcon','priColor',
   'corner','cardC','headGrad','headText','hdOverC','hdSubC','hdDdC','headDeco','headBand','stickers','stkOff','stkHideM','stkHome','btnStyle','pgStyle','rowStyle','catShape','quoteStyle','postFs',
   'pet','petImg','petImgs','petSz','clickFx','snd','sndV','protectImg','fav','postPage',
-  'listTc','rowTag','tagShape','galCols','memoCols','galRows','memoRows','sbStyle','catSel','catCnt','gbHint','gbEmpty','homeName','galName','gbName','labelIcon','headFs','headSubFs','headOverFs','headShow','sidePos','tagShow','tagOrder','magPick','magCards','magSlots'];   // 글 목록 제목 색 등 남은 꾸밈도 모드별(phase519)
+  'listTc','rowTag','tagShape','galCols','memoCols','galRows','memoRows','sbStyle','galShape','catSel','catCnt','gbHint','gbEmpty','homeName','galName','gbName','labelIcon','headFs','headSubFs','headOverFs','headShow','sidePos','tagShow','tagOrder','magPick','magCards','magSlots'];   // 글 목록 제목 색 등 남은 꾸밈도 모드별(phase519)
 const MODE_HDR=['heroImgs','heroImg','headFit','headH','headMode','headNoBg','enterImg','enterRef','enterText','cardImg','bannerImg','catImgs'];   // 사진(헤더·대문·대표·카테고리)
 const MODE_STRIP=['stripPin','stripCnt','stripShape','stripOn','stripSrc'];   // 사진 출처도 모드별(phase537b)                                                                          // 하단 스트립(phase476)
 const MODE_WID=['side','ddays','bgm','noLatest','sidePos','homeStyle'];                                                                   // 위젯 구성(phase476) · 홈 구조도 함께(phase537)
@@ -4366,7 +4367,7 @@ function renderCatFix(){
       <select id="strip-cnt" style="font-size:11px;width:auto;margin:0 0 0 6px" title="대문 스트립에 보여줄 장수 — 사진이 더 적으면 있는 만큼 꽉 채워요">
         ${[2,3,4,5,6].map(n=>`<option value="${n}" ${(st.page.stripCnt||4)==n?'selected':''}>${n}장</option>`).join('')}
       </select>
-      <select id="strip-shape" style="font-size:11px;width:auto;margin:0 0 0 6px" title="스트립 칸의 사진 비율">
+      <select id="strip-shape" style="font-size:11px;width:auto;margin:0 0 0 6px" title="대문 하단 스트립 칸의 사진 비율 — 갤러리 탭 격자는 꾸미기 → 레이아웃 → 갤러리 한 줄에서">
         <option value="" ${!st.page.stripShape?'selected':''}>기본 (4:3)</option>
         <option value="wide" ${st.page.stripShape==='wide'?'selected':''}>가로 와이드</option>
         <option value="sq" ${st.page.stripShape==='sq'?'selected':''}>정사각</option>
@@ -4462,7 +4463,7 @@ function renderCatFix(){
   const sh=$('#strip-shape'); if(sh) sh.onchange=async()=>{           // ▤ 모양(phase308) — 즉시 저장
     st.page.stripShape=sh.value;
     try{ await updateDoc(doc(db,'pages',st.handle),{stripShape:sh.value}); modeSyncCurrent();
-      renderGal(); msg('스트립 모양을 바꿨어요 — 대문에서 확인해 보세요.'); }
+      renderGal(); msg('대문 하단 스트립 모양을 바꿨어요 — 홈에서 확인해 보세요. 갤러리 탭 격자는 레이아웃 탭의 〈갤러리 한 줄〉 옆 비율에서 따로 바꿔요.'); }
     catch(e2){ msg('저장 실패: '+e2.message); } };
   const ss=$('#strip-src'); if(ss) ss.onchange=async()=>{
     st.page.stripSrc=ss.value;
@@ -7094,6 +7095,7 @@ function fillSettings(){
   [['s-hdnamefs','hdNameFs'],['s-hdoverfs','hdOverFs'],['s-hdsubfs','hdSubFs']].forEach(([id,k])=>{ const el=$('#'+id); if(el) el.value=st.page[k]||''; });
   const spf=$('#s-postfs'); if(spf) spf.value=st.page.postFs||'';
   const ssb=$('#s-sbstyle'); if(ssb) ssb.value=st.page.sbStyle||'';
+  const sgs=$('#s-galshape'); if(sgs) sgs.value=st.page.galShape||'';
   $('#s-galcols').value=String(galCols());
   const sgr=$('#s-galrows'); if(sgr) sgr.value=String(galRows());
   const smr=$('#s-memorows'); if(smr) smr.value=String(memoRows());
@@ -7234,6 +7236,7 @@ async function saveSettings(){
       hdNameFs: +($('#s-hdnamefs')?.value)||'', hdOverFs: +($('#s-hdoverfs')?.value)||'', hdSubFs: +($('#s-hdsubfs')?.value)||'',
       postFs: (()=>{ const v=parseFloat($('#s-postfs')?.value); return (v>=11&&v<=20)?v:''; })(),
       sbStyle: $('#s-sbstyle')?.value||'',   // 스크롤바 모양(phase537b)
+      galShape: $('#s-galshape')?.value||'',   // ▤ 갤러리 탭 비율(phase537b)
       galCols: +$('#s-galcols').value||3, galRows: +($('#s-galrows')?.value ?? 5), memoRows: +($('#s-memorows')?.value ?? 4),   // ▤🗒 줄 수(phase537b)
       memoCols: +($('#s-memocols')?.value)||3,
       mpinMax: +($('#s-mpinmax')?.value)||3,

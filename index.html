@@ -719,6 +719,13 @@
   #lb-n{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);
     color:rgba(255,255,255,.85);font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.15em}
   @media(max-width:640px){.lb-nav{width:38px;height:56px;font-size:26px}}
+  /* ▤ 갤러리 탭 격자 비율(phase537b) — 스트립 모양과 별개 */
+  body.gg-wide .gal-grid a{aspect-ratio:21/9!important}
+  body.gg-sq .gal-grid a{aspect-ratio:1/1!important}
+  body.gg-v .gal-grid a{aspect-ratio:3/4!important}
+  body.gg-free .gal-grid{align-items:start}
+  body.gg-free .gal-grid a{aspect-ratio:auto!important}
+  body.gg-free .gal-grid a img{height:auto!important}
   .gal-grid a{aspect-ratio:4/3;border-radius:9px;overflow:hidden;cursor:pointer;
     border:1px solid var(--line);background:var(--card2);display:block;position:relative}
   .gdel{position:absolute;top:6px;right:6px;z-index:2;width:22px;height:22px;
@@ -1044,8 +1051,8 @@
   .head.v .dday{position:static;text-align:left;padding:0 18px 14px;margin-top:-6px}
 
   /* ═══ 세로 헤더 — 기둥 (phase537) : 왼쪽 칸을 통째로 쓰는 사진 기둥 ═══ */
-  .head.pil{position:sticky;top:24px;
-    height:auto;flex:1 1 auto;min-height:min(420px,calc(100vh - 96px));max-height:calc(100vh - 96px);   /* 칸 높이를 따라가고, 화면보다 길면 화면 높이에서 멈춰 sticky(phase537b) — 축소해도 혼자 안 커짐 */
+  .head.pil{position:sticky;top:24px;flex:none;
+    height:min(calc(100vh - 96px), 760px);   /* 페이지마다 안 달라지게 고정(phase537b) · 화면이 그보다 작으면 화면 높이 */
     display:flex;flex-direction:column;justify-content:flex-end;margin-bottom:0}
   body.hm-pillar #hcol-l,body.hm-pillar #aside-l,body.hm-pillar-r #hcol-r,body.hm-pillar-r #aside{align-self:stretch}
   /* 오른쪽 기둥(phase537b) — 왼쪽 규칙을 거울처럼 */
@@ -3302,6 +3309,9 @@ html,body{overflow-x:hidden;overflow-x:clip}
       <div class="trow"><span class="tl">갤러리 한 줄</span><span class="tc"><select id="s-galcols">
         <option value="1">1장 (크게)</option><option value="2">2장</option>
         <option value="3" selected>3장 (기본)</option><option value="4">4장</option></select>
+        <select id="s-galshape" title="갤러리 탭 격자의 사진 비율 — 대문 하단 스트립 모양은 카테고리 탭에서 따로">
+        <option value="">비율 — 4:3 (기본)</option><option value="wide">비율 — 가로 와이드</option>
+        <option value="sq">비율 — 정사각</option><option value="v">비율 — 세로</option><option value="free">비율 — 원본 그대로</option></select>
         <select id="s-galrows" title="한 페이지에 보여줄 줄 수 — 넘으면 페이지 번호가 생겨요">
         <option value="2">2줄까지</option><option value="3">3줄까지</option><option value="4">4줄까지</option>
         <option value="5" selected>5줄까지 (기본)</option><option value="8">8줄까지</option><option value="0">제한 없음</option></select></span></div>
@@ -3576,6 +3586,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=592"></script>
+<script type="module" src="./app.js?v=594"></script>
 </body>
 </html>
