@@ -2928,8 +2928,8 @@ html,body{overflow-x:hidden;overflow-x:clip}
     <div id="inq-list"></div>
 
     <p class="p-h" style="margin-top:30px">🔑 비밀글 복구 비밀번호</p>
-    <p class="note" style="margin-top:-4px">비밀글 비밀번호를 잊었을 때 여는 열쇠예요. 글마다 다른 비밀번호를 써도 이 하나로 열고 새로 정할 수 있어요.
-      앞으로 쓰는 비밀글엔 자동 적용, 예전 비밀글은 한 번 정상적으로 열면 함께 적용됩니다. <b>복구 비밀번호까지 잊으면 방법이 없으니 꼭 따로 적어두세요.</b> (운영자도 열 수 없어요)</p>
+    <p class="note" style="margin-top:-4px">비밀글 비밀번호를 잊었을 때 사용하는 열쇠입니다. 글마다 다른 비밀번호를 사용해도 이 하나로 열고 재설정할 수 있습니다.
+      이후 작성하는 비밀글에는 자동 적용되며, 기존 비밀글은 한 번 정상적으로 열면 함께 적용됩니다. <b>복구 비밀번호까지 잊으면 방법이 없으니 꼭 따로 적어두세요.</b> (운영자도 열 수 없어요)</p>
     <div class="p-row" style="align-items:center;gap:10px">
       <button class="btn" id="rec-set" style="font-size:12px">복구 비밀번호 만들기</button>
       <span class="note" id="rec-state" style="margin:0">미설정</span>
@@ -2963,11 +2963,11 @@ html,body{overflow-x:hidden;overflow-x:clip}
       방명록은 글·갤러리를 담을 때 <b>보관용 기록으로만</b> 함께 저장되고, 복원·이사되지는 않아요.</p>
 
     <p class="p-h" style="margin-top:26px">⏪ 되돌리기 (자동 백업)</p>
-    <p class="note" style="margin-top:-4px">꾸미기를 저장하거나 초기화 · 복원 · 듀얼 담기를 할 때마다 <b>직전 상태가 이 기기에 자동으로 저장</b>됩니다(최근 12개).
-      실수로 초기화했을 때 아래에서 고르면 그 상태로 되돌아가요. 글 · 사진 · 방명록은 건드리지 않고 꾸미기만 되돌립니다.
-      기기·브라우저에 저장되니, 다른 기기나 시크릿 창에는 안 남아요.</p>
+    <p class="note" style="margin-top:-4px">꾸미기 저장 · 초기화 · 복원 · 듀얼 담기를 실행할 때마다 <b>직전 상태가 이 기기에 자동 저장</b>됩니다(최근 12개).
+      실수로 초기화한 경우 아래에서 시점을 선택해 복구할 수 있으며, 글 · 사진 · 방명록은 변경되지 않고 꾸미기만 되돌아갑니다.
+      브라우저에 저장되므로 다른 기기나 시크릿 창에는 남지 않습니다.</p>
     <div id="undo-list"></div>
-    <div class="p-row" style="align-items:center;gap:8px;margin-top:6px"><button class="rmv" id="undo-more" style="font-size:11px">더 보기</button><button class="rmv" id="undo-clear" style="font-size:11px">기록 비우기</button><span class="note" style="margin:0">최근 12개까지만 보관되고 오래된 것부터 자동으로 지워져요</span></div>
+    <div class="p-row" style="align-items:center;gap:8px;margin-top:6px"><button class="rmv" id="undo-more" style="font-size:11px">더 보기</button><button class="rmv" id="undo-clear" style="font-size:11px">기록 비우기</button><span class="note" style="margin:0">최근 12개까지 보관되며 오래된 항목부터 자동 삭제됩니다</span></div>
 
     <p class="p-h" style="margin-top:26px">복원 (백업에서 불러오기)</p>
     <p class="note" style="margin-top:-4px">JSON 백업 파일로 되돌립니다. 복원 직전에 <b>현재 상태가 자동으로 한 번 백업</b>되고,
@@ -3186,7 +3186,7 @@ html,body{overflow-x:hidden;overflow-x:clip}
         <input type="color" id="s-fxc" value="#ffb3c8" title="커서 효과 색 — 자유롭게 골라요">
         <button class="rmv" id="s-fxc-x" style="font-size:11px">테마색</button></span></div>
       <div class="trow"><span class="tl">🔊 클릭 소리</span><span class="tc">
-        <select id="s-snd" title="화면을 클릭할 때 나는 작은 소리 — 파일 없이 브라우저가 합성해요">
+        <select id="s-snd" title="화면을 클릭할 때 재생되는 작은 소리입니다 — 파일 없이 브라우저가 합성합니다">
           <option value="">없음</option>
           <option value="click">딸깍 — 마우스 클릭</option>
           <option value="tap">톡 — 부드러운 탭</option>
@@ -3194,7 +3194,7 @@ html,body{overflow-x:hidden;overflow-x:clip}
           <option value="pop">뽁 — 거품 터짐</option></select>
         <span class="tl2">크기</span><input type="range" id="s-sndv" min="5" max="100" value="40" style="width:110px"><span class="tl2" id="s-sndv-t">40</span>
         <button class="rmv" id="s-snd-test" style="font-size:11px">들어보기</button>
-        <span class="tl2">— 방문자는 화면 오른쪽 아래 🔇로 끌 수 있어요</span></span></div>
+        <span class="tl2">— 방문자는 화면 왼쪽 아래 버튼으로 끌 수 있습니다</span></span></div>
       <div class="trow"><span class="tl">위젯 제목 기호</span><span class="tc">
         <input id="s-lbicon" maxlength="3" placeholder="◈" style="width:64px!important;text-align:center" title="SEARCH·CHAT 같은 제목 앞 기호 — 비우면 없어져요 (예: ◆ ✦ ❖ ▸ ·)"></span></div>
     </div>
@@ -3241,8 +3241,8 @@ html,body{overflow-x:hidden;overflow-x:clip}
 
   <div class="pane hidden" data-pane="mode">
     <p class="p-h" style="border:none;padding-top:0;margin-top:0">🌗 듀얼 테마</p>
-    <p class="note" style="margin-top:-4px">홈의 꾸밈을 두 벌 담아 두고, 방문자가 버튼으로 오갈 수 있게 해요. 낮/밤 · 평상시/이벤트 · 두 인물 시점처럼 컨셉은 자유.
-      담기는 것: 색 · 배경 · 글꼴 · 모서리 · 효과(커서 · 픽셀펫 · 클릭 이펙트 · 클릭 소리) · 스티커 · 헤더 색. 글 · 갤러리 · 방명록은 공통이에요. <a href="/dual.html" target="_blank" rel="noopener" style="color:var(--pri)">자세한 안내 ↗</a></p>
+    <p class="note" style="margin-top:-4px">홈의 꾸밈을 두 벌 저장해 두고, 방문자가 버튼으로 전환할 수 있습니다. 낮/밤 · 평상시/이벤트 · 두 인물 시점 등 컨셉은 자유롭게 정하실 수 있습니다.
+      담기는 항목: 색 · 배경 · 글꼴 · 모서리 · 효과(커서 · 픽셀펫 · 클릭 이펙트 · 클릭 소리) · 스티커 · 헤더 색. 글 · 갤러리 · 방명록은 공통입니다. <a href="/dual.html" target="_blank" rel="noopener" style="color:var(--pri)">자세한 안내 ↗</a></p>
 
     <p class="p-h">1 · 켜기와 전환 버튼</p>
     <div class="p-row" style="align-items:center;gap:10px">
@@ -3271,7 +3271,7 @@ html,body{overflow-x:hidden;overflow-x:clip}
       <select id="md-mpos" style="width:auto;margin-bottom:0">
         <option value="">위치 — PC와 같게</option><option value="br">오른쪽 아래</option><option value="bl">왼쪽 아래</option><option value="tr">오른쪽 위</option><option value="tl">왼쪽 위</option><option value="free">자유 (폰에서 드래그)</option></select>
     </div>
-    <p class="note">〈자유〉 위치는 <b>위젯 편집(⠿)을 켠 상태에서만</b> 드래그로 옮길 수 있고, 놓은 자리는 자동 저장돼요. 모바일 자유 위치는 폰(좁은 화면)에서 드래그한 자리를 따로 기억해요. 자유 배치 버튼은 화면에 붙어 따라오지 않고 <b>홈 페이지 위 한 자리</b>에 놓여요(위젯처럼). 구석 4곳은 화면에 붙어 따라옵니다. 글자 한 줄은 자유가 아니면 카테고리 줄 오른쪽 끝.</p>
+    <p class="note">〈자유〉 위치는 <b>위젯 편집(⠿)이 켜진 상태에서만</b> 드래그로 이동할 수 있으며, 놓은 위치는 자동 저장됩니다. 모바일 자유 위치는 좁은 화면에서 드래그한 자리를 별도로 기억합니다. 자유 배치 버튼은 화면에 고정되지 않고 <b>홈 페이지 위 한 자리</b>에 놓입니다(위젯과 동일). 구석 4곳은 화면에 고정됩니다. 글자 한 줄은 자유가 아니면 카테고리 줄 오른쪽 끝.</p>
 
     <div id="md-body" class="hidden">
     <p class="p-h">2 · A 담기</p>
@@ -3283,7 +3283,7 @@ html,body{overflow-x:hidden;overflow-x:clip}
       <button class="rmv" id="md-load-a" style="font-size:11px">A 불러오기</button>
     </div>
     <p class="p-h">3 · B 담기</p>
-    <p class="note" style="margin-top:-4px">B용으로 배경 · 색 등을 바꾼 뒤 담아요. 바꾼 내용은 담을 때 함께 저장돼요.</p>
+    <p class="note" style="margin-top:-4px">B용으로 배경 · 색 등을 변경한 뒤 담습니다. 변경 내용은 담을 때 함께 저장됩니다.</p>
     <div class="p-row" style="align-items:center;gap:8px">
       <input id="md-bn" placeholder="B 이름 (예: 밤 · 설아 · 이벤트)" maxlength="14" style="width:200px;margin-bottom:0">
       <input id="md-bb" placeholder="B로 가는 버튼 문구 (예: ☾ 밤으로 →)" maxlength="16" style="width:220px;margin-bottom:0">
@@ -3298,13 +3298,13 @@ html,body{overflow-x:hidden;overflow-x:clip}
       <label class="chk" title="사이드 위젯 구성 · 디데이 · BGM"><input type="checkbox" id="md-wid"> 위젯 구성도</label>
       <select id="md-def" style="width:auto;margin-bottom:0"><option value="a">처음 보이는 모습 — A</option><option value="b">처음 보이는 모습 — B</option></select>
     </div>
-    <p class="note">⚠ 체크를 바꿨으면 A · B를 다시 담아야 반영돼요. 담을 때의 체크 상태가 그 슬롯에 들어갑니다. 실수로 덮어썼다면 〈관리 → ⏪ 되돌리기〉에서 직전 상태로 돌아갈 수 있어요.</p>
+    <p class="note">⚠ 체크를 변경한 경우 A · B를 다시 담아야 반영됩니다. 담을 때의 체크 상태가 해당 슬롯에 저장됩니다. 실수로 덮어썼다면 〈관리 → ⏪ 되돌리기〉에서 직전 상태로 복구할 수 있습니다.</p>
     <div class="p-row" style="align-items:center;gap:10px">
       <button class="btn" id="md-apply" style="font-size:12px">설정 저장</button>
       <span class="note" id="md-st" style="margin:0"></span>
     </div>
-    <p class="note">방문자가 누른 모드는 그 기기에 기억돼요. 〈버튼 옆 문구 표시〉를 끄면 문구를 적어 두어도 스위치(또는 이모지)만 보여요. 문구를 비우면 동그라미·글자 버튼엔 상대 모드 이름이 보이고, 전등 스위치엔 스위치만 남아요.</p>
-    <p class="note" style="color:var(--pri)">ℹ 듀얼 테마가 켜진 상태에서 위젯 · 설정 · 스티커를 저장하면 <b>지금 보고 있는 모드</b>에 자동으로 반영돼요. 다른 모드를 고치려면 그 모드로 전환(불러오기)한 뒤 저장하세요. [A로 담기] · [B로 담기]는 옵션 범위를 바꿨을 때나 통째로 다시 담을 때 쓰면 됩니다.</p>
+    <p class="note">방문자가 선택한 모드는 해당 기기에 기억됩니다. 〈버튼 옆 문구 표시〉를 끄면 문구를 입력해 두어도 스위치(또는 이모지)만 표시됩니다. 문구를 비우면 동그라미·글자 버튼엔 상대 모드 이름이 보이고, 전등 스위치엔 스위치만 남아요.</p>
+    <p class="note" style="color:var(--pri)">ℹ 듀얼 테마가 켜진 상태에서 위젯 · 설정 · 스티커를 저장하면 <b>현재 보고 있는 모드</b>에 자동 반영됩니다. 다른 모드를 수정하려면 해당 모드로 전환한 뒤 저장해 주세요. [A로 담기] · [B로 담기]는 옵션 범위를 변경했거나 전체를 다시 담을 때 사용합니다.</p>
     </div>
   </div>
 
@@ -3369,6 +3369,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=556"></script>
+<script type="module" src="./app.js?v=557"></script>
 </body>
 </html>

@@ -4001,7 +4001,7 @@ function renderCatMgr(){
         <option value="album" ${isA(c)?'selected':''}>사진첩 (제목 있는 묶음)</option>
         <option value="memo" ${isMemo(c)?'selected':''}>메모 (카드 모아보기)</option>
       </select>
-      ${(isG(c)||isA(c))?`<label class="chk" style="margin:0;font-size:11px" title="켜면 이 카테고리의 사진은 GALLERY(통합) 탭과 대문 갤러리에 안 뜨고, 이 카테고리 탭에서만 보여요"><input type="checkbox" data-gex="${i}" ${(st.page.galEx||[]).includes(c)?'checked':''}> 통합 제외</label>`:''}
+      ${(isG(c)||isA(c))?`<label class="chk" style="margin:0;font-size:11px" title="켜면 해당 카테고리의 사진이 GALLERY(통합) 탭과 대문 갤러리에 표시되지 않고, 해당 카테고리 탭에서만 보입니다"><input type="checkbox" data-gex="${i}" ${(st.page.galEx||[]).includes(c)?'checked':''}> 통합 제외</label>`:''}
       ${isA(c)?`<select data-alv="${i}" style="width:auto;margin-bottom:0;font-size:11px" title="이 사진첩의 목록을 어떻게 보여줄지">
         <option value="card" ${(st.page.abListView||{})[c]!=='list'?'selected':''}>표지 카드</option>
         <option value="list" ${(st.page.abListView||{})[c]==='list'?'selected':''}>제목만</option>
@@ -4195,7 +4195,7 @@ function renderCatFix(){
     (homeStyle()==='blog'?'':row('recent','ALL',
       `<label class="chk" style="margin:0;font-size:11px" title="켜면 상단의 ALL(전체 글) 탭이 숨겨져요 — 카테고리별 탭은 그대로예요"><input type="checkbox" data-alloff ${st.page.allOff?'checked':''}> 끄기</label>`))+
         (allTags().length?`<p class="p-h" style="margin-top:22px">🏷 태그 바</p>
-    <p class="note" style="margin-top:-4px">글 목록 위에 뜨는 태그 줄이에요. 체크를 끄면 그 태그는 줄에서 숨고(글에는 남아요), ↑↓로 순서를 정하면 그 순서대로 앞에 옵니다. 순서를 안 정한 태그는 가나다순으로 뒤에 붙어요.</p>
+    <p class="note" style="margin-top:-4px">글 목록 위에 표시되는 태그 줄입니다. 체크를 끄면 해당 태그는 줄에서만 숨겨지며(글의 태그는 유지), ↑↓로 정한 순서가 앞에 옵니다. 순서를 정하지 않은 태그는 가나다순으로 뒤에 배치됩니다.</p>
     <div id="tag-mgr">${(()=>{ const ord=st.page.tagOrder||[], show=st.page.tagShow||[]; const all=allTags().slice().sort((a,b)=>{ const ia=ord.indexOf(a), ib=ord.indexOf(b); if(ia>=0||ib>=0) return (ia<0?9999:ia)-(ib<0?9999:ib); return a.localeCompare(b,'ko'); });
       return all.map((t,i)=>`<div class="p-row" style="align-items:center;gap:8px;margin-bottom:4px"><label class="chk" style="margin:0;display:inline-flex;align-items:center;gap:6px;width:200px"><input type="checkbox" data-tshow="${esc(t)}" ${(!show.length||show.includes(t))?'checked':''}><span style="flex:1;text-align:left">${esc(t)}</span></label>
         <button class="rmv" data-tup="${i}" style="font-size:11px;padding:2px 7px">↑</button><button class="rmv" data-tdn="${i}" style="font-size:11px;padding:2px 7px">↓</button></div>`).join(''); })()}</div>`:'');
@@ -7562,7 +7562,7 @@ function renderUndo(){
       <span style="font-size:11.5px;color:var(--body);min-width:118px">${when}</span>
       <span class="note" style="margin:0;flex:1">${esc(it.r)}</span>
       <button class="rmv" data-undo="${i}" style="font-size:11px">↩ 이 상태로</button></div>`;
-  }).join('') : '<p class="note" style="margin:0">아직 기록이 없어요 — 꾸미기를 저장하면 이 기기에 쌓입니다.</p>';
+  }).join('') : '<p class="note" style="margin:0">아직 기록이 없습니다 — 꾸미기를 저장하면 이 기기에 쌓입니다.</p>';
   box.querySelectorAll('[data-undo]').forEach(b=>b.onclick=()=>undoApply(+b.dataset.undo));
 }
 function buildBackup(withDeco, withPosts){
