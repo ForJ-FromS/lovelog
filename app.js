@@ -4976,6 +4976,10 @@ function renderWidEdit(){
       <option value="bare" ${w.style==='bare'?'selected':''}>담백 — 선·점 없이 글줄만</option>
     </select>
     <input id="we-tldot" placeholder="점 모양 (비우면 ● — 이모지·문자 가능, 예: ✦ ♥ ✈ 📍)" value="${esc(w.dot||'')}" maxlength="4">
+    <div class="p-row" style="align-items:center;margin-bottom:6px">
+      <input type="number" id="we-chmax" placeholder="최대 높이 px (비우면 전체 표시)" value="${+w.maxH>0?+w.maxH:''}" min="120" max="900" style="width:190px;margin-bottom:0" title="정하면 그 높이를 넘는 항목은 스크롤로 봐요 — 위젯 안 스크롤바 모양을 따라요">
+      <span class="note" style="margin:0">넘치면 위젯 안에서 스크롤 (phase537b)</span>
+    </div>
     ${(w.items||[]).map((it,ii)=>`<div class="tl-ed">
       <div class="p-row">
         <input data-tld="${ii}" placeholder="날짜 (자유 형식)" value="${esc(it.d||'')}" style="flex:1">
