@@ -2853,6 +2853,8 @@ function renderSide(){
   gh.classList.toggle('no-l', pos==='b' && !hL.children.length && !st.mine);
   gh.classList.toggle('no-r', pos==='b' && !hR.children.length && !st.mine);
   /* 게시판 왼쪽 칸: 사이드바가 '양쪽'이 아니어도 왼쪽으로 지정한 위젯이 있으면 칸을 연다(phase537b) — 위젯이 없는 헤더뿐이면 기둥 CSS가 따로 처리 */
+  /* 🔢 방문자수: 처음 진입 때 위젯이 없었거나(듀얼 다른 모드 · 방금 추가) st.cnt가 비어 있으면 다시 읽어 옴(phase537b) — 0으로 보이던 것. 세션당 1회 가드가 있어 두 번 세지 않음 */
+  if(!st.cnt && sideCfg().some(w=>w.t==='cnt'&&!w.hid)) bumpCounter();
   const lw = !home && !both && !pil && [...boxL.children].some(el=>!el.classList.contains('head'));
   document.body.classList.toggle('side-lw', lw);
   applyAutoHead();                                   // 헤더 재배치 후 실제 폭으로 재계산
