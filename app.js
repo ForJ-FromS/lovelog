@@ -1690,7 +1690,7 @@ document.addEventListener('mousemove',e=>{
 });
 /* 🔊 클릭 소리(phase494) — WebAudio 합성, 파일 없음. 방문자는 🔇로 기기별 끄기 */
 let sndCtx=null;
-const SND_FILES={click:'/snd/click.mp3'};                       // 파일 소리(phase497) — 저장소 /snd/ 에 동봉
+const SND_FILES={click:'/snd/click.mp3', key:'/snd/key.mp3'};                       // 파일 소리(phase497) — 저장소 /snd/ 에 동봉
 let sndBufs={};
 async function sndFile(kind, vol){
   const c=sndCtx; const url=SND_FILES[kind]; if(!url) return false;
