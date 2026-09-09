@@ -1129,7 +1129,8 @@ function modeToggleDraw(){
   const m=st.page.modes;
   let b=document.getElementById('mode-toggle');
   if(!m||!m.on||!(m.a&&m.a.snap)||!(m.b&&m.b.snap)){ if(b) b.remove(); return; }   // 두 슬롯 다 있어야 버튼
-  const style=m.btn||'float', pos=m.pos||'br';
+  const isM=innerWidth<=640, mm=(isM&&m.m)?m.m:{};             // 📱 모바일 별도 설정(phase530)
+  const style=mm.btn||m.btn||'float', pos=mm.pos||m.pos||'br';
   const parent = (style==='cat' && pos!=='free') ? (document.getElementById('catbar')||document.body) : document.body;   // 글자도 자유 배치 가능(phase512)
   if(b && b.parentElement!==parent){ b.remove(); b=null; }
   if(!b){ b=document.createElement('button'); b.id='mode-toggle'; b.type='button'; parent.appendChild(b); }
@@ -1137,7 +1138,8 @@ function modeToggleDraw(){
   const label=(m[other]&&m[other].btn)||(m[other]&&m[other].name)||(other==='a'?'A':'B');
   b.className='mb-'+style+((style!=='cat'||pos==='free')?' mp-'+pos:'')+(cur==='b'?' down':'')+(st.mine&&pos==='br'&&style!=='cat'?' mp-owner':'')+(m.onPost===false?' no-post':'');   // 주인 FAB 위로(phase481) · 글 화면 숨김(phase506)
   if(pos==='free'){                                             // 자유 배치(phase514): 문서 기준 — x는 폭 비율, y는 위에서 px
-    b.style.setProperty('--mtX', (m.x??80)+'%'); b.style.setProperty('--mtY', (m.yp??600)+'px');
+    const fx=(isM&&m.m&&m.m.x!=null)?m.m.x:(m.x??80), fy=(isM&&m.m&&m.m.yp!=null)?m.m.yp:(m.yp??600);
+    b.style.setProperty('--mtX', fx+'%'); b.style.setProperty('--mtY', fy+'px');
     if(st.mine&&st.editMode){ b.classList.add('can-drag'); modeDragBind(b); } else { b.classList.remove('can-drag'); b.onpointerdown=b.onpointermove=b.onpointerup=null; }
   }
   const colNow=((m[cur]&&m[cur].col)||m.col||'');               // 모드별 색 우선(phase516) — 없으면 공통, 그것도 없으면 테마 포인트색
@@ -1170,10 +1172,11 @@ function modeDragBind(b){
     moved=true; b.classList.add('drag'); px=Math.max(3,Math.min(97, e.clientX/innerWidth*100)); py=Math.max(20, Math.round(e.clientY+window.scrollY));   // y는 문서 px
     b.style.setProperty('--mtX', px+'%'); b.style.setProperty('--mtY', py+'px'); };
   b.onpointerup=async e=>{ b.releasePointerCapture(e.pointerId); b.classList.remove('drag'); if(!moved) return;
-    const m=st.page.modes; m.x=Math.round(px*10)/10; m.yp=py;
+    const m=st.page.modes; if(innerWidth<=640){ m.m={...(m.m||{}), x:Math.round(px*10)/10, yp:py}; } else { m.x=Math.round(px*10)/10; m.yp=py; }   // 폰이면 모바일 좌표에(phase530)
     try{ await updateDoc(doc(db,'pages',st.handle),{modes:m}); msg('전환 버튼 위치를 저장했어요.'); }catch(err){ msg('위치 저장 실패 — '+(err.message||err)); }
     b._suppress=true; setTimeout(()=>{ b._suppress=false; }, 300); };
 }
+let _mtRz=null; window.addEventListener('resize',()=>{ clearTimeout(_mtRz); _mtRz=setTimeout(()=>{ if(st.page&&st.page.modes&&st.page.modes.on) modeToggleDraw(); },200); });   // 폭 변화 시 모바일/PC 설정 재적용(phase530)
 function modeInit(){
   const m=st.page.modes; if(!m||!m.on){ modeToggleDraw(); return; }
   const cur=modeCur(); const snap=(m[cur]||{}).snap;
@@ -4122,7 +4125,12 @@ function renderCatMgr(){
   });
   box.querySelectorAll('[data-cd]').forEach(b=>b.onclick=async()=>{
     await removeCat(cats()[+b.dataset.cd]); renderCatMgr();
-  });
+  })+
+    (allTags().length?`<p class="p-h" style="margin-top:22px">🏷 태그 바</p>
+    <p class="note" style="margin-top:-4px">글 목록 위에 뜨는 태그 줄이에요. 체크를 끄면 그 태그는 줄에서 숨고(글에는 남아요), ↑↓로 순서를 정하면 그 순서대로 앞에 옵니다. 순서를 안 정한 태그는 가나다순으로 뒤에 붙어요.</p>
+    <div id="tag-mgr">${(()=>{ const ord=st.page.tagOrder||[], show=st.page.tagShow||[]; const all=allTags().slice().sort((a,b)=>{ const ia=ord.indexOf(a), ib=ord.indexOf(b); if(ia>=0||ib>=0) return (ia<0?9999:ia)-(ib<0?9999:ib); return a.localeCompare(b,'ko'); });
+      return all.map((t,i)=>`<div class="p-row" style="align-items:center;gap:8px;margin-bottom:4px"><label class="chk" style="margin:0;display:inline-flex;align-items:center;gap:6px;width:200px"><input type="checkbox" data-tshow="${esc(t)}" ${(!show.length||show.includes(t))?'checked':''}><span style="flex:1;text-align:left">${esc(t)}</span></label>
+        <button class="rmv" data-tup="${i}" style="font-size:11px;padding:2px 7px">↑</button><button class="rmv" data-tdn="${i}" style="font-size:11px;padding:2px 7px">↓</button></div>`).join(''); })()}</div>`:'');
   bindCatImg(box);
 }
 async function setCatImg(key,val){
@@ -4189,11 +4197,6 @@ function renderCatFix(){
       <input id="s-gbhint" value="${esc(st.page.gbHint||'')}" placeholder="다녀간 흔적을 남겨주세요" maxlength="40" style="width:240px;margin-bottom:0;font-size:11.5px" title="방명록 입력칸에 연하게 보이는 문구 · 비우면 기본">
       <input id="s-gbempty" value="${esc(st.page.gbEmpty||'')}" placeholder="아직 방명록이 비어 있어요 — 첫 흔적을 남겨주세요." maxlength="60" style="width:300px;margin-bottom:0;font-size:11.5px" title="방명록이 비었을 때 보이는 문구 · 비우면 기본">
     </div>`+
-    (allTags().length?`<p class="p-h" style="margin-top:22px">🏷 태그 바</p>
-    <p class="note" style="margin-top:-4px">글 목록 위에 뜨는 태그 줄이에요. 체크를 끄면 그 태그는 줄에서 숨고(글에는 남아요), ↑↓로 순서를 정하면 그 순서대로 앞에 옵니다. 순서를 안 정한 태그는 가나다순으로 뒤에 붙어요.</p>
-    <div id="tag-mgr">${(()=>{ const ord=st.page.tagOrder||[], show=st.page.tagShow||[]; const all=allTags().slice().sort((a,b)=>{ const ia=ord.indexOf(a), ib=ord.indexOf(b); if(ia>=0||ib>=0) return (ia<0?9999:ia)-(ib<0?9999:ib); return a.localeCompare(b,'ko'); });
-      return all.map((t,i)=>`<div class="p-row" style="align-items:center;gap:8px;margin-bottom:4px"><label class="chk" style="margin:0;min-width:200px"><input type="checkbox" data-tshow="${esc(t)}" ${(!show.length||show.includes(t))?'checked':''}> ${esc(t)}</label>
-        <button class="rmv" data-tup="${i}" style="font-size:11px;padding:2px 7px">↑</button><button class="rmv" data-tdn="${i}" style="font-size:11px;padding:2px 7px">↓</button></div>`).join(''); })()}</div>`:'')+
     (homeStyle()==='blog'?'':row('recent','ALL',
       `<label class="chk" style="margin:0;font-size:11px" title="켜면 상단의 ALL(전체 글) 탭이 숨겨져요 — 카테고리별 탭은 그대로예요"><input type="checkbox" data-alloff ${st.page.allOff?'checked':''}> 끄기</label>`));
   bindCatImg(box);
@@ -6337,7 +6340,8 @@ function modeUIFill(){
   if(g('md-an')) g('md-an').value=(m.a&&m.a.name)||'';
   if(g('md-bn')) g('md-bn').value=(m.b&&m.b.name)||'';
   if(g('md-ab')) g('md-ab').value=(m.a&&m.a.btn)||''; if(g('md-bb')) g('md-bb').value=(m.b&&m.b.btn)||'';
-  if(g('md-btn')) g('md-btn').value=m.btn||'float'; if(g('md-pos')) g('md-pos').value=m.pos||'br'; if(g('md-onpost')) g('md-onpost').checked=m.onPost!==false; if(g('md-swlabel')) g('md-swlabel').checked=m.swLabel!==false;
+  if(g('md-btn')) g('md-btn').value=m.btn||'float'; if(g('md-pos')) g('md-pos').value=m.pos||'br';
+  if(g('md-mbtn')) g('md-mbtn').value=(m.m&&m.m.btn)||''; if(g('md-mpos')) g('md-mpos').value=(m.m&&m.m.pos)||''; if(g('md-onpost')) g('md-onpost').checked=m.onPost!==false; if(g('md-swlabel')) g('md-swlabel').checked=m.swLabel!==false;
   if(g('md-tgemo')) g('md-tgemo').checked=!!m.tgEmo; if(g('md-ul')) g('md-ul').checked=!!m.catUl;
   if(g('md-acol')) g('md-acol').value=(m.a&&m.a.col)||m.col||'#c9b27a'; if(g('md-bcol')) g('md-bcol').value=(m.b&&m.b.col)||m.col||'#c9b27a';
   const bt=(m.btn||'float'); if(g('md-tgemo-l')) g('md-tgemo-l').style.display=bt==='toggle'?'':'none'; if(g('md-ul-l')) g('md-ul-l').style.display=bt==='cat'?'':'none';
@@ -6351,7 +6355,8 @@ async function modeSaveCfg(extra){
   m.on=$('#md-on')?.checked===true;
   m.a={...(m.a||{}), name:($('#md-an')?.value||'').trim().slice(0,14), btn:($('#md-ab')?.value||'').trim().slice(0,16)};
   m.b={...(m.b||{}), name:($('#md-bn')?.value||'').trim().slice(0,14), btn:($('#md-bb')?.value||'').trim().slice(0,16)};
-  m.btn=$('#md-btn')?.value||'float'; m.pos=$('#md-pos')?.value||'br'; m.onPost=$('#md-onpost')?.checked!==false; m.swLabel=$('#md-swlabel')?.checked!==false; m.tgEmo=$('#md-tgemo')?.checked===true; m.catUl=$('#md-ul')?.checked===true;
+  m.btn=$('#md-btn')?.value||'float'; m.pos=$('#md-pos')?.value||'br';
+  m.m={...(m.m||{}), btn:$('#md-mbtn')?.value||'', pos:$('#md-mpos')?.value||''}; if(!m.m.btn) delete m.m.btn; if(!m.m.pos) delete m.m.pos; m.onPost=$('#md-onpost')?.checked!==false; m.swLabel=$('#md-swlabel')?.checked!==false; m.tgEmo=$('#md-tgemo')?.checked===true; m.catUl=$('#md-ul')?.checked===true;
   ['a','b'].forEach(k=>{ const el=$('#md-'+k+'col'); if(!el) return; m[k]={...(m[k]||{})}; m[k].col=st['_mdCol'+k+'Clear']?'':(el.value||''); st['_mdCol'+k+'Clear']=false; });
   delete m.col;
   m.def=$('#md-def')?.value==='b'?'b':'a'; m.fx=$('#md-fx')?.value||'soft'; m.hdr=$('#md-hdr')?.checked===true; m.strip=$('#md-strip')?.checked===true; m.wid=$('#md-wid')?.checked===true;

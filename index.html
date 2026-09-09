@@ -3264,7 +3264,14 @@ html,body{overflow-x:hidden;overflow-x:clip}
       <label class="chk" title="전등 스위치 · 동그라미 옆에 버튼 문구(예: 밤 / 아침)를 함께 보일지"><input type="checkbox" id="md-swlabel" checked> 버튼 옆 문구 표시</label>
       <select id="md-fx" style="width:auto;margin-bottom:0"><option value="soft">전환 효과 — 자연스럽게 (색이 번짐)</option><option value="fade">전환 효과 — 페이드</option><option value="blink">전환 효과 — 암전</option><option value="none">전환 효과 — 없음 (바로)</option></select>
     </div>
-    <p class="note">〈자유〉 위치는 <b>위젯 편집(⠿)을 켠 상태에서만</b> 드래그로 옮길 수 있고, 놓은 자리는 자동 저장돼요. 자유 배치 버튼은 화면에 붙어 따라오지 않고 <b>홈 페이지 위 한 자리</b>에 놓여요(위젯처럼). 구석 4곳은 화면에 붙어 따라옵니다. 글자 한 줄은 자유가 아니면 카테고리 줄 오른쪽 끝.</p>
+    <div class="p-row" style="align-items:center;gap:10px">
+      <span style="font-size:12px;color:var(--body)">📱 모바일에서는</span>
+      <select id="md-mbtn" style="width:auto;margin-bottom:0">
+        <option value="">버튼 — PC와 같게</option><option value="float">떠 있는 동그라미</option><option value="switch">전등 스위치</option><option value="toggle">토글 스위치</option><option value="dial">회전 다이얼</option><option value="split">분할 버튼</option><option value="cat">글자 한 줄</option></select>
+      <select id="md-mpos" style="width:auto;margin-bottom:0">
+        <option value="">위치 — PC와 같게</option><option value="br">오른쪽 아래</option><option value="bl">왼쪽 아래</option><option value="tr">오른쪽 위</option><option value="tl">왼쪽 위</option><option value="free">자유 (폰에서 드래그)</option></select>
+    </div>
+    <p class="note">〈자유〉 위치는 <b>위젯 편집(⠿)을 켠 상태에서만</b> 드래그로 옮길 수 있고, 놓은 자리는 자동 저장돼요. 모바일 자유 위치는 폰(좁은 화면)에서 드래그한 자리를 따로 기억해요. 자유 배치 버튼은 화면에 붙어 따라오지 않고 <b>홈 페이지 위 한 자리</b>에 놓여요(위젯처럼). 구석 4곳은 화면에 붙어 따라옵니다. 글자 한 줄은 자유가 아니면 카테고리 줄 오른쪽 끝.</p>
 
     <div id="md-body" class="hidden">
     <p class="p-h">2 · A 담기</p>
@@ -3362,6 +3369,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=553"></script>
+<script type="module" src="./app.js?v=555"></script>
 </body>
 </html>
