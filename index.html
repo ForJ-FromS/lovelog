@@ -644,8 +644,28 @@
   /* 채팅 높이 제한 + 스크롤 */
   .w-chat.ch-scroll .ch-box, .w-tl.ch-scroll .ch-box{max-height:var(--chMax,380px);overflow-y:auto;
     overscroll-behavior:contain;padding-right:5px}
-  .w-chat.ch-scroll .ch-box::-webkit-scrollbar{width:4px}
-  .w-chat.ch-scroll .ch-box::-webkit-scrollbar-thumb{background:var(--line);border-radius:99px}
+  /* ═══ 위젯 공통 스크롤바(phase537b) — 얇고 은은하게 · 포인트색을 옅게 ═══ */
+  @supports not selector(::-webkit-scrollbar){   /* 파이어폭스만 표준 속성 — 크롬은 이 속성이 있으면 아래 ::-webkit 꾸밈을 무시함 */
+    .side *{scrollbar-width:thin;scrollbar-color:color-mix(in srgb, var(--pri) 45%, transparent) transparent}
+    body.sb-hide .side *{scrollbar-width:none} }
+  .side *::-webkit-scrollbar{width:5px;height:5px}
+  .side *::-webkit-scrollbar-track{background:transparent}
+  .side *::-webkit-scrollbar-thumb{background:color-mix(in srgb, var(--pri) 34%, transparent);border-radius:99px}
+  .side *::-webkit-scrollbar-thumb:hover{background:color-mix(in srgb, var(--pri) 62%, transparent)}
+  .side *::-webkit-scrollbar-button{display:none;width:0;height:0}
+  .side *::-webkit-scrollbar-corner{background:transparent}
+  /* 스크롤바 모양 3종 — 꾸미기 → 모양 · 화면 */
+  body.sb-hide .side *::-webkit-scrollbar{width:0;height:0;display:none}
+  body.sb-dot .side *::-webkit-scrollbar{width:8px}
+  body.sb-dot .side *::-webkit-scrollbar-thumb{background:var(--pri);border-radius:99px;
+    border:2.5px solid transparent;background-clip:content-box}
+  body.sb-rail .side *::-webkit-scrollbar{width:7px}
+  body.sb-rail .side *::-webkit-scrollbar-track{background:linear-gradient(90deg,transparent 3px,var(--line) 3px 4px,transparent 4px)}
+  body.sb-rail .side *::-webkit-scrollbar-thumb{background:var(--pri);border-radius:99px;border:1px solid var(--card)}
+  body.sb-grad .side *::-webkit-scrollbar{width:6px}
+  body.sb-grad .side *::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--pri),color-mix(in srgb, var(--pri) 45%, hsl(var(--h) 30% 20%)));border-radius:99px}
+  body.sb-line .side *::-webkit-scrollbar{width:3px}
+  body.sb-line .side *::-webkit-scrollbar-thumb{background:color-mix(in srgb, var(--pri) 70%, transparent);border-radius:0}
   /* 채팅 움짤 — 메신저·윈도우: 아래서 올라오듯 / 대본형: 제자리 뿅 */
   .ch-anim .ch-line{display:none}
   .ch-anim .ch-line.ch-in{display:flex;opacity:0;animation:chBloom .34s ease-out forwards}
@@ -1123,8 +1143,6 @@
   .w-links a:last-child{border-bottom:none}
   .w-links a:hover{color:var(--pri)}
   .w-banner .bn-list{max-height:var(--bnH,170px);overflow-y:auto;padding-right:4px}
-  .w-banner .bn-list::-webkit-scrollbar{width:4px}
-  .w-banner .bn-list::-webkit-scrollbar-thumb{background:var(--line);border-radius:2px}
   .w-banner a{display:block;border-radius:8px;overflow:hidden;margin-bottom:8px;
     border:1px solid var(--line)}
   .w-banner a:last-child{margin-bottom:0}
@@ -1321,7 +1339,7 @@
   .dd-ticket .dd-main::before{left:-7px} .dd-ticket .dd-main::after{right:-7px}
   .dd-ticket .dd-main .n{font-family:'IBM Plex Mono',monospace;font-size:var(--wts,24px);color:var(--wac,var(--pri))} .dd-ticket .dd-main .t{font-size:11px;color:var(--wtc,var(--body))}
   .dd-ticket .dd-rest{border-top:none;padding:8px 17px 12px}
-  .dd-strip .dd-strip{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
+  .dd-strip .dd-strip{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
   .dd-strip .dd-sc{flex:none;width:86px;padding:10px 8px;border-radius:10px;border:1px solid var(--line);text-align:center}
   .dd-strip .dd-sc .n{display:block;font-family:'IBM Plex Mono',monospace;font-size:var(--wts,18px);color:var(--wtc,var(--ink))} .dd-strip .dd-sc .t{display:block;font-size:9px;margin-top:3px;color:var(--muted)}
   .dd-strip .dd-sc.first{background:var(--wac,var(--pri));border-color:var(--wac,var(--pri))} .dd-strip .dd-sc.first .n,.dd-strip .dd-sc.first .t{color:#15131f}
@@ -1526,6 +1544,16 @@
   .ext-link{display:inline;padding:0;border:none;border-radius:0;font-size:inherit;color:var(--pri);
     text-decoration:underline;text-decoration-color:color-mix(in srgb, var(--pri) 55%, transparent);text-underline-offset:3px;text-decoration-thickness:1px}   /* 본문 링크: 알약 → 밑줄(phase474) */
   .ext-link:hover{text-decoration-color:var(--pri)}
+  /* 📁 곡 목록 접기(phase537b) */
+  .bgm-tw.fold .bgm-trk{display:none}
+  .bgm-tw.fold.open .bgm-trk{display:flex}
+  .bgm-tkh{display:flex;align-items:center;gap:7px;width:100%;margin-top:8px;padding:6px 4px;cursor:pointer;
+    background:none;border:0;border-top:1px solid var(--line);color:var(--bgmTx,var(--muted));font-size:11.5px;text-align:left}
+  .bgm-tkh:hover{color:var(--bgmTx,var(--ink))}
+  .bgm-tkh .a{font-size:9px;transition:transform .2s;display:inline-block}
+  .bgm-tw.open .bgm-tkh .a{transform:rotate(180deg)}
+  .bgm-tkh .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bgm-tkh .n{font-family:'IBM Plex Mono',monospace;font-size:9px;opacity:.7}
   .bgm-trk{display:flex;flex-direction:column;gap:2px;margin-top:8px;max-height:150px;overflow:auto}
   .bgm-trk button{display:flex;align-items:center;gap:7px;width:100%;text-align:left;
     background:none;border:0;padding:5px 7px;border-radius:7px;cursor:pointer;
@@ -2050,8 +2078,6 @@
     white-space:pre-wrap;overflow-wrap:anywhere}
   .w-phone.ch-scroll .ch-box{max-height:var(--chMax,380px);overflow-y:auto;
     overscroll-behavior:contain;padding-right:4px}
-  .w-phone.ch-scroll .ch-box::-webkit-scrollbar{width:4px}
-  .w-phone.ch-scroll .ch-box::-webkit-scrollbar-thumb{background:var(--phMut);border-radius:99px}
 
   /* A. OLED 미니멀 */
   .ph-oled .ph-frame{border:7px solid transparent;border-radius:30px;padding:12px 14px 15px;
@@ -2205,8 +2231,6 @@
     border:1px dashed var(--line);border-radius:9px}
   .nb-list{display:flex;flex-direction:column;gap:7px;
     max-height:var(--nbH,none);overflow-y:auto;padding-right:3px}
-  .nb-list::-webkit-scrollbar{width:4px}
-  .nb-list::-webkit-scrollbar-thumb{background:var(--line);border-radius:2px}
   .nb-more{margin:2px 0 0;text-align:right;font-size:10.5px;color:var(--muted)}
   .gpin{position:absolute;left:6px;top:6px;font-style:normal;font-size:12px;
     background:hsl(var(--h) 30% 8% / .72);color:hsl(0 0% 100% / .55);border-radius:50%;
@@ -3277,11 +3301,17 @@ html,body{overflow-x:hidden;overflow-x:clip}
         style="width:86px"></span></div>
       <div class="trow"><span class="tl">갤러리 한 줄</span><span class="tc"><select id="s-galcols">
         <option value="1">1장 (크게)</option><option value="2">2장</option>
-        <option value="3" selected>3장 (기본)</option><option value="4">4장</option></select></span></div>
+        <option value="3" selected>3장 (기본)</option><option value="4">4장</option></select>
+        <select id="s-galrows" title="한 페이지에 보여줄 줄 수 — 넘으면 페이지 번호가 생겨요">
+        <option value="2">2줄까지</option><option value="3">3줄까지</option><option value="4">4줄까지</option>
+        <option value="5" selected>5줄까지 (기본)</option><option value="8">8줄까지</option><option value="0">제한 없음</option></select></span></div>
       <div class="trow"><span class="tl">메모 카드</span><span class="tc"><select id="s-memocols">
         <option value="2">한 줄 2장</option><option value="3" selected>한 줄 3장</option><option value="4">한 줄 4장</option></select>
         <select id="s-memoh">
         <option value="s">짧게 (4줄)</option><option value="m" selected>보통 (7줄)</option><option value="l">길게 (11줄)</option></select>
+        <select id="s-memorows" title="한 페이지에 보여줄 줄 수 — 넘으면 페이지 번호가 생겨요">
+        <option value="2">2줄까지</option><option value="3">3줄까지</option><option value="4" selected>4줄까지 (기본)</option>
+        <option value="6">6줄까지</option><option value="0">제한 없음</option></select>
         <select id="s-mpinmax">
         <option value="1">고정 1개</option><option value="2">고정 2개</option>
         <option value="3" selected>고정 3개</option><option value="4">고정 4개</option><option value="6">고정 6개</option></select>
@@ -3298,6 +3328,10 @@ html,body{overflow-x:hidden;overflow-x:clip}
       <p class="p-h">모양 · 화면</p>
         <div class="trow"><span class="tl">🔲 모서리</span><span class="tc"><select id="s-corner">
         <option value="">둥글게 (기본)</option><option value="soft">살짝 각지게</option><option value="sharp">뾰족하게</option></select>
+          <select id="s-sbstyle" title="위젯 안 목록의 스크롤바 모양">
+            <option value="">스크롤바 — 가는 알약 (기본)</option><option value="dot">스크롤바 — 동그란 점</option>
+            <option value="line">스크롤바 — 얇은 선</option><option value="rail">스크롤바 — 레일 (선 위 손잡이)</option>
+            <option value="grad">스크롤바 — 그라데이션</option><option value="hide">스크롤바 — 숨기기</option></select>
           <select id="s-btnstyle" title="BACK · 더보기 같은 작은 버튼 모양">
             <option value="">버튼 — 알약 (기본)</option><option value="box">버튼 — 네모</option><option value="text">버튼 — 글자만 (밑줄)</option></select></span></div>
       <div class="trow"><span class="tl">글 목록</span><span class="tc"><select id="s-rowstyle" title="글 목록과 대표글 · 최신글 위젯의 줄 모양">
@@ -3542,6 +3576,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=584"></script>
+<script type="module" src="./app.js?v=590"></script>
 </body>
 </html>

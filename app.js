@@ -951,6 +951,7 @@ async function enterPage(){
   document.body.classList.toggle('tag-text', p.tagShape==='text');      // 🏷 태그 모양(phase313)
   document.body.classList.toggle('tag-box', p.tagShape==='box');
   document.body.classList.toggle('style-blog', homeStyle()==='blog');
+  ['','dot','line','rail','grad','hide'].forEach(k=>document.body.classList.toggle('sb-'+k, !!k && p.sbStyle===k));   // 스크롤바 모양(phase537b)
   document.body.classList.remove('theme-win98','theme-vhs');
   if(p.theme && p.theme!=='default') document.body.classList.add('theme-'+p.theme);
   document.documentElement.style.setProperty('--galc', galCols());
@@ -1106,7 +1107,7 @@ async function enterPage(){
 const MODE_KEYS=['hue','sat','lum','light','glass','theme','dots','bgImg','bgRef','bgDim','titleColor','font','customCss','curImg','sparkle','fx','fxC','labelIcon','priColor',
   'corner','cardC','headGrad','headText','hdOverC','hdSubC','hdDdC','headDeco','headBand','stickers','stkOff','stkHideM','stkHome','btnStyle','pgStyle','rowStyle','catShape','quoteStyle','postFs',
   'pet','petImg','petImgs','petSz','clickFx','snd','sndV','protectImg','fav','postPage',
-  'listTc','rowTag','tagShape','galCols','memoCols','catSel','catCnt','gbHint','gbEmpty','homeName','galName','gbName','labelIcon','headFs','headSubFs','headOverFs','headShow','sidePos','tagShow','tagOrder','magPick','magCards','magSlots'];   // 글 목록 제목 색 등 남은 꾸밈도 모드별(phase519)
+  'listTc','rowTag','tagShape','galCols','memoCols','galRows','memoRows','sbStyle','catSel','catCnt','gbHint','gbEmpty','homeName','galName','gbName','labelIcon','headFs','headSubFs','headOverFs','headShow','sidePos','tagShow','tagOrder','magPick','magCards','magSlots'];   // 글 목록 제목 색 등 남은 꾸밈도 모드별(phase519)
 const MODE_HDR=['heroImgs','heroImg','headFit','headH','headMode','headNoBg','enterImg','enterRef','enterText','cardImg','bannerImg','catImgs'];   // 사진(헤더·대문·대표·카테고리)
 const MODE_STRIP=['stripPin','stripCnt','stripShape','stripOn','stripSrc'];   // 사진 출처도 모드별(phase537b)                                                                          // 하단 스트립(phase476)
 const MODE_WID=['side','ddays','bgm','noLatest','sidePos','homeStyle'];                                                                   // 위젯 구성(phase476) · 홈 구조도 함께(phase537)
@@ -1534,6 +1535,8 @@ function galPos(g){                                            // 썸네일 크�
   return (fx!==50||fy!==50)?` style="object-position:${fx}% ${fy}%"`:'';
 }
 function memoCols(){ const n=+st.page.memoCols; return (n>=2&&n<=4)?n:3; }
+function galRows(){ const n=+st.page.galRows; return [0,2,3,4,5,8].includes(n)?n:5; }      // ▤ 갤러리 줄 수(phase537b)
+function memoRows(){ const n=+st.page.memoRows; return [0,2,3,4,6].includes(n)?n:4; }      // 🗒 메모 줄 수(phase537b)
 function mpinMax(){ const n=+st.page.mpinMax; return (n>=1&&n<=6)?n:3; }
 /* 🔴 새 방명록 배지(주인 전용): 마지막 확인 시각을 localStorage에 — 서버 비용 0 (phase315) */
 const gbLastTs=()=>st.guest.reduce((m,g)=>Math.max(m,(g.ts&&g.ts.seconds)||0),0);
@@ -2120,13 +2123,21 @@ function renderSide(){
       };
       const srcOf=u=>srcFrom(Math.max(0, trks.findIndex(t=>t.url===u)));
       if(trks.length>1){                                          // 곡 목록 UI(phase274)
+        const fold = !!w.tkFold;                                  // 📁 곡 목록 접어두기(phase537b) — 기본은 펼침
+        const tw=document.createElement('div'); tw.className='bgm-tw'+(fold?' fold':'');
+        if(fold){                                                 // 접힘: 머리 줄을 눌러 펼침
+          const hb=document.createElement('button'); hb.className='bgm-tkh'; hb.type='button';
+          hb.innerHTML=`<span class="a">▾</span><span class="t">${esc(w.tkLabel||'곡 목록')}</span><span class="n">${trks.length}</span>`;
+          hb.onclick=e=>{ e.stopPropagation(); tw.classList.toggle('open'); };
+          tw.appendChild(hb);
+        }
         const tl=document.createElement('div'); tl.className='bgm-trk';
         tl.innerHTML=trks.map((t,i)=>{
           const playing=bgmPlaying() && (bgmNowVid ? ytId(trks[i].url)===bgmNowVid : bgmCur===srcFrom(i));
           return `<button data-tk="${i}" class="${i===tcur?'sel':''}${playing?' pl':''}">
             <span class="n">${playing?'♪':(i+1)}</span><span class="t">${esc(t.title||('트랙 '+(i+1)))}</span></button>`;
         }).join('');
-        d.appendChild(tl);
+        tw.appendChild(tl); d.appendChild(tw);
         tl.querySelectorAll('[data-tk]').forEach(b2=>b2.onclick=e=>{
           e.stopPropagation();
           const i=+b2.dataset.tk; bgmTrk[wi]=i;
@@ -3143,7 +3154,7 @@ function renderList(){
     $('#pin-slot').innerHTML='';
     const gex=st.page.galEx||[];
     const all = st.cat==='__gal' ? st.gallery.filter(g=>!gex.includes(g.cat)) : st.gallery.filter(g=>g.cat===st.cat);   // 통합 제외(phase509)
-    const gper = galCols()*5;
+    const gper = galRows() ? galCols()*galRows() : all.length||1;   // 0=제한 없음(phase537b)
     renderPager(all.length, gper);
     const items = all.slice(((st.pg||1)-1)*gper, (st.pg||1)*gper);
     if(st.selMode) st.selIds ??= new Set();
@@ -3199,7 +3210,7 @@ function renderList(){
     let all=st.posts.filter(p=>p.cat===st.cat);
     if(st.q) all=all.filter(p=>postHay(p).includes(st.q));
     all=[...all.filter(p=>p.mpin), ...all.filter(p=>!p.mpin)];   // 📌 고정 메모는 맨 앞(phase231)
-    const mper=memoCols()*4;
+    const mper=memoRows() ? memoCols()*memoRows() : all.length||1;   // 0=제한 없음(phase537b)
     renderPager(all.length, mper);
     const items=all.slice(((st.pg||1)-1)*mper, (st.pg||1)*mper);
     const strip=s=>String(s||'').replace(/\[사진\d+\]/g,'').replace(/\*\*|__|~~|==|\*/g,'')
@@ -5087,6 +5098,8 @@ function renderWidEdit(){
         <option value="lp" ${w.style==='lp'?'selected':''}>LP 턴테이블 (판이 돌아요)</option>
         <option value="tun" ${w.style==='tun'?'selected':''}>주파수 튜너 (바늘이 떨려요)</option>
       </select>
+      <input id="we-bgtkl" placeholder="곡 목록 제목 (기본: 곡 목록)" value="${esc(w.tkLabel||'')}" style="width:150px" title="접어둔 곡 목록 줄에 적히는 글자">
+      <label class="chk" title="곡이 두 개 이상일 때 목록을 접어두고, 줄을 눌러야 펼쳐지게 해요"><input type="checkbox" id="we-bgfold" ${w.tkFold?'checked':''}> 📁 곡 목록 접어두기</label>
       <input id="we-bgsub" placeholder="보조 문구" value="${esc(w.sub||'')}" style="width:130px" title="카세트: 라벨 위 작은 글씨 (기본 SIDE A) / LP: 제목 아래 (기본 33⅓ RPM · SIDE A) / 튜너: 제목 아래 (기본 FM 88.1 · STEREO)">
     </div>
     <div class="p-row" style="align-items:center;font-size:11px;color:var(--muted);gap:8px">
@@ -5388,6 +5401,8 @@ function renderWidEdit(){
     if(sel.length) w.cats=sel; else delete w.cats;
   }));
   const mgl=$('#we-maglab'); if(mgl) mgl.addEventListener('input',()=>{ w.label=mgl.value===' '?'':(mgl.value.trim()||undefined); if(w.label===undefined) delete w.label; });   // 📰 공백 하나 = 제목 없음
+  const bfo=$('#we-bgfold'); if(bfo) bfo.addEventListener('change',()=>{ if(bfo.checked) w.tkFold=true; else delete w.tkFold; });   // 📁 기본은 펼침(phase537b)
+  const btl=$('#we-bgtkl'); if(btl) btl.addEventListener('input',()=>{ const v=btl.value.trim(); if(v) w.tkLabel=v; else delete w.tkLabel; });
   const wbr=$('#we-bare'); if(wbr) wbr.addEventListener('change',()=>{ if(wbr.checked) w.bare=true; else delete w.bare; });   // 🫧 투명 공통(phase537b)
   const wbc=$('#we-bcol'); if(wbc) wbc.addEventListener('change',()=>{ if(wbc.value) w.bcol=wbc.value; else delete w.bcol; });   // 카테고리 화면 좌우(phase537b)
   const qan=$('#we-qanim'); if(qan) qan.addEventListener('change',()=>{ w.anim=qan.checked; });
@@ -7076,7 +7091,10 @@ function fillSettings(){
   [['s-hdname','hdName'],['s-hdover','hdOver'],['s-hdsub','hdSub']].forEach(([id,k])=>{ const el=$('#'+id); if(el) el.checked=st.page[k]!==false; });
   [['s-hdnamefs','hdNameFs'],['s-hdoverfs','hdOverFs'],['s-hdsubfs','hdSubFs']].forEach(([id,k])=>{ const el=$('#'+id); if(el) el.value=st.page[k]||''; });
   const spf=$('#s-postfs'); if(spf) spf.value=st.page.postFs||'';
+  const ssb=$('#s-sbstyle'); if(ssb) ssb.value=st.page.sbStyle||'';
   $('#s-galcols').value=String(galCols());
+  const sgr=$('#s-galrows'); if(sgr) sgr.value=String(galRows());
+  const smr=$('#s-memorows'); if(smr) smr.value=String(memoRows());
   const smc=$('#s-memocols'); if(smc) smc.value=String(memoCols());
   const smp=$('#s-mpinmax'); if(smp) smp.value=String(mpinMax());
   const scf=$('#s-clickfx'); if(scf) scf.value=st.page.clickFx||'';
@@ -7213,7 +7231,8 @@ async function saveSettings(){
       hdName: $('#s-hdname')?.checked!==false, hdOver: $('#s-hdover')?.checked!==false, hdSub: $('#s-hdsub')?.checked!==false,
       hdNameFs: +($('#s-hdnamefs')?.value)||'', hdOverFs: +($('#s-hdoverfs')?.value)||'', hdSubFs: +($('#s-hdsubfs')?.value)||'',
       postFs: (()=>{ const v=parseFloat($('#s-postfs')?.value); return (v>=11&&v<=20)?v:''; })(),
-      galCols: +$('#s-galcols').value||3,
+      sbStyle: $('#s-sbstyle')?.value||'',   // 스크롤바 모양(phase537b)
+      galCols: +$('#s-galcols').value||3, galRows: +($('#s-galrows')?.value ?? 5), memoRows: +($('#s-memorows')?.value ?? 4),   // ▤🗒 줄 수(phase537b)
       memoCols: +($('#s-memocols')?.value)||3,
       mpinMax: +($('#s-mpinmax')?.value)||3,
       memoH: $('#s-memoh')?.value||'m',
