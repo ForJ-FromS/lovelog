@@ -1137,6 +1137,11 @@ async function modeApply(which, animate){
     ov.className='mfx-'+fx+' on'; await new Promise(r=>setTimeout(r, fx==='blink'?180:460)); }
   const wasLH=listHome();                                       // 홈 구조가 모드별이면 첫 화면이 달라질 수 있음(phase537)
   Object.assign(st.page, JSON.parse(JSON.stringify(snap)));
+  /* 스냅샷에 없는 키는 '기본값'으로(phase537b) — 전엔 홈 문서 값(반대 모드에서 마지막 저장한 값)이 그대로 남아 두 모드가 같이 바뀌었음.
+     기본에서 한 번도 안 바꾼 홈은 그 키가 문서에도 스냅샷에도 없어서 '저장 전 값 채우기'로도 못 막던 경우 */
+  { const range=MODE_KEYS.concat(m.hdr?MODE_HDR:[], m.strip?MODE_STRIP:[], m.wid?MODE_WID:[]);
+    const other=(m[which==='a'?'b':'a']||{}).snap||{};
+    range.forEach(k=>{ if(!(k in snap) && (k in other)) delete st.page[k]; }); }   // 반대 모드에만 있는 키 = 모드별로 쓰는 키 → 이쪽은 기본값. 둘 다 없는 키는 옛 스냅샷의 공통값이라 건드리지 않음
   try{ await resolveImgs(st.page); }catch(e){}                 // 참조 이미지 다시 채움(phase477)
   st.modeSwitch=true; try{ await enterPage(); } finally{ st.modeSwitch=false; }
   if(!document.body.classList.contains('in-post')){            // 글 읽는 중엔 화면을 안 옮김 — 목록으로 돌아갈 때 반영
