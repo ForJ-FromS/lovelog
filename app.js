@@ -5627,7 +5627,8 @@ function renderWidEdit(){
   const blab=$('#we-blab'); if(blab) blab.addEventListener('input',()=>{ w.label=blab.value; });
   const bmh=$('#we-bmaxh'); if(bmh) bmh.addEventListener('change',()=>{
     if(bmh.value) w.maxh=bmh.value; else delete w.maxh; });
-  const bnh=$('#we-bnhome'); if(bnh) bnh.onclick=()=>{ w.items=w.items||[]; w.items.unshift({h:'',url:''}); renderWidEdit(); $('#we-bnhome')?.scrollIntoView({block:'start',behavior:'smooth'}); };   // 새 배너는 맨 위에 — 추가 줄 바로 아래(phase537b)
+  const bnh=$('#we-bnhome'); if(bnh) bnh.onclick=()=>{ w.items=w.items||[]; w.items.push({h:'',url:''}); renderWidEdit();   // 새 배너는 맨 아래(순서 유지) · 추가 줄만 맨 위(phase537b)
+    const rows=document.querySelectorAll('#we-modal [data-bh]'); const last=rows[rows.length-1]; if(last){ last.scrollIntoView({block:'center',behavior:'smooth'}); last.focus(); } };
   $('#wid-edit').querySelectorAll('[data-bh]').forEach(i2=>i2.addEventListener('input',()=>{
     const raw=i2.value.trim();
     w.items[i2.dataset.bh].h = ownHandle(raw) || raw.toLowerCase().replace(/^.*\//,''); }));
@@ -5641,7 +5642,7 @@ function renderWidEdit(){
     delete w.items[b2.dataset.bimx].img; renderWidEdit(); });
   const badd=$('#we-bimg'); if(badd) badd.addEventListener('change',async e=>{
     const f=e.target.files[0]; if(!f) return; msg('배너 압축 중...');
-    w.items=w.items||[]; w.items.unshift({img:await upFile(f,1200,.9,110),url:''});   // 맨 위에(phase537b)
+    w.items=w.items||[]; w.items.push({img:await upFile(f,1200,.9,110),url:''});
     renderWidEdit(); renderWidList(); msg('배너 추가됨 — [위젯 구성 저장]을 눌러주세요.');
   });
   const ladd=$('#we-add'); if(ladd) ladd.onclick=()=>{ w.items=w.items||[]; w.items.push({label:'',url:''}); renderWidEdit(); };
