@@ -7209,6 +7209,7 @@ function fillSettings(){
 }
 async function saveSettings(){
   undoPush('설정 저장 전');
+  const prevPage={...st.page};                                   // 🌗 저장 전 값 — 반대 모드 스냅샷에 빠진 기본 키를 이 값으로 채움(phase537b)
   msg('저장 중...');
   try{
     const gateIn=$('#s-gate').value;
@@ -7346,7 +7347,13 @@ async function saveSettings(){
     gateClear=false; renderGateState();
     if(data.gate==='') sessionStorage.removeItem('gate_'+st.handle);
     if($('#md-on') && !st._modeSaving){ try{ await modeSaveCfg(); }catch(e){} }   // 듀얼 탭 값도 같이 저장(phase537b) — 따로 [듀얼 설정 저장] 안 눌러도
-    if(st.page.modes&&st.page.modes.on&&!st._modeSaving){ await modeSyncCurrent(); msg(`저장 완료 — 지금 보고 있는 모드(${(modeCur()||'a').toUpperCase()})에도 반영했어요.`); }
+    if(st.page.modes&&st.page.modes.on&&!st._modeSaving){
+      await modeSyncCurrent();
+      /* 반대 모드 스냅샷에 기본 키가 빠져 있으면(옛 스냅샷) 저장 전 값으로 채움 — 안 채우면 그 키는 두 모드가 공통이 되어 같이 바뀜(phase537b) */
+      const m=st.page.modes, cur=modeCur()||'a', oth=cur==='a'?'b':'a', os=m[oth]&&m[oth].snap;
+      if(os){ let ch=false; MODE_KEYS.forEach(k=>{ if(!(k in os) && prevPage[k]!==undefined){ os[k]=prevPage[k]; ch=true; } });
+        if(ch){ try{ await updateDoc(doc(db,'pages',st.handle),{modes:m}); }catch(e){} } }
+      msg(`저장 완료 — 지금 보고 있는 모드(${cur.toUpperCase()})에 반영했어요. 반대 모드는 그대로예요.`); }
     else msg('저장 완료!');
     enterPage(); renderCatbar();
   }catch(e){ msg('오류: '+e.message); }
