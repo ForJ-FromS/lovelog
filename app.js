@@ -1285,7 +1285,7 @@ function bindFloatDrag(el, wi){
       const src=st.page.side && st.page.side[wi];
       if(!src) return;
       src.fx=Math.round(nx*100)/100; src.fy=Math.round(ny);
-      try{ await updateDoc(doc(db,'pages',st.handle),{side:st.page.side}); }
+      try{ await updateDoc(doc(db,'pages',st.handle),{side:st.page.side}); modeSyncCurrent(); }   // 🌗 지금 모드 스냅샷에도(phase537b) — 전환하면 체크가 되돌아가던 것
       catch(e){ msg('위젯 위치 저장 실패 — '+e.message); }
     };
     el.addEventListener('pointermove',move);
@@ -2445,7 +2445,7 @@ function renderSide(){
         const h=(st.page.side[wi].habits||[])[+el.dataset.hb]; if(!h) return;
         h.m=h.m||{}; const ds=el.dataset.hd;
         if(h.m[ds]) delete h.m[ds]; else h.m[ds]=1;
-        try{ await updateDoc(doc(db,'pages',st.handle),{side:st.page.side}); }
+        try{ await updateDoc(doc(db,'pages',st.handle),{side:st.page.side}); modeSyncCurrent(); }   // 🌗 지금 모드 스냅샷에도(phase537b) — 전환하면 체크가 되돌아가던 것
         catch(err){ msg('저장 실패 — '+err.message); return; }
         renderSide();
       });
@@ -2478,7 +2478,7 @@ function renderSide(){
         cb.closest('.td-item').classList.toggle('done', cb.checked);
         const ct=d.querySelector('.td-cnt');
         if(ct) ct.textContent=its.filter(x=>x.done).length+' / '+its.length;
-        try{ await updateDoc(doc(db,'pages',st.handle),{side:st.page.side}); }
+        try{ await updateDoc(doc(db,'pages',st.handle),{side:st.page.side}); modeSyncCurrent(); }   // 🌗 지금 모드 스냅샷에도(phase537b) — 전환하면 체크가 되돌아가던 것
         catch(e){ msg('체크 저장 실패 — 잠시 후 다시 시도해주세요.'); }
       });
       box.appendChild(d); return;
