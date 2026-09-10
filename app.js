@@ -1659,7 +1659,7 @@ async function dropWidget(from, to, contId, pos){
   }
   st.page.side=arr;
   renderSide();
-  try{ await updateDoc(doc(db,'pages',st.handle),{side:arr}); }
+  try{ await updateDoc(doc(db,'pages',st.handle),{side:arr}); modeSyncCurrent(); }   // 🌗 지금 모드 스냅샷에도(phase537b) — 듀얼 켜면 새로고침·전환 때 순서가 되돌아가던 것
   catch(e){ alert('순서 저장 실패: '+e.message); }
 }
 let spkFx='', spkPri='#9db4ff', spkLast=0;
@@ -2835,7 +2835,7 @@ function renderSide(){
       const a1=same[p].i, b1=same[t].i;
       [arr[a1],arr[b1]]=[arr[b1],arr[a1]];
       st.page.side=arr; renderSide();
-      try{ await updateDoc(doc(db,'pages',st.handle),{side:arr}); }
+      try{ await updateDoc(doc(db,'pages',st.handle),{side:arr}); modeSyncCurrent(); }
       catch(e){ msg('순서 저장 실패: '+e.message); }
     };
     const bump=async(wi,dir)=>{
@@ -2846,7 +2846,7 @@ function renderSide(){
       if(tg<0||tg>=sq.length) return;
       const t=sq[ps].w.mo; sq[ps].w.mo=sq[tg].w.mo; sq[tg].w.mo=t;
       st.page.side=arr; renderSide();
-      try{ await updateDoc(doc(db,'pages',st.handle),{side:arr}); }catch(e){}
+      try{ await updateDoc(doc(db,'pages',st.handle),{side:arr}); modeSyncCurrent(); }catch(e){}
     };
     const cols = blogEdit ? [boxL,boxR] : (isM ? [hC] : [hL,hC,hR]);
     cols.forEach(colEl=> colEl && colEl.querySelectorAll(':scope > [data-wi]').forEach(el=>{
