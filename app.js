@@ -1112,7 +1112,9 @@ const MODE_KEYS=['hue','sat','lum','light','glass','theme','dots','bgImg','bgRef
   'pet','petImg','petImgs','petSz','clickFx','snd','sndV','protectImg','fav','postPage',
   'listTc','rowTag','tagShape','galCols','memoCols','galRows','memoRows','sbStyle','galShape','catSel','catCnt','gbHint','gbEmpty','gbPer','lockMark','privMark','headMode','headH','headFit','homeName','galName','gbName','labelIcon','headFs','headSubFs','headOverFs','headShow','sidePos','tagShow','tagOrder','magPick','magCards','magSlots'];   // 글 목록 제목 색 등 남은 꾸밈도 모드별(phase519)
 const MODE_HDR=['heroImgs','heroImg','headNoBg','enterImg','enterRef','enterText','cardImg','bannerImg','catImgs'];   // 사진(헤더·대문·대표·카테고리) — headMode·headH·headFit는 배치라 기본 스냅샷으로 옮김(phase537b)
-const MODE_STRIP=['stripPin','stripCnt','stripShape','stripOn','stripSrc'];   // 사진 출처도 모드별(phase537b)                                                                          // 하단 스트립(phase476)
+const MODE_STRIP=['stripPin','stripCnt','stripShape','stripOn','stripSrc'];   // 사진 출처도 모드별(phase537b)
+/* 모드별 '기본값 되돌리기'·'저장 전 값 채우기'를 적용하는 배치 키(phase537b) — 사진·이미지 키는 용량 때문에 스냅샷에서 빠질 수 있어 이 규칙에 넣으면 안 됨 */
+const MODE_LAYOUT=['headMode','headH','headFit','homeStyle','sidePos','side','noLatest','magPick','magCards','magSlots','stripOn','stripSrc','stripShape','stripCnt','stripPin','sbStyle','galShape','galRows','memoRows','gbPer','lockMark','privMark','catShape','catStyle'];                                                                          // 하단 스트립(phase476)
 const MODE_WID=['side','ddays','bgm','noLatest','sidePos','homeStyle'];                                                                   // 위젯 구성(phase476) · 홈 구조도 함께(phase537)
 function modeSnap(){
   const m=st.page.modes||{}; const keys=MODE_KEYS.concat(m.hdr?MODE_HDR:[], m.strip?MODE_STRIP:[], m.wid?MODE_WID:[]); const o={};
@@ -1141,7 +1143,7 @@ async function modeApply(which, animate){
      기본에서 한 번도 안 바꾼 홈은 그 키가 문서에도 스냅샷에도 없어서 '저장 전 값 채우기'로도 못 막던 경우 */
   { const range=MODE_KEYS.concat(m.hdr?MODE_HDR:[], m.strip?MODE_STRIP:[], m.wid?MODE_WID:[]);
     const other=(m[which==='a'?'b':'a']||{}).snap||{};
-    range.forEach(k=>{ if(!(k in snap) && (k in other)) delete st.page[k]; }); }   // 반대 모드에만 있는 키 = 모드별로 쓰는 키 → 이쪽은 기본값. 둘 다 없는 키는 옛 스냅샷의 공통값이라 건드리지 않음
+    range.forEach(k=>{ if(MODE_LAYOUT.includes(k) && !(k in snap) && (k in other)) delete st.page[k]; }); }   // 배치 키만: 반대 모드에만 있는 키 = 모드별로 쓰는 키 → 이쪽은 기본값. 사진 키는 제외(용량으로 빠진 걸 '없음'으로 오해해 헤더가 날아갔던 것)
   try{ await resolveImgs(st.page); }catch(e){}                 // 참조 이미지 다시 채움(phase477)
   st.modeSwitch=true; try{ await enterPage(); } finally{ st.modeSwitch=false; }
   if(!document.body.classList.contains('in-post')){            // 글 읽는 중엔 화면을 안 옮김 — 목록으로 돌아갈 때 반영
@@ -7356,7 +7358,7 @@ async function saveSettings(){
       await modeSyncCurrent();
       /* 반대 모드 스냅샷에 기본 키가 빠져 있으면(옛 스냅샷) 저장 전 값으로 채움 — 안 채우면 그 키는 두 모드가 공통이 되어 같이 바뀜(phase537b) */
       const m=st.page.modes, cur=modeCur()||'a', oth=cur==='a'?'b':'a', os=m[oth]&&m[oth].snap;
-      if(os){ let ch=false; Object.keys(modeSnap()).forEach(k=>{ if(!(k in os) && prevPage[k]!==undefined){ os[k]=prevPage[k]; ch=true; } });   // 기본 + 체크한 묶음 전부
+      if(os){ let ch=false; Object.keys(modeSnap()).forEach(k=>{ if(MODE_LAYOUT.includes(k) && !(k in os) && prevPage[k]!==undefined){ os[k]=prevPage[k]; ch=true; } });   // 배치 키만 (사진·큰 데이터는 채우지 않음)
         if(ch){ try{ await updateDoc(doc(db,'pages',st.handle),{modes:m}); }catch(e){} } }
       msg(`저장 완료 — 지금 보고 있는 모드(${cur.toUpperCase()})에 반영했어요. 반대 모드는 그대로예요.`); }
     else msg('저장 완료!');
