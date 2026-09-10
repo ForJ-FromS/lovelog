@@ -5314,8 +5314,10 @@ function renderWidEdit(){
       <textarea data-phtx="${i}" placeholder="알림 내용" class="chl-tx">${esc(l.text||'')}</textarea>
     </div>`).join('')
     +`<button class="btn" id="we-phadd" style="font-size:12px">+ 알림 추가</button>`;
-  html+=`<p class="note">입력은 즉시 반영돼요 — 마지막에 [위젯 구성 저장]만 누르면 저장 완료.</p>`;
+  html+=`<button type="button" class="go" id="we-savego2" style="width:100%;margin:12px 0 6px;padding:11px 0;font-size:12.5px">저장하고 닫기</button>
+  <p class="note">입력은 즉시 반영돼요 — 마지막에 [위젯 구성 저장]만 누르면 저장 완료.</p>`;   // 아래에도 저장 버튼(phase537b) — 긴 편집창에서 위로 안 올라가도 됨
   $('#wid-edit').innerHTML=html;
+  { const sg=$('#we-savego2'); if(sg) sg.onclick=()=>{ $('#wid-save').click(); closeWidEdit(); renderWidList(); }; }
   // 라이브 바인딩: 쓰는 즉시 draft에 반영
   const t=$('#we-text'); if(t) t.addEventListener('input',()=>{ w.text=t.value; });
   // 📇 페어 인터뷰(phase338)
