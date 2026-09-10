@@ -1185,7 +1185,7 @@ async function modeSyncCurrent(){
   const m=st.page.modes; if(!m||!m.on) return;
   const cur=modeCur(); const slot=m[cur]; if(!slot||!slot.snap) return;
   const fresh=modeSnap();                                       // 현재 옵션 범위로 새 스냅샷
-  Object.keys(fresh).forEach(k=>{ if(k in slot.snap || MODE_KEYS.includes(k)) slot.snap[k]=fresh[k]; });   // 담겨 있던 항목 + 기본 항목(새로 늘어난 키 포함) 갱신(phase537b)
+  Object.keys(fresh).forEach(k=>{ slot.snap[k]=fresh[k]; });   // 지금 켜진 범위(기본 + 체크한 묶음)의 키를 전부 갱신 — 옛 스냅샷에 없던 키도 들어감(phase537b)
   try{ await updateDoc(doc(db,'pages',st.handle),{modes:m}); }catch(e){}
 }
 function modeDragBind(b){
@@ -7351,7 +7351,7 @@ async function saveSettings(){
       await modeSyncCurrent();
       /* 반대 모드 스냅샷에 기본 키가 빠져 있으면(옛 스냅샷) 저장 전 값으로 채움 — 안 채우면 그 키는 두 모드가 공통이 되어 같이 바뀜(phase537b) */
       const m=st.page.modes, cur=modeCur()||'a', oth=cur==='a'?'b':'a', os=m[oth]&&m[oth].snap;
-      if(os){ let ch=false; MODE_KEYS.forEach(k=>{ if(!(k in os) && prevPage[k]!==undefined){ os[k]=prevPage[k]; ch=true; } });
+      if(os){ let ch=false; Object.keys(modeSnap()).forEach(k=>{ if(!(k in os) && prevPage[k]!==undefined){ os[k]=prevPage[k]; ch=true; } });   // 기본 + 체크한 묶음 전부
         if(ch){ try{ await updateDoc(doc(db,'pages',st.handle),{modes:m}); }catch(e){} } }
       msg(`저장 완료 — 지금 보고 있는 모드(${cur.toUpperCase()})에 반영했어요. 반대 모드는 그대로예요.`); }
     else msg('저장 완료!');
