@@ -1476,7 +1476,8 @@ async function bumpCounter(){
   const ref=doc(db,'pages',st.handle,'stats','counter');
   const t=today(), key='lvcnt-'+st.handle+'-'+t;
   let c={};
-  if(!sessionStorage.getItem(key)){
+  if(!sessionStorage.getItem(key) && !st._cntBusy){
+    st._cntBusy=true; sessionStorage.setItem(key,'1');           // 🔢 트랜잭션 '전에' 잠금(phase537b) — 같은 세션에서 겹쳐 불려도 한 번만 (v592~620 사이 렌더마다 +1 되던 것)
     try{
       // 트랜잭션 — 동시 방문에도 한 명도 안 빠지게 원자적으로 +1
       c=await runTransaction(db,async tx=>{
@@ -1485,8 +1486,8 @@ async function bumpCounter(){
         tx.set(ref,upd); return upd;
       });
       console.log('[lovelog] counter 커밋:', 'handle='+st.handle, c);
-      sessionStorage.setItem(key,'1');
     }catch(e){
+      sessionStorage.removeItem(key);                            // 실패했으면 다음 렌더에서 다시 시도할 수 있게
       console.warn('[lovelog] 방문자수 기록 실패:', e.code||e.message, e);
       try{ c=(await getDoc(ref)).data()||{}; }catch(e2){}
       if(st.mine) msg('⚠ 방문자수 기록 실패 — '+(e.code||e.message)+' (규칙의 stats 부분을 확인해주세요)');
@@ -1498,7 +1499,7 @@ async function bumpCounter(){
     catch(e){ console.warn('[lovelog] counter 로드 실패:', e.code||e.message, e);
       if(st.mine) msg('⚠ 방문자수 불러오기 실패 — '+(e.code||e.message)); }
   }
-  st.cnt=c; fillCounter();
+  st._cntBusy=false; st.cnt=c; fillCounter();
 }
 function fillCounter(){
   const a=$('#cnt-today'), b=$('#cnt-total'); if(!a||!b) return;
@@ -2869,7 +2870,7 @@ function renderSide(){
   gh.classList.toggle('no-r', pos==='b' && !hR.children.length && !st.mine);
   /* 게시판 왼쪽 칸: 사이드바가 '양쪽'이 아니어도 왼쪽으로 지정한 위젯이 있으면 칸을 연다(phase537b) — 위젯이 없는 헤더뿐이면 기둥 CSS가 따로 처리 */
   /* 🔢 방문자수: 처음 진입 때 위젯이 없었거나(듀얼 다른 모드 · 방금 추가) st.cnt가 비어 있으면 다시 읽어 옴(phase537b) — 0으로 보이던 것. 세션당 1회 가드가 있어 두 번 세지 않음 */
-  if(!st.cnt && sideCfg().some(w=>w.t==='cnt'&&!w.hid)) bumpCounter();
+  if(!st.cnt && !st._cntBusy && sideCfg().some(w=>w.t==='cnt'&&!w.hid)) bumpCounter();
   const lw = !home && !both && !pil && [...boxL.children].some(el=>!el.classList.contains('head'));
   document.body.classList.toggle('side-lw', lw);
   applyAutoHead();                                   // 헤더 재배치 후 실제 폭으로 재계산
