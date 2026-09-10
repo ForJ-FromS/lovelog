@@ -388,8 +388,11 @@
   #mode-fx.mfx-fade.on{opacity:.92;transition:opacity .45s ease-in}
   #mode-fx.mfx-fade.out{opacity:0;transition:opacity .9s ease-out}
   /* 자연스럽게(phase488): 덮개 없이 배경·카드·글자색만 1.4초에 걸쳐 번짐 — blur 없음 */
-  body.mode-soft,body.mode-soft #bgphoto,body.mode-soft .side,body.mode-soft .head,body.mode-soft .post,body.mode-soft .card,body.mode-soft #catbar a,body.mode-soft .row,body.mode-soft .btn{
-    transition:background-color 1.4s ease,color 1.4s ease,border-color 1.4s ease,opacity 1.4s ease}
+  body.mode-soft{transition:background-color 1.2s ease}
+  body.mode-soft .wrap,body.mode-soft #stk-layer{transition:opacity .9s ease-out,filter .9s ease-out,transform .9s ease-out}
+  body.mode-soft #bgphoto{transition:opacity .9s ease-out,filter .9s ease-out}
+  body.mode-soft.mode-soft-out .wrap,body.mode-soft.mode-soft-out #stk-layer{opacity:0;filter:blur(8px);transform:translateY(6px);transition:opacity .36s ease-in,filter .36s ease-in,transform .36s ease-in}
+  body.mode-soft.mode-soft-out #bgphoto{opacity:.4;filter:blur(10px);transition:opacity .36s ease-in,filter .36s ease-in}
   #mode-fx.mfx-blink.on{background:#000;opacity:1;transition:opacity .12s} #mode-fx.mfx-blink.out{opacity:0;transition:opacity .35s ease}
   .head .dday .t{font-family:'IBM Plex Mono',monospace;font-size:8px;
     letter-spacing:.2em;color:var(--muted)}
@@ -3602,6 +3605,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=611"></script>
+<script type="module" src="./app.js?v=612"></script>
 </body>
 </html>

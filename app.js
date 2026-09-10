@@ -1130,7 +1130,9 @@ async function modeApply(which, animate){
   const m=st.page.modes; if(!m||!m.on) return; const snap=(m[which]||{}).snap; if(!snap) return;
   const fx=['fade','blink','none','soft'].includes(m.fx)?m.fx:'soft';   // 기본 자연스럽게(phase488) · 커튼 등 옛 값은 soft
   const overlay=animate&&(fx==='fade'||fx==='blink');
-  if(animate&&fx==='soft') document.body.classList.add('mode-soft');
+  if(animate&&fx==='soft'){                                     // 🌫 자연스럽게(phase537b): 내용을 살짝 흐리며 가라앉혔다가 새 모드로 떠오름 — 전엔 색만 1.4s 트랜지션이라 티가 안 났음(위젯은 다시 그려져 효과 없음)
+    document.body.classList.add('mode-soft'); await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+    document.body.classList.add('mode-soft-out'); await new Promise(r=>setTimeout(r,380)); }
   if(overlay){ const ov=document.getElementById('mode-fx')||Object.assign(document.body.appendChild(document.createElement('div')),{id:'mode-fx'});
     ov.className='mfx-'+fx+' on'; await new Promise(r=>setTimeout(r, fx==='blink'?180:460)); }
   const wasLH=listHome();                                       // 홈 구조가 모드별이면 첫 화면이 달라질 수 있음(phase537)
@@ -1143,7 +1145,7 @@ async function modeApply(which, animate){
   }
   try{ localStorage.setItem('lv-mode-'+st.handle, which); }catch(e){}
   if(overlay){ const ov=document.getElementById('mode-fx'); if(ov){ ov.classList.add('out'); setTimeout(()=>{ ov.className=''; }, 1000); } }
-  if(animate&&fx==='soft') setTimeout(()=>document.body.classList.remove('mode-soft'), 1600);
+  if(animate&&fx==='soft'){ requestAnimationFrame(()=>document.body.classList.remove('mode-soft-out')); setTimeout(()=>document.body.classList.remove('mode-soft'), 1600); }
   modeToggleDraw();
 }
 function modeToggleDraw(){
