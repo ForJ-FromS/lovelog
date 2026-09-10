@@ -2180,6 +2180,17 @@
   body.reading .strip-sec{display:none}
   body.reading .cols{grid-template-columns:1fr!important}
   body.reading #ph-dock{display:none}
+  /* 넓게 읽기 + 세로 칼럼(phase537b): 칼럼은 옆에 세워 두고 글만 넓게 — 위젯만 숨김 (전엔 칼럼이 1열로 밀려 화면 가득 펼쳐졌음) */
+  body.reading.hm-pillar .cols{grid-template-columns:300px minmax(0,1fr)!important}
+  body.reading.hm-pillar #aside-l{display:flex!important}
+  body.reading.hm-pillar #aside-l .side{display:none}
+  body.reading.hm-pillar-r .cols{grid-template-columns:minmax(0,1fr) 300px!important}
+  body.reading.hm-pillar-r #aside{display:flex!important}
+  body.reading.hm-pillar-r #aside .side{display:none}
+  body.reading.hm-pillar #post-view > article,body.reading.hm-pillar #pv-nav{max-width:none}
+  @media(max-width:820px){
+    body.reading.hm-pillar .cols,body.reading.hm-pillar-r .cols{grid-template-columns:minmax(0,1fr)!important}
+  }
   body.reading #post-view > article{max-width:1000px;margin:0 auto;
     padding:clamp(26px,3.4vw,46px) clamp(22px,3.2vw,50px)}
   body.reading #post-view #pv-body{font-size:14.5px;line-height:2}
@@ -3608,6 +3619,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=625"></script>
+<script type="module" src="./app.js?v=627"></script>
 </body>
 </html>
