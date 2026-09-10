@@ -1444,8 +1444,11 @@
   .lp-row{display:flex;gap:14px;align-items:center}
   .lp-wrap{position:relative;flex:none;display:block;width:92px;height:92px}
   .lp-disc{display:block;width:92px;height:92px;border-radius:50%;position:relative;overflow:hidden;
-    background:repeating-radial-gradient(circle, color-mix(in srgb, var(--ink) 9%, transparent) 0 2px, rgba(0,0,0,.55) 2px 4px);
+    background:radial-gradient(circle at 35% 30%, #2a2f3d, #0f121a 70%);   /* 기본: 검정 매끈 판(phase537b) */
     box-shadow:0 0 0 1px var(--line), 0 6px 18px rgba(0,0,0,.4)}
+  .lp-disc::before{content:'';position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 20deg, transparent 0 40%, rgba(255,255,255,.07) 47%, transparent 54%, transparent 100%)}   /* 은은한 광 */
+  .lp-disc.groove{background:#0f121a url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 92 92'%3E%3Ccircle cx='46' cy='46' r='46' fill='%230f121a'/%3E%3Ccircle cx='46' cy='46' r='14' fill='none' stroke='rgba(255,255,255,.14)' stroke-width='1'/%3E%3Ccircle cx='46' cy='46' r='18' fill='none' stroke='rgba(255,255,255,.14)' stroke-width='1'/%3E%3Ccircle cx='46' cy='46' r='22' fill='none' stroke='rgba(255,255,255,.14)' stroke-width='1'/%3E%3Ccircle cx='46' cy='46' r='26' fill='none' stroke='rgba(255,255,255,.14)' stroke-width='1'/%3E%3Ccircle cx='46' cy='46' r='30' fill='none' stroke='rgba(255,255,255,.14)' stroke-width='1'/%3E%3Ccircle cx='46' cy='46' r='34' fill='none' stroke='rgba(255,255,255,.14)' stroke-width='1'/%3E%3Ccircle cx='46' cy='46' r='38' fill='none' stroke='rgba(255,255,255,.14)' stroke-width='1'/%3E%3Ccircle cx='46' cy='46' r='42' fill='none' stroke='rgba(255,255,255,.14)' stroke-width='1'/%3E%3Ccircle cx='46' cy='46' r='46' fill='none' stroke='rgba(255,255,255,.06)' stroke-width='1'/%3E%3C/svg%3E") center/100% 100% no-repeat}   /* 옵션: SVG 홈 — 소수점 크기에서도 선명 */
+  .lp-disc.groove::before{display:none}
   .lp-disc img,.lp-disc .mus{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
     width:34px;height:34px;border-radius:50%;object-fit:cover;border:1px solid var(--line);
     display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--muted)}
@@ -1469,7 +1472,7 @@
     color:color-mix(in srgb, var(--bgmTx, var(--muted)) 70%, transparent)}
   /* 좁은 칸에서 판이 칸을 다 먹어 글자가 세 줄로 접히던 것(phase537) */
   .lp-wrap{width:min(92px,34%);width:round(min(92px,34%),2px);height:auto;aspect-ratio:1}   /* 소수점 크기면 홈 줄이 깨져 보여 2px 단위로(phase537b) */
-  .lp-disc{width:100%;height:auto;aspect-ratio:1;backface-visibility:hidden;transform:translateZ(0)}
+  .lp-disc{width:100%;height:auto;aspect-ratio:1}
   .lp-arm{height:63%}
   .lp-disc img,.lp-disc .mus{width:37%;height:37%}   /* 판이 줄면 라벨도 같이(phase537) */
   /* 튜너 */
@@ -3605,6 +3608,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=612"></script>
+<script type="module" src="./app.js?v=614"></script>
 </body>
 </html>

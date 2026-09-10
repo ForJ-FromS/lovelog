@@ -2091,7 +2091,7 @@ function renderSide(){
         d.className+=' bgm-lp';
         d.innerHTML=`<p class="label">${esc(w.label||'NOW PLAYING')}</p>
           <div class="lp-row">
-            <span class="lp-wrap"><span class="lp-disc">${cover}</span><span class="lp-arm"></span></span>
+            <span class="lp-wrap"><span class="lp-disc${w.lpDisc==='groove'?' groove':''}">${cover}</span><span class="lp-arm"></span></span>
             <span class="lp-meta"><b>${btit}</b><span>${esc(w.sub||'33⅓ RPM · SIDE A')}</span></span>
             <span class="bgm-btn2">▶</span>
           </div>`;
@@ -5139,6 +5139,8 @@ function renderWidEdit(){
       </select>
       <input id="we-bgtkl" placeholder="곡 목록 제목 (기본: 곡 목록)" value="${esc(w.tkLabel||'')}" style="width:150px" title="접어둔 곡 목록 줄에 적히는 글자">
       <label class="chk" title="곡이 두 개 이상일 때 목록을 접어두고, 줄을 눌러야 펼쳐지게 해요"><input type="checkbox" id="we-bgfold" ${w.tkFold?'checked':''}> 📁 곡 목록 접어두기</label>
+      <select id="we-lpdisc" style="width:auto;margin-bottom:0" title="LP 턴테이블일 때 판 모양">
+        <option value="" ${w.lpDisc!=='groove'?'selected':''}>LP 판 — 검정 매끈 (기본)</option><option value="groove" ${w.lpDisc==='groove'?'selected':''}>LP 판 — 홈 있음</option></select>
       <input id="we-bgsub" placeholder="보조 문구" value="${esc(w.sub||'')}" style="width:130px" title="카세트: 라벨 위 작은 글씨 (기본 SIDE A) / LP: 제목 아래 (기본 33⅓ RPM · SIDE A) / 튜너: 제목 아래 (기본 FM 88.1 · STEREO)">
     </div>
     <div class="p-row" style="align-items:center;font-size:11px;color:var(--muted);gap:8px">
@@ -5439,6 +5441,7 @@ function renderWidEdit(){
     if(sel.length) w.cats=sel; else delete w.cats;
   }));
   const mgl=$('#we-maglab'); if(mgl) mgl.addEventListener('input',()=>{ w.label=mgl.value===' '?'':(mgl.value.trim()||undefined); if(w.label===undefined) delete w.label; });   // 📰 공백 하나 = 제목 없음
+  const lpd=$('#we-lpdisc'); if(lpd) lpd.addEventListener('change',()=>{ if(lpd.value) w.lpDisc=lpd.value; else delete w.lpDisc; });   // LP 판 모양(phase537b)
   const bfo=$('#we-bgfold'); if(bfo) bfo.addEventListener('change',()=>{ if(bfo.checked) w.tkFold=true; else delete w.tkFold; });   // 📁 기본은 펼침(phase537b)
   const btl=$('#we-bgtkl'); if(btl) btl.addEventListener('input',()=>{ const v=btl.value.trim(); if(v) w.tkLabel=v; else delete w.tkLabel; });
   const wbr=$('#we-bare'); if(wbr) wbr.addEventListener('change',()=>{ if(wbr.checked) w.bare=true; else delete w.bare; });   // 🫧 투명 공통(phase537b)
