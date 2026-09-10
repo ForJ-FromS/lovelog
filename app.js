@@ -1110,8 +1110,8 @@ async function enterPage(){
 const MODE_KEYS=['hue','sat','lum','light','glass','theme','dots','bgImg','bgRef','bgDim','titleColor','font','customCss','curImg','sparkle','fx','fxC','labelIcon','priColor',
   'corner','cardC','headGrad','headText','hdOverC','hdSubC','hdDdC','headDeco','headBand','stickers','stkOff','stkHideM','stkHome','btnStyle','pgStyle','rowStyle','catShape','quoteStyle','postFs',
   'pet','petImg','petImgs','petSz','clickFx','snd','sndV','protectImg','fav','postPage',
-  'listTc','rowTag','tagShape','galCols','memoCols','galRows','memoRows','sbStyle','galShape','catSel','catCnt','gbHint','gbEmpty','gbPer','lockMark','privMark','homeName','galName','gbName','labelIcon','headFs','headSubFs','headOverFs','headShow','sidePos','tagShow','tagOrder','magPick','magCards','magSlots'];   // 글 목록 제목 색 등 남은 꾸밈도 모드별(phase519)
-const MODE_HDR=['heroImgs','heroImg','headFit','headH','headMode','headNoBg','enterImg','enterRef','enterText','cardImg','bannerImg','catImgs'];   // 사진(헤더·대문·대표·카테고리)
+  'listTc','rowTag','tagShape','galCols','memoCols','galRows','memoRows','sbStyle','galShape','catSel','catCnt','gbHint','gbEmpty','gbPer','lockMark','privMark','headMode','headH','headFit','homeName','galName','gbName','labelIcon','headFs','headSubFs','headOverFs','headShow','sidePos','tagShow','tagOrder','magPick','magCards','magSlots'];   // 글 목록 제목 색 등 남은 꾸밈도 모드별(phase519)
+const MODE_HDR=['heroImgs','heroImg','headNoBg','enterImg','enterRef','enterText','cardImg','bannerImg','catImgs'];   // 사진(헤더·대문·대표·카테고리) — headMode·headH·headFit는 배치라 기본 스냅샷으로 옮김(phase537b)
 const MODE_STRIP=['stripPin','stripCnt','stripShape','stripOn','stripSrc'];   // 사진 출처도 모드별(phase537b)                                                                          // 하단 스트립(phase476)
 const MODE_WID=['side','ddays','bgm','noLatest','sidePos','homeStyle'];                                                                   // 위젯 구성(phase476) · 홈 구조도 함께(phase537)
 function modeSnap(){
@@ -1185,7 +1185,7 @@ async function modeSyncCurrent(){
   const m=st.page.modes; if(!m||!m.on) return;
   const cur=modeCur(); const slot=m[cur]; if(!slot||!slot.snap) return;
   const fresh=modeSnap();                                       // 현재 옵션 범위로 새 스냅샷
-  Object.keys(slot.snap).forEach(k=>{ if(fresh[k]!==undefined) slot.snap[k]=fresh[k]; });   // 담겨 있던 항목만 갱신
+  Object.keys(fresh).forEach(k=>{ if(k in slot.snap || MODE_KEYS.includes(k)) slot.snap[k]=fresh[k]; });   // 담겨 있던 항목 + 기본 항목(새로 늘어난 키 포함) 갱신(phase537b)
   try{ await updateDoc(doc(db,'pages',st.handle),{modes:m}); }catch(e){}
 }
 function modeDragBind(b){
