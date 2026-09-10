@@ -1071,6 +1071,7 @@ async function enterPage(){
   const isPil = p.headMode==='pillar' || p.headMode==='pillar-r';   // 📐 세로 헤더 — 기둥 왼쪽/오른쪽(phase537)
   document.body.classList.toggle('hm-pillar', isPil);
   document.body.classList.toggle('hm-pillar-r', p.headMode==='pillar-r');
+  document.body.style.setProperty('--pilH', ((+p.headH>=500)?+p.headH:780)+'px');   // 세로 칼럼 높이 — 헤더 높이 설정 500 이상이면 그 값, 아니면 780(phase537b)
   if(p.headMode==='side' || isPil){
     headEl.classList.toggle('v', !isPil); headEl.classList.toggle('pil', isPil);
     headEl.style.removeProperty('min-height'); $('#aside').prepend(headEl); }
@@ -1966,17 +1967,17 @@ function renderSide(){
     if(w.t==='pin'){
       if(!home) return;
       const el=pinCard(); if(!el) return;          // 고정글이 없으면 자리도 없음
-      el.dataset.wi=wi; bindDrag(el); if(w.bare) el.classList.add('w-bare');
+      el.dataset.wi=wi; bindDrag(el); if(w.bare){ el.classList.add('w-bare'); if(w.bareLine) el.classList.add('w-line'); }
       box.appendChild(el);
       return;
     }
     if(w.t==='latest'){
       if(!home) return;
       const el=latestBlock(box, w.n, w.noPin!==true, w.cats||(w.cat?[w.cat]:[]), w.icon||'◈', !!w.mhide);
-      el.dataset.wi=wi; bindDrag(el); if(w.bare){ el.classList.add('w-bare'); box.querySelector('.pin')?.classList.add('w-bare'); }
+      el.dataset.wi=wi; bindDrag(el); if(w.bare){ el.classList.add('w-bare'); if(w.bareLine) el.classList.add('w-line'); box.querySelector('.pin')?.classList.add('w-bare'); }
       return;
     }
-    const d=document.createElement('div'); d.className='side sw-'+w.t+(w.mhide?' w-mhide':'')+(w.bare?' w-bare':'');   // 🫧 투명(phase537b)
+    const d=document.createElement('div'); d.className='side sw-'+w.t+(w.mhide?' w-mhide':'')+(w.bare?' w-bare':'')+(w.bare&&w.bareLine?' w-line':'');   // 🫧 투명(phase537b)
     d.dataset.wi=wi; if(!flw) bindDrag(d);   // 띄운 위젯은 컬럼 순서 드래그 대상이 아님
     if(w.t==='search'){
       d.innerHTML=`<p class="label">${esc(w.label||'SEARCH')}</p>
@@ -3029,7 +3030,8 @@ function magSelect(list){
       return st.posts.find(p=>p.id===o.id)||null; };
     lead = byId(sl[0],0) || list[0];
     if(sl[0]&&sl[0].img) slotImg[lead.id]=sl[0].img;
-    cards = sl.slice(1).map((o,i)=>byId(o,i+1)).filter((p,i,arr)=>p && p!==lead && arr.indexOf(p)===i);
+    const nC=[0,2,4].includes(+st.page.magCards)?+st.page.magCards:2;
+    cards = sl.slice(1,1+nC).map((o,i)=>byId(o,i+1)).filter((p,i,arr)=>p && p!==lead && arr.indexOf(p)===i);
     sl.slice(1).forEach((o,i)=>{ const p2=byId(o,i+1); if(p2&&o.img) slotImg[p2.id]=o.img; });
     rest=list.filter(p=>p!==lead && !cards.includes(p));
   } else {
@@ -4704,6 +4706,7 @@ function renderWidEdit(){
   html+=`
     <div class="p-row" style="align-items:center;gap:8px;margin-bottom:6px">
       <label class="chk" title="카드 배경·테두리·금색 탭 없이 내용만 홈 위에 얹혀요 — 편집 모드에선 점선으로 자리가 보여요"><input type="checkbox" id="we-bare" ${w.bare?'checked':''}> 🫧 투명 (카드 없이)</label>
+      <label class="chk" title="투명 위젯 아래에 얇은 구분선을 그어요 — 투명끼리 붙을 때 경계"><input type="checkbox" id="we-bareline" ${w.bareLine?'checked':''}> ─ 아래 구분선</label>
       <span style="font-size:11px;color:var(--muted);flex:none;margin-left:6px">카테고리 화면에선</span>
       <select id="we-bcol" title="글 목록·카테고리 화면으로 넘어갔을 때 이 위젯을 어느 쪽 사이드에 둘지 — 기본은 사이드바 설정을 따라요" style="flex:.8">
         <option value="">사이드바 설정대로</option><option value="l"${w.bcol==='l'?' selected':''}>왼쪽</option><option value="r"${w.bcol==='r'?' selected':''}>오른쪽</option></select>
@@ -5157,7 +5160,10 @@ function renderWidEdit(){
     <input data-lu="${i}" placeholder="https://..." value="${esc(l.url||'')}" style="flex:1.4;min-width:0;margin-bottom:0">${w.skin==='card'?`<input data-ld="${i}" placeholder="설명" value="${esc(l.d||'')}" style="flex:1;min-width:0;margin-bottom:0">`:''}${w.skin==='ltree'?`<label class="chk" title="강조"><input type="checkbox" data-lh="${i}" ${l.hl?'checked':''}>★</label>`:''}
     <button class="rmv" data-lup="${i}" title="위로" style="font-size:10px">↑</button><button class="rmv" data-ldn="${i}" title="아래로" style="font-size:10px">↓</button><button class="rmv" data-lx="${i}" title="삭제" style="font-size:10px">✕</button></div>`).join('')+
     `<button class="btn" id="we-add" style="font-size:12px">+ 링크 줄 추가</button>`;
-  if(w.t==='banner') html+=((w.items||[]).length?'' :
+  if(w.t==='banner') html+=`<div class="p-row" style="margin-bottom:10px">
+      <label class="filelab">배너 이미지 추가 <input type="file" id="we-bimg" accept="image/*"></label>
+      <button class="btn" id="we-bnhome" style="font-size:12px">＋ 러브로그 홈 걸기</button>
+    </div>`+((w.items||[]).length?'' :
     `<p class="note" style="margin:0 0 8px">이미지를 추가하면 배너마다 이동할 링크 주소 · ↑↓ 순서 · ✕ 삭제가 생겨요.</p>`)
     +(w.items||[]).map((b,i)=>`
     <div class="chl">
@@ -5183,11 +5189,7 @@ function renderWidEdit(){
              </select></div>`
         : `<input data-bu="${i}" placeholder="눌렀을 때 이동할 주소 (선택)" value="${b.url||''}" style="width:100%">`}
     </div>`).join('')+
-    `<div class="p-row">
-      <label class="filelab">배너 이미지 추가 <input type="file" id="we-bimg" accept="image/*"></label>
-      <button class="btn" id="we-bnhome" style="font-size:12px">＋ 러브로그 홈 걸기</button>
-    </div>
-    <input id="we-blab" placeholder="제목 (기본: BANNER)" value="${esc(w.label??'')}">
+    `<input id="we-blab" placeholder="제목 (기본: BANNER)" value="${esc(w.label??'')}">
     <div class="p-row" style="align-items:center">
       <span style="font-size:11.5px;color:var(--muted)">보이는 높이</span>
       <select id="we-bmaxh" style="flex:1">
@@ -5438,6 +5440,7 @@ function renderWidEdit(){
   const bfo=$('#we-bgfold'); if(bfo) bfo.addEventListener('change',()=>{ if(bfo.checked) w.tkFold=true; else delete w.tkFold; });   // 📁 기본은 펼침(phase537b)
   const btl=$('#we-bgtkl'); if(btl) btl.addEventListener('input',()=>{ const v=btl.value.trim(); if(v) w.tkLabel=v; else delete w.tkLabel; });
   const wbr=$('#we-bare'); if(wbr) wbr.addEventListener('change',()=>{ if(wbr.checked) w.bare=true; else delete w.bare; });   // 🫧 투명 공통(phase537b)
+  const wbl=$('#we-bareline'); if(wbl) wbl.addEventListener('change',()=>{ if(wbl.checked) w.bareLine=true; else delete w.bareLine; });
   const wbc=$('#we-bcol'); if(wbc) wbc.addEventListener('change',()=>{ if(wbc.value) w.bcol=wbc.value; else delete w.bcol; });   // 카테고리 화면 좌우(phase537b)
   const qan=$('#we-qanim'); if(qan) qan.addEventListener('change',()=>{ w.anim=qan.checked; });
   const qaf=$('#we-qafix'); if(qaf) qaf.addEventListener('change',()=>{ if(qaf.checked) w.animFix=true; else delete w.animFix; });
@@ -5619,7 +5622,7 @@ function renderWidEdit(){
   const blab=$('#we-blab'); if(blab) blab.addEventListener('input',()=>{ w.label=blab.value; });
   const bmh=$('#we-bmaxh'); if(bmh) bmh.addEventListener('change',()=>{
     if(bmh.value) w.maxh=bmh.value; else delete w.maxh; });
-  const bnh=$('#we-bnhome'); if(bnh) bnh.onclick=()=>{ w.items=w.items||[]; w.items.push({h:'',url:''}); renderWidEdit(); };
+  const bnh=$('#we-bnhome'); if(bnh) bnh.onclick=()=>{ w.items=w.items||[]; w.items.unshift({h:'',url:''}); renderWidEdit(); $('#we-bnhome')?.scrollIntoView({block:'start',behavior:'smooth'}); };   // 새 배너는 맨 위에 — 추가 줄 바로 아래(phase537b)
   $('#wid-edit').querySelectorAll('[data-bh]').forEach(i2=>i2.addEventListener('input',()=>{
     const raw=i2.value.trim();
     w.items[i2.dataset.bh].h = ownHandle(raw) || raw.toLowerCase().replace(/^.*\//,''); }));
@@ -5633,7 +5636,7 @@ function renderWidEdit(){
     delete w.items[b2.dataset.bimx].img; renderWidEdit(); });
   const badd=$('#we-bimg'); if(badd) badd.addEventListener('change',async e=>{
     const f=e.target.files[0]; if(!f) return; msg('배너 압축 중...');
-    w.items=w.items||[]; w.items.push({img:await upFile(f,1200,.9,110),url:''});
+    w.items=w.items||[]; w.items.unshift({img:await upFile(f,1200,.9,110),url:''});   // 맨 위에(phase537b)
     renderWidEdit(); renderWidList(); msg('배너 추가됨 — [위젯 구성 저장]을 눌러주세요.');
   });
   const ladd=$('#we-add'); if(ladd) ladd.onclick=()=>{ w.items=w.items||[]; w.items.push({label:'',url:''}); renderWidEdit(); };
@@ -6299,7 +6302,7 @@ $('#w-go').onclick=async()=>{
       priv: $('#w-priv').checked,
       feat: $('#w-feat').checked,
       mpin: editPost ? !!(st.posts.find(p2=>p2.id===editPost)?.mpin) : false,
-      excerpt: secret?'':(asHtml?raw.replace(/<[^>]+>/g,' '):raw
+      excerpt: secret?'':(asHtml?raw.replace(/<(style|script)[\s\S]*?<\/\1>/gi,' ').replace(/<!--[\s\S]*?-->/g,' ').replace(/\/\*[\s\S]*?\*\//g,' ').replace(/<[^>]+>/g,' ').replace(/\s{2,}/g,' '):raw   /* HTML 글: 스타일·주석 덩어리가 발췌에 새던 것(phase537b) */
         .replace(/^\[접기[^\]\n]*\]\s*\n[\s\S]*?\[\/접기\]\s*$/gm,'')   /* 접은 내용은 발췌에서 제외(phase285) */
         .replace(/^\[\/?접기[^\]\n]*\]\s*$/gm,'')
         .replace(/^>\s?/gm,'')
@@ -6442,7 +6445,7 @@ function renderMagSlots(){
   const posts=(st.posts||[]).slice().sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
   const opt=(sel)=>`<option value="">— 비워 두기 —</option><option value="__custom"${sel==='__custom'?' selected':''}>✎ 직접 쓰기 (공지처럼 — 글 없이 제목·문구·사진)</option>`+posts.map(p=>`<option value="${p.id}"${p.id===sel?' selected':''}>${esc((p.date||'').slice(2,10))} · ${esc(p.title||'(제목 없음)')}</option>`).join('');
   box.innerHTML = `<p class="note" style="margin:0 0 6px">표지와 카드에 올릴 글을 고르거나 〈직접 쓰기〉로 문구를 적어요. 사진을 안 넣으면 그 글의 대표 사진(없으면 본문 첫 사진)이 쓰이고, 그것도 없으면 사진 없이 나와요. 비워 둔 칸은 표시되지 않아요.</p>`+
-    ['표지','카드 1','카드 2'].map((lb,i)=>{ const o=magSlotsDraft[i]; const cu=o.id==='__custom'; return `
+    ['표지','카드 1','카드 2','카드 3','카드 4'].slice(0, 1+([0,2,4].includes(+($('#s-magcards')?.value))?+$('#s-magcards').value:2)).map((lb,i)=>{ const o=magSlotsDraft[i]; const cu=o.id==='__custom'; return `
     <div class="ms-row">
       <span class="ms-l">${lb}</span>
       <select data-ms="${i}">${opt(o.id)}</select>
@@ -7119,7 +7122,8 @@ function fillSettings(){
   const scc=$('#s-catcnt'); if(scc) scc.checked=st.page.catCnt!==false;
   const spp=$('#s-perpage'); if(spp) spp.value=String(+st.page.perPage||12); const sbs=$('#s-btnstyle'); if(sbs) sbs.value=st.page.btnStyle||''; const sps=$('#s-pgstyle'); if(sps) sps.value=st.page.pgStyle||''; const srs=$('#s-rowstyle'); if(srs) srs.value=st.page.rowStyle||'';
   const magP=$('#s-magpick'); if(magP) magP.value=st.page.magPick||'latest'; const magC=$('#s-magcards'); if(magC) magC.value=String([0,2,4].includes(+st.page.magCards)?+st.page.magCards:2);
-  magSlotsDraft=[0,1,2].map(i=>{ const o=(st.page.magSlots||[])[i]||{}; return {id:o.id||'', img:o.img||'', title:o.title||'', cat:o.cat||'', ex:o.ex||'', url:o.url||''}; });   // 📰 직접 고르기 초안(phase537) · 직접 쓰기 칸(phase537b)
+  magSlotsDraft=[0,1,2,3,4].map(i=>{ const o=(st.page.magSlots||[])[i]||{}; return {id:o.id||'', img:o.img||'', title:o.title||'', cat:o.cat||'', ex:o.ex||'', url:o.url||''}; });   // 📰 직접 고르기 초안(phase537) · 표지 1 + 카드 최대 4(phase537b)
+  if(magC){ magC.onchange=()=>renderMagSlots(); }
   if(magP){ magP.onchange=()=>renderMagSlots(); } renderMagSlots();
   const scs=$('#s-catsel'); if(scs) scs.value=st.page.catSel||'';
   const sqs=$('#s-quotestyle'); if(sqs) sqs.value=st.page.quoteStyle||'';
@@ -7333,6 +7337,7 @@ async function saveSettings(){
     initPet(); petImgsNew=null; renderPetImgList();              // 펫 즉시 산책(phase254b) — 새로고침 없이 반영
     gateClear=false; renderGateState();
     if(data.gate==='') sessionStorage.removeItem('gate_'+st.handle);
+    if($('#md-on') && !st._modeSaving){ try{ await modeSaveCfg(); }catch(e){} }   // 듀얼 탭 값도 같이 저장(phase537b) — 따로 [듀얼 설정 저장] 안 눌러도
     if(st.page.modes&&st.page.modes.on&&!st._modeSaving){ await modeSyncCurrent(); msg(`저장 완료 — 지금 보고 있는 모드(${(modeCur()||'a').toUpperCase()})에도 반영했어요.`); }
     else msg('저장 완료!');
     enterPage(); renderCatbar();

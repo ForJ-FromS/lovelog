@@ -517,6 +517,7 @@
   .side.w-bare{background:none!important;border-color:transparent!important;padding:4px 2px;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
   .side.w-bare::before{display:none}
   .side.w-bare+.side.w-bare{margin-top:6px}
+  .side.w-bare.w-line{border-bottom:1px solid var(--line)!important;border-radius:0;padding-bottom:14px;margin-bottom:2px}   /* 투명 위젯 구분선(phase537b) */
   .side.w-bare:hover{border-color:transparent}
   body.editmode .side.w-bare{outline:1px dashed color-mix(in srgb, var(--pri) 45%, transparent);outline-offset:4px;border-radius:12px}   /* 편집 모드에선 자리가 보이게 */
   @media(max-width:640px){ #hcol-c .w-mag .mg-lead{grid-template-columns:1fr} }
@@ -1054,7 +1055,7 @@
 
   /* ═══ 세로 헤더 — 기둥 (phase537) : 왼쪽 칸을 통째로 쓰는 사진 기둥 ═══ */
   .head.pil{position:sticky;top:24px;flex:none;
-    height:min(calc(100vh - 96px), 780px);   /* 페이지마다 안 달라지게 고정(phase537b) · 화면이 그보다 작으면 화면 높이 */
+    height:min(calc(100vh - 96px), var(--pilH,780px));   /* 고정 높이(phase537b) — 헤더 높이 설정 500 이상이면 그 값 · 화면이 작으면 화면 높이 */
     display:flex;flex-direction:column;justify-content:flex-end;margin-bottom:0}
   body.hm-pillar #hcol-l,body.hm-pillar #aside-l,body.hm-pillar-r #hcol-r,body.hm-pillar-r #aside{align-self:stretch}
   /* 오른쪽 기둥(phase537b) — 왼쪽 규칙을 거울처럼 */
@@ -2995,7 +2996,7 @@ html,body{overflow-x:hidden;overflow-x:clip}
     </div>
     <div class="p-row" style="align-items:center">
       <span style="font-size:12px;color:var(--muted)">헤더 높이</span>
-      <input type="range" id="s-headh" min="180" max="620" step="10" style="flex:1;min-width:120px;margin-bottom:0">
+      <input type="range" id="s-headh" min="180" max="1000" step="10" style="flex:1;min-width:120px;margin-bottom:0">
       <span id="s-headh-v" style="font-size:11px;color:var(--muted);width:52px;text-align:right"></span>
       <select id="s-headfit" style="flex:.9">
         <option value="auto">사진 비율에 맞추기 (여백 없음)</option>
@@ -3601,6 +3602,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=610"></script>
+<script type="module" src="./app.js?v=611"></script>
 </body>
 </html>
