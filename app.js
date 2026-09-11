@@ -2040,7 +2040,7 @@ function renderSide(){
     if(w.t==='search'){
       const ss=w.style||'';                                     // 서치 스킨(phase538): '' 기본 · under 밑줄 · term 터미널 · label 라벨지 · capsule 캡슐
       const ph=esc(w.ph||'search');
-      d.className+=ss?' ss-'+ss:'';
+      d.className+=(ss?' ss-'+ss:'')+(w.nolab?' nolab':'');
       const inner = ss==='term'  ? `<div class="s-search s-term"><span class="p">&gt;</span><input id="q" placeholder="${ph}"><i class="c"></i></div>`
                   : ss==='label' ? `<div class="s-search s-label"><span class="l">${esc(w.tag||'INDEX')}</span>⌕ <input id="q" placeholder="${ph}"></div>`
                   : ss==='capsule'? `<div class="s-search s-cap">⌕ <input id="q" placeholder="${ph}"><b>→</b></div>`
@@ -4846,7 +4846,7 @@ function renderWidEdit(){
         <option value="capsule" ${w.style==='capsule'?'selected':''}>모양 — 캡슐 (알약 + 버튼)</option></select>
       <input id="we-sph" placeholder="안내 문구 (기본: search)" value="${esc(w.ph||'')}" style="width:150px;margin-bottom:0">
       <input id="we-stag" placeholder="라벨지 글자 (기본: INDEX)" value="${esc(w.tag||'')}" style="width:150px;margin-bottom:0">
-      <label class="chk" title="위젯 위 제목 줄(◈ SEARCH)을 없애고 입력칸만"><input type="checkbox" id="we-snolab" ${w.nolab?'checked':''}> 제목 줄 숨김</label>
+      <label class="chk" title="위젯 위 제목 줄(◈ SEARCH)을 없애고 입력칸만 — 밑줄형은 🫧 투명과 같이 켜면 선 하나만 남아 제일 깔끔해요"><input type="checkbox" id="we-snolab" ${w.nolab?'checked':''}> 제목 줄 숨김</label>
     </div>`;
   if(w.t==='profile') html+=`
     <div class="p-row"><label class="filelab">사진 <input type="file" id="we-img" accept="image/*"></label></div>

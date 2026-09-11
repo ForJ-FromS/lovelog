@@ -803,6 +803,9 @@
   .w-bare .s-search.s-label::before,.w-bare .s-search.s-label::after,.w-bare .s-search.s-label .l{background:var(--bg)}
   .s-search.s-cap{border-radius:999px;padding:4px 4px 4px 14px}
   .s-search.s-cap b{width:28px;height:28px;border-radius:50%;background:var(--pri);color:hsl(var(--h) 30% 12%);display:grid;place-items:center;font-size:13px;font-weight:400;cursor:pointer;flex:none}
+  .sw-search.nolab{padding:10px 14px}                                   /* 제목 숨기면 카드 여백을 줄여 입력칸만 딱(phase538) */
+  .sw-search.nolab.ss-under{padding:8px 14px 6px}
+  .sw-search.nolab::before{display:none}
   #cats{list-style:none}
   #cats a{display:flex;justify-content:space-between;align-items:baseline;gap:6px;
     padding:6px 2px;font-size:12.5px;color:var(--body);cursor:pointer;
@@ -3704,6 +3707,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=638"></script>
+<script type="module" src="./app.js?v=639"></script>
 </body>
 </html>
