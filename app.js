@@ -1167,12 +1167,13 @@ function modeToggleDraw(){
   const cur=modeCur()||'a', other=cur==='a'?'b':'a';
   const label=(m[other]&&m[other].btn)||(m[other]&&m[other].name)||(other==='a'?'A':'B');
   b.className='mb-'+style+((style!=='cat'||pos==='free')?' mp-'+pos:'')+(cur==='b'?' down':'')+(st.mine&&pos==='br'&&style!=='cat'?' mp-owner':'')+(m.onPost===false?' no-post':'');   // 주인 FAB 위로(phase481) · 글 화면 숨김(phase506)
+  b.title=`지금: ${(m[cur]&&m[cur].name)||cur.toUpperCase()} · 누르면 ${(m[other]&&m[other].name)||other.toUpperCase()}`;   // 어느 모드에 있는지 명시(phase537b)
   if(pos==='free'){                                             // 자유 배치(phase514): 문서 기준 — x는 폭 비율, y는 위에서 px
     const fx=(isM&&m.m&&m.m.x!=null)?m.m.x:(m.x??80), fy=(isM&&m.m&&m.m.yp!=null)?m.m.yp:(m.yp??600);
     b.style.setProperty('--mtX', fx+'%'); b.style.setProperty('--mtY', fy+'px');
     if(st.mine&&st.editMode){ b.classList.add('can-drag'); modeDragBind(b); } else { b.classList.remove('can-drag'); b.onpointerdown=b.onpointermove=b.onpointerup=null; }
   }
-  const colNow=((m[cur]&&m[cur].col)||m.col||'');               // 모드별 색 우선(phase516) — 없으면 공통, 그것도 없으면 테마 포인트색
+  const colNow=((m[other]&&m[other].col)||m.col||'');           // 버튼 색도 '누르면 갈 모드' 기준(phase537b) — 이름은 갈 모드인데 색만 지금 모드라 '반대로 저장됐다'고 헷갈리던 것
   if(/^#[0-9a-fA-F]{3,8}$/.test(colNow)) b.style.setProperty('--mtC', colNow); else b.style.removeProperty('--mtC');
   if(style==='float'){ const lb=(m.swLabel===false&&/\p{Extended_Pictographic}/u.test(label))?label.match(/\p{Extended_Pictographic}/u)[0]:label;   // 문구 끄면 이모지만(phase507)
     const emojiOnly=/^\p{Extended_Pictographic}$/u.test(lb.trim()); b.innerHTML=emojiOnly?esc(lb):`<span class="mt-txt">${esc(lb)}</span>`; }
