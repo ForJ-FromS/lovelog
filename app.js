@@ -1743,7 +1743,7 @@ document.addEventListener('mousemove',e=>{
 });
 /* 🔊 클릭 소리(phase494) — WebAudio 합성, 파일 없음. 방문자는 🔇로 기기별 끄기 */
 let sndCtx=null;
-const SND_FILES={click:'/snd/click.mp3', key:'/snd/key.mp3'};                       // 파일 소리(phase497) — 저장소 /snd/ 에 동봉
+const SND_FILES={click:'/snd/click.mp3', key:'/snd/key.mp3', reload:'/snd/reload.mp3'};   // 🔫 장전(phase538)                       // 파일 소리(phase497) — 저장소 /snd/ 에 동봉
 const sndUrlOf=kind=> kind==='custom' ? (st.page&&st.page.sndUrl||'') : (SND_FILES[kind]||'');   // 🎵 직접 올린 소리(phase537b)
 let sndBufs={}; let sndCustom=null;
 async function sndFile(kind, vol){
