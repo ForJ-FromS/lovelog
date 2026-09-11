@@ -70,6 +70,8 @@ function applyAutoHead(tries){
   const w=head.clientWidth;
   if(!w){ if((tries||0)<120) requestAnimationFrame(()=>applyAutoHead((tries||0)+1)); return; }  // 숨김 상태 — 절대 폭을 가정하지 말고 보일 때까지 대기
   const px=Math.max(160,Math.min(2400,Math.round(w*st.autoRatio)));
+  if(head.classList.contains('pil')){                  // 세로 칼럼은 높이가 CSS 고정 — 사진 비율 자동 높이를 인라인으로 박으면 폰에서 칼럼이 화면을 다 먹음(phase537b)
+    head.style.removeProperty('min-height'); return; }
   if(head.classList.contains('v')){
     head.style.removeProperty('min-height');            // 가로 모드가 남긴 인라인 높이 제거(사진 아래 여백 방지)
     document.documentElement.style.setProperty('--headH', px+'px');
