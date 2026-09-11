@@ -4,7 +4,7 @@
    글쓰기(비밀글 암호화) · 갤러리 · 글 삭제 · 공유 링크
    ============================================================ */
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut }
+import { getAuth, onAuthStateChanged, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut }
   from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteField, runTransaction, serverTimestamp,
   collection, query, orderBy, where, limit, getDocs, addDoc, deleteDoc }
@@ -3565,12 +3565,19 @@ function doLogin(){                                            // 구글 로그�
   const ua=navigator.userAgent||'';
   const inApp=/KAKAOTALK|Instagram|FBAN|FBAV|FB_IAB|Twitter|Line\/|NAVER|DaumApps|; wv\)/i.test(ua);
   if(inApp) msg('앱 속 브라우저에서는 구글 로그인이 막힐 수 있어요 — 주소를 복사해 사파리·크롬에서 열어주세요.');
-  signInWithPopup(auth,new GoogleAuthProvider()).catch(e=>{
+  const prov=new GoogleAuthProvider();
+  /* 🔐 팝업이 막히면 전체 화면 리다이렉트로(phase538) — 확장 프로그램·COOP·쿠키 차단으로 팝업이 죽는 브라우저 대응 */
+  const goRedirect=()=>{ try{ sessionStorage.setItem('lv-login-redirect','1'); }catch(e){} msg('팝업 대신 구글 로그인 화면으로 넘어가요…'); signInWithRedirect(auth,prov).catch(e2=>msg('로그인이 안 됐어요 — '+(e2.code||e2.message))); };
+  if(inApp){ goRedirect(); return; }                            // 앱 속 브라우저는 처음부터 리다이렉트
+  signInWithPopup(auth,prov).catch(e=>{
     if(e.code==='auth/popup-closed-by-user'||e.code==='auth/cancelled-popup-request') return;
-    if(e.code==='auth/popup-blocked'){ msg('팝업이 차단됐어요 — 브라우저 설정에서 이 사이트의 팝업을 허용해 주세요.'); return; }
-    msg('로그인이 안 됐어요'+(inApp?' — 앱 속 브라우저 제한일 수 있어요. 사파리·크롬으로 열어주세요.':' — '+(e.code||e.message)));
+    if(['auth/popup-blocked','auth/operation-not-supported-in-this-environment','auth/web-storage-unsupported','auth/internal-error','auth/network-request-failed'].includes(e.code)){ goRedirect(); return; }
+    msg('로그인이 안 됐어요 — '+(e.code||e.message)+' · 팝업이 계속 막히면 다시 눌러 보세요');
   });
 }
+/* 리다이렉트로 돌아온 경우 결과 회수 */
+try{ if(sessionStorage.getItem('lv-login-redirect')){ sessionStorage.removeItem('lv-login-redirect');
+  getRedirectResult(auth).catch(e=>{ if(e&&e.code) msg('로그인이 안 됐어요 — '+e.code); }); } }catch(e){}
 $('#gb-login-btn').onclick=doLogin;
 function galFocusUI(imgSrc, cur, onOk){                       // 썸네일 초점 팝업 — 2축(phase259d)
   const cx=cur.x??50, cy=cur.y??50;
