@@ -846,9 +846,11 @@
   .bgm-btn2:hover{border-color:var(--pri)}
   /* ═══ BGM 추가(phase538): 재생바 · 곡 메모 · 셔플반복 · 미니 · 워크맨 · CD ═══ */
   .bgm-bar{margin-top:10px}
-  .bgm-bar .tr{height:3px;border-radius:99px;background:var(--line);position:relative;cursor:pointer}
-  .bgm-bar .tr i{position:absolute;left:0;top:0;height:100%;width:0;border-radius:99px;background:var(--bgmAc,var(--pri));transition:width .5s linear}
+  .bgm-bar .tr{height:16px;position:relative;cursor:pointer}   /* 누르는 영역은 16px · 보이는 선은 3px(phase538) */
+  .bgm-bar .tr::before{content:'';position:absolute;left:0;right:0;top:50%;height:3px;margin-top:-1.5px;border-radius:99px;background:var(--line)}
+  .bgm-bar .tr i{position:absolute;left:0;top:50%;height:3px;margin-top:-1.5px;width:0;border-radius:99px;background:var(--bgmAc,var(--pri));transition:width .5s linear;pointer-events:none}
   .bgm-bar .tr i::after{content:'';position:absolute;right:-4px;top:-3px;width:9px;height:9px;border-radius:50%;background:var(--bgmAc,var(--pri));box-shadow:0 0 0 3px color-mix(in srgb, var(--bgmAc,var(--pri)) 25%, transparent)}
+  .bgm-bar .tm{margin-top:0!important}
   .bgm-bar .tm{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:var(--bgmTx,var(--muted));opacity:.8;margin-top:5px}
   .bgm-note{margin-top:10px;padding:7px 10px;border-left:2px solid var(--bgmAc,var(--pri));font-size:12px;color:var(--bgmTx,var(--body));background:color-mix(in srgb, var(--bgmAc,var(--pri)) 7%, transparent);border-radius:0 6px 6px 0;line-height:1.6}
   .bgm-note i{font-style:normal;display:block;font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.2em;color:var(--bgmTx,var(--muted));opacity:.7;margin-bottom:2px}
@@ -3697,6 +3699,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=635"></script>
+<script type="module" src="./app.js?v=636"></script>
 </body>
 </html>

@@ -2254,7 +2254,11 @@ function renderSide(){
         const bar=document.createElement('div'); bar.className='bgm-bar';
         bar.innerHTML=`<div class="tr"><i></i></div><div class="tm"><span class="cur">0:00</span><span class="rem"></span></div>`;
         const tw0=d.querySelector('.bgm-tw'); if(tw0) d.insertBefore(bar, tw0); else d.appendChild(bar);
-        bar.querySelector('.tr').onclick=e=>{ if(!bgmDur) return; const r=e.currentTarget.getBoundingClientRect(); bgmSeek((e.clientX-r.left)/r.width*bgmDur); };
+        bar.querySelector('.tr').addEventListener('pointerdown',e=>{ e.stopPropagation(); });   // 위젯 드래그로 안 새게
+        bar.querySelector('.tr').onclick=e=>{ e.stopPropagation();
+          if(!bgmDur){ msg('재생을 시작하면 이동할 수 있어요.'); return; }
+          const r=e.currentTarget.getBoundingClientRect(); const to=(e.clientX-r.left)/r.width*bgmDur;
+          bgmSeek(to); bgmPos=to; bgmBarDraw(); };
         bgmBarDraw();
       }
       if(w.ctl && trks.length>1 && !(w.mini && !bgmOpen[wi])){     // ⇄ ↻ 셔플 · 반복(phase538)
