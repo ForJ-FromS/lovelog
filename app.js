@@ -1125,7 +1125,7 @@ const MODE_KEYS=['hue','sat','lum','light','glass','theme','dots','bgImg','bgRef
 const MODE_HDR=['heroImgs','heroImg','headNoBg','enterImg','enterRef','enterText','cardImg','bannerImg','catImgs'];   // 사진(헤더·대문·대표·카테고리) — headMode·headH·headFit는 배치라 기본 스냅샷으로 옮김(phase537b)
 const MODE_STRIP=['stripPin','stripCnt','stripShape','stripOn','stripSrc'];   // 사진 출처도 모드별(phase537b)
 /* 모드별 '기본값 되돌리기'·'저장 전 값 채우기'를 적용하는 배치 키(phase537b) — 사진·이미지 키는 용량 때문에 스냅샷에서 빠질 수 있어 이 규칙에 넣으면 안 됨 */
-const MODE_LAYOUT=['headMode','headH','headFit','homeStyle','sidePos','side','noLatest','magPick','magCards','magSlots','stripOn','stripSrc','stripShape','stripCnt','stripPin','sbStyle','galShape','galRows','memoRows','gbPer','lockMark','privMark','catShape','catStyle'];                                                                          // 하단 스트립(phase476)
+const MODE_LAYOUT=['headMode','headH','headFit','homeStyle','sidePos','side','noLatest','magPick','magCards','magSlots','stripOn','stripSrc','stripShape','stripCnt','stripPin','sbStyle','galShape','galRows','memoRows','gbPer','lockMark','privMark','catShape','catStyle','postPage'];                                                                          // 하단 스트립(phase476)
 const MODE_WID=['side','ddays','bgm','noLatest','sidePos','homeStyle'];                                                                   // 위젯 구성(phase476) · 홈 구조도 함께(phase537)
 function modeSnap(){
   const m=st.page.modes||{}; const keys=MODE_KEYS.concat(m.hdr?MODE_HDR:[], m.strip?MODE_STRIP:[], m.wid?MODE_WID:[]); const o={};
