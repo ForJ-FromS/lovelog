@@ -828,7 +828,12 @@
     border-radius:50%;background:var(--card);border:2px solid var(--line);
     transform:translate(-50%,-50%)}
   .playing .bgm-cov img{animation:spin 7s linear infinite}
+  .playing .bgm-cov img.yt-fit{animation:spinz 7s linear infinite}   /* 유튜브 썸네일은 확대(1.36)를 유지한 채 회전(phase538) — 전엔 회전이 확대를 지워 순간 원래 크기로 튀었음 */
   @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes spinz{from{transform:scale(1.36) rotate(0)}to{transform:scale(1.36) rotate(360deg)}}
+  /* ▢ 네모 앨범아트(phase538): 기본 스킨 — 회전 없이 */
+  .bgm-sq .bgm-cov{border-radius:10px} .bgm-sq .bgm-cov::after{display:none}
+  .bgm-sq.playing .bgm-cov img{animation:none}
   .bgm-meta{flex:1;min-width:0}
   .bgm-meta b{font-size:12.5px;color:var(--ink);display:block;font-weight:500;
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -3699,6 +3704,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=636"></script>
+<script type="module" src="./app.js?v=637"></script>
 </body>
 </html>

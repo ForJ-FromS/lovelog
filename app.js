@@ -2197,6 +2197,7 @@ function renderSide(){
           </div>`;
         d.querySelector('.mini-row').onclick=e=>{ if(e.target.closest('.bgm-btn2')) return; bgmOpen[wi]=true; renderSide(); };
       }else{
+        if(w.covShape==='sq') d.className+=' bgm-sq';           // ▢ 네모 앨범아트(phase538)
         d.innerHTML=`<p class="label">${esc(w.label||'NOW PLAYING')}${w.mini?'<i class="mini-x" title="접기">▴</i>':''}</p>
           <div class="bgm-w">
             <span class="bgm-cov">${cover}</span>
@@ -5273,6 +5274,8 @@ function renderWidEdit(){
         <option value="wm" ${w.style==='wm'?'selected':''}>워크맨 (본체 · 릴이 돌아요)</option>
         <option value="cd" ${w.style==='cd'?'selected':''}>CD 케이스 (디스크가 돌아요)</option>
       </select>
+      <select id="we-bgcov" style="width:auto;margin-bottom:0" title="기본 스킨의 앨범아트 모양">
+        <option value="" ${w.covShape!=='sq'?'selected':''}>앨범아트 — 동그라미 (회전)</option><option value="sq" ${w.covShape==='sq'?'selected':''}>앨범아트 — 네모</option></select>
       <label class="chk" title="곡 진행 막대 + 남은 시간 · 막대를 누르면 그 지점으로"><input type="checkbox" id="we-bgbar" ${w.bar?'checked':''}> ⏱ 재생바</label>
       <label class="chk" title="곡이 둘 이상일 때 ⇄ 셔플 · ↻ 한 곡 반복 버튼"><input type="checkbox" id="we-bgctl" ${w.ctl?'checked':''}> ⇄↻ 셔플 · 반복</label>
       <label class="chk" title="앨범아트 + 제목 한 줄 띠로 접어둬요 — 띠를 누르면 펼쳐져요 (기본 스킨에서만)"><input type="checkbox" id="we-bgmini" ${w.mini?'checked':''}> ▬ 미니 모드</label>
@@ -5583,6 +5586,7 @@ function renderWidEdit(){
   }));
   const mgl=$('#we-maglab'); if(mgl) mgl.addEventListener('input',()=>{ w.label=mgl.value===' '?'':(mgl.value.trim()||undefined); if(w.label===undefined) delete w.label; });   // 📰 공백 하나 = 제목 없음
   const lpd=$('#we-lpdisc'); if(lpd) lpd.addEventListener('change',()=>{ if(lpd.value) w.lpDisc=lpd.value; else delete w.lpDisc; });   // LP 판 모양(phase537b)
+  const bgc=$('#we-bgcov'); if(bgc) bgc.addEventListener('change',()=>{ if(bgc.value) w.covShape=bgc.value; else delete w.covShape; });   // ▢(phase538)
   [['we-bgbar','bar'],['we-bgctl','ctl'],['we-bgmini','mini']].forEach(([id,k])=>{ const el=$('#'+id); if(el) el.addEventListener('change',()=>{ if(el.checked) w[k]=true; else delete w[k]; }); });   // ⏱⇄▬(phase538)
   const bfo=$('#we-bgfold'); if(bfo) bfo.addEventListener('change',()=>{ if(bfo.checked) w.tkFold=true; else delete w.tkFold; });   // 📁 기본은 펼침(phase537b)
   const btl=$('#we-bgtkl'); if(btl) btl.addEventListener('input',()=>{ const v=btl.value.trim(); if(v) w.tkLabel=v; else delete w.tkLabel; });
