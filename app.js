@@ -5266,8 +5266,9 @@ function renderWidEdit(){
       </div>`).join('')
     + `<button class="btn" id="we-btadd" style="font-size:12px">+ 곡 추가</button>`;
   if(w.t==='bgm') html+=`
-    <div class="p-row" style="align-items:center">
-      <select id="we-bgst" style="flex:1">
+    <p class="note" style="margin:6px 0 4px"><b>모양</b> — 스킨 · 앨범아트(기본 스킨) · LP 판(LP 스킨) · 보조 문구</p>
+    <div class="p-row" style="align-items:center;gap:8px">
+      <select id="we-bgst" style="flex:1.6;min-width:200px;margin-bottom:0">
         <option value="" ${!w.style?'selected':''}>기본 (앨범아트 + 이퀄라이저)</option>
         <option value="cst" ${w.style==='cst'?'selected':''}>카세트 테이프 (릴이 감겨요)</option>
         <option value="lp" ${w.style==='lp'?'selected':''}>LP 턴테이블 (판이 돌아요)</option>
@@ -5275,17 +5276,21 @@ function renderWidEdit(){
         <option value="wm" ${w.style==='wm'?'selected':''}>워크맨 (본체 · 릴이 돌아요)</option>
         <option value="cd" ${w.style==='cd'?'selected':''}>CD 케이스 (디스크가 돌아요)</option>
       </select>
-      <select id="we-bgcov" style="width:auto;margin-bottom:0" title="기본 스킨의 앨범아트 모양">
+      <select id="we-bgcov" style="flex:1;min-width:150px;margin-bottom:0" title="기본 스킨의 앨범아트 모양">
         <option value="" ${w.covShape!=='sq'?'selected':''}>앨범아트 — 동그라미 (회전)</option><option value="sq" ${w.covShape==='sq'?'selected':''}>앨범아트 — 네모</option></select>
+      <select id="we-lpdisc" style="flex:1;min-width:150px;margin-bottom:0" title="LP 턴테이블일 때 판 모양">
+        <option value="" ${w.lpDisc!=='groove'?'selected':''}>LP 판 — 검정 매끈 (기본)</option><option value="groove" ${w.lpDisc==='groove'?'selected':''}>LP 판 — 홈 있음</option></select>
+      <input id="we-bgsub" placeholder="보조 문구" value="${esc(w.sub||'')}" style="flex:1;min-width:120px;margin-bottom:0" title="카세트: 라벨 위 작은 글씨 (기본 SIDE A) / LP: 제목 아래 (기본 33⅓ RPM · SIDE A) / 튜너: 제목 아래 (기본 FM 88.1 · STEREO)">
+    </div>
+    <p class="note" style="margin:8px 0 4px"><b>옵션</b> — 재생바 · 셔플 반복 · 미니 모드(기본 스킨) · 곡 목록 접기</p>
+    <div class="p-row" style="align-items:center;gap:14px;flex-wrap:wrap">
       <label class="chk" title="곡 진행 막대 + 남은 시간 · 막대를 누르면 그 지점으로"><input type="checkbox" id="we-bgbar" ${w.bar?'checked':''}> ⏱ 재생바</label>
       <label class="chk" title="곡이 둘 이상일 때 ⇄ 셔플 · ↻ 한 곡 반복 버튼"><input type="checkbox" id="we-bgctl" ${w.ctl?'checked':''}> ⇄↻ 셔플 · 반복</label>
       <label class="chk" title="앨범아트 + 제목 한 줄 띠로 접어둬요 — 띠를 누르면 펼쳐져요 (기본 스킨에서만)"><input type="checkbox" id="we-bgmini" ${w.mini?'checked':''}> ▬ 미니 모드</label>
-      <input id="we-bgtkl" placeholder="곡 목록 제목 (기본: 곡 목록)" value="${esc(w.tkLabel||'')}" style="width:150px" title="접어둔 곡 목록 줄에 적히는 글자">
       <label class="chk" title="곡이 두 개 이상일 때 목록을 접어두고, 줄을 눌러야 펼쳐지게 해요"><input type="checkbox" id="we-bgfold" ${w.tkFold?'checked':''}> 📁 곡 목록 접어두기</label>
-      <select id="we-lpdisc" style="width:auto;margin-bottom:0" title="LP 턴테이블일 때 판 모양">
-        <option value="" ${w.lpDisc!=='groove'?'selected':''}>LP 판 — 검정 매끈 (기본)</option><option value="groove" ${w.lpDisc==='groove'?'selected':''}>LP 판 — 홈 있음</option></select>
-      <input id="we-bgsub" placeholder="보조 문구" value="${esc(w.sub||'')}" style="width:130px" title="카세트: 라벨 위 작은 글씨 (기본 SIDE A) / LP: 제목 아래 (기본 33⅓ RPM · SIDE A) / 튜너: 제목 아래 (기본 FM 88.1 · STEREO)">
+      <input id="we-bgtkl" placeholder="곡 목록 제목 (기본: 곡 목록)" value="${esc(w.tkLabel||'')}" style="flex:1;min-width:140px;margin-bottom:0" title="접어둔 곡 목록 줄에 적히는 글자">
     </div>
+    <p class="note" style="margin:8px 0 4px"><b>색 · 소리</b></p>
     <div class="p-row" style="align-items:center;font-size:11px;color:var(--muted);gap:8px">
       바탕 <input type="color" id="we-bgbg" value="${w.bg||'#14161e'}" style="width:38px;padding:0;flex:none" title="플레이어 몸체 색 — 밝은 홈에서 탁해 보이면 여기서 조절 (글자색 자동 대비)">
       <span style="font-size:11px;color:var(--muted)">🔊 시작 소리</span>
