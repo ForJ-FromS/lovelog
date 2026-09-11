@@ -7279,6 +7279,17 @@ function fillSettings(){
   [['s-hdnamefs','hdNameFs'],['s-hdoverfs','hdOverFs'],['s-hdsubfs','hdSubFs']].forEach(([id,k])=>{ const el=$('#'+id); if(el) el.value=st.page[k]||''; });
   const spf=$('#s-postfs'); if(spf) spf.value=st.page.postFs||'';
   const ssb=$('#s-sbstyle'); if(ssb) ssb.value=st.page.sbStyle||'';
+  /* 🎛 모양 세트(phase538): 셀렉트들을 한 번에 맞춤 — 저장은 [설정 저장]에서, 서치 위젯 모양은 저장 때 side에 같이 */
+  { const ss=$('#s-shapeset'); if(ss){ ss.value='';
+    const SETS={
+      round:{ 's-corner':'', 's-btnstyle':'', 's-pgstyle':'pill', 's-tagshape':'', 's-catshape':'pill', 's-sbstyle':'', search:'capsule' },
+      box:  { 's-corner':'sharp', 's-btnstyle':'box', 's-pgstyle':'box', 's-tagshape':'box', 's-catshape':'box', 's-sbstyle':'line', search:'label' },
+      line: { 's-corner':'', 's-btnstyle':'text', 's-pgstyle':'text', 's-tagshape':'text', 's-catshape':'text', 's-sbstyle':'line', search:'under' },
+      term: { 's-corner':'sharp', 's-btnstyle':'box', 's-pgstyle':'text', 's-tagshape':'box', 's-catshape':'bracket', 's-sbstyle':'line', search:'term' } };
+    ss.onchange=()=>{ const set=SETS[ss.value]; if(!set) return;
+      Object.entries(set).forEach(([id,v])=>{ if(id==='search') return; const el=$('#'+id); if(el){ el.value=v; el.dispatchEvent(new Event('change')); } });
+      st._searchSkin=set.search;                                  // 저장 때 서치 위젯 전부에 적용
+      msg('세트를 맞췄어요 — 항목별로 더 바꿔도 되고, [설정 저장]으로 확정해요.'); }; } }
   const sgsh=$('#s-galshape'); if(sgsh) sgsh.value=st.page.galShape||'';
   $('#s-galcols').value=String(galCols());
   const sgr=$('#s-galrows'); if(sgr) sgr.value=String(galRows());
@@ -7484,6 +7495,11 @@ async function saveSettings(){
     initPet(); petImgsNew=null; renderPetImgList();              // 펫 즉시 산책(phase254b) — 새로고침 없이 반영
     gateClear=false; renderGateState();
     if(data.gate==='') sessionStorage.removeItem('gate_'+st.handle);
+    if(st._searchSkin!==undefined && Array.isArray(st.page.side)){          // 🎛 모양 세트의 서치 모양(phase538)
+      const sd=st.page.side.map(w=>w&&w.t==='search' ? ({...w, ...(st._searchSkin?{style:st._searchSkin}:{})}) : w);
+      if(!st._searchSkin) sd.forEach(w=>{ if(w&&w.t==='search') delete w.style; });
+      try{ await updateDoc(doc(db,'pages',st.handle),{side:sd}); st.page.side=sd; }catch(e){}
+      delete st._searchSkin; }
     if($('#md-on') && !st._modeSaving){ try{ await modeSaveCfg(); }catch(e){} }   // 듀얼 탭 값도 같이 저장(phase537b) — 따로 [듀얼 설정 저장] 안 눌러도
     if(st.page.modes&&st.page.modes.on&&!st._modeSaving){
       await modeSyncCurrent();
