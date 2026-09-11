@@ -1897,7 +1897,27 @@ window.addEventListener('message', e=>{
   let d2; try{ d2=JSON.parse(e.data); }catch(err){ return; }
   const v2=d2&&d2.info&&d2.info.videoData&&d2.info.videoData.video_id;
   if(v2 && v2!==bgmNowVid){ bgmNowVid=v2; try{ renderSide(); }catch(err){} }
+  /* ⏱ 재생바(phase538): infoDelivery의 currentTime · duration — 렌더 없이 막대만 갱신 */
+  if(d2&&d2.info){
+    if(typeof d2.info.currentTime==='number') bgmPos=d2.info.currentTime;
+    if(typeof d2.info.duration==='number' && d2.info.duration>0) bgmDur=d2.info.duration;
+    bgmBarDraw();
+  }
 });
+let bgmPos=0, bgmDur=0;
+const bgmFmt=t=>{ t=Math.max(0,Math.round(t||0)); return Math.floor(t/60)+':'+String(t%60).padStart(2,'0'); };
+function bgmBarDraw(){
+  document.querySelectorAll('.bgm-bar').forEach(el=>{
+    const pct=bgmDur? Math.min(100, bgmPos/bgmDur*100) : 0;
+    const f=el.querySelector('.tr i'); if(f) f.style.width=pct+'%';
+    const c=el.querySelector('.cur'), r=el.querySelector('.rem');
+    if(c) c.textContent=bgmFmt(bgmPos); if(r) r.textContent=bgmDur? '-'+bgmFmt(bgmDur-bgmPos) : '';
+  });
+}
+function bgmSeek(sec){ const fr=document.querySelector('#bgm-dock-fr iframe'); if(!fr) return;
+  try{ fr.contentWindow.postMessage(JSON.stringify({event:'command', func:'seekTo', args:[Math.max(0,sec), true]}), '*'); }catch(e){} }
+const bgmOpt={};                                                 // 위젯별 셔플 · 반복 (세션)(phase538)
+const bgmOpen={};                                                // 미니 모드 펼침 (세션)
 /* 🔊 소리 크기(phase387): 유튜브 API setVolume — 이 기기에 기억 */
 function bgmVol(){                                           // 방문자가 이 홈에서 조절한 값 > 주인이 위젯에 정한 기본
   const v=parseInt(localStorage.getItem('lv-bgm-vol-'+bgmHandle));
@@ -1921,7 +1941,7 @@ function bgmMinApply(){
   $('#bgm-dock').classList.toggle('min', localStorage.getItem('lv-bgm-min')==='1');
 }
 const bgmPlaying=()=>!!document.querySelector('#bgm-dock-fr iframe');
-function bgmStart(src, baseVol){ bgmCur=src; bgmHandle=st.handle; bgmNowVid=''; bgmBase=(baseVol==null||isNaN(+baseVol))?100:Math.max(0,Math.min(100,+baseVol));
+function bgmStart(src, baseVol){ bgmCur=src; bgmHandle=st.handle; bgmNowVid=''; bgmPos=0; bgmDur=0; bgmBase=(baseVol==null||isNaN(+baseVol))?100:Math.max(0,Math.min(100,+baseVol));
   src+=(src.includes('?')?'&':'?')+'enablejsapi=1&origin='+encodeURIComponent(location.origin);
   $('#bgm-dock-fr').innerHTML=`<iframe style="width:200px;height:112px;border:0;border-radius:9px;display:block" src="${src}" allow="autoplay; encrypted-media"></iframe>`;
   $('#bgm-dock').classList.remove('hidden'); bgmMinApply(); bgmListen();
@@ -2014,9 +2034,18 @@ function renderSide(){
     const d=document.createElement('div'); d.className='side sw-'+w.t+(w.mhide?' w-mhide':'')+(w.bare?' w-bare':'')+(w.bare&&w.bareLine?' w-line':'');   // 🫧 투명(phase537b)
     d.dataset.wi=wi; if(!flw) bindDrag(d);   // 띄운 위젯은 컬럼 순서 드래그 대상이 아님
     if(w.t==='search'){
-      d.innerHTML=`<p class="label">${esc(w.label||'SEARCH')}</p>
-        <div class="s-search">⌕ <input id="q" placeholder="search"></div>`;
+      const ss=w.style||'';                                     // 서치 스킨(phase538): '' 기본 · under 밑줄 · term 터미널 · label 라벨지 · capsule 캡슐
+      const ph=esc(w.ph||'search');
+      d.className+=ss?' ss-'+ss:'';
+      const inner = ss==='term'  ? `<div class="s-search s-term"><span class="p">&gt;</span><input id="q" placeholder="${ph}"><i class="c"></i></div>`
+                  : ss==='label' ? `<div class="s-search s-label"><span class="l">${esc(w.tag||'INDEX')}</span>⌕ <input id="q" placeholder="${ph}"></div>`
+                  : ss==='capsule'? `<div class="s-search s-cap">⌕ <input id="q" placeholder="${ph}"><b>→</b></div>`
+                  : ss==='under' ? `<div class="s-search s-under"><i>⌕</i><input id="q" placeholder="${ph}"></div>`
+                  : `<div class="s-search">⌕ <input id="q" placeholder="${ph}"></div>`;
+      d.innerHTML=`<p class="label">${esc(w.label||'SEARCH')}</p>`+inner;
       box.appendChild(d);
+      if(ss==='term'){ const q0=d.querySelector('#q'), c0=d.querySelector('.c'); const up=()=>c0.classList.toggle('hidden', !!q0.value); q0.addEventListener('input',up); up(); }
+      if(ss==='capsule'){ d.querySelector('.s-cap b').onclick=()=>{ st.q=d.querySelector('#q').value.trim().toLowerCase(); st.pg=1; renderList(); }; }
       d.querySelector('#q').addEventListener('input',e=>{
         st.q=e.target.value.trim().toLowerCase(); st.pg=1; renderList(); });
       return;
@@ -2139,15 +2168,42 @@ function renderSide(){
               <span class="bgm-btn2">▶</span>
             </div>
           </div>`;
-      }else{
+      }else if(bst==='wm'){                                       // 🎧 워크맨(phase538)
+        d.className+=' bgm-wm';
         d.innerHTML=`<p class="label">${esc(w.label||'NOW PLAYING')}</p>
+          <div class="wm-body"><span class="wm-lab">${esc(w.sub||'STEREO')}</span>
+            <div class="wm-win"><span class="wm-tape"></span><span class="wm-reel l"></span><span class="wm-reel r"></span><em>${btit}</em></div>
+            <div class="wm-keys"><span class="wm-k" data-wk="prev">◀◀</span><span class="wm-k bgm-btn2">▶</span><span class="wm-k" data-wk="stop">■</span><span class="wm-k" data-wk="next">▶▶</span></div>
+          </div>`;
+      }else if(bst==='cd'){                                       // 💿 CD 케이스(phase538)
+        d.className+=' bgm-cd';
+        d.innerHTML=`<p class="label">${esc(w.label||'NOW PLAYING')}</p>
+          <div class="cd-row">
+            <span class="cd-case"><span class="cd-spine"><i>${btit}</i></span><span class="cd-disc">${ccov?`<img src="${ccov}" alt="">`:''}</span></span>
+            <span class="cd-meta"><b>${btit}</b><span>${esc(w.sub||'DISC 1')}</span></span>
+            <span class="bgm-btn2">▶</span>
+          </div>`;
+      }else if(w.mini && !bgmOpen[wi]){                            // ▬ 미니 모드(phase538): 띠 하나
+        d.className+=' bgm-mini';
+        d.innerHTML=`<div class="mini-row">
+            <span class="bgm-cov">${cover}</span>
+            <span class="mini-tx"><span class="lb">${esc(w.label||'NOW PLAYING')}</span><b>${btit}</b></span>
+            <span class="bgm-eq"><i></i><i></i><i></i></span>
+            <span class="bgm-btn2">▶</span>
+          </div>`;
+        d.querySelector('.mini-row').onclick=e=>{ if(e.target.closest('.bgm-btn2')) return; bgmOpen[wi]=true; renderSide(); };
+      }else{
+        d.innerHTML=`<p class="label">${esc(w.label||'NOW PLAYING')}${w.mini?'<i class="mini-x" title="접기">▴</i>':''}</p>
           <div class="bgm-w">
             <span class="bgm-cov">${cover}</span>
             <span class="bgm-meta"><b>${btit}</b>
               <span class="bgm-eq"><i></i><i></i><i></i><i></i><i></i></span></span>
             <span class="bgm-btn2">▶</span>
           </div>`;
+        const mx=d.querySelector('.mini-x'); if(mx) mx.onclick=()=>{ delete bgmOpen[wi]; renderSide(); };
       }
+      /* 📝 곡 메모(phase538): 지금 곡의 한 줄 */
+      { const nt=(trks[tcur]&&trks[tcur].note)||''; if(nt && !(w.mini && !bgmOpen[wi])) d.insertAdjacentHTML('beforeend', `<div class="bgm-note"><i>NOTE</i>${esc(nt)}</div>`); }
       /* 한 곡=반복 / 여러 곡=그 곡부터 이어 재생(phase277) */
       const srcFrom=si=>{
         const t0=trks[si]||{};
@@ -2158,7 +2214,10 @@ function renderSide(){
           return `https://www.youtube.com/embed/${v0}?autoplay=1&loop=1&playlist=${v0}`; }  // 한 곡 = 반복
         const myId=ytId(t0.url);
         const at=Math.max(0, ids.indexOf(myId));
-        const order=[...ids.slice(at), ...ids.slice(0,at)];                                 // 누른 곡부터, 끝나면 처음으로 순환
+        const op=bgmOpt[wi]||{};
+        if(op.rp==='one'){ const v1=myId||ids[0]; return `https://www.youtube.com/embed/${v1}?autoplay=1&loop=1&playlist=${v1}`; }   // ↻1 한 곡 반복(phase538)
+        let order=[...ids.slice(at), ...ids.slice(0,at)];                                   // 누른 곡부터, 끝나면 처음으로 순환
+        if(op.sh){ const rest=order.slice(1); for(let i=rest.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [rest[i],rest[j]]=[rest[j],rest[i]]; } order=[order[0],...rest]; }   // ⇄ 셔플: 누른 곡 다음부터 섞음
         return `https://www.youtube.com/embed/${order[0]}?autoplay=1&loop=1&playlist=${order.join(',')}`;
       };
       const srcOf=u=>srcFrom(Math.max(0, trks.findIndex(t=>t.url===u)));
@@ -2187,6 +2246,29 @@ function renderSide(){
           renderSide(); });
       }
       box.appendChild(d);
+      if(w.bar && !(w.mini && !bgmOpen[wi])){                      // ⏱ 재생바(phase538)
+        const bar=document.createElement('div'); bar.className='bgm-bar';
+        bar.innerHTML=`<div class="tr"><i></i></div><div class="tm"><span class="cur">0:00</span><span class="rem"></span></div>`;
+        const tw0=d.querySelector('.bgm-tw'); if(tw0) d.insertBefore(bar, tw0); else d.appendChild(bar);
+        bar.querySelector('.tr').onclick=e=>{ if(!bgmDur) return; const r=e.currentTarget.getBoundingClientRect(); bgmSeek((e.clientX-r.left)/r.width*bgmDur); };
+        bgmBarDraw();
+      }
+      if(w.ctl && trks.length>1 && !(w.mini && !bgmOpen[wi])){     // ⇄ ↻ 셔플 · 반복(phase538)
+        const op=bgmOpt[wi]||{}; const c=document.createElement('div'); c.className='bgm-ctl';
+        c.innerHTML=`<span class="b${op.sh?' on':''}" data-c="sh">⇄ SHUFFLE</span><span class="b${op.rp?' on':''}" data-c="rp">↻ ${op.rp==='one'?'REPEAT 1':'REPEAT'}</span>`;
+        const tw0=d.querySelector('.bgm-tw'); if(tw0) d.insertBefore(c, tw0); else d.appendChild(c);
+        c.querySelectorAll('[data-c]').forEach(b3=>b3.onclick=()=>{
+          const o=bgmOpt[wi]=bgmOpt[wi]||{};
+          if(b3.dataset.c==='sh') o.sh=!o.sh; else o.rp = o.rp==='one' ? '' : 'one';   // 반복: 전체(기본) ↔ 한 곡
+          if(bgmPlaying()){ bgmStart(srcFrom(tcur), w.vol); }                              // 재생 중이면 새 순서로 다시
+          renderSide(); });
+      }
+      d.querySelectorAll('[data-wk]').forEach(k=>k.onclick=()=>{                            // 🎧 워크맨 키
+        const kk=k.dataset.wk;
+        if(kk==='stop'){ bgmStop(); renderSide(); return; }
+        if(!trks.length) return;
+        const ni = kk==='next' ? (tcur+1)%trks.length : (tcur-1+trks.length)%trks.length;
+        bgmTrk[wi]=ni; bgmStart(srcFrom(ni), w.vol); renderSide(); });
       const src = trks.length ? srcFrom(tcur)
         : (list ? `https://www.youtube.com/embed/videoseries?list=${list}&autoplay=1`
                 : `https://www.youtube.com/embed/${vid}?autoplay=1&loop=1&playlist=${vid}`);
@@ -4745,6 +4827,17 @@ function renderWidEdit(){
       <select id="we-bcol" title="글 목록·카테고리 화면으로 넘어갔을 때 이 위젯을 어느 쪽 사이드에 둘지 — 기본은 사이드바 설정을 따라요" style="flex:.8">
         <option value="">사이드바 설정대로</option><option value="l"${w.bcol==='l'?' selected':''}>왼쪽</option><option value="r"${w.bcol==='r'?' selected':''}>오른쪽</option></select>
     </div>`;                                                   // 모든 위젯 공통(phase537b)
+  if(w.t==='search') html+=`
+    <div class="p-row" style="align-items:center">
+      <select id="we-sstyle" style="flex:1">
+        <option value="" ${!w.style?'selected':''}>모양 — 기본 (둥근 칸)</option>
+        <option value="under" ${w.style==='under'?'selected':''}>모양 — 밑줄</option>
+        <option value="term" ${w.style==='term'?'selected':''}>모양 — 터미널 (커서 깜빡임)</option>
+        <option value="label" ${w.style==='label'?'selected':''}>모양 — 라벨지 (점선 · 구멍)</option>
+        <option value="capsule" ${w.style==='capsule'?'selected':''}>모양 — 캡슐 (알약 + 버튼)</option></select>
+      <input id="we-sph" placeholder="안내 문구 (기본: search)" value="${esc(w.ph||'')}" style="width:150px;margin-bottom:0">
+      <input id="we-stag" placeholder="라벨지 글자 (기본: INDEX)" value="${esc(w.tag||'')}" style="width:150px;margin-bottom:0">
+    </div>`;
   if(w.t==='profile') html+=`
     <div class="p-row"><label class="filelab">사진 <input type="file" id="we-img" accept="image/*"></label></div>
     <div class="p-row" style="align-items:center">
@@ -5156,6 +5249,7 @@ function renderWidEdit(){
       <div class="p-row">
         <input data-bt="${i}" placeholder="곡 제목" value="${esc(t.title||'')}" style="width:132px">
         <input data-bu="${i}" placeholder="유튜브 링크 (영상/플레이리스트)" value="${esc(t.url||'')}">
+        <input data-bn="${i}" placeholder="한 줄 메모 (선택 · 가사 한 구절, 넣은 이유…)" value="${esc(t.note||'')}" maxlength="120" style="width:100%;font-size:11.5px" title="이 곡이 재생될 때 위젯에 한 줄로 나와요">
         <label class="filelab" style="flex:none;font-size:11px" title="이 곡 전용 커버">🖼${t.cov?'✓':''} <input type="file" data-btcv="${i}" accept="image/*"></label>
         ${t.cov?`<button class="rmv" data-btcx="${i}" style="flex:none;font-size:10px" title="곡 커버 제거">✕🖼</button>`:''}
         <button class="rmv" data-bx="${i}" style="flex:none;font-size:11px">✕</button>
@@ -5168,7 +5262,12 @@ function renderWidEdit(){
         <option value="cst" ${w.style==='cst'?'selected':''}>카세트 테이프 (릴이 감겨요)</option>
         <option value="lp" ${w.style==='lp'?'selected':''}>LP 턴테이블 (판이 돌아요)</option>
         <option value="tun" ${w.style==='tun'?'selected':''}>주파수 튜너 (바늘이 떨려요)</option>
+        <option value="wm" ${w.style==='wm'?'selected':''}>워크맨 (본체 · 릴이 돌아요)</option>
+        <option value="cd" ${w.style==='cd'?'selected':''}>CD 케이스 (디스크가 돌아요)</option>
       </select>
+      <label class="chk" title="곡 진행 막대 + 남은 시간 · 막대를 누르면 그 지점으로"><input type="checkbox" id="we-bgbar" ${w.bar?'checked':''}> ⏱ 재생바</label>
+      <label class="chk" title="곡이 둘 이상일 때 ⇄ 셔플 · ↻ 한 곡 반복 버튼"><input type="checkbox" id="we-bgctl" ${w.ctl?'checked':''}> ⇄↻ 셔플 · 반복</label>
+      <label class="chk" title="앨범아트 + 제목 한 줄 띠로 접어둬요 — 띠를 누르면 펼쳐져요 (기본 스킨에서만)"><input type="checkbox" id="we-bgmini" ${w.mini?'checked':''}> ▬ 미니 모드</label>
       <input id="we-bgtkl" placeholder="곡 목록 제목 (기본: 곡 목록)" value="${esc(w.tkLabel||'')}" style="width:150px" title="접어둔 곡 목록 줄에 적히는 글자">
       <label class="chk" title="곡이 두 개 이상일 때 목록을 접어두고, 줄을 눌러야 펼쳐지게 해요"><input type="checkbox" id="we-bgfold" ${w.tkFold?'checked':''}> 📁 곡 목록 접어두기</label>
       <select id="we-lpdisc" style="width:auto;margin-bottom:0" title="LP 턴테이블일 때 판 모양">
@@ -5476,8 +5575,12 @@ function renderWidEdit(){
   }));
   const mgl=$('#we-maglab'); if(mgl) mgl.addEventListener('input',()=>{ w.label=mgl.value===' '?'':(mgl.value.trim()||undefined); if(w.label===undefined) delete w.label; });   // 📰 공백 하나 = 제목 없음
   const lpd=$('#we-lpdisc'); if(lpd) lpd.addEventListener('change',()=>{ if(lpd.value) w.lpDisc=lpd.value; else delete w.lpDisc; });   // LP 판 모양(phase537b)
+  [['we-bgbar','bar'],['we-bgctl','ctl'],['we-bgmini','mini']].forEach(([id,k])=>{ const el=$('#'+id); if(el) el.addEventListener('change',()=>{ if(el.checked) w[k]=true; else delete w[k]; }); });   // ⏱⇄▬(phase538)
   const bfo=$('#we-bgfold'); if(bfo) bfo.addEventListener('change',()=>{ if(bfo.checked) w.tkFold=true; else delete w.tkFold; });   // 📁 기본은 펼침(phase537b)
   const btl=$('#we-bgtkl'); if(btl) btl.addEventListener('input',()=>{ const v=btl.value.trim(); if(v) w.tkLabel=v; else delete w.tkLabel; });
+  const sst=$('#we-sstyle'); if(sst) sst.addEventListener('change',()=>{ if(sst.value) w.style=sst.value; else delete w.style; });   // 서치 스킨(phase538)
+  const sph=$('#we-sph'); if(sph) sph.addEventListener('input',()=>{ const v=sph.value.trim(); if(v) w.ph=v; else delete w.ph; });
+  const stg=$('#we-stag'); if(stg) stg.addEventListener('input',()=>{ const v=stg.value.trim(); if(v) w.tag=v; else delete w.tag; });
   const wbr=$('#we-bare'); if(wbr) wbr.addEventListener('change',()=>{ if(wbr.checked) w.bare=true; else delete w.bare; });   // 🫧 투명 공통(phase537b)
   const wbl=$('#we-bareline'); if(wbl) wbl.addEventListener('change',()=>{ if(wbl.checked) w.bareLine=true; else delete w.bareLine; });
   const wbc=$('#we-bcol'); if(wbc) wbc.addEventListener('change',()=>{ if(wbc.value) w.bcol=wbc.value; else delete w.bcol; });   // 카테고리 화면 좌우(phase537b)
@@ -5731,6 +5834,8 @@ function renderWidEdit(){
     w.tracks[i.dataset.bt].title=i.value; }));
   $('#wid-edit').querySelectorAll('[data-bu]').forEach(i=>i.addEventListener('input',()=>{
     w.tracks[i.dataset.bu].url=i.value.trim(); }));
+  $('#wid-edit').querySelectorAll('[data-bn]').forEach(i=>i.addEventListener('input',()=>{
+    const v=i.value.trim(); if(v) w.tracks[i.dataset.bn].note=v; else delete w.tracks[i.dataset.bn].note; }));   // 📝 곡 메모(phase538)
   $('#wid-edit').querySelectorAll('[data-bx]').forEach(b2=>b2.onclick=()=>{
     w.tracks.splice(+b2.dataset.bx,1); renderWidEdit(); });
   $('#wid-edit').querySelectorAll('[data-ll]').forEach(i=>i.addEventListener('input',()=>{ w.items[i.dataset.ll].label=i.value; }));

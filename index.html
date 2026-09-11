@@ -787,6 +787,22 @@
     border-radius:9px;background:var(--card2);padding:8px 12px}
   .s-search input{border:none;background:none;outline:none;width:100%;
     font-size:12px;color:var(--ink)}
+  /* ═══ 서치 스킨(phase538) ═══ */
+  .s-search.s-under{border:none;border-radius:0;background:none;padding:5px 2px 7px;border-bottom:1px solid var(--line);position:relative}
+  .s-search.s-under::after{content:'';position:absolute;left:0;bottom:-1px;width:38px;height:1px;background:var(--pri)}
+  .s-search.s-under i{font-style:normal;color:var(--pri)}
+  .s-search.s-term{font-family:'IBM Plex Mono',monospace;background:#0b0e15;border-color:hsl(var(--h) 20% 22%);border-radius:7px;gap:6px}
+  .s-search.s-term .p{color:var(--pri)} .s-search.s-term input{font-family:inherit;color:hsl(var(--h) 40% 80%);font-size:12px}
+  .s-search.s-term .c{width:7px;height:13px;background:var(--pri);flex:none;animation:sbl 1s steps(1) infinite}
+  .s-search.s-term .c.hidden{display:none}
+  @keyframes sbl{50%{opacity:0}}
+  .s-search.s-label{position:relative;border-style:dashed;border-radius:6px;overflow:visible}
+  .s-search.s-label::before,.s-search.s-label::after{content:'';position:absolute;top:50%;width:10px;height:10px;border-radius:50%;background:var(--card);border:1px dashed var(--line);transform:translateY(-50%)}
+  .s-search.s-label::before{left:-6px} .s-search.s-label::after{right:-6px}
+  .s-search.s-label .l{position:absolute;right:12px;top:-7px;font-family:'IBM Plex Mono',monospace;font-size:7.5px;letter-spacing:.2em;color:var(--pri);background:var(--card);padding:0 5px}
+  .w-bare .s-search.s-label::before,.w-bare .s-search.s-label::after,.w-bare .s-search.s-label .l{background:var(--bg)}
+  .s-search.s-cap{border-radius:999px;padding:4px 4px 4px 14px}
+  .s-search.s-cap b{width:28px;height:28px;border-radius:50%;background:var(--pri);color:hsl(var(--h) 30% 12%);display:grid;place-items:center;font-size:13px;font-weight:400;cursor:pointer;flex:none}
   #cats{list-style:none}
   #cats a{display:flex;justify-content:space-between;align-items:baseline;gap:6px;
     padding:6px 2px;font-size:12.5px;color:var(--body);cursor:pointer;
@@ -828,6 +844,54 @@
     border:1px solid var(--line);background:var(--card2);color:var(--pri);
     display:flex;align-items:center;justify-content:center;font-size:12px}
   .bgm-btn2:hover{border-color:var(--pri)}
+  /* ═══ BGM 추가(phase538): 재생바 · 곡 메모 · 셔플반복 · 미니 · 워크맨 · CD ═══ */
+  .bgm-bar{margin-top:10px}
+  .bgm-bar .tr{height:3px;border-radius:99px;background:var(--line);position:relative;cursor:pointer}
+  .bgm-bar .tr i{position:absolute;left:0;top:0;height:100%;width:0;border-radius:99px;background:var(--bgmAc,var(--pri));transition:width .5s linear}
+  .bgm-bar .tr i::after{content:'';position:absolute;right:-4px;top:-3px;width:9px;height:9px;border-radius:50%;background:var(--bgmAc,var(--pri));box-shadow:0 0 0 3px color-mix(in srgb, var(--bgmAc,var(--pri)) 25%, transparent)}
+  .bgm-bar .tm{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:var(--bgmTx,var(--muted));opacity:.8;margin-top:5px}
+  .bgm-note{margin-top:10px;padding:7px 10px;border-left:2px solid var(--bgmAc,var(--pri));font-size:12px;color:var(--bgmTx,var(--body));background:color-mix(in srgb, var(--bgmAc,var(--pri)) 7%, transparent);border-radius:0 6px 6px 0;line-height:1.6}
+  .bgm-note i{font-style:normal;display:block;font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.2em;color:var(--bgmTx,var(--muted));opacity:.7;margin-bottom:2px}
+  .bgm-ctl{display:flex;gap:6px;margin-top:10px;justify-content:flex-end}
+  .bgm-ctl .b{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;border:1px solid var(--line);border-radius:6px;padding:3px 8px;color:var(--bgmTx,var(--muted));cursor:pointer}
+  .bgm-ctl .b.on{color:var(--bgmAc,var(--pri));border-color:var(--bgmAc,var(--pri))}
+  /* 미니 */
+  .bgm-mini{padding:6px 8px!important;border-radius:999px!important}
+  .bgm-mini::before{display:none}
+  .mini-row{display:flex;align-items:center;gap:10px;cursor:pointer}
+  .bgm-mini .bgm-cov{width:30px;height:30px;border-width:1px} .bgm-mini .bgm-cov::after{width:7px;height:7px;border-width:1px}
+  .mini-tx{flex:1;min-width:0;display:flex;align-items:baseline;gap:8px}
+  .mini-tx .lb{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.22em;color:var(--bgmTx,var(--muted));flex:none;white-space:nowrap}
+  .mini-tx b{font-size:12px;color:var(--bgmTx,var(--ink));font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:0 1 auto}
+  .bgm-mini .bgm-eq{height:14px;margin:0;flex:none} .bgm-mini .bgm-btn2{width:24px;height:24px;font-size:9px}
+  .mini-x{float:right;font-style:normal;cursor:pointer;color:var(--muted);font-size:10px;padding:0 2px}
+  /* 워크맨 */
+  .wm-body{position:relative;background:linear-gradient(180deg,#eef1f7,#cfd5e2);border-radius:10px;padding:12px 12px 10px;border:1px solid #b7bfcf;box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 6px 16px rgba(30,45,90,.18)}
+  .bgm-wm[style*="--bgmBg"] .wm-body{background:var(--bgmBg)}
+  .wm-lab{position:absolute;right:14px;top:8px;font-family:'IBM Plex Mono',monospace;font-size:7px;letter-spacing:.25em;color:#6a7288}
+  .wm-win{background:#1a1e27;border:2px solid #9aa3b5;border-radius:6px;height:64px;position:relative;overflow:hidden}
+  .wm-tape{position:absolute;left:52px;right:52px;top:50%;height:8px;transform:translateY(-50%);background:repeating-linear-gradient(90deg,#3c2a1a 0 2px,#5a3f2a 2px 4px);border-radius:2px}
+  .wm-reel{position:absolute;top:50%;width:26px;height:26px;border-radius:50%;background:#2b303a;border:3px solid #444a57;transform:translateY(-50%);background-image:repeating-conic-gradient(#444a57 0 20deg,transparent 20deg 60deg)}
+  .wm-reel.l{left:18px} .wm-reel.r{right:18px}
+  .playing .wm-reel{animation:wmspin 3s linear infinite}
+  @keyframes wmspin{to{transform:translateY(-50%) rotate(360deg)}}
+  .wm-win em{position:absolute;left:0;right:0;bottom:6px;text-align:center;font-style:normal;font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.2em;color:var(--bgmAc,var(--pri));white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 8px}
+  .wm-keys{display:flex;gap:6px;margin-top:10px}
+  .wm-k{flex:1;height:22px;border-radius:4px;background:linear-gradient(180deg,#fff,#dfe4ee);border:1px solid #aeb6c6;display:grid;place-items:center;font-size:9px;color:#3a4050;box-shadow:0 2px 0 #aeb6c6;cursor:pointer;user-select:none}
+  .bgm-wm .bgm-btn2{width:auto;height:22px;border-radius:4px;background:linear-gradient(180deg,#fff,#dfe4ee);border:1px solid #aeb6c6;color:#3a4050;font-size:9px}
+  .bgm-wm.playing .bgm-btn2{background:linear-gradient(180deg,var(--bgmAc,var(--pri)),color-mix(in srgb, var(--bgmAc,var(--pri)) 70%, #000));color:#fff;transform:translateY(1px);box-shadow:0 1px 0 #aeb6c6}
+  /* CD 케이스 */
+  .cd-row{display:flex;gap:12px;align-items:center}
+  .cd-case{position:relative;width:74px;height:74px;flex:none;border-radius:4px;margin-left:9px;background:linear-gradient(135deg,rgba(255,255,255,.35),rgba(220,228,245,.12));border:1px solid rgba(160,175,210,.55);box-shadow:inset 0 0 0 4px rgba(255,255,255,.18),0 6px 16px rgba(0,0,0,.25)}
+  .cd-disc{position:absolute;inset:8px;border-radius:50%;overflow:hidden;background:conic-gradient(from 0deg,#cfd6ff,#ffd6e8,#d6ffe9,#fff4c9,#cfd6ff);box-shadow:0 0 0 1px rgba(0,0,0,.3)}
+  .cd-disc img{width:100%;height:100%;object-fit:cover;opacity:.85}
+  .cd-disc::after{content:'';position:absolute;left:50%;top:50%;width:14px;height:14px;border-radius:50%;background:var(--card);transform:translate(-50%,-50%);box-shadow:0 0 0 3px rgba(255,255,255,.45)}
+  .playing .cd-disc{animation:spin 6s linear infinite}
+  .cd-spine{position:absolute;left:-9px;top:0;bottom:0;width:8px;background:linear-gradient(180deg,#dfe4f2,#aeb6c9);border-radius:2px 0 0 2px;border:1px solid rgba(0,0,0,.25);overflow:hidden}
+  .cd-spine i{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(90deg);font-family:'IBM Plex Mono',monospace;font-size:6px;letter-spacing:.2em;color:#333;white-space:nowrap;font-style:normal}
+  .cd-meta{flex:1;min-width:0} .cd-meta b{display:block;font-size:13px;color:var(--bgmTx,var(--ink));font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cd-meta span{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.14em;color:var(--bgmTx,var(--muted))}
+  .bgm-cd .bgm-btn2{width:30px;height:30px}
   .bgm-play{display:flex;align-items:center;gap:10px;cursor:pointer}
   .bgm-play .ic{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);
     display:flex;align-items:center;justify-content:center;color:var(--pri);flex:none}
@@ -3625,6 +3689,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=632"></script>
+<script type="module" src="./app.js?v=633"></script>
 </body>
 </html>
