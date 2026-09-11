@@ -199,6 +199,15 @@ function shrinkBlob(file,maxW,q){ return new Promise((res,rej)=>{
       alpha?'image/png':'image/jpeg', q);
   }; img.onerror=rej; img.src=URL.createObjectURL(file); });}
 const GIF_MAX = 8*1024*1024;                     // 움짤 원본 통과 상한 8MB
+async function upAudio(file){                                                        // 🎵 클릭 소리 파일(phase537b) — 300KB 이내 원본 그대로
+  if(!st.me) throw new Error('로그인이 필요해요');
+  if(file.size>300*1024) throw new Error('300KB 이하로 줄여주세요 (짧은 효과음이면 충분해요)');
+  const ext=(file.name.split('.').pop()||'mp3').toLowerCase().replace(/[^a-z0-9]/g,'')||'mp3';
+  const name='snd-'+Date.now().toString(36)+'.'+ext;
+  const r=sref(stg,'u/'+st.me.uid+'/'+name);
+  await uploadBytes(r,file,{contentType:file.type||'audio/mpeg',cacheControl:'public,max-age=31536000'});
+  return await getDownloadURL(r);
+}
 async function upFile(file,maxW=1800,q=.88,fallbackKB=200){
   try{
     if(!st.me) throw new Error('no-auth');
@@ -1111,7 +1120,7 @@ async function enterPage(){
    스냅샷 범위: 테마·색·배경·글꼴·모서리·효과·스티커·헤더 색/그라데이션 (+hdr이면 헤더 사진) — 위젯 구성·글은 공통 */
 const MODE_KEYS=['hue','sat','lum','light','glass','theme','dots','bgImg','bgRef','bgDim','titleColor','font','customCss','curImg','sparkle','fx','fxC','labelIcon','priColor',
   'corner','cardC','headGrad','headText','hdOverC','hdSubC','hdDdC','headDeco','headBand','stickers','stkOff','stkHideM','stkHome','btnStyle','pgStyle','rowStyle','catShape','quoteStyle','postFs',
-  'pet','petImg','petImgs','petSz','clickFx','snd','sndV','protectImg','fav','postPage',
+  'pet','petImg','petImgs','petSz','clickFx','snd','sndV','sndUrl','protectImg','fav','postPage',
   'listTc','rowTag','tagShape','galCols','memoCols','galRows','memoRows','sbStyle','galShape','catSel','catCnt','gbHint','gbEmpty','gbPer','lockMark','privMark','headMode','headH','headFit','homeName','galName','gbName','labelIcon','headFs','headSubFs','headOverFs','headShow','sidePos','tagShow','tagOrder','magPick','magCards','magSlots'];   // 글 목록 제목 색 등 남은 꾸밈도 모드별(phase519)
 const MODE_HDR=['heroImgs','heroImg','headNoBg','enterImg','enterRef','enterText','cardImg','bannerImg','catImgs'];   // 사진(헤더·대문·대표·카테고리) — headMode·headH·headFit는 배치라 기본 스냅샷으로 옮김(phase537b)
 const MODE_STRIP=['stripPin','stripCnt','stripShape','stripOn','stripSrc'];   // 사진 출처도 모드별(phase537b)
@@ -1733,18 +1742,21 @@ document.addEventListener('mousemove',e=>{
 /* 🔊 클릭 소리(phase494) — WebAudio 합성, 파일 없음. 방문자는 🔇로 기기별 끄기 */
 let sndCtx=null;
 const SND_FILES={click:'/snd/click.mp3', key:'/snd/key.mp3'};                       // 파일 소리(phase497) — 저장소 /snd/ 에 동봉
+const sndUrlOf=kind=> kind==='custom' ? (st.page&&st.page.sndUrl||'') : (SND_FILES[kind]||'');   // 🎵 직접 올린 소리(phase537b)
 let sndBufs={};
 async function sndFile(kind, vol){
-  const c=sndCtx; const url=SND_FILES[kind]; if(!url) return false;
+  const c=sndCtx; const url=sndUrlOf(kind); if(!url) return false;
   try{
-    if(!sndBufs[kind]){ const r=await fetch(url); sndBufs[kind]=await c.decodeAudioData(await r.arrayBuffer()); }
+    const bk=kind==='custom'?'custom:'+url:kind;                                     // 파일이 바뀌면 다시 받도록 주소로 캐시
+    if(!sndBufs[bk]){ const r=await fetch(url); sndBufs[bk]=await c.decodeAudioData(await r.arrayBuffer()); }
     const s=c.createBufferSource(); s.buffer=sndBufs[kind]; const g=c.createGain(); g.gain.value=Math.max(0,Math.min(1,(vol||40)/100)); s.connect(g); g.connect(c.destination); s.start(); return true;
   }catch(e){ return false; }
 }
 function sndPlay(kind, vol){
   try{
     if(!kind) return; if(localStorage.getItem('lv-snd-off')==='1') return;
-    if(SND_FILES[kind]){ sndCtx=sndCtx||new (window.AudioContext||window.webkitAudioContext)(); if(sndCtx.state==='suspended') sndCtx.resume(); sndFile(kind, vol); return; }
+    if(sndUrlOf(kind)){ sndCtx=sndCtx||new (window.AudioContext||window.webkitAudioContext)(); if(sndCtx.state==='suspended') sndCtx.resume(); sndFile(kind, vol); return; }
+    if(kind==='custom') return;                                                        // 올린 파일이 없으면 조용히
     sndCtx=sndCtx||new (window.AudioContext||window.webkitAudioContext)(); const c=sndCtx; if(c.state==='suspended') c.resume();
     const g=c.createGain(); g.connect(c.destination); const v=Math.max(0,Math.min(1,(vol||40)/100))*0.6; const t=c.currentTime;
     const tick=(at,ms,hz,amp)=>{                                 // 아주 짧은 노이즈 틱 (마우스 클릭 소리의 재료)
@@ -1768,6 +1780,15 @@ function sndMuteDraw(){
   b.onclick=()=>{ try{ localStorage.setItem('lv-snd-off', off?'0':'1'); }catch(e){} sndMuteDraw(); };
 }
 $('#s-snd-test')?.addEventListener('click',()=>sndPlay($('#s-snd').value||'click', +$('#s-sndv').value||40));
+{ const sf=$('#s-sndfile'), st2=$('#s-sndfile-t');
+  const showSnd=()=>{ if(st2) st2.textContent = st.page&&st.page.sndUrl ? '올린 소리 있음 ✓' : ''; const on=$('#s-snd')?.value==='custom'; $('#s-sndfile-lab')?.classList.toggle('hidden', !on); if(st2) st2.classList.toggle('hidden', !on); };
+  $('#s-snd')?.addEventListener('change', showSnd); document.addEventListener('lv-settings-filled', showSnd);
+  if(sf) sf.addEventListener('change', async e=>{
+    const f=e.target.files[0]; if(!f) return; msg('소리 올리는 중…');
+    try{ const url=await upAudio(f); await updateDoc(doc(db,'pages',st.handle),{sndUrl:url}); st.page.sndUrl=url; delete sndBufs['custom:'+url]; modeSyncCurrent();
+      $('#s-snd').value='custom'; showSnd(); msg('올렸어요 — [들어보기]로 확인하고 [설정 저장]을 눌러주세요.'); sndPlay('custom', +$('#s-sndv').value||40); }
+    catch(err){ msg('올리기 실패 — '+err.message); }
+  }); }
 $('#s-sndv')?.addEventListener('input',()=>{ const t=$('#s-sndv-t'); if(t) t.textContent=$('#s-sndv').value; });
 $('#s-snd')?.addEventListener('change',()=>{ if($('#s-snd').value) sndPlay($('#s-snd').value, +$('#s-sndv').value||40); });
 document.addEventListener('contextmenu',e=>{
@@ -7160,6 +7181,7 @@ function fillSettings(){
   const smc=$('#s-memocols'); if(smc) smc.value=String(memoCols());
   const smp=$('#s-mpinmax'); if(smp) smp.value=String(mpinMax());
   const scf=$('#s-clickfx'); if(scf) scf.value=st.page.clickFx||'';
+  document.dispatchEvent(new Event('lv-settings-filled'));
   const sul=$('#s-unlisted'); if(sul) sul.checked=!!st.page.unlisted;
   const spt=$('#s-pet'); if(spt) spt.value=st.page.pet||'';
   const spz=$('#s-petsz'); if(spz){ spz.value=petSzVal();
