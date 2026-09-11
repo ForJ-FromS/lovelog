@@ -5241,8 +5241,9 @@ function renderWidEdit(){
     <button class="btn" id="we-ddadd" style="font-size:12px">+ 디데이 추가</button>
     <p class="note">헤더에는 〈헤더〉 체크된 디데이 중 맨 위 하나가 걸려요. 사진을 넣으면 이미지 카드가 됩니다.</p>`;
   if(w.t==='bgm') html+=`
+    <p class="note" style="margin:6px 0 4px"><b>🖼 커버 이미지</b> — 유튜브 썸네일 대신 쓸 앨범아트 · 곡별 커버가 있으면 그 곡에선 그게 우선</p>
     <div class="p-row" style="align-items:center;margin-bottom:6px">
-      <label class="filelab ico" style="font-size:12px;flex:none;white-space:nowrap">🖼 커버 이미지 ${w.cov?'✓':'올리기'}<input type="file" id="we-bcov" accept="image/*"></label>
+      <label class="filelab ico" style="flex:none">${w.cov?'커버 바꾸기':'커버 올리기'}<input type="file" id="we-bcov" accept="image/*"></label>
       ${w.cov?`<img src="${w.cov}" style="width:34px;height:34px;object-fit:cover;border-radius:6px;flex:none" alt="">`:''}
       ${w.cov?`<button class="rmv" id="we-bcovx" style="flex:none;font-size:10px">제거</button>`:''}
       <select id="we-covfit" style="flex:1;margin-bottom:0" title="커버를 따로 올리지 않았을 때 쓰는 유튜브 썸네일 처리">
@@ -5250,7 +5251,6 @@ function renderWidEdit(){
         <option value="raw"${w.covFit==='raw'?' selected':''}>유튜브 썸네일 — 원본 그대로</option>
       </select>
     </div>
-    <p class="note" style="margin-top:-2px">유튜브 썸네일 대신 쓸 앨범아트예요. 곡별 커버(아래 🖼)가 있으면 그 곡에선 그게 우선.</p>
     <p class="p-h" style="margin-top:8px">1번 곡 (대표곡)</p>
     <input id="we-burl" placeholder="유튜브 링크 https://youtu.be/... (영상 또는 재생목록)" value="${esc(pdraft.bgm.url)}">
     <input id="we-btitle" placeholder="곡 제목 (선택)" value="${esc(pdraft.bgm.title)}">
