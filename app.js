@@ -1743,7 +1743,7 @@ document.addEventListener('mousemove',e=>{
 let sndCtx=null;
 const SND_FILES={click:'/snd/click.mp3', key:'/snd/key.mp3'};                       // 파일 소리(phase497) — 저장소 /snd/ 에 동봉
 const sndUrlOf=kind=> kind==='custom' ? (st.page&&st.page.sndUrl||'') : (SND_FILES[kind]||'');   // 🎵 직접 올린 소리(phase537b)
-let sndBufs={};
+let sndBufs={}; let sndCustom=null;
 async function sndFile(kind, vol){
   const c=sndCtx; const url=sndUrlOf(kind); if(!url) return false;
   try{
@@ -1755,8 +1755,12 @@ async function sndFile(kind, vol){
 function sndPlay(kind, vol){
   try{
     if(!kind) return; if(localStorage.getItem('lv-snd-off')==='1') return;
+    if(kind==='custom'){                                                               // 🎵 올린 소리는 <audio>로(phase538) — Storage 주소는 fetch가 CORS에 막혀 버퍼 재생이 안 됨
+      const u=sndUrlOf(kind); if(!u) return;
+      try{ if(!sndCustom || sndCustom.src!==u){ sndCustom=new Audio(u); sndCustom.preload='auto'; }
+        const a=sndCustom.cloneNode(); a.volume=Math.max(0,Math.min(1,(vol||40)/100)); a.play().catch(()=>{}); }catch(e){}
+      return; }
     if(sndUrlOf(kind)){ sndCtx=sndCtx||new (window.AudioContext||window.webkitAudioContext)(); if(sndCtx.state==='suspended') sndCtx.resume(); sndFile(kind, vol); return; }
-    if(kind==='custom') return;                                                        // 올린 파일이 없으면 조용히
     sndCtx=sndCtx||new (window.AudioContext||window.webkitAudioContext)(); const c=sndCtx; if(c.state==='suspended') c.resume();
     const g=c.createGain(); g.connect(c.destination); const v=Math.max(0,Math.min(1,(vol||40)/100))*0.6; const t=c.currentTime;
     const tick=(at,ms,hz,amp)=>{                                 // 아주 짧은 노이즈 틱 (마우스 클릭 소리의 재료)
