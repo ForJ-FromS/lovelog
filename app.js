@@ -1492,11 +1492,13 @@ async function bumpCounter(){
     st._cntBusy=true; sessionStorage.setItem(key,'1');           // 🔢 트랜잭션 '전에' 잠금(phase537b) — 같은 세션에서 겹쳐 불려도 한 번만 (v592~620 사이 렌더마다 +1 되던 것)
     try{
       // 트랜잭션 — 동시 방문에도 한 명도 안 빠지게 원자적으로 +1
-      c=await runTransaction(db,async tx=>{
-        const cur=(await tx.get(ref)).data()||{};
-        const upd={ total:(cur.total||0)+1, day:t, today: cur.day===t ? (cur.today||0)+1 : 1 };
-        tx.set(ref,upd); return upd;
-      });
+      c=await Promise.race([                                     // ⏳ 8초 안에 안 끝나면 실패로 — 표시만 남고 커밋이 안 된 채 굳던 것(phase538)
+        runTransaction(db,async tx=>{
+          const cur=(await tx.get(ref)).data()||{};
+          const upd={ total:(cur.total||0)+1, day:t, today: cur.day===t ? (cur.today||0)+1 : 1 };
+          tx.set(ref,upd); return upd;
+        }),
+        new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),8000)) ]);
       console.log('[lovelog] counter 커밋:', 'handle='+st.handle, c);
     }catch(e){
       sessionStorage.removeItem(key);                            // 실패했으면 다음 렌더에서 다시 시도할 수 있게
@@ -2226,7 +2228,7 @@ function renderSide(){
         return `https://www.youtube.com/embed/${order[0]}?autoplay=1&loop=1&playlist=${order.join(',')}`;
       };
       const srcOf=u=>srcFrom(Math.max(0, trks.findIndex(t=>t.url===u)));
-      if(trks.length>1){                                          // 곡 목록 UI(phase274)
+      if(trks.length>1 && !(w.mini && !bgmOpen[wi])){             // 곡 목록 UI(phase274) · 미니 띠에선 숨김(phase538)
         const fold = !!w.tkFold;                                  // 📁 곡 목록 접어두기(phase537b) — 기본은 펼침
         const tw=document.createElement('div'); tw.className='bgm-tw'+(fold?' fold':'');
         if(fold){                                                 // 접힘: 머리 줄을 눌러 펼침
