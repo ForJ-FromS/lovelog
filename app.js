@@ -5242,7 +5242,7 @@ function renderWidEdit(){
     <p class="note">헤더에는 〈헤더〉 체크된 디데이 중 맨 위 하나가 걸려요. 사진을 넣으면 이미지 카드가 됩니다.</p>`;
   if(w.t==='bgm') html+=`
     <div class="p-row" style="align-items:center;margin-bottom:6px">
-      <label class="filelab" style="font-size:11px">🖼 커버 이미지 ${w.cov?'(있음)':''} <input type="file" id="we-bcov" accept="image/*"></label>
+      <label class="filelab ico" style="font-size:12px;flex:none;white-space:nowrap">🖼 커버 이미지 ${w.cov?'✓':'올리기'}<input type="file" id="we-bcov" accept="image/*"></label>
       ${w.cov?`<img src="${w.cov}" style="width:34px;height:34px;object-fit:cover;border-radius:6px;flex:none" alt="">`:''}
       ${w.cov?`<button class="rmv" id="we-bcovx" style="flex:none;font-size:10px">제거</button>`:''}
       <select id="we-covfit" style="flex:1;margin-bottom:0" title="커버를 따로 올리지 않았을 때 쓰는 유튜브 썸네일 처리">
@@ -5259,8 +5259,8 @@ function renderWidEdit(){
       <div class="p-row">
         <input data-bt="${i}" placeholder="곡 제목" value="${esc(t.title||'')}" style="width:132px">
         <input data-bu="${i}" placeholder="유튜브 링크 (영상/플레이리스트)" value="${esc(t.url||'')}">
-        <input data-bn="${i}" placeholder="한 줄 메모 (선택 · 가사 한 구절, 넣은 이유…)" value="${esc(t.note||'')}" maxlength="120" style="width:100%;font-size:11.5px" title="이 곡이 재생될 때 위젯에 한 줄로 나와요">
-        <label class="filelab" style="flex:none;font-size:11px" title="이 곡 전용 커버">🖼${t.cov?'✓':''} <input type="file" data-btcv="${i}" accept="image/*"></label>
+        <input data-bn="${i}" placeholder="한 줄 메모 (선택)" value="${esc(t.note||'')}" maxlength="120" style="flex:1;min-width:120px;font-size:11.5px" title="이 곡이 재생될 때 위젯에 한 줄로 나와요">
+        <label class="filelab ico" style="flex:none;font-size:12px" title="이 곡 전용 커버 (선택)">🖼${t.cov?' ✓':''}<input type="file" data-btcv="${i}" accept="image/*"></label>
         ${t.cov?`<button class="rmv" data-btcx="${i}" style="flex:none;font-size:10px" title="곡 커버 제거">✕🖼</button>`:''}
         <button class="rmv" data-bx="${i}" style="flex:none;font-size:11px">✕</button>
       </div>`).join('')
@@ -5288,7 +5288,7 @@ function renderWidEdit(){
       <label class="chk" title="곡이 둘 이상일 때 ⇄ 셔플 · ↻ 한 곡 반복 버튼"><input type="checkbox" id="we-bgctl" ${w.ctl?'checked':''}> ⇄↻ 셔플 · 반복</label>
       <label class="chk" title="앨범아트 + 제목 한 줄 띠로 접어둬요 — 띠를 누르면 펼쳐져요 (기본 스킨에서만)"><input type="checkbox" id="we-bgmini" ${w.mini?'checked':''}> ▬ 미니 모드</label>
       <label class="chk" title="곡이 두 개 이상일 때 목록을 접어두고, 줄을 눌러야 펼쳐지게 해요"><input type="checkbox" id="we-bgfold" ${w.tkFold?'checked':''}> 📁 곡 목록 접어두기</label>
-      <input id="we-bgtkl" placeholder="곡 목록 제목 (기본: 곡 목록)" value="${esc(w.tkLabel||'')}" style="flex:1;min-width:140px;margin-bottom:0" title="접어둔 곡 목록 줄에 적히는 글자">
+      <input id="we-bgtkl" placeholder="접힌 줄 문구 (기본: 곡 목록)" value="${esc(w.tkLabel||'')}" style="flex:1;min-width:140px;margin-bottom:0" title="접어둔 곡 목록 줄에 적히는 글자">
     </div>
     <p class="note" style="margin:8px 0 4px"><b>색 · 소리</b></p>
     <div class="p-row" style="align-items:center;font-size:11px;color:var(--muted);gap:8px">

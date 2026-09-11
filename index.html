@@ -1652,7 +1652,7 @@
   /* 📁 곡 목록 접기(phase537b) */
   .bgm-tw.fold .bgm-trk{display:none}
   .bgm-tw.fold.open .bgm-trk{display:flex}
-  .bgm-tkh{display:flex;align-items:center;gap:7px;width:100%;margin-top:8px;padding:6px 4px;cursor:pointer;
+  .bgm-tkh{display:flex;align-items:center;gap:7px;width:100%;margin-top:14px;padding:9px 4px 5px;cursor:pointer;
     background:none;border:0;border-top:1px solid var(--line);color:var(--bgmTx,var(--muted));font-size:11.5px;text-align:left}
   .bgm-tkh:hover{color:var(--bgmTx,var(--ink))}
   .bgm-tkh .a{font-size:9px;transition:transform .2s;display:inline-block}
@@ -2478,6 +2478,8 @@
     .filelab{padding:9px 11px;border:1px solid var(--line);border-radius:9px;
       display:inline-flex;align-items:center}
     .filelab input[type=file]{max-width:132px}
+    .filelab.ico{position:relative;padding:8px 10px;overflow:hidden}          /* 아이콘만 보이는 파일 버튼(phase538) — 곡별 커버 */
+    .filelab.ico input[type=file]{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;max-width:none}
     .rmv{padding:9px 12px}
     .chl-nm{min-width:100%!important}
     .chl-r{margin-left:auto}
@@ -3707,6 +3709,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=640"></script>
+<script type="module" src="./app.js?v=642"></script>
 </body>
 </html>
