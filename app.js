@@ -2046,7 +2046,7 @@ function renderSide(){
                   : ss==='capsule'? `<div class="s-search s-cap">⌕ <input id="q" placeholder="${ph}"><b>→</b></div>`
                   : ss==='under' ? `<div class="s-search s-under"><i>⌕</i><input id="q" placeholder="${ph}"></div>`
                   : `<div class="s-search">⌕ <input id="q" placeholder="${ph}"></div>`;
-      d.innerHTML=`<p class="label">${esc(w.label||'SEARCH')}</p>`+inner;
+      d.innerHTML=(w.nolab?'':`<p class="label">${esc(w.label||'SEARCH')}</p>`)+inner;   // 제목 숨김(phase538)
       box.appendChild(d);
       if(ss==='term'){ const q0=d.querySelector('#q'), c0=d.querySelector('.c'); const up=()=>c0.classList.toggle('hidden', !!q0.value); q0.addEventListener('input',up); up(); }
       if(ss==='capsule'){ d.querySelector('.s-cap b').onclick=()=>{ st.q=d.querySelector('#q').value.trim().toLowerCase(); st.pg=1; renderList(); }; }
@@ -4846,6 +4846,7 @@ function renderWidEdit(){
         <option value="capsule" ${w.style==='capsule'?'selected':''}>모양 — 캡슐 (알약 + 버튼)</option></select>
       <input id="we-sph" placeholder="안내 문구 (기본: search)" value="${esc(w.ph||'')}" style="width:150px;margin-bottom:0">
       <input id="we-stag" placeholder="라벨지 글자 (기본: INDEX)" value="${esc(w.tag||'')}" style="width:150px;margin-bottom:0">
+      <label class="chk" title="위젯 위 제목 줄(◈ SEARCH)을 없애고 입력칸만"><input type="checkbox" id="we-snolab" ${w.nolab?'checked':''}> 제목 줄 숨김</label>
     </div>`;
   if(w.t==='profile') html+=`
     <div class="p-row"><label class="filelab">사진 <input type="file" id="we-img" accept="image/*"></label></div>
@@ -5592,6 +5593,7 @@ function renderWidEdit(){
   const btl=$('#we-bgtkl'); if(btl) btl.addEventListener('input',()=>{ const v=btl.value.trim(); if(v) w.tkLabel=v; else delete w.tkLabel; });
   const sst=$('#we-sstyle'); if(sst) sst.addEventListener('change',()=>{ if(sst.value) w.style=sst.value; else delete w.style; });   // 서치 스킨(phase538)
   const sph=$('#we-sph'); if(sph) sph.addEventListener('input',()=>{ const v=sph.value.trim(); if(v) w.ph=v; else delete w.ph; });
+  const snl=$('#we-snolab'); if(snl) snl.addEventListener('change',()=>{ if(snl.checked) w.nolab=true; else delete w.nolab; });
   const stg=$('#we-stag'); if(stg) stg.addEventListener('input',()=>{ const v=stg.value.trim(); if(v) w.tag=v; else delete w.tag; });
   const wbr=$('#we-bare'); if(wbr) wbr.addEventListener('change',()=>{ if(wbr.checked) w.bare=true; else delete w.bare; });   // 🫧 투명 공통(phase537b)
   const wbl=$('#we-bareline'); if(wbl) wbl.addEventListener('change',()=>{ if(wbl.checked) w.bareLine=true; else delete w.bareLine; });
