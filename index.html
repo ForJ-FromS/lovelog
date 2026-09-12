@@ -1305,10 +1305,10 @@
   body.theme-retro .s-search,body.theme-retro .wrap input:not(.s-search input),body.theme-retro .wrap textarea,body.theme-retro .wrap select{border:2px solid var(--ro-ink)!important;border-radius:4px!important}
   body.theme-retro .side *::-webkit-scrollbar{width:12px} body.theme-retro .side *::-webkit-scrollbar-track{background:#fff;border-left:2px solid var(--ro-ink)} body.theme-retro .side *::-webkit-scrollbar-thumb{background:var(--ro-bar);border:2px solid var(--ro-ink);border-radius:0}
   /* ═══ 테마 프리셋: 네온 사인(phase538) — 네온1 = 포인트색, 네온2 = 보색 ═══ */
-  body.theme-neon{--n1:var(--pri);--n2:hsl(calc(var(--h) + 150) 90% 70%);--n-bg:#0b0a14;--n-card:rgba(20,18,36,.85);--n-tx:#cfd0e0;
+  body.theme-neon{--n1:var(--pri);--n2:hsl(calc(var(--h) + 150) 90% 70%);--n-bg:#0b0a14;--n-card:var(--card);--n-tx:#cfd0e0;   /* 카드색은 홈 설정(--card · 투명화)을 따름(phase538) */
     background-color:var(--n-bg)!important;color:var(--n-tx);
     background-image:radial-gradient(ellipse 60% 40% at 30% 10%, color-mix(in srgb, var(--n1) 15%, transparent), transparent 60%),radial-gradient(ellipse 60% 40% at 80% 90%, color-mix(in srgb, var(--n2) 12%, transparent), transparent 60%)!important}
-  body.theme-neon .side:not(.w-phone):not(.w-bare),body.theme-neon #post-view > article{background:var(--n-card)!important;border:1px solid var(--n1)!important;box-shadow:0 0 8px color-mix(in srgb, var(--n1) 35%, transparent),inset 0 0 12px color-mix(in srgb, var(--n1) 8%, transparent)!important}
+  body.theme-neon .side:not(.w-phone):not(.w-bare),body.theme-neon #post-view > article{border:1px solid var(--n1)!important;box-shadow:0 0 8px color-mix(in srgb, var(--n1) 35%, transparent),inset 0 0 12px color-mix(in srgb, var(--n1) 8%, transparent)!important}
   body.theme-neon .side:nth-child(2n):not(.w-phone):not(.w-bare){border-color:var(--n2)!important;box-shadow:0 0 8px color-mix(in srgb, var(--n2) 35%, transparent),inset 0 0 12px color-mix(in srgb, var(--n2) 8%, transparent)!important}
   body.theme-neon .side::before{display:none}
   body.theme-neon .side .label{color:var(--n1)!important;text-shadow:0 0 6px var(--n1),0 0 14px var(--n1)}
@@ -1377,7 +1377,7 @@
   /* ═══ 테마 프리셋: 사이버펑크 HUD(phase538) — 검은 바탕 · 깎인 모서리 · 시안 발광 (--cy = 포인트색) ═══ */
   body.theme-cyber{--cy:var(--pri);--cy-dim:color-mix(in srgb, var(--pri) 35%, transparent);--cy-bg:#050608;
     background-color:var(--cy-bg)!important;background-image:linear-gradient(color-mix(in srgb, var(--cy) 5%, transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in srgb, var(--cy) 5%, transparent) 1px,transparent 1px)!important;background-size:32px 32px!important;color:#bfeaf2}
-  body.theme-cyber .side:not(.w-phone):not(.w-bare),body.theme-cyber .head,body.theme-cyber #post-view > article{background:rgba(5,6,8,.85)!important;border:1.5px solid var(--cy)!important;border-radius:0!important;position:relative;box-shadow:0 0 10px var(--cy-dim),inset 0 0 18px color-mix(in srgb, var(--cy) 6%, transparent)!important;
+  body.theme-cyber .side:not(.w-phone):not(.w-bare),body.theme-cyber .head,body.theme-cyber #post-view > article{border:1.5px solid var(--cy)!important;   /* 카드색은 홈 설정(--card · 투명화)을 따름(phase538) */border-radius:0!important;position:relative;box-shadow:0 0 10px var(--cy-dim),inset 0 0 18px color-mix(in srgb, var(--cy) 6%, transparent)!important;
     clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px))}
   body.theme-cyber .side:not(.w-phone):not(.w-bare)::before{content:'';position:absolute;left:12px;top:0;width:34%;height:3px;border-radius:0;background:var(--cy);box-shadow:0 0 6px var(--cy);opacity:1}
   body.theme-cyber .side:not(.w-phone):not(.w-bare)::after{content:'';position:absolute;right:18px;top:0;width:44px;height:6px;background:repeating-linear-gradient(-60deg,var(--cy) 0 3px,transparent 3px 7px);opacity:.9;pointer-events:none}
@@ -3861,6 +3861,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=672"></script>
+<script type="module" src="./app.js?v=674"></script>
 </body>
 </html>
