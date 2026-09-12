@@ -7252,7 +7252,52 @@ background:repeating-linear-gradient(0deg,rgba(0,0,0,.12) 0 1px,transparent 1px 
   scrap:{ nm:'점선 스크랩북', css:
 `/* ═ 프리셋: 점선 스크랩북 ═ */
 .side,.head,#post-view article{border-style:dashed;border-width:1.5px}
-.label{border-bottom:1px dotted var(--line);padding-bottom:4px}`}
+.label{border-bottom:1px dotted var(--line);padding-bottom:4px}`},
+  retroos:{ nm:'레트로 OS 창', css:
+`/* ═ 프리셋: 레트로 OS 창 ═ */
+/* 모눈 배경 · 두꺼운 남색 테두리 · 오른쪽 아래 딱딱한 그림자 · 위젯 제목이 창 제목줄 */
+/* 색은 홈 색 설정을 따라요 — 잉크는 색상(--h)의 짙은 톤, 제목줄은 포인트색(--pri)과 그 보색 계열. 바꾸려면 아래 변수만 손대세요 */
+:root{--ro-ink:hsl(var(--h) 30% 28%);--ro-bar:var(--pri);--ro-bar2:hsl(calc(var(--h) + 40) 60% 76%);--ro-grid:hsl(var(--h) 60% 60% / .16)}
+body{background-image:linear-gradient(var(--ro-grid) 1px,transparent 1px),linear-gradient(90deg,var(--ro-grid) 1px,transparent 1px)!important;background-size:28px 28px!important}
+.side,.head,#post-view article,.mm-card,#panel .card{border:2px solid var(--ro-ink)!important;border-radius:6px!important;box-shadow:5px 6px 0 var(--ro-ink)!important}
+.side{padding-top:44px!important;overflow:visible}
+.side::before{content:''!important;position:absolute;left:-2px;right:-2px;top:-2px;width:auto!important;height:30px!important;border-radius:4px 4px 0 0!important;background:var(--ro-bar)!important;border:2px solid var(--ro-ink);opacity:1!important}
+.side .label{position:absolute;left:12px;top:5px;margin:0!important;color:var(--ro-ink)!important;font-size:12px!important;letter-spacing:.06em!important;font-family:inherit!important;z-index:1}
+.side .label::before{content:''!important}
+.side::after{content:'_ ▢ ✕';position:absolute;right:10px;top:4px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.2em;color:var(--ro-ink);z-index:1}
+.side:nth-child(2n)::before{background:var(--ro-bar2)!important}
+.head{overflow:hidden!important}
+.head .in{background:rgba(255,255,255,.92);margin:0 18px 18px;padding:14px 18px!important;border:2px solid var(--ro-ink);border-radius:4px;box-shadow:4px 4px 0 var(--ro-ink);width:auto!important}
+.head h1,.head .sub,.head .over{color:var(--ro-ink)!important;text-shadow:none!important}
+#catbar a{border:2px solid var(--ro-ink)!important;border-radius:4px!important;box-shadow:3px 3px 0 var(--ro-ink)!important;background:#fff!important;color:var(--ro-ink)!important}
+#catbar a.on{background:var(--ro-bar)!important}
+.btn,#pager a,.pager a,.go{border:2px solid var(--ro-ink)!important;border-radius:4px!important;box-shadow:3px 3px 0 var(--ro-ink)!important}
+.s-search,input,textarea,select{border:2px solid var(--ro-ink)!important;border-radius:4px!important}
+.side *::-webkit-scrollbar{width:12px} .side *::-webkit-scrollbar-track{background:#fff;border-left:2px solid var(--ro-ink)} .side *::-webkit-scrollbar-thumb{background:var(--ro-bar);border:2px solid var(--ro-ink);border-radius:0}`},
+  neon:{ nm:'네온 사인', css:
+`/* ═ 프리셋: 네온 사인 ═ */
+/* 어두운 밤거리 · 위젯 테두리가 두 색으로 번갈아 발광 · 네온1은 포인트색, 네온2는 그 보색. 바꾸려면 아래 변수만 */
+:root{--n1:var(--pri);--n2:hsl(calc(var(--h) + 150) 90% 70%);--n-bg:#0b0a14;--n-card:rgba(20,18,36,.85);--n-tx:#cfd0e0}
+body{background-color:var(--n-bg)!important;background-image:radial-gradient(ellipse 60% 40% at 30% 10%, color-mix(in srgb, var(--n1) 15%, transparent), transparent 60%),radial-gradient(ellipse 60% 40% at 80% 90%, color-mix(in srgb, var(--n2) 12%, transparent), transparent 60%)!important;color:var(--n-tx)}
+.side,#post-view article{background:var(--n-card)!important;border:1px solid var(--n1)!important;border-radius:10px!important;box-shadow:0 0 8px color-mix(in srgb, var(--n1) 35%, transparent),inset 0 0 12px color-mix(in srgb, var(--n1) 8%, transparent)!important}
+.side:nth-child(2n){border-color:var(--n2)!important;box-shadow:0 0 8px color-mix(in srgb, var(--n2) 35%, transparent),inset 0 0 12px color-mix(in srgb, var(--n2) 8%, transparent)!important}
+.side::before{display:none!important}
+.side .label{color:var(--n1)!important;text-shadow:0 0 6px var(--n1),0 0 14px var(--n1)}
+.side:nth-child(2n) .label{color:var(--n2)!important;text-shadow:0 0 6px var(--n2),0 0 14px var(--n2)}
+.side .label::before{content:'✦ '!important;color:inherit!important}
+.head{border:1px solid var(--n2)!important;box-shadow:0 0 14px color-mix(in srgb, var(--n2) 35%, transparent)!important}
+.head .shade{background:linear-gradient(180deg,transparent 30%,rgba(11,10,20,.9))!important}
+.head h1{color:#fff!important;text-shadow:0 0 6px var(--n1),0 0 18px var(--n1),0 0 36px var(--n1)!important}
+.head .sub,.head .over{color:var(--n2)!important;text-shadow:0 0 8px var(--n2)}
+#catbar a{background:transparent!important;border:1px solid color-mix(in srgb, var(--n-tx) 30%, transparent)!important;color:var(--n-tx)!important}
+#catbar a.on{border-color:var(--n1)!important;color:var(--n1)!important;text-shadow:0 0 8px var(--n1);box-shadow:0 0 10px color-mix(in srgb, var(--n1) 40%, transparent)}
+.row .t,.pin .t,.mini-rows a,.mg-ti,.cd-meta b,.bgm-meta b{color:#eceefc!important}
+.row,.mini-rows a{border-color:color-mix(in srgb, var(--n-tx) 15%, transparent)!important}
+.cnt b,.dd-card .n,.bgm-bar .tr i{color:var(--n2)!important;text-shadow:0 0 8px var(--n2)}
+.s-search,input,textarea,select{background:var(--n-bg)!important;border:1px solid color-mix(in srgb, var(--n-tx) 30%, transparent)!important;color:var(--n-tx)!important}
+.btn,#pager a,.go{background:transparent!important;border:1px solid var(--n1)!important;color:var(--n1)!important;box-shadow:0 0 8px color-mix(in srgb, var(--n1) 40%, transparent)!important}
+#pager a.on{background:var(--n1)!important;color:var(--n-bg)!important}
+.side *::-webkit-scrollbar-thumb{background:var(--n2)!important;box-shadow:0 0 6px var(--n2)}`}
 };
 $('#s-csspre-add').onclick=()=>{
   const k=$('#s-csspre').value, pr=CSS_PRESETS[k]; if(!pr) return;
