@@ -3192,7 +3192,7 @@ function magHTML({lead,cards,slotImg}){
   const th=slotImg[lead.id]||postThumb(lead);
   const tagH=(p)=>(p.tags&&p.tags[0])?`<span class="mg-tag">${esc(p.tags[0])}</span>`:'';
   return `<div class="mg-wrap">
-    <a class="mg-lead${th?'':' no-th'}" data-id="${lead.id}"${lead.custom?` data-url="${esc(lead.url||'')}"`:''}>
+    <a class="mg-lead${th?'':' no-th'}${lead.custom?' custom':''}" data-id="${lead.id}"${lead.custom?` data-url="${esc(lead.url||'')}"`:''}>
       ${th?`<span class="mg-ph"><img src="${th}" alt="" loading="lazy"></span>`:''}
       <span class="mg-tx">
         <span class="mg-meta">${tagH(lead)}<span class="mg-cat">${esc(lead.cat||'')}</span></span>
@@ -6643,7 +6643,7 @@ function renderMagSlots(){
     </div>${cu?`
     <div class="ms-row ms-custom" style="padding-left:52px">
       <input data-mst="${i}" placeholder="제목" value="${esc(o.title||'')}" maxlength="80" style="flex:1;min-width:180px;margin-bottom:0">
-      <input data-msc="${i}" placeholder="작은 라벨 (예: NOTICE)" value="${esc(o.cat||'')}" maxlength="20" style="width:150px;margin-bottom:0">
+      <input data-msc="${i}" placeholder="작은 라벨 (예: NOTICE)" value="${esc(o.cat||'')}" maxlength="40" style="width:150px;margin-bottom:0">
     </div>
     <div class="ms-row ms-custom" style="padding-left:52px">
       <textarea data-mse="${i}" placeholder="짧은 문구 (표지는 4줄 · 카드는 2줄까지 보여요)" maxlength="300" style="flex:1;min-width:180px;min-height:54px;margin-bottom:0">${esc(o.ex||'')}</textarea>
