@@ -1319,10 +1319,13 @@
   body.theme-neon .head .sub,body.theme-neon .head .over{color:var(--n2)!important;text-shadow:0 0 8px var(--n2)}
   /* 카테고리 줄은 〈카테고리 모양〉 설정을 따라가되 네온 결로(phase538) */
   body.theme-neon #catbar a{color:var(--n-tx)!important;position:relative;box-shadow:none!important}
-  body.theme-neon.catsh-list #catbar a,body.theme-neon.catsh-text #catbar a,body.theme-neon.catsh-dots #catbar a,body.theme-neon.catsh-toc #catbar a{background:transparent!important;border:none!important;border-radius:0!important;padding:8px 6px!important}
-  body.theme-neon.catsh-list #catbar a::after,body.theme-neon.catsh-text #catbar a::after,body.theme-neon.catsh-dots #catbar a::after,body.theme-neon.catsh-toc #catbar a::after{content:'';position:absolute;left:0;right:0;bottom:2px;height:2px;background:color-mix(in srgb, var(--n-tx) 20%, transparent);transform:scaleX(.4);transform-origin:left;transition:transform .2s,background .2s}
-  body.theme-neon.catsh-list #catbar a.on,body.theme-neon.catsh-text #catbar a.on,body.theme-neon.catsh-dots #catbar a.on,body.theme-neon.catsh-toc #catbar a.on{color:var(--n1)!important;background:transparent!important;text-shadow:0 0 8px var(--n1)}
-  body.theme-neon.catsh-list #catbar a.on::after,body.theme-neon.catsh-text #catbar a.on::after,body.theme-neon.catsh-dots #catbar a.on::after,body.theme-neon.catsh-toc #catbar a.on::after{background:var(--n1);transform:none;box-shadow:0 0 10px var(--n1)}
+  body.theme-neon.catsh-list #catbar a{background:transparent!important;border:none!important;border-radius:0!important;padding:8px 6px!important}
+  body.theme-neon.catsh-list #catbar a::after{content:'';position:absolute;left:0;right:0;bottom:2px;height:2px;background:color-mix(in srgb, var(--n-tx) 20%, transparent);transform:scaleX(.4);transform-origin:left;transition:transform .2s,background .2s}
+  body.theme-neon.catsh-list #catbar a.on{color:var(--n1)!important;background:transparent!important;text-shadow:0 0 8px var(--n1)}
+  body.theme-neon.catsh-list #catbar a.on::after{background:var(--n1);transform:none;box-shadow:0 0 10px var(--n1)}
+  body.theme-neon.catsh-text #catbar a,body.theme-neon.catsh-dots #catbar a,body.theme-neon.catsh-toc #catbar a{background:transparent!important;border:none!important;box-shadow:none!important}
+  body.theme-neon.catsh-text #catbar a.on,body.theme-neon.catsh-dots #catbar a.on,body.theme-neon.catsh-toc #catbar a.on{color:var(--n1)!important;background:transparent!important;text-shadow:0 0 8px var(--n1)}
+  body.theme-neon.catsh-text #catbar a.on::after,body.theme-neon.catsh-toc #catbar a.on::after{display:none}
   body.theme-neon.catsh-box #catbar a,body.theme-neon.catsh-pill #catbar a{background:transparent!important;border:1px solid color-mix(in srgb, var(--n-tx) 30%, transparent)!important}
   body.theme-neon.catsh-box #catbar a{border-radius:6px!important} body.theme-neon.catsh-pill #catbar a{border-radius:999px!important}
   body.theme-neon.catsh-box #catbar a.on,body.theme-neon.catsh-pill #catbar a.on{border-color:var(--n1)!important;color:var(--n1)!important;text-shadow:0 0 8px var(--n1);box-shadow:0 0 12px color-mix(in srgb, var(--n1) 45%, transparent),inset 0 0 10px color-mix(in srgb, var(--n1) 10%, transparent)!important;background:transparent!important}
@@ -1384,10 +1387,14 @@
   /* 카테고리 줄은 〈카테고리 모양〉 설정을 따라가되 사이버펑크 결로(phase538) */
   body.theme-cyber #catbar a{font-family:'Share Tech Mono','IBM Plex Mono',monospace;color:#bfeaf2!important;position:relative;box-shadow:none!important}
   /* 기본 · 글씨만 · 점 · 목차 → 밑줄 발광 */
-  body.theme-cyber.catsh-list #catbar a,body.theme-cyber.catsh-text #catbar a,body.theme-cyber.catsh-dots #catbar a,body.theme-cyber.catsh-toc #catbar a{background:transparent!important;border:none!important;border-radius:0!important;padding:8px 6px!important}
-  body.theme-cyber.catsh-list #catbar a::after,body.theme-cyber.catsh-text #catbar a::after,body.theme-cyber.catsh-dots #catbar a::after,body.theme-cyber.catsh-toc #catbar a::after{content:'';position:absolute;left:0;right:0;bottom:2px;height:2px;background:var(--cy-dim);transform:scaleX(.4);transform-origin:left;transition:transform .2s,background .2s}
-  body.theme-cyber.catsh-list #catbar a.on,body.theme-cyber.catsh-text #catbar a.on,body.theme-cyber.catsh-dots #catbar a.on,body.theme-cyber.catsh-toc #catbar a.on{color:var(--cy)!important;background:transparent!important;text-shadow:0 0 6px var(--cy-dim)}
-  body.theme-cyber.catsh-list #catbar a.on::after,body.theme-cyber.catsh-text #catbar a.on::after,body.theme-cyber.catsh-dots #catbar a.on::after,body.theme-cyber.catsh-toc #catbar a.on::after{background:var(--cy);transform:none;box-shadow:0 0 8px var(--cy)}
+  body.theme-cyber.catsh-list #catbar a{background:transparent!important;border:none!important;border-radius:0!important;padding:8px 6px!important}
+  body.theme-cyber.catsh-list #catbar a::after{content:'';position:absolute;left:0;right:0;bottom:2px;height:2px;background:var(--cy-dim);transform:scaleX(.4);transform-origin:left;transition:transform .2s,background .2s}
+  body.theme-cyber.catsh-list #catbar a.on{color:var(--cy)!important;background:transparent!important;text-shadow:0 0 6px var(--cy-dim)}
+  body.theme-cyber.catsh-list #catbar a.on::after{background:var(--cy);transform:none;box-shadow:0 0 8px var(--cy)}
+  /* 글씨만 · 점 · 목차 → 선 없이 켜진 것만 색 + 글로우 (기본 모양의 점·목차 구조는 그대로) */
+  body.theme-cyber.catsh-text #catbar a,body.theme-cyber.catsh-dots #catbar a,body.theme-cyber.catsh-toc #catbar a{background:transparent!important;border:none!important;box-shadow:none!important}
+  body.theme-cyber.catsh-text #catbar a.on,body.theme-cyber.catsh-dots #catbar a.on,body.theme-cyber.catsh-toc #catbar a.on{color:var(--cy)!important;background:transparent!important;text-shadow:0 0 8px var(--cy-dim)}
+  body.theme-cyber.catsh-text #catbar a.on::after,body.theme-cyber.catsh-toc #catbar a.on::after{display:none}
   /* 네모 · 알약 → 아웃라인 칩 (모서리 두 곳 굵게) */
   body.theme-cyber.catsh-box #catbar a,body.theme-cyber.catsh-pill #catbar a{background:transparent!important;border:1px solid var(--cy-dim)!important;border-radius:0!important;padding:7px 14px!important}
   body.theme-cyber.catsh-box #catbar a::before,body.theme-cyber.catsh-pill #catbar a::before{content:'';position:absolute;left:-1px;top:-1px;width:6px;height:6px;border-top:2px solid var(--cy);border-left:2px solid var(--cy)}
@@ -3845,6 +3852,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=661"></script>
+<script type="module" src="./app.js?v=662"></script>
 </body>
 </html>
