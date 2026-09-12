@@ -1445,7 +1445,7 @@ const galNm=()=>st.page?.galName||'GALLERY';
 const gbNm=()=>st.page?.gbName||'GUESTBOOK';
 function applyGbText(){ const t=$('#gb-text'); if(t) t.placeholder=st.page?.gbHint||'다녀간 흔적을 남겨주세요'; }   // 방명록 문구(phase508)
 const homeNm=()=>st.page?.homeName||'HOME';
-const WNAME={idcard:'🪪 ID 카드',mag:'📰 매거진 표지',latest:'최신글',pin:'📌 고정글',char:'캐릭터 프로필',pair:'페어 프로필',cal:'달력',habit:'해빗 트래커',notice:'공지',chat:'채팅로그',phone:'단말기',tl:'타임라인',feat:'★ 대표글',img:'이미지',nb:'이웃 홈',profile:'프로필',search:'검색',category:'카테고리',
+const WNAME={mag:'📰 매거진 표지',latest:'최신글',pin:'📌 고정글',char:'캐릭터 프로필',pair:'페어 프로필',cal:'달력',habit:'해빗 트래커',notice:'공지',chat:'채팅로그',phone:'단말기',tl:'타임라인',feat:'★ 대표글',img:'이미지',nb:'이웃 홈',profile:'프로필',search:'검색',category:'카테고리',
   dday:'디데이',bgm:'BGM',quote:'인용구',links:'링크',banner:'배너칸',text:'글',cnt:'방문자수',stamp:'발도장',pairqa:'페어 인터뷰',todo:'투두리스트'};
 const STAMP_LEGACY=['heart','paw','star','drop'];   // 옛 슬롯 이름 — 카운트 승계용
 /* 글자 묶음(grapheme) 분해 — ZWJ 결합 이모지·피부색·국기가 하나로 유지(phase490) */
@@ -1543,7 +1543,7 @@ function fillCounter(){
   else b.textContent = tot;
   if(a.closest('.cnt-term')) a.textContent=String(tv).padStart(6,'0');
 }
-const DEFCOL={idcard:'c',mag:'c',search:'l',category:'l',profile:'l',latest:'c',tl:'r',feat:'r',quote:'c',notice:'c',chat:'c',phone:'c',img:'l',nb:'r',
+const DEFCOL={mag:'c',search:'l',category:'l',profile:'l',latest:'c',tl:'r',feat:'r',quote:'c',notice:'c',chat:'c',phone:'c',img:'l',nb:'r',
   dday:'r',bgm:'r',links:'r',banner:'r',text:'c',cnt:'l',char:'r',pair:'c',cal:'r',habit:'r'};
 const homeStyle=()=>st.page?.homeStyle||'grid';
 /* 🔒 비밀글 · 🔏 비공개 표시 — 꾸미기에서 이모지·문자·[LOCKED] 같은 글자로 바꿀 수 있음(phase537b) */
@@ -2310,22 +2310,6 @@ function renderSide(){
         renderSide(); };
       return;
     }
-    if(w.t==='idcard'){                                        // 🪪 ID 카드(phase538) — 사이버펑크식 신분증
-      d.className+=' w-idcard';
-      if(w.tag) d.style.setProperty('--idTag', w.tag);
-      if(w.bg) d.style.setProperty('--idBg', w.bg);
-      const rows=(w.rows||[]).filter(r=>r&&(r.k||r.v));
-      d.innerHTML=`<div class="idc-bar"><span>${esc(w.label||'IDENTIFICATION')}</span><span>${esc(w.no||'')}</span></div>
-        <div class="idc-bd">
-          <div class="idc-top">${w.img?`<img class="idc-ph" src="${w.img}" alt="" draggable="false">`:''}<div class="idc-hd">
-            <h3>${esc(w.name||'')}</h3>${w.role?`<div class="idc-role">${esc(w.role)}</div>`:''}
-            ${rows.length?`<dl>${rows.map(r=>`<dt>${esc(r.k||'')}</dt><dd>${esc(r.v||'')}</dd>`).join('')}</dl>`:''}
-          </div></div>
-          ${w.text?`<p class="idc-txt">${esc(w.text)}</p>`:''}
-          ${w.nobc?'':'<div class="idc-bc"></div>'}
-        </div>`;
-      box.appendChild(d); return;
-    }
     if(w.t==='profile'){
       d.className+=' w-profile';
       d.innerHTML=(w.img?`<img src="${w.img}" alt="" draggable="false" style="max-height:${+(w.h)||210}px">`:'')+
@@ -2383,7 +2367,7 @@ function renderSide(){
       box.appendChild(d); return;
     }
     if(w.t==='char' || w.t==='pair'){
-      const stl=['file','frame','story','id','tcg','msgr'].includes(w.style)?w.style:'basic';   // 스킨(phase245)
+      const stl=['file','frame','story','id','tcg','msgr','badge','holo','slate'].includes(w.style)?w.style:'basic';   // 스킨(phase245) · 배지·홀로·슬레이트(phase538)
       const card=(P,idx,rev)=>{ P=P||{};
         const its=(P.items||[]).filter(i=>i.k||i.v);
         const kvs=its.filter(i=>i.k);
@@ -2416,6 +2400,35 @@ function renderSide(){
               ${kvs.length?`<dl class="cp-dl">${kvs.map(i=>`<div><dt>${esc(i.k)}</dt><dd>${esc(i.v||'')}</dd></div>`).join('')}</dl>`:''}
               ${P.bio?`<p class="cp-bio">${esc(P.bio)}</p>`:''}
             </div></div>`;
+        const lvOf=()=>{ const it=its.find(i=>/^(lv|level|class|rank|등급|클래스)$/i.test((i.k||'').trim())); const m=it&&String(it.v||'').match(/\b([SABCD])\b/i); return m?{S:5,A:4,B:3,C:2,D:1}[m[1].toUpperCase()]:0; };   // 등급 게이지(phase538): LV/CLASS 항목의 S~D
+        if(stl==='badge'){ const lv=lvOf(); return `<div class="cp-card"${stA}>
+            <p class="cp-bghd"><b>${esc(w.label||'IDENTIFICATION')}</b>${lv?`<i>LV.${'SABCD'[5-lv]}</i>`:''}</p>
+            <div class="cp-bgbd">${img}<div class="cp-idinfo">
+              ${P.name?`<b class="cp-nm">${esc(P.name)}</b>`:''}
+              ${P.sub?`<i class="cp-sub">${esc(P.sub)}</i>`:''}
+              ${kvs.length?`<dl class="cp-dl">${kvs.map(i=>`<div><dt>${esc(i.k)}</dt><dd>${esc(i.v||'')}</dd></div>`).join('')}</dl>`:''}
+              ${lv?`<div class="cp-lv">${[1,2,3,4,5].map(n=>`<i class="${n<=lv?'':'o'}"></i>`).join('')}</div>`:''}
+            </div></div>
+            ${(P.bio||tgl.length)?`<div class="cp-bd">${P.bio?`<p class="cp-bio">${esc(P.bio)}</p>`:''}${tgl.length?`<div class="cp-hash">${tgl.map(t=>`<span>#${esc(t)}</span>`).join('')}</div>`:''}</div>`:''}
+            <p class="cp-bgft"><span>ISSUED ${esc(w.issued||'')}</span><span>No.0${idx+1}</span></p></div>`; }
+        if(stl==='holo'){ const lv=lvOf(); return `<div class="cp-card"${stA}><span class="cp-qr" aria-hidden="true"></span>
+            <div class="cp-hltop">${img}<span>
+              ${P.name?`<b class="cp-nm">${esc(P.name)}</b>`:''}
+              ${P.sub?`<i class="cp-sub">${esc(P.sub)}</i>`:''}
+              ${lv?`<em class="cp-chip">ACCESS · ${'SABCD'[5-lv]}</em>`:''}</span></div>
+            ${kvs.length?`<dl class="cp-dl">${kvs.map(i=>`<div><dt>${esc(i.k)}</dt><dd>${esc(i.v||'')}</dd></div>`).join('')}</dl>`:''}
+            ${P.bio?`<p class="cp-bio">${esc(P.bio)}</p>`:''}
+            ${tgl.length?`<div class="cp-hash">${tgl.map(t=>`<span>#${esc(t)}</span>`).join('')}</div>`:''}</div>`; }
+        if(stl==='slate') return `<div class="cp-card"${stA}>
+            <div class="cp-slrow">${img}<div class="cp-idinfo">
+              <p class="cp-slk">■ ${esc(w.label||'PERSONNEL RECORD')} · No.0${idx+1}</p>
+              ${P.name?`<b class="cp-nm">${esc(P.name)}</b>`:''}
+              ${P.sub?`<i class="cp-sub">${esc(P.sub)}</i>`:''}
+              ${kvs.length?`<div class="cp-stat">${kvs.map(i=>`<span>${esc(i.k)}<em>${esc(i.v||'')}</em></span>`).join('')}</div>`:''}
+            </div></div>
+            ${P.bio?`<p class="cp-bio">${esc(P.bio)}</p>`:''}
+            ${tgl.length?`<div class="cp-hash">${tgl.map(t=>`<span>#${esc(t)}</span>`).join('')}</div>`:''}
+            <span class="cp-bar" aria-hidden="true"></span></div>`;
         if(stl==='id') return `<div class="cp-card"${stA}>
             <p class="cp-idtop"><span>IDENTIFICATION</span><span>No.0${idx+1}</span></p>
             <div class="cp-idbody">${img}
@@ -4889,23 +4902,6 @@ function renderWidEdit(){
       <input id="we-stag" placeholder="라벨지 글자 (기본: INDEX)" value="${esc(w.tag||'')}" style="width:150px;margin-bottom:0">
       <label class="chk" title="위젯 위 제목 줄(◈ SEARCH)을 없애고 입력칸만 — 밑줄형은 🫧 투명과 같이 켜면 선 하나만 남아 제일 깔끔해요"><input type="checkbox" id="we-snolab" ${w.nolab?'checked':''}> 제목 줄 숨김</label>
     </div>`;
-  if(w.t==='idcard') html+=`
-    <div class="p-row" style="align-items:center;gap:8px">
-      <label class="filelab ico" style="flex:none">${w.img?'사진 바꾸기':'사진 올리기'}<input type="file" id="we-img" accept="image/*"></label>
-      <input id="we-idno" placeholder="번호 (예: No.01)" value="${esc(w.no||'')}" style="width:130px;margin-bottom:0">
-      <span class="tl2">띠 색</span><input type="color" id="we-idtag" value="${w.tag||'#f2c66d'}">
-      <span class="tl2">바탕</span><input type="color" id="we-idbg" value="${w.bg||'#0b1220'}">
-      <label class="chk" style="margin:0"><input type="checkbox" id="we-idnobc" ${w.nobc?'checked':''}> 바코드 없이</label>
-    </div>
-    <div class="p-row" style="gap:8px">
-      <input id="we-idname" placeholder="이름 (크게 · 예: CALLSIGN)" value="${esc(w.name||'')}" style="flex:1;margin-bottom:0">
-      <input id="we-idrole" placeholder="직함 · 소속 (작게)" value="${esc(w.role||'')}" style="flex:1;margin-bottom:0">
-    </div>
-    <p class="note" style="margin:6px 0 4px">항목 — 왼쪽 키(NAME · AGE · CLASS …) · 오른쪽 값. 6개까지</p>
-    ${[0,1,2,3,4,5].map(i=>{ const r=(w.rows||[])[i]||{}; return `<div class="p-row" style="gap:8px;margin-bottom:5px">
-      <input data-idk="${i}" placeholder="키" value="${esc(r.k||'')}" style="width:110px;margin-bottom:0;font-size:12px">
-      <input data-idv="${i}" placeholder="값" value="${esc(r.v||'')}" style="flex:1;margin-bottom:0;font-size:12px"></div>`; }).join('')}
-    <textarea id="we-idtext" placeholder="소개 문단 (선택)" style="min-height:80px">${esc(w.text||'')}</textarea>`;
   if(w.t==='profile') html+=`
     <div class="p-row"><label class="filelab">사진 <input type="file" id="we-img" accept="image/*"></label></div>
     <div class="p-row" style="align-items:center">
@@ -4970,7 +4966,14 @@ function renderWidEdit(){
       <option value="id" ${w.style==='id'?'selected':''}>디자인 — 신분증 (ID 카드 · 일련번호 · 바코드)</option>
       <option value="tcg" ${w.style==='tcg'?'selected':''}>디자인 — 트레이딩 카드 (도톰 테두리 · 부제가 LV 자리)</option>
       <option value="msgr" ${w.style==='msgr'?'selected':''}>디자인 — 메신저 프로필 (커버 · 부제가 상태메시지)</option>
-    </select>`;
+      <option value="badge" ${w.style==='badge'?'selected':''}>디자인 — 클리어런스 배지 (깎인 모서리 · 등급 게이지 · 발급일)</option>
+      <option value="holo" ${w.style==='holo'?'selected':''}>디자인 — 홀로그램 패스 (둥근 사진 발광 링 · 홀로 광택 · QR)</option>
+      <option value="slate" ${w.style==='slate'?'selected':''}>디자인 — 데이터 슬레이트 (색 띠 · 두 열 표 · 탈색 사진)</option>
+    </select>
+    ${['badge','holo','slate'].includes(w.style)?`<div class="p-row" style="gap:8px;align-items:center">
+      <input id="we-cplabel" placeholder="${w.style==='slate'?'머리글 (기본: PERSONNEL RECORD)':'머리글 (기본: IDENTIFICATION)'}" value="${esc(w.label||'')}" style="flex:1;margin-bottom:0">
+      ${w.style==='badge'?`<input id="we-cpissued" placeholder="발급일 (예: 2026.09.07)" value="${esc(w.issued||'')}" style="width:170px;margin-bottom:0">`:''}
+      <span class="tl2">등급 게이지는 항목 키가 LV · CLASS · 등급이고 값에 S~D가 있으면 자동</span></div>`:''}`;
   if(w.t==='char') html+=cpForm(w.p,'p','인물');
   if(w.t==='pair') html+=`
     <input id="we-cpcn" value="${esc(w.cn||'')}" placeholder="가운데 연결 기호 (선택 — 비우면 없음)" style="width:230px">
@@ -5839,13 +5842,9 @@ function renderWidEdit(){
     w.img=await upFile(f,1100,.9,120); msg('사진 반영됨 — [위젯 구성 저장]을 눌러주세요.');
   });
   const blab=$('#we-blab'); if(blab) blab.addEventListener('input',()=>{ w.label=blab.value; });
-  /* 🪪 ID 카드(phase538) */
-  [['we-idno','no'],['we-idname','name'],['we-idrole','role'],['we-idtext','text']].forEach(([id,k])=>{ const el=$('#'+id); if(el) el.addEventListener('input',()=>{ const v=el.value; if(v.trim()) w[k]=v; else delete w[k]; }); });
-  [['we-idtag','tag'],['we-idbg','bg']].forEach(([id,k])=>{ const el=$('#'+id); if(el) el.addEventListener('input',()=>{ w[k]=el.value; }); });
-  { const nb=$('#we-idnobc'); if(nb) nb.addEventListener('change',()=>{ if(nb.checked) w.nobc=true; else delete w.nobc; }); }
-  $('#wid-edit').querySelectorAll('[data-idk],[data-idv]').forEach(el=>el.addEventListener('input',()=>{
-    const i=+(el.dataset.idk??el.dataset.idv); w.rows=w.rows||[]; while(w.rows.length<=i) w.rows.push({k:'',v:''});
-    if(el.dataset.idk!==undefined) w.rows[i].k=el.value; else w.rows[i].v=el.value; }));
+  { const cl=$('#we-cplabel'); if(cl) cl.addEventListener('input',()=>{ const v=cl.value.trim(); if(v) w.label=v; else delete w.label; });   // 프로필 스킨 머리글(phase538)
+    const ci=$('#we-cpissued'); if(ci) ci.addEventListener('input',()=>{ const v=ci.value.trim(); if(v) w.issued=v; else delete w.issued; }); }
+  { const cs=$('#we-cpstyle'); if(cs) cs.addEventListener('change',()=>{ setTimeout(renderWidEdit,0); }); }   // 스킨 바꾸면 머리글 칸 보이게
   const bmh=$('#we-bmaxh'); if(bmh) bmh.addEventListener('change',()=>{
     if(bmh.value) w.maxh=bmh.value; else delete w.maxh; });
   const bnh=$('#we-bnhome'); if(bnh) bnh.onclick=()=>{ w.items=w.items||[]; w.items.push({h:'',url:''}); renderWidEdit();   // 새 배너는 맨 아래(순서 유지) · 추가 줄만 맨 위(phase537b)
