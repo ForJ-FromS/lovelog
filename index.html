@@ -1305,7 +1305,7 @@
   body.theme-retro .s-search,body.theme-retro .wrap input:not(.s-search input),body.theme-retro .wrap textarea,body.theme-retro .wrap select{border:2px solid var(--ro-ink)!important;border-radius:4px!important}
   body.theme-retro .side *::-webkit-scrollbar{width:12px} body.theme-retro .side *::-webkit-scrollbar-track{background:#fff;border-left:2px solid var(--ro-ink)} body.theme-retro .side *::-webkit-scrollbar-thumb{background:var(--ro-bar);border:2px solid var(--ro-ink);border-radius:0}
   /* ═══ 테마 프리셋: 네온 사인(phase538) — 네온1 = 포인트색, 네온2 = 보색 ═══ */
-  body.theme-neon{--n1:var(--pri);--n2:hsl(calc(var(--h) + 150) 90% 70%);--n-bg:#0b0a14;--n-card:var(--card);--n-tx:#cfd0e0;   /* 카드색은 홈 설정(--card · 투명화)을 따름(phase538) */
+  body.theme-neon{--n1:var(--pri);--n2:hsl(calc(var(--h) + 150) 90% 70%);--n-bg:#0b0a14;--n-card:var(--card);--n-tx:var(--body);   /* 카드색·글자색은 홈 설정을 따름(phase538) */
     background-color:var(--n-bg)!important;color:var(--n-tx);
     background-image:radial-gradient(ellipse 60% 40% at 30% 10%, color-mix(in srgb, var(--n1) 15%, transparent), transparent 60%),radial-gradient(ellipse 60% 40% at 80% 90%, color-mix(in srgb, var(--n2) 12%, transparent), transparent 60%)!important}
   body.theme-neon .side:not(.w-phone):not(.w-bare),body.theme-neon #post-view > article{border:1px solid var(--n1)!important;box-shadow:0 0 8px color-mix(in srgb, var(--n1) 35%, transparent),inset 0 0 12px color-mix(in srgb, var(--n1) 8%, transparent)!important}
@@ -1337,7 +1337,8 @@
   body.theme-neon.catsh-tab #catbar{border-bottom:1px solid color-mix(in srgb, var(--n1) 45%, transparent)!important}
   body.theme-neon.catsh-tab #catbar a{background:transparent!important;border:1px solid color-mix(in srgb, var(--n-tx) 20%, transparent)!important;border-bottom:none!important}
   body.theme-neon.catsh-tab #catbar a.on{border-color:var(--n1)!important;color:var(--n1)!important;text-shadow:0 0 8px var(--n1);box-shadow:0 -6px 14px -8px var(--n1)!important;background:transparent!important}
-  body.theme-neon .row .t,body.theme-neon .pin .t,body.theme-neon .mini-rows a,body.theme-neon .mg-ti,body.theme-neon .cd-meta b,body.theme-neon .bgm-meta b,body.theme-neon .post{color:#eceefc!important}
+  body.theme-neon .row .t,body.theme-neon .pin .t,body.theme-neon .mini-rows a,body.theme-neon .mg-ti{color:var(--listTc, var(--ink))!important}   /* 제목 색 설정 · 테마 글자색을 따름(phase538) — 밝은 테마에서도 읽히게 */
+  body.theme-neon .cd-meta b,body.theme-neon .bgm-meta b,body.theme-neon .post{color:var(--ink)!important}
   body.theme-neon .row,body.theme-neon .mini-rows a{border-color:color-mix(in srgb, var(--n-tx) 15%, transparent)!important}
   body.theme-neon .cnt b,body.theme-neon .dd-card .n,body.theme-neon .bgm-bar .tr i{color:var(--n2)!important;text-shadow:0 0 8px var(--n2)}
   body.theme-neon .s-search,body.theme-neon .wrap input:not(.s-search input),body.theme-neon .wrap textarea,body.theme-neon .wrap select{background:var(--card2)!important;border:1px solid color-mix(in srgb, var(--n-tx) 30%, transparent)!important;color:var(--n-tx)!important}
@@ -1376,7 +1377,7 @@
   @media(max-width:720px){ body.theme-paper .hcol,body.theme-paper #aside,body.theme-paper #aside-l,body.theme-paper .cols > main{border-right:none;padding:0} body.theme-paper .head h1{font-size:34px!important} }
   /* ═══ 테마 프리셋: 사이버펑크 HUD(phase538) — 검은 바탕 · 깎인 모서리 · 시안 발광 (--cy = 포인트색) ═══ */
   body.theme-cyber{--cy:var(--pri);--cy-dim:color-mix(in srgb, var(--pri) 35%, transparent);--cy-bg:#050608;
-    background-color:var(--cy-bg)!important;background-image:linear-gradient(color-mix(in srgb, var(--cy) 5%, transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in srgb, var(--cy) 5%, transparent) 1px,transparent 1px)!important;background-size:32px 32px!important;color:#bfeaf2}
+    background-color:var(--cy-bg)!important;background-image:linear-gradient(color-mix(in srgb, var(--cy) 5%, transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in srgb, var(--cy) 5%, transparent) 1px,transparent 1px)!important;background-size:32px 32px!important;color:var(--body)}
   body.theme-cyber .side:not(.w-phone):not(.w-bare),body.theme-cyber .head,body.theme-cyber #post-view > article{border:1.5px solid var(--cy)!important;   /* 카드색은 홈 설정(--card · 투명화)을 따름(phase538) */border-radius:0!important;position:relative;box-shadow:0 0 10px var(--cy-dim),inset 0 0 18px color-mix(in srgb, var(--cy) 6%, transparent)!important;
     clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px))}
   body.theme-cyber .side:not(.w-phone):not(.w-bare)::before{content:'';position:absolute;left:12px;top:0;width:34%;height:3px;border-radius:0;background:var(--cy);box-shadow:0 0 6px var(--cy);opacity:1}
@@ -1415,7 +1416,8 @@
   body.theme-cyber.catsh-tab #catbar a+a::before{display:none}
   body.theme-cyber.catsh-tab #catbar a.on{color:var(--cy)!important;border-top-color:var(--cy)!important;background:linear-gradient(180deg, color-mix(in srgb, var(--cy) 12%, transparent), transparent)!important;text-shadow:0 0 6px var(--cy-dim);clip-path:none;box-shadow:none!important}
   body.theme-cyber .row{border-bottom:1px solid color-mix(in srgb, var(--cy) 20%, transparent)!important}
-  body.theme-cyber .row .t,body.theme-cyber .pin .t,body.theme-cyber .mini-rows a,body.theme-cyber .mg-ti,body.theme-cyber .post,body.theme-cyber .bgm-meta b,body.theme-cyber .cd-meta b{color:#e6fbff!important}
+  body.theme-cyber .row .t,body.theme-cyber .pin .t,body.theme-cyber .mini-rows a,body.theme-cyber .mg-ti{color:var(--listTc, var(--ink))!important}
+  body.theme-cyber .post,body.theme-cyber .bgm-meta b,body.theme-cyber .cd-meta b{color:var(--ink)!important}
   body.theme-cyber .row .d,body.theme-cyber .cnt b,body.theme-cyber .dd-card .n,body.theme-cyber .mini-rows .dt{color:var(--cy)!important;text-shadow:0 0 6px var(--cy-dim);font-family:'Share Tech Mono','IBM Plex Mono',monospace}
   body.theme-cyber .s-search,body.theme-cyber .wrap input:not(.s-search input),body.theme-cyber .wrap textarea,body.theme-cyber .wrap select{background:var(--card2)!important;border:1px solid var(--cy-dim)!important;border-radius:0!important;color:#bfeaf2!important}
   body.theme-cyber .btn,body.theme-cyber .go{background:transparent!important;border:1px solid var(--cy)!important;color:var(--cy)!important;border-radius:0!important;letter-spacing:.2em;box-shadow:none!important;clip-path:polygon(0 0,calc(100% - 8px) 0,100% 100%,0 100%)}
@@ -3861,6 +3863,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=675"></script>
+<script type="module" src="./app.js?v=676"></script>
 </body>
 </html>
