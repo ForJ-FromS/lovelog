@@ -723,7 +723,8 @@ function renderStickers(){
       const move=e2=>{
         let xp=e2.clientX-rect.left-dx,
             yp=e2.clientY-rect.top-dy;
-        xp=Math.max(-sz/2, Math.min(rect.width-sz/2, xp));
+        const mg=mM?0:Math.max(0,(window.innerWidth-rect.width)/2-8);     // PC: 본문 바깥 좌우 여백까지 나갈 수 있게(phase538)
+        xp=Math.max(-mg-sz/2+16, Math.min(rect.width+mg-sz/2-16, xp));
         yp=Math.max(-sz/2, Math.min(rect.height-sz/2, yp));
         const nx=(xp/rect.width)*100;
         if(mM){ s.mx=nx; s.my=yp; } else { s.x=nx; s.y=yp; }
