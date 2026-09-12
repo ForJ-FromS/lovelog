@@ -966,6 +966,7 @@ async function enterPage(){
   ['wide','sq','v','free'].forEach(k=>document.body.classList.toggle('gg-'+k, p.galShape===k));   // ▤ 갤러리 탭 비율(phase537b)   // 스크롤바 모양(phase537b)
   document.body.classList.remove('theme-win98','theme-vhs','theme-retro','theme-neon','theme-paper','theme-cyber');
   if(p.theme && p.theme!=='default') document.body.classList.add('theme-'+p.theme);
+  if(p.neon2 && /^#[0-9a-fA-F]{6}$/.test(p.neon2)) document.body.style.setProperty('--n2', p.neon2); else document.body.style.removeProperty('--n2');   // 네온2 직접 지정(phase538)
   document.documentElement.style.setProperty('--galc', galCols());
   document.documentElement.style.setProperty('--memoc', memoCols());
   if(st.page.listTc) document.documentElement.style.setProperty('--listTc', st.page.listTc);
@@ -1120,7 +1121,7 @@ async function enterPage(){
 /* ═══ 🌗 듀얼 테마(phase475): 꾸밈 스냅샷 2개(A·B)를 홈 문서 modes에 두고 방문자가 토글 ═══
    modes={on, a:{name,snap}, b:{name,snap}, def:'a'|'b', fx:'fade'|'curtain'|'blink', hdr:bool}
    스냅샷 범위: 테마·색·배경·글꼴·모서리·효과·스티커·헤더 색/그라데이션 (+hdr이면 헤더 사진) — 위젯 구성·글은 공통 */
-const MODE_KEYS=['hue','sat','lum','light','glass','theme','dots','bgImg','bgRef','bgDim','titleColor','font','customCss','curImg','sparkle','fx','fxC','labelIcon','priColor',
+const MODE_KEYS=['hue','sat','lum','light','glass','theme','neon2','dots','bgImg','bgRef','bgDim','titleColor','font','customCss','curImg','sparkle','fx','fxC','labelIcon','priColor',
   'corner','cardC','headGrad','headText','hdOverC','hdSubC','hdDdC','headDeco','headBand','stickers','stkOff','stkHideM','stkHome','btnStyle','pgStyle','rowStyle','catShape','quoteStyle','postFs',
   'pet','petImg','petImgs','petSz','clickFx','snd','sndV','sndUrl','protectImg','fav','postPage',
   'listTc','rowTag','tagShape','galCols','memoCols','galRows','memoRows','sbStyle','galShape','catSel','catCnt','gbHint','gbEmpty','gbPer','lockMark','privMark','headMode','headH','headFit','homeName','galName','gbName','labelIcon','headFs','headSubFs','headOverFs','headShow','sidePos','tagShow','tagOrder','magPick','magCards','magSlots'];   // 글 목록 제목 색 등 남은 꾸밈도 모드별(phase519)
@@ -7361,6 +7362,10 @@ function fillSettings(){
   }
   $('#s-homestyle').value=homeStyle();
   $('#s-theme').value=p.theme||'default';
+  { const n2=$('#s-neon2'), lab=$('#s-neon2-lab'); if(n2){ n2.value=p.neon2||'#6ef5ff'; n2.dataset.auto=p.neon2?'':'1'; }
+    const showN2=()=>{ if(lab) lab.style.display=$('#s-theme').value==='neon'?'flex':'none'; }; showN2(); $('#s-theme').addEventListener('change',showN2);
+    const au=$('#s-neon2-auto'); if(au) au.onclick=()=>{ if(n2){ n2.dataset.auto='1'; n2.value='#6ef5ff'; } msg('네온2를 자동(홈 색상 + 150°)으로 — [설정 저장]으로 확정'); };
+    if(n2) n2.addEventListener('input',()=>{ n2.dataset.auto=''; }); }
   renderStkList();
   $('#s-dim').value=p.bgDim??78; $('#s-dots').value=p.dots!==false?'on':''; $('#s-protect').value=p.protectImg!==false?'on':''; $('#s-stkm').checked=!!p.stkHideM; $('#s-stkhome').checked=!!p.stkHome; $('#s-stkoff').checked=p.stkOff!==true; $('#s-fx').value=p.fx ?? (p.sparkle?'sparkle':''); $('#s-fxc').value=p.fxC||'#ffb3c8'; fxCVal=null; $('#s-postpage').value=p.postPage?'on':''; $('#s-corner').value=p.corner||''; $('#s-cardc').value=p.cardC||'#1a1c26'; cardCVal=null; $('#s-rowtag').value=p.rowTag!==false?'on':''; const sts=$('#s-tagshape'); if(sts) sts.value=p.tagShape||'';
   $('#s-gatebtn').value=p.gateBtn||''; $('#s-listed').checked=!!p.listed; cardNew=null; bnrNew=null; renderCard(); renderBnr(); $('#s-lbicon').value=p.labelIcon??'◈'; gateColVal=null;
@@ -7487,6 +7492,7 @@ async function saveSettings(){
       listTc: ($('#s-listtc')?.dataset.on ? $('#s-listtc').value : ''),
       homeStyle: $('#s-homestyle').value,
       theme: $('#s-theme').value,
+      neon2: ($('#s-neon2')&&!$('#s-neon2').dataset.auto) ? $('#s-neon2').value : '',   // 네온2 색(phase538) · 비면 자동
       bgDim: parseInt($('#s-dim').value)||78,
       dots: $('#s-dots').value==='on',
       protectImg: $('#s-protect').value==='on',
