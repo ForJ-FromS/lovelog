@@ -964,7 +964,7 @@ async function enterPage(){
   document.body.classList.toggle('style-blog', homeStyle()==='blog');
   ['','dot','line','rail','grad','hide'].forEach(k=>document.body.classList.toggle('sb-'+k, !!k && p.sbStyle===k));
   ['wide','sq','v','free'].forEach(k=>document.body.classList.toggle('gg-'+k, p.galShape===k));   // ▤ 갤러리 탭 비율(phase537b)   // 스크롤바 모양(phase537b)
-  document.body.classList.remove('theme-win98','theme-vhs','theme-retro','theme-neon');
+  document.body.classList.remove('theme-win98','theme-vhs','theme-retro','theme-neon','theme-paper','theme-cyber');
   if(p.theme && p.theme!=='default') document.body.classList.add('theme-'+p.theme);
   document.documentElement.style.setProperty('--galc', galCols());
   document.documentElement.style.setProperty('--memoc', memoCols());
@@ -1014,8 +1014,10 @@ async function enterPage(){
   document.body.classList.toggle('stk-home', !!p.stkHome);   // 스티커 홈 전용(phase284)
   document.documentElement.style.setProperty('--lbIcon',
     p.labelIcon===undefined ? '"◈ "' : (p.labelIcon ? JSON.stringify(p.labelIcon+' ') : '""'));
-  const fk=FONTS[p.font]?p.font:'sans';
+  let fk=FONTS[p.font]?p.font:'sans';
+  if(fk==='sans'){ if(p.theme==='paper') fk='nanummyeongjo'; else if(p.theme==='cyber') fk='orbitron'; }   // 테마 기본 글꼴(phase538) — 홈 글꼴을 따로 고르면 그게 우선
   ensureFont(fk);
+  if(p.theme==='paper') ensureFont('blackletter'); if(p.theme==='cyber') ensureFont('sharetech');       // 마스트헤드 · 라벨용 보조 글꼴
   document.documentElement.style.setProperty('--uFam', FONTS[fk].fam);
   document.body.classList.toggle('font-serif', fk==='serif');
   document.title = p.name ? p.name : 'luvlog';
@@ -1393,6 +1395,17 @@ const FONTS={
     css:'https://cdn.jsdelivr.net/npm/galmuri/dist/galmuri.css'},
   paperlogy:{label:'페이퍼로지 — 둥글고 단정한', fam:"'Paperlogy','Noto Sans KR',sans-serif",   /* 검증: fonts-archive gh raw 200 · family Paperlogy · 웨이트 100~900 (phase251) */
     css:'https://cdn.jsdelivr.net/gh/fonts-archive/Paperlogy/subsets/Paperlogy-dynamic-subset.css'},
+  /* 신문 · 사이버펑크 프리셋용(phase538) — 영문 글꼴은 한글이 없어 Noto로 폴백 */
+  nanummyeongjo:{label:'나눔명조 — 신문 활자', fam:"'Nanum Myeongjo','Noto Serif KR',serif",
+    css:'https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&display=swap'},
+  blackletter:{label:'블랙레터 — 옛 신문 제목 (영문)', fam:"'UnifrakturMaguntia','Nanum Myeongjo','Noto Serif KR',serif",
+    css:'https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&family=Nanum+Myeongjo:wght@400;700;800&display=swap'},
+  orbitron:{label:'오비트론 — HUD 각진 (영문)', fam:"'Orbitron','Noto Sans KR',sans-serif",
+    css:'https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&display=swap'},
+  audiowide:{label:'오디오와이드 — 둥근 테크 (영문)', fam:"'Audiowide','Noto Sans KR',sans-serif",
+    css:'https://fonts.googleapis.com/css2?family=Audiowide&display=swap'},
+  sharetech:{label:'셰어 테크 모노 — 터미널 (영문)', fam:"'Share Tech Mono','Noto Sans KR',monospace",
+    css:'https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap'},
 };
 function ensureFont(k){
   const f=FONTS[k]; if(!f||(!f.css&&!f.face)) return;
