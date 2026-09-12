@@ -1389,11 +1389,12 @@
   body.theme-cyber .head .dday .n{color:#fff!important;text-shadow:0 0 8px var(--cy);font-family:'Orbitron',monospace}
   /* 카테고리 줄은 〈카테고리 모양〉 설정을 따라가되 사이버펑크 결로(phase538) */
   body.theme-cyber #catbar a{font-family:'Share Tech Mono','IBM Plex Mono',monospace;color:#bfeaf2!important;position:relative;box-shadow:none!important}
-  /* 기본 · 글씨만 · 점 · 목차 → 밑줄 발광 */
-  body.theme-cyber.catsh-list #catbar a{background:transparent!important;border:none!important;border-radius:0!important;padding:8px 6px!important}
-  body.theme-cyber.catsh-list #catbar a::after{content:'';position:absolute;left:0;right:0;bottom:2px;height:2px;background:var(--cy-dim);transform:scaleX(.4);transform-origin:left;transition:transform .2s,background .2s}
+  /* 기본 → 모서리 꺾쇠: 켜진 것 좌상·우하 귀퉁이만(phase538) */
+  body.theme-cyber.catsh-list #catbar a{background:transparent!important;border:none!important;border-radius:0!important;padding:8px 16px!important}
   body.theme-cyber.catsh-list #catbar a.on{color:var(--cy)!important;background:transparent!important;text-shadow:0 0 6px var(--cy-dim)}
-  body.theme-cyber.catsh-list #catbar a.on::after{background:var(--cy);transform:none;box-shadow:0 0 8px var(--cy)}
+  body.theme-cyber.catsh-list #catbar a.on::before,body.theme-cyber.catsh-list #catbar a.on::after{content:'';position:absolute;width:8px;height:8px;border-color:var(--cy);border-style:solid;background:none;box-shadow:none}
+  body.theme-cyber.catsh-list #catbar a.on::before{left:2px;top:2px;border-width:2px 0 0 2px}
+  body.theme-cyber.catsh-list #catbar a.on::after{right:2px;bottom:2px;border-width:0 2px 2px 0;transform:none}
   /* 글씨만 · 점 · 목차 → 선 없이 켜진 것만 색 + 글로우 (기본 모양의 점·목차 구조는 그대로) */
   body.theme-cyber.catsh-text #catbar a,body.theme-cyber.catsh-dots #catbar a,body.theme-cyber.catsh-toc #catbar a{background:transparent!important;border:none!important;box-shadow:none!important}
   body.theme-cyber.catsh-text #catbar a.on,body.theme-cyber.catsh-dots #catbar a.on,body.theme-cyber.catsh-toc #catbar a.on{color:var(--cy)!important;background:transparent!important;text-shadow:0 0 8px var(--cy-dim)}
@@ -1407,11 +1408,11 @@
   body.theme-cyber.catsh-bracket #catbar a::before,body.theme-cyber.catsh-bracket #catbar a::after{color:var(--cy-dim)}
   body.theme-cyber.catsh-bracket #catbar a.on{color:var(--cy)!important;text-shadow:0 0 8px var(--cy-dim)}
   body.theme-cyber.catsh-bracket #catbar a.on::before,body.theme-cyber.catsh-bracket #catbar a.on::after{color:var(--cy)}
-  /* 탭 폴더 → 탭 슬래시 */
+  /* 탭 폴더 → 위 바 탭: 채움 없이 상단 굵은 선 + 아래로 옅게 번짐(phase538) */
   body.theme-cyber.catsh-tab #catbar{border-bottom:1px solid var(--cy-dim)!important;gap:0!important}
-  body.theme-cyber.catsh-tab #catbar a{background:transparent!important;border:none!important;border-radius:0!important;padding:9px 18px!important}
-  body.theme-cyber.catsh-tab #catbar a+a::before{content:'/';position:absolute;left:-4px;top:8px;color:var(--cy-dim)}
-  body.theme-cyber.catsh-tab #catbar a.on{color:var(--cy-bg)!important;background:var(--cy)!important;clip-path:polygon(0 0,calc(100% - 8px) 0,100% 100%,0 100%);box-shadow:0 0 10px var(--cy-dim)!important}
+  body.theme-cyber.catsh-tab #catbar a{background:transparent!important;border:none!important;border-top:2px solid transparent!important;border-radius:0!important;padding:9px 18px!important;margin-bottom:-1px}
+  body.theme-cyber.catsh-tab #catbar a+a::before{display:none}
+  body.theme-cyber.catsh-tab #catbar a.on{color:var(--cy)!important;border-top-color:var(--cy)!important;background:linear-gradient(180deg, color-mix(in srgb, var(--cy) 12%, transparent), transparent)!important;text-shadow:0 0 6px var(--cy-dim);clip-path:none;box-shadow:none!important}
   body.theme-cyber .row{border-bottom:1px solid color-mix(in srgb, var(--cy) 20%, transparent)!important}
   body.theme-cyber .row .t,body.theme-cyber .pin .t,body.theme-cyber .mini-rows a,body.theme-cyber .mg-ti,body.theme-cyber .post,body.theme-cyber .bgm-meta b,body.theme-cyber .cd-meta b{color:#e6fbff!important}
   body.theme-cyber .row .d,body.theme-cyber .cnt b,body.theme-cyber .dd-card .n,body.theme-cyber .mini-rows .dt{color:var(--cy)!important;text-shadow:0 0 6px var(--cy-dim);font-family:'Share Tech Mono','IBM Plex Mono',monospace}
@@ -3856,6 +3857,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=669"></script>
+<script type="module" src="./app.js?v=670"></script>
 </body>
 </html>
