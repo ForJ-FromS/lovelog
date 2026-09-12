@@ -1107,6 +1107,7 @@ async function enterPage(){
     return; }
   await loadContent();
   bumpCounter(); loadStamps();
+  if(st.mine) fixOrphanCats();                                      // 🗂 주인이면 진입 때 고아 폴더 점검(phase538) — 이미 어긋난 홈도 열기만 하면 복구
   if(listHome()){ st.cat='recent'; applyView(); }               // 블로그형·매거진형은 첫 화면이 recent(phase537)
   else { st.cat='home'; applyView(); }
   document.querySelector('.strip-sec').classList.toggle('hidden', !stripShow());
@@ -8059,7 +8060,8 @@ function dlFile(name, text, type){
 }
 const expStamp=()=>{ const d=new Date();
   return d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0'); };
-const DECO_SKIP=['uid','handle','createdAt','owner','email'];   // 꾸미기 백업에서 제외할 시스템 필드
+const DECO_SKIP=['uid','handle','createdAt','owner','email',
+  'cats','gcats','mcats','acats','navSeq','catTags','catImgs','abListView','catHide','catSel'];   // 시스템 필드 + 폴더 구조(phase538): 폴더 이름을 바꾸면 글도 새 이름으로 이사하는데, 되돌리기가 폴더 목록만 옛 이름으로 돌려 글이 고아가 되던 것
 function decoSnap(){                                             // st.page에서 꾸미기 전체 스냅샷
   const o={};
   Object.keys(st.page||{}).forEach(k=>{ if(!DECO_SKIP.includes(k)) o[k]=st.page[k]; });
@@ -8082,15 +8084,27 @@ function undoPush(reason){
     localStorage.setItem(UNDO_KEY(), JSON.stringify(arr));
   }catch(e){}
 }
+/* 🗂 고아 폴더 복구(phase538): 글·사진첩·갤러리가 가리키는 폴더가 목록에 없으면 목록에 되살림 — 글이 사라진 것처럼 보이던 것 */
+async function fixOrphanCats(){
+  if(!st.mine||!st.page) return;
+  const have=new Set(cats()); const miss=new Set();
+  (st.posts||[]).forEach(p=>{ if(p.cat && !have.has(p.cat)) miss.add(p.cat); });
+  (st.albums||[]).forEach(a=>{ if(a.cat && !have.has(a.cat)) miss.add(a.cat); });
+  (st.gallery||[]).forEach(g=>{ if(g.cat && !have.has(g.cat)) miss.add(g.cat); });
+  if(!miss.size) return;
+  const next=[...cats(), ...miss];
+  try{ await updateDoc(doc(db,'pages',st.handle),{cats:next}); st.page.cats=next; renderCatMgr?.(); renderCatbar(); renderSide(); msg(`글이 있는 폴더 ${[...miss].map(x=>`'${x}'`).join(', ')}를 목록에 되살렸어요.`); }catch(e){}
+}
 async function undoApply(i){
   const arr=undoList(); const it=arr[i]; if(!it) return;
   const when=new Date(it.t).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
   if(!confirm(`${when}의 꾸미기 상태로 되돌릴까요?\n(지금 상태도 자동으로 백업해 둡니다 · 글과 사진은 그대로예요)`)) return;
   undoPush('되돌리기 직전');
   try{ msg('되돌리는 중...');
-    await updateDoc(doc(db,'pages',st.handle), it.d); Object.assign(st.page, it.d);
+    const d2={...it.d}; DECO_SKIP.forEach(k=>delete d2[k]);            // 옛 백업에 폴더 구조가 들어 있어도 적용하지 않음(phase538)
+    await updateDoc(doc(db,'pages',st.handle), d2); Object.assign(st.page, d2);
     try{ await resolveImgs(st.page); }catch(e){}
-    await enterPage(); renderUndo(); msg('되돌렸어요.');
+    await enterPage(); await fixOrphanCats(); renderUndo(); msg('되돌렸어요.');
   }catch(e){ msg('되돌리기 실패 — '+(e.message||e)); }
 }
 function renderUndo(){
