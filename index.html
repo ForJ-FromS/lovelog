@@ -1288,9 +1288,9 @@
   /* ═══ 테마 프리셋: 레트로 OS 창 — Y2K 파스텔(phase538) — 잉크는 색상(--h) 짙은 톤, 제목줄은 포인트색과 옆 색상 ═══ */
   body.theme-retro{--ro-ink:hsl(var(--h) 30% 28%);--ro-bar:var(--pri);--ro-bar2:hsl(calc(var(--h) + 40) 60% 76%);--ro-grid:hsl(var(--h) 60% 60% / .16);
     background-image:linear-gradient(var(--ro-grid) 1px,transparent 1px),linear-gradient(90deg,var(--ro-grid) 1px,transparent 1px)!important;background-size:28px 28px!important}
-  body.theme-retro .side:not(.w-phone):not(.w-bare),body.theme-retro .head,body.theme-retro #post-view > article,body.theme-retro .mm-card{border:2px solid var(--ro-ink)!important;border-radius:6px!important;box-shadow:5px 6px 0 var(--ro-ink)!important}
+  body.theme-retro .side:not(.w-phone):not(.w-bare),body.theme-retro .head,body.theme-retro #post-view > article,body.theme-retro .mm-card{border:2px solid var(--ro-ink)!important;box-shadow:5px 6px 0 var(--ro-ink)!important}   /* 둥글기는 〈모서리〉 설정을 따름(phase538) */
   body.theme-retro .side:not(.w-phone):not(.w-bare){padding-top:44px!important;overflow:visible}
-  body.theme-retro .side:not(.w-phone):not(.w-bare)::before{content:'';position:absolute;left:-2px;right:-2px;top:-2px;width:auto;height:30px;border-radius:4px 4px 0 0;background:var(--ro-bar);border:2px solid var(--ro-ink);opacity:1}
+  body.theme-retro .side:not(.w-phone):not(.w-bare)::before{content:'';position:absolute;left:-2px;right:-2px;top:-2px;width:auto;height:30px;border-radius:inherit;border-bottom-left-radius:0;border-bottom-right-radius:0;background:var(--ro-bar);border:2px solid var(--ro-ink);opacity:1}
   body.theme-retro .side:not(.w-bare) .label{position:absolute;left:12px;top:5px;margin:0;color:var(--ro-ink)!important;font-size:12px;letter-spacing:.06em;font-family:inherit;z-index:1}
   body.theme-retro .side .label::before{content:''}
   body.theme-retro .side:not(.w-phone):not(.w-bare)::after{content:'_ ▢ ✕';position:absolute;right:10px;top:4px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.2em;color:var(--ro-ink);z-index:1}
@@ -1307,7 +1307,7 @@
   body.theme-neon{--n1:var(--pri);--n2:hsl(calc(var(--h) + 150) 90% 70%);--n-bg:#0b0a14;--n-card:rgba(20,18,36,.85);--n-tx:#cfd0e0;
     background-color:var(--n-bg)!important;color:var(--n-tx);
     background-image:radial-gradient(ellipse 60% 40% at 30% 10%, color-mix(in srgb, var(--n1) 15%, transparent), transparent 60%),radial-gradient(ellipse 60% 40% at 80% 90%, color-mix(in srgb, var(--n2) 12%, transparent), transparent 60%)!important}
-  body.theme-neon .side:not(.w-phone):not(.w-bare),body.theme-neon #post-view > article{background:var(--n-card)!important;border:1px solid var(--n1)!important;border-radius:10px!important;box-shadow:0 0 8px color-mix(in srgb, var(--n1) 35%, transparent),inset 0 0 12px color-mix(in srgb, var(--n1) 8%, transparent)!important}
+  body.theme-neon .side:not(.w-phone):not(.w-bare),body.theme-neon #post-view > article{background:var(--n-card)!important;border:1px solid var(--n1)!important;box-shadow:0 0 8px color-mix(in srgb, var(--n1) 35%, transparent),inset 0 0 12px color-mix(in srgb, var(--n1) 8%, transparent)!important}
   body.theme-neon .side:nth-child(2n):not(.w-phone):not(.w-bare){border-color:var(--n2)!important;box-shadow:0 0 8px color-mix(in srgb, var(--n2) 35%, transparent),inset 0 0 12px color-mix(in srgb, var(--n2) 8%, transparent)!important}
   body.theme-neon .side::before{display:none}
   body.theme-neon .side .label{color:var(--n1)!important;text-shadow:0 0 6px var(--n1),0 0 14px var(--n1)}
@@ -3855,6 +3855,6 @@ html,body{overflow-x:hidden;overflow-x:clip}
       </div>
     </div>
 <footer>LOVELOG</footer>
-<script type="module" src="./app.js?v=664"></script>
+<script type="module" src="./app.js?v=665"></script>
 </body>
 </html>
